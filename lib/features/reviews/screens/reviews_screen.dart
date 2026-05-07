@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Avis et notes — voir README.
+import '../../../core/constants/app_strings.dart';
+
 class ReviewsScreen extends StatelessWidget {
   const ReviewsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Avis')),
+    return Scaffold(
+      body: Center(child: Text(AppStrings.screenReviews)),
     );
   }
 }

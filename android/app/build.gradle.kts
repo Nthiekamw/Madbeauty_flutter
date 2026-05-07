@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.madbeauty.madbeauty"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Doit être installée via SDK Manager (NDK side by side). Alignée avec les plugins Flutter Android courants.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

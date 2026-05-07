@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.appName)),
+      appBar: AppBar(title: Text(AppStrings.appName)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -26,19 +26,31 @@ class HomeScreen extends StatelessWidget {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Supabase non configuré : remplis SUPABASE_URL et '
-                      'SUPABASE_ANON_KEY dans le fichier .env à la racine, '
-                      'puis lance avec --dart-define-from-file=.env '
-                      '(ou la config VS Code « MadBeauty (avec .env) »).',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.supabaseMissingTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppStrings.supabaseMissingBody,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.push('/login'),
-                child: const Text('Connexion / inscription'),
+                child: Text(AppStrings.signInOrSignUp),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => context.push('/prestataire'),
+                child: Text(AppStrings.openPrestataireSpace),
               ),
             ],
           ),

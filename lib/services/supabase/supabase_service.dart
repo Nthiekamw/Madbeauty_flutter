@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/config/app_config.dart';
+import '../../core/config/app_config.dart';
 
 class SupabaseService {
   SupabaseService._();

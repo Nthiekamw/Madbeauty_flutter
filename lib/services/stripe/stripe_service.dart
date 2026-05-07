@@ -1,4 +1,4 @@
-import '../core/config/app_config.dart';
+import '../../core/config/app_config.dart';
 
 /// Paiements Stripe (clé publique + flux à implémenter côté app / Edge Functions).
 class StripeService {

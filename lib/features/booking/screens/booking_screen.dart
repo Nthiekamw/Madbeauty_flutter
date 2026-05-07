@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Réservations, historique — voir README.
+import '../../../core/constants/app_strings.dart';
+
 class BookingScreen extends StatelessWidget {
   const BookingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Réservations')),
+    return Scaffold(
+      body: Center(child: Text(AppStrings.screenBooking)),
     );
   }
 }

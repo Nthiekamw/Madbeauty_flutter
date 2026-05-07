@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/constants/app_strings.dart';
 
 /// Profil prestataire, services, disponibilités — voir README.
 class PrestataireHubScreen extends StatelessWidget {
@@ -6,8 +9,15 @@ class PrestataireHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Espace prestataire')),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppStrings.screenPrestataireHub),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+        ),
+      ),
+      body: Center(child: Text(AppStrings.screenPrestataireHub)),
     );
   }
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Statistiques prestataire — voir README.
+import '../../../core/constants/app_strings.dart';
+
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Statistiques')),
+    return Scaffold(
+      body: Center(child: Text(AppStrings.screenStats)),
     );
   }
 }

@@ -39,6 +39,7 @@ Avant de commencer, assure-toi d'avoir :
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) >= 3.0
 - [Dart SDK](https://dart.dev/get-dart) >= 3.0 (inclus avec Flutter)
 - [Android Studio](https://developer.android.com/studio) ou [VS Code](https://code.visualstudio.com) avec l'extension Flutter
+- Sur Android : le **NDK 27.0.12077973** (Android Studio → *Settings* → *Languages & Frameworks* → *Android SDK* → onglet *SDK Tools*, coche **NDK (Side by side)** et sélectionne la version utilisée dans `android/app/build.gradle.kts`, champ `ndkVersion`). Sans cette version installée localement, Gradle peut échouer ou afficher des avertissements de version entre plugins Flutter.
 - Un emulateur Android ou simulateur iOS configure (ou un vrai device)
 - Un compte [Supabase](https://supabase.com) avec un projet cree
 - Un compte [Stripe](https://stripe.com) (pour le module paiement)
@@ -115,6 +116,10 @@ dart run build_runner build --delete-conflicting-outputs
 flutter run --dart-define-from-file=.env
 ```
 
+### 6. Migrations SQL (Supabase CLI)
+
+Le schéma Postgres est versionné dans **`supabase/migrations/`** (voir la section [Base de donnees Supabase (migrations)](#base-de-donnees-supabase-migrations) plus bas).
+
 ---
 
 ## Structure du projet
@@ -132,12 +137,32 @@ lib/
 |   |   `-- app_theme.dart
 |   `-- widgets/
 |-- services/
-|   |-- supabase_service.dart
-|   |-- storage_service.dart
-|   |-- stripe_service.dart
-|   `-- notification_service.dart
+|   |-- supabase/
+|   |   `-- supabase_service.dart
+|   |-- auth/
+|   |   `-- auth_service.dart
+|   |-- storage/
+|   |   `-- storage_service.dart
+|   |-- stripe/
+|   |   `-- stripe_service.dart
+|   `-- notification/
+|       `-- notification_service.dart
 `-- features/
     |-- auth/
+    |   |-- providers/
+    |   |   `-- auth_notifier.dart
+    |   |-- login/
+    |   |   |-- routes/
+    |   |   |   `-- login_route.dart
+    |   |   |-- screens/
+    |   |   |   `-- login_page.dart
+    |   |   |-- providers/
+    |   |   |   `-- login_controller.dart
+    |   |   |-- models/
+    |   |   |   `-- login_view_state.dart
+    |   |   `-- logic/
+    |   |       `-- login_validators.dart
+    |   `-- register/            # meme decoupage que login/ (inscription, verification...)
     |-- search/
     |-- prestataire/
     |-- booking/
@@ -145,27 +170,101 @@ lib/
     |-- reviews/
     |-- stats/
     `-- profile/
+supabase/                      # CLI Supabase : migrations SQL (hors Flutter)
+|-- config.toml
+|-- seed.sql
+`-- migrations/
+    `-- 20260507140000_init_extensions.sql
 ```
 
-Chaque feature suit la structure :
+Chaque feature suit en general : `screens/`, `widgets/`, `providers/`, `models/`, et si besoin `routes/`, `logic/`.
+
+**Auth** est un cas particulier : plusieurs **flux** (connexion, inscription, recuperation de mot de passe, etc.) sous `features/auth/<flux>/` avec le meme decoupage ; **`features/auth/providers/`** garde uniquement la **session globale** (`auth_notifier`, acces `AuthService`).
 
 ```text
-features/[feature]/
-|-- screens/
-|-- widgets/
-|-- providers/
-`-- models/
+features/auth/
+|-- providers/           # Session : AuthNotifier, authServiceProvider
+|-- login/               # Connexion
+|   |-- routes/
+|   |-- screens/
+|   |-- providers/
+|   |-- models/
+|   `-- logic/
+|-- register/            # Inscription (a creer, meme structure)
+`-- ...                  # ex. forgot_password/, verify_email/
 ```
 
 ---
 
-## Base de donnees
+## Base de donnees Supabase (migrations)
 
-Le schema complet est documente dans `docs/DB_SCHEMA.md`.
+Le dossier **`supabase/`** à la racine sert au [**Supabase CLI**](https://supabase.com/docs/guides/cli) : schéma versionné en SQL (**pas** depuis l’app Flutter).
 
-Tables principales : `profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris`.
+| Chemin | Rôle |
+| --- | --- |
+| `supabase/config.toml` | Config du projet local (`supabase start`) et repère CLI |
+| `supabase/migrations/*.sql` | Migrations ordonnées (timestamp + nom) |
+| `supabase/seed.sql` | Données de dev optionnelles après `db reset` |
 
-> Row Level Security (RLS) est active sur toutes les tables. Les politiques sont definies dans le SQL Editor Supabase.
+### Prérequis CLI
+
+- [Node.js](https://nodejs.org/) (pour **`npx`**)
+- **Ne pas utiliser** `npm install -g supabase` : le paquet npm **refuse** l’installation globale et affiche *« Installing Supabase CLI as a global module is not supported »*.
+
+**Option A — recommandée sur ce repo (sans install système)** : depuis la racine du projet, toutes les commandes avec le préfixe **`npx`** (déjà utilisé pour `supabase init`, `login`, `db push`).
+
+```powershell
+npx supabase --version
+```
+
+**Option B — Windows : commande `supabase` via [Scoop](https://scoop.sh)** (facultatif).  
+Il faut **d’abord installer Scoop** (voir [install](https://scoop.sh/#install)), puis :
+
+```powershell
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+```
+
+Si `scoop` n’est pas reconnu, tu n’as pas encore Scoop : **reste sur l’option A** (`npx supabase`).
+
+**Option C — dépendance npm locale** (dans un dossier qui a un `package.json`) : `npm i supabase --save-dev`, puis `npx supabase …`.  
+
+Voir aussi la [doc officielle d’installation](https://github.com/supabase/cli#install-the-cli).
+
+### Commandes utiles
+
+Sous Windows, si **`supabase`** n’est pas reconnu, utilise **`npx supabase …`** (option A ci-dessus).
+
+```bash
+# Authentification aupres de Supabase
+npx supabase login
+
+# Lier ce repo au projet cloud (project_ref : Settings → General dans le dashboard)
+npx supabase link --project-ref <project_ref>
+
+# Nouvelle migration (fichier dans supabase/migrations/)
+npx supabase migration new description_courte
+
+# Appliquer les migrations sur le projet lié
+npx supabase db push
+
+# En local : Postgres + API + Studio (voir les ports dans config.toml)
+npx supabase start
+```
+
+Si la CLI est installée via **Scoop** (ou autre méthode supportée) et que `supabase` est dans ton `PATH`, tu peux omettre le préfixe `npx `.
+
+**Important :** la version Postgres dans `config.toml` (`[db].major_version`) doit **correspondre** à celle du projet distant (dashboard → *Database* → *Settings*) pour limiter les écarts au `db push`.
+
+Les clés **`SUPABASE_URL`** / **`SUPABASE_ANON_KEY`** du `.env` servent au **client Flutter** uniquement. Les migrations passent par le CLI (ne jamais embarquer la *service role key* dans l’app).
+
+### Schema metier (documentation)
+
+Le détail des tables / relations / RLS est visé dans `docs/DB_SCHEMA.md` — à **aligner** avec le SQL des migrations au fil du temps.
+
+Tables principales prevues : `profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris`.
+
+> Row Level Security (RLS) doit rester active sur les tables exposées à l’API ; les politiques se definissent dans le SQL des migrations ou le SQL Editor.
 
 ---
 
@@ -398,10 +497,16 @@ lib/
 %   %   %%% app_theme.dart
 %   %%% widgets/
 %%% services/               # Couche d abstraction Supabase
-%   %%% supabase_service.dart
-%   %%% storage_service.dart
-%   %%% stripe_service.dart
-%   %%% notification_service.dart
+%   %%% supabase/
+%   %   %%% supabase_service.dart
+%   %%% auth/
+%   %   %%% auth_service.dart
+%   %%% storage/
+%   %   %%% storage_service.dart
+%   %%% stripe/
+%   %   %%% stripe_service.dart
+%   %%% notification/
+%   %   %%% notification_service.dart
 %%% features/               # Modules m�tier
     %%% auth/               # Inscription, connexion, choix du r�le
     %%% search/             # Listing, filtres, carte
