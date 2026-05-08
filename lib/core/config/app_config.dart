@@ -3,6 +3,8 @@
 class AppConfig {
   AppConfig._();
 
+  static bool? debugSupabaseEnabledOverride;
+
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: '',
@@ -18,6 +20,13 @@ class AppConfig {
     defaultValue: '',
   );
 
+  /// URL de redirection pour les e-mails Supabase (confirmation, recovery).
+  /// Exemple mobile (deep link): com.madbeauty.madbeauty://login-callback
+  static const String supabaseEmailRedirectUrl = String.fromEnvironment(
+    'SUPABASE_EMAIL_REDIRECT_URL',
+    defaultValue: '',
+  );
+
   /// Mot de passe base de donnees Supabase defini dans `.env`,
   /// injecte au build avec `--dart-define-from-file=.env`.
   static const String supabaseDatabasePassword = String.fromEnvironment(
@@ -26,8 +35,12 @@ class AppConfig {
   );
 
   static bool get hasSupabase =>
-      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+      debugSupabaseEnabledOverride ??
+      (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty);
 
   static bool get hasSupabaseDatabasePassword =>
       supabaseDatabasePassword.isNotEmpty;
+
+  static String? get authEmailRedirectTo =>
+      supabaseEmailRedirectUrl.isEmpty ? null : supabaseEmailRedirectUrl;
 }

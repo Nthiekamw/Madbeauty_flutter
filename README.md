@@ -11,7 +11,7 @@ MadBeauty est une application mobile de reservation beaute, specialisee en coiff
 
 ## Presentation
 
-MadBeauty met en relation clients et prestataires specialises en coiffure afro. Les clients trouvent et reservent un prestataire selon leur type de cheveux et leur localisation. Les prestataires gerent leur agenda, leur profil et leurs revenus directement depuis l'application.
+MadBeauty met en relation des clients et des prestataires specialises en coiffure afro, manucure, maquillage et pedicure. Les clients trouvent et reservent un prestataire selon leurs besoins et leur localisation. Les prestataires gerent leur agenda, leur profil et leurs revenus directement depuis l'application.
 
 ---
 
@@ -72,7 +72,15 @@ SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_ANON_KEY=eyJhbGci...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 SUPABASE_DATABASE_PASSWORD="ton_mot_de_passe"
+SUPABASE_EMAIL_REDIRECT_URL=com.madbeauty.madbeauty://login-callback
 ```
+
+Important pour la confirmation e-mail Supabase:
+
+- Dans Supabase Dashboard -> Authentication -> URL Configuration:
+  - **Site URL**: ne pas laisser `http://localhost:3000` en production/mobile.
+  - **Redirect URLs**: ajouter la valeur de `SUPABASE_EMAIL_REDIRECT_URL`
+    (ex: `com.madbeauty.madbeauty://login-callback`).
 
 Pour lancer l'app avec ce fichier :
 

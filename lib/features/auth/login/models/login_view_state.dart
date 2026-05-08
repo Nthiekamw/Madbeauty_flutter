@@ -13,4 +13,24 @@ class LoginViewState {
   final String? submitError;
   final bool requestSupabaseSnack;
   final bool shouldPopRoute;
+
+  LoginViewState copyWith({
+    String? emailError,
+    String? passwordError,
+    String? submitError,
+    bool? requestSupabaseSnack,
+    bool? shouldPopRoute,
+    bool clearEmailError = false,
+    bool clearPasswordError = false,
+    bool clearSubmitError = false,
+  }) {
+    return LoginViewState(
+      emailError: clearEmailError ? null : (emailError ?? this.emailError),
+      passwordError:
+          clearPasswordError ? null : (passwordError ?? this.passwordError),
+      submitError: clearSubmitError ? null : (submitError ?? this.submitError),
+      requestSupabaseSnack: requestSupabaseSnack ?? this.requestSupabaseSnack,
+      shouldPopRoute: shouldPopRoute ?? this.shouldPopRoute,
+    );
+  }
 }

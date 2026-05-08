@@ -72,6 +72,8 @@ class AuthService {
 
   Future<AuthResponse> refreshSession() => _runAuth(_auth.refreshSession);
 
+  Future<UserResponse> getUser() => _runAuth(_auth.getUser);
+
   /// OAuth (ex. Google). Le résultat se lit via [onAuthStateChange].
   Future<bool> signInWithOAuth(
     OAuthProvider provider, {

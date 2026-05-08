@@ -9,7 +9,7 @@ import '../logic/login_validators.dart';
 import '../models/login_view_state.dart';
 
 final loginControllerProvider =
-    NotifierProvider.autoDispose<LoginController, LoginViewState>(
+    NotifierProvider<LoginController, LoginViewState>(
   LoginController.new,
 );
 
@@ -17,22 +17,32 @@ class LoginController extends Notifier<LoginViewState> {
   @override
   LoginViewState build() => const LoginViewState();
 
-  void acknowledgeSupabaseSnack() {
-    state = LoginViewState(
-      emailError: state.emailError,
-      passwordError: state.passwordError,
-      submitError: state.submitError,
+  void onEmailChanged(String _) {
+    state = state.copyWith(
+      clearEmailError: true,
+      clearSubmitError: true,
       requestSupabaseSnack: false,
-      shouldPopRoute: state.shouldPopRoute,
+      shouldPopRoute: false,
+    );
+  }
+
+  void onPasswordChanged(String _) {
+    state = state.copyWith(
+      clearPasswordError: true,
+      clearSubmitError: true,
+      requestSupabaseSnack: false,
+      shouldPopRoute: false,
+    );
+  }
+
+  void acknowledgeSupabaseSnack() {
+    state = state.copyWith(
+      requestSupabaseSnack: false,
     );
   }
 
   void acknowledgeRouteClose() {
-    state = LoginViewState(
-      emailError: state.emailError,
-      passwordError: state.passwordError,
-      submitError: state.submitError,
-      requestSupabaseSnack: state.requestSupabaseSnack,
+    state = state.copyWith(
       shouldPopRoute: false,
     );
   }
@@ -66,6 +76,7 @@ class LoginController extends Notifier<LoginViewState> {
           email: email,
           password: rawPassword,
         );
+    if (!ref.mounted) return;
 
     final auth = ref.read(authNotifierProvider);
 

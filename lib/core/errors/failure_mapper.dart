@@ -7,8 +7,18 @@ import 'app_failure.dart';
 abstract final class FailureMapper {
   FailureMapper._();
 
-  static AppFailure fromAuthException(AuthException e) =>
-      AppFailure(e.message, cause: e);
+  static AppFailure fromAuthException(AuthException e) {
+    final msg = e.message.toLowerCase();
+    final code = e.statusCode?.toLowerCase();
+    final isEmailNotConfirmed = msg.contains('email not confirmed') ||
+        msg.contains('email_not_confirmed') ||
+        code == 'email_not_confirmed';
+
+    if (isEmailNotConfirmed) {
+      return AppFailure(AppStrings.authEmailNotConfirmed, cause: e);
+    }
+    return AppFailure(e.message, cause: e);
+  }
 
   static AppFailure fromUnknown(Object error) =>
       AppFailure(AppStrings.errorUnexpected, cause: error);

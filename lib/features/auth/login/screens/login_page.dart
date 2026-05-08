@@ -16,7 +16,10 @@ class LoginPage extends StatelessWidget {
     required this.formEnabled,
     required this.onBack,
     required this.onSubmit,
+    required this.onOpenRegister,
     required this.onPasswordFieldSubmitted,
+    required this.onEmailChanged,
+    required this.onPasswordChanged,
   });
 
   final bool showSupabaseConfigCard;
@@ -29,7 +32,10 @@ class LoginPage extends StatelessWidget {
   final bool formEnabled;
   final VoidCallback onBack;
   final VoidCallback onSubmit;
+  final VoidCallback onOpenRegister;
   final VoidCallback onPasswordFieldSubmitted;
+  final ValueChanged<String> onEmailChanged;
+  final ValueChanged<String> onPasswordChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +85,10 @@ class LoginPage extends StatelessWidget {
                 children: [
                   TextField(
                     controller: emailController,
+                    onChanged: onEmailChanged,
                     enabled: formEnabled,
                     keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.username, AutofillHints.email],
                     autocorrect: false,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
@@ -92,8 +100,10 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   TextField(
                     controller: passwordController,
+                    onChanged: onPasswordChanged,
                     enabled: formEnabled,
                     obscureText: true,
+                    autofillHints: const [AutofillHints.password],
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => onPasswordFieldSubmitted(),
                     decoration: InputDecoration(
@@ -131,6 +141,11 @@ class LoginPage extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(AppStrings.loginActionSubmit),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: isLoading ? null : onOpenRegister,
+                    child: Text(AppStrings.loginActionOpenRegister),
                   ),
                 ],
               ),

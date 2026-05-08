@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../router/navigation_extensions.dart';
 import '../../providers/auth_notifier.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
@@ -49,7 +50,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       }
       if (next.shouldPopRoute) {
         if (context.mounted) {
-          context.canPop() ? context.pop() : context.go('/');
+          context.goRoleChoice();
         }
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
       }
@@ -69,9 +70,14 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       submitError: loginUi.submitError,
       isLoading: isLoading,
       formEnabled: formEnabled,
-      onBack: () => context.canPop() ? context.pop() : context.go('/'),
+      onBack: () =>
+          context.canPop() ? context.pop() : context.goHome(),
       onSubmit: _submit,
+      onOpenRegister: context.pushRegister,
       onPasswordFieldSubmitted: _submit,
+      onEmailChanged: ref.read(loginControllerProvider.notifier).onEmailChanged,
+      onPasswordChanged:
+          ref.read(loginControllerProvider.notifier).onPasswordChanged,
     );
   }
 }
