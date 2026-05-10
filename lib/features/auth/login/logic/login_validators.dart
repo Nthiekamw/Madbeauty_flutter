@@ -16,4 +16,21 @@ abstract final class LoginValidators {
     if (value.isEmpty) return AppStrings.loginValidationPasswordEmpty;
     return null;
   }
+
+  /// E.164 : + suivi du indicatif pays et du numéro (6 à 15 chiffres au total après le +).
+  static String? phoneE164(String trimmedValue) {
+    if (trimmedValue.isEmpty) {
+      return AppStrings.loginValidationPhoneEmpty;
+    }
+    final ok = RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(trimmedValue);
+    if (!ok) return AppStrings.loginValidationPhoneInvalid;
+    return null;
+  }
+
+  static String? otpCode(String value) {
+    final t = value.trim();
+    if (t.isEmpty) return AppStrings.loginValidationOtpEmpty;
+    if (t.length < 6) return AppStrings.loginValidationOtpTooShort;
+    return null;
+  }
 }

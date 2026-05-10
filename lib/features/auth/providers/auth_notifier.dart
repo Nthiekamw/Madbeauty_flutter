@@ -147,4 +147,53 @@ class AuthNotifier extends AsyncNotifier<User?> {
       return user;
     });
   }
+
+  Future<void> verifyOtpEmailSignIn({
+    required String email,
+    required String token,
+  }) async {
+    if (!ref.read(authSupabaseEnabledProvider)) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final response = await _auth.verifyOtpEmailSignIn(email: email, token: token);
+      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
+      await _cacheCurrentEmail(user);
+      return user;
+    });
+  }
+
+  Future<void> verifyOtpSmsSignIn({
+    required String phone,
+    required String token,
+  }) async {
+    if (!ref.read(authSupabaseEnabledProvider)) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final response = await _auth.verifyOtpSmsSignIn(phone: phone, token: token);
+      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
+      await _cacheCurrentEmail(user);
+      return user;
+    });
+  }
+
+  /// Ouvre le navigateur / onglet OAuth ; la session arrive via deep link (PKCE).
+  Future<void> signInWithGoogle() async {
+    if (!ref.read(authSupabaseEnabledProvider)) return;
+    await _auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: AppConfig.authEmailRedirectTo,
+    );
+  }
+
+  /// Après ouverture du lien « mot de passe oublié » (session recovery).
+  Future<void> updatePassword(String newPassword) async {
+    if (!ref.read(authSupabaseEnabledProvider)) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await _auth.updateUser(UserAttributes(password: newPassword));
+      final user = _auth.currentSession?.user ?? _auth.currentUser;
+      await _cacheCurrentEmail(user);
+      return user;
+    });
+  }
 }

@@ -43,6 +43,58 @@ class AuthService {
   }) =>
       _runAuth(() => _auth.signInWithPassword(email: email, password: password));
 
+  /// OTP e-mail : le template Supabase doit inclure `{{ .Token }}` (pas seulement le lien).
+  Future<void> signInWithOtpEmail({
+    required String email,
+    String? emailRedirectTo,
+    bool shouldCreateUser = true,
+  }) =>
+      _runAuth(
+        () => _auth.signInWithOtp(
+          email: email,
+          emailRedirectTo: emailRedirectTo,
+          shouldCreateUser: shouldCreateUser,
+        ),
+      );
+
+  /// OTP SMS : configurer le fournisseur SMS dans le dashboard Supabase.
+  Future<void> signInWithOtpPhone({
+    required String phone,
+    bool shouldCreateUser = true,
+    OtpChannel channel = OtpChannel.sms,
+  }) =>
+      _runAuth(
+        () => _auth.signInWithOtp(
+          phone: phone,
+          shouldCreateUser: shouldCreateUser,
+          channel: channel,
+        ),
+      );
+
+  Future<AuthResponse> verifyOtpEmailSignIn({
+    required String email,
+    required String token,
+  }) =>
+      _runAuth(
+        () => _auth.verifyOTP(
+          type: OtpType.email,
+          email: email,
+          token: token.trim(),
+        ),
+      );
+
+  Future<AuthResponse> verifyOtpSmsSignIn({
+    required String phone,
+    required String token,
+  }) =>
+      _runAuth(
+        () => _auth.verifyOTP(
+          type: OtpType.sms,
+          phone: phone,
+          token: token.trim(),
+        ),
+      );
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,

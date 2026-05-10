@@ -13,5 +13,6 @@ extension AppNavigationX on BuildContext {
 
   void pushLogin() => pushNamed(AppRouteNames.login);
   void pushRegister() => pushNamed(AppRouteNames.register);
+  void pushForgotPassword() => pushNamed(AppRouteNames.forgotPassword);
   void pushPrestataire() => pushNamed(AppRouteNames.prestataire);
 }

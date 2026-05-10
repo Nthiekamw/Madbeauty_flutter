@@ -1,9 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/auth/forgot_password/routes/forgot_password_route.dart';
 import '../features/auth/login/routes/login_route.dart';
 import '../features/auth/providers/auth_notifier.dart';
+import '../features/auth/providers/password_recovery_provider.dart';
 import '../features/auth/register/routes/register_route.dart';
+import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
@@ -15,6 +19,8 @@ abstract final class AppRoutes {
   static const String home = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
   static const String role = '/role';
   static const String prestataire = '/prestataire';
 }
@@ -24,12 +30,20 @@ abstract final class AppRouteNames {
   static const String home = 'home';
   static const String login = 'login';
   static const String register = 'register';
+  static const String forgotPassword = 'forgot-password';
+  static const String resetPassword = 'reset-password';
   static const String role = 'role';
   static const String prestataire = 'prestataire';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authNotifierProvider);
+  final authEvent = switch (ref.watch(authStateStreamProvider)) {
+    AsyncData(:final value) => value.event,
+    _ => null,
+  };
+  final recoveryPending = ref.watch(passwordRecoveryPendingProvider) ||
+      authEvent == AuthChangeEvent.passwordRecovery;
 
   final user = switch (auth) {
     AsyncData(:final value) => value,
@@ -44,10 +58,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.splash,
         AppRoutes.login,
         AppRoutes.register,
+        AppRoutes.forgotPassword,
+        AppRoutes.resetPassword,
       };
       final guestOnlyRoutes = <String>{
         AppRoutes.login,
         AppRoutes.register,
+        AppRoutes.forgotPassword,
       };
       final requiresAuth = !publicRoutes.contains(location);
 
@@ -60,6 +77,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (auth.isLoading) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
+      }
+
+      if (recoveryPending) {
+        if (location != AppRoutes.resetPassword) {
+          return AppRoutes.resetPassword;
+        }
+        return null;
+      }
+
+      if (location == AppRoutes.resetPassword) {
+        return user == null ? AppRoutes.login : preferredPath;
       }
 
       if (user == null) {
@@ -94,6 +122,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.register,
         path: AppRoutes.register,
         builder: (context, state) => const RegisterRoute(),
+      ),
+      GoRoute(
+        name: AppRouteNames.forgotPassword,
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordRoute(),
+      ),
+      GoRoute(
+        name: AppRouteNames.resetPassword,
+        path: AppRoutes.resetPassword,
+        builder: (context, state) => const ResetPasswordRoute(),
       ),
       GoRoute(
         name: AppRouteNames.role,
