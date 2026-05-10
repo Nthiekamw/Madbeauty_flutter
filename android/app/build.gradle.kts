@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "com.madbeauty.madbeauty"
-    compileSdk = flutter.compileSdkVersion
+    // API 31+ requise pour les attributs splash (values-v31). Évite l’erreur
+    // « postSplashScreenTheme not found » si flutter.compileSdkVersion est trop bas.
+    compileSdk = maxOf(34, flutter.compileSdkVersion)
     // Doit être installée via SDK Manager (NDK side by side). Alignée avec les plugins Flutter Android courants.
     ndkVersion = "27.0.12077973"
 

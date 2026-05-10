@@ -8,6 +8,8 @@ import '../../../router/navigation_extensions.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../providers/home_profile_provider.dart';
 import '../../../shared/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app_button.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -23,7 +25,8 @@ class HomeScreen extends ConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text(AppStrings.actionCancel),
               ),
-              FilledButton(
+              AppButton(
+                variant: AppButtonVariant.primary,
                 onPressed: () => Navigator.of(context).pop(true),
                 child: const Text(AppStrings.actionConfirm),
               ),
@@ -77,24 +80,43 @@ class HomeScreen extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: switch (profileSnapshotAsync) {
-                      AsyncData(:final value) when value != null => Column(
+                      AsyncData(:final value) when value != null => Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${AppStrings.profileLabelName} ${value.displayName.isEmpty ? '—' : value.displayName}',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                            AppAvatar(
+                              displayName: value.displayName.isEmpty
+                                  ? null
+                                  : value.displayName,
+                              email: value.email.isEmpty
+                                  ? currentUser!.email
+                                  : value.email,
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '${AppStrings.profileLabelEmail} ${value.email.isEmpty ? currentUser!.email : value.email}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              value.isFromCache
-                                  ? AppStrings.profileSourceCache
-                                  : AppStrings.profileSourceLive,
-                              style: Theme.of(context).textTheme.bodySmall,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${AppStrings.profileLabelName} ${value.displayName.isEmpty ? '—' : value.displayName}',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${AppStrings.profileLabelEmail} ${value.email.isEmpty ? currentUser!.email : value.email}',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    value.isFromCache
+                                        ? AppStrings.profileSourceCache
+                                        : AppStrings.profileSourceLive,
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -143,12 +165,14 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              FilledButton(
+              AppButton(
+                variant: AppButtonVariant.primary,
                 onPressed: context.pushLogin,
                 child: Text(AppStrings.signInOrSignUp),
               ),
               const SizedBox(height: 12),
-              OutlinedButton(
+              AppButton(
+                variant: AppButtonVariant.secondary,
                 onPressed: context.goPrestataire,
                 child: Text(AppStrings.openPrestataireSpace),
               ),

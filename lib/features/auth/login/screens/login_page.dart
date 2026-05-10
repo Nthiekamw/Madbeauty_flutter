@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 
 /// Page de connexion : mise en page uniquement (aucune règle métier).
 class LoginPage extends StatelessWidget {
@@ -83,7 +85,7 @@ class LoginPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
+                  AppTextField(
                     controller: emailController,
                     onChanged: onEmailChanged,
                     enabled: formEnabled,
@@ -91,14 +93,11 @@ class LoginPage extends StatelessWidget {
                     autofillHints: const [AutofillHints.username, AutofillHints.email],
                     autocorrect: false,
                     textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: AppStrings.loginFieldEmail,
-                      errorText: emailError,
-                      border: const OutlineInputBorder(),
-                    ),
+                    label: AppStrings.loginFieldEmail,
+                    errorText: emailError,
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  AppTextField(
                     controller: passwordController,
                     onChanged: onPasswordChanged,
                     enabled: formEnabled,
@@ -106,11 +105,8 @@ class LoginPage extends StatelessWidget {
                     autofillHints: const [AutofillHints.password],
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => onPasswordFieldSubmitted(),
-                    decoration: InputDecoration(
-                      labelText: AppStrings.loginFieldPassword,
-                      errorText: passwordError,
-                      border: const OutlineInputBorder(),
-                    ),
+                    label: AppStrings.loginFieldPassword,
+                    errorText: passwordError,
                   ),
                   if (submitError != null) ...[
                     const SizedBox(height: 16),
@@ -132,15 +128,12 @@ class LoginPage extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: !formEnabled || isLoading ? null : onSubmit,
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(AppStrings.loginActionSubmit),
+                  AppButton(
+                    variant: AppButtonVariant.primary,
+                    isLoading: isLoading,
+                    enabled: formEnabled,
+                    onPressed: onSubmit,
+                    child: Text(AppStrings.loginActionSubmit),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
