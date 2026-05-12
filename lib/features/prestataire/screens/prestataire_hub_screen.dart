@@ -12,13 +12,13 @@ class PrestataireHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.screenPrestataireHub),
+        title: Text(DiscoveryStrings.screenPrestataireHub),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.canPop() ? context.pop() : context.goHome(),
         ),
       ),
-      body: Center(child: Text(AppStrings.screenPrestataireHub)),
+      body: Center(child: Text(DiscoveryStrings.screenPrestataireHub)),
     );
   }
 }

@@ -17,8 +17,8 @@ void main() {
           );
 
       final state = container.read(loginControllerProvider);
-      expect(state.emailError, AppStrings.loginValidationEmailInvalid);
-      expect(state.passwordError, AppStrings.loginValidationPasswordEmpty);
+      expect(state.emailError, AuthStrings.loginValidationEmailInvalid);
+      expect(state.passwordError, AuthStrings.loginValidationPasswordEmpty);
       expect(state.requestSupabaseSnack, isFalse);
     });
 

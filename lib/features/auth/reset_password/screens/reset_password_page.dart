@@ -34,7 +34,7 @@ class ResetPasswordPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.resetPasswordTitle),
+        title: Text(AuthStrings.resetPasswordTitle),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -44,7 +44,7 @@ class ResetPasswordPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                AppStrings.resetPasswordDescription,
+                AuthStrings.resetPasswordDescription,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -55,7 +55,7 @@ class ResetPasswordPage extends StatelessWidget {
                 obscureText: true,
                 autofillHints: const [AutofillHints.newPassword],
                 textInputAction: TextInputAction.next,
-                label: AppStrings.loginFieldPassword,
+                label: AuthStrings.loginFieldPassword,
                 errorText: passwordError,
               ),
               const SizedBox(height: 16),
@@ -67,7 +67,7 @@ class ResetPasswordPage extends StatelessWidget {
                 autofillHints: const [AutofillHints.newPassword],
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onSubmit(),
-                label: AppStrings.resetPasswordFieldConfirm,
+                label: AuthStrings.resetPasswordFieldConfirm,
                 errorText: confirmError,
               ),
               if (submitError != null) ...[
@@ -94,7 +94,7 @@ class ResetPasswordPage extends StatelessWidget {
                 isLoading: isLoading,
                 enabled: formEnabled,
                 onPressed: onSubmit,
-                child: Text(AppStrings.resetPasswordActionSubmit),
+                child: Text(AuthStrings.resetPasswordActionSubmit),
               ),
             ],
           ),

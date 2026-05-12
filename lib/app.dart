@@ -16,7 +16,7 @@ class MadBeautyApp extends ConsumerWidget {
       router: router,
       builder: (context, area) {
         return MaterialApp.router(
-          title: AppStrings.appName,
+          title: CoreStrings.appName,
           debugShowCheckedModeBanner: false,
           themeMode: ThemeMode.system,
           theme: AppTheme.light(area),

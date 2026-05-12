@@ -10,6 +10,8 @@ import '../features/auth/register/routes/register_route.dart';
 import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/listing/screens/listing_screen.dart';
+import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
 import '../features/splash/screens/startup_splash_screen.dart';
 import '../services/storage/local_cache_service.dart';
@@ -17,6 +19,8 @@ import '../services/storage/local_cache_service.dart';
 abstract final class AppRoutes {
   static const String splash = '/splash';
   static const String home = '/';
+  static const String listing = '/listing';
+  static const String prestataires = '/prestataires';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
@@ -28,6 +32,8 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const String splash = 'splash';
   static const String home = 'home';
+  static const String listing = 'listing';
+  static const String prestataireDetail = 'prestataire-detail';
   static const String login = 'login';
   static const String register = 'register';
   static const String forgotPassword = 'forgot-password';
@@ -112,6 +118,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.home,
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.listing,
+        path: AppRoutes.listing,
+        builder: (context, state) => const ListingScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireDetail,
+        path: '${AppRoutes.prestataires}/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return PrestataireDetailScreen(prestataireId: id);
+        },
       ),
       GoRoute(
         name: AppRouteNames.login,

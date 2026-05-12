@@ -44,7 +44,7 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
     if (!AppConfig.hasSupabase) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.supabaseMissingTitle)),
+          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
         );
       }
       return;
@@ -59,7 +59,7 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _successMessage = AppStrings.forgotPasswordSuccess;
+        _successMessage = AuthStrings.forgotPasswordSuccess;
       });
     } on AppFailure catch (e) {
       if (!mounted) return;
@@ -71,7 +71,7 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _submitError = AppStrings.errorUnexpected;
+        _submitError = CoreStrings.errorUnexpected;
       });
     }
   }

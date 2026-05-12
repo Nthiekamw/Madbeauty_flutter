@@ -98,7 +98,7 @@ class RegisterController extends Notifier<RegisterViewState> {
     if (auth.hasError) {
       final err = auth.error;
       submitErr =
-          err is AppFailure ? err.message : AppStrings.errorUnexpected;
+          err is AppFailure ? err.message : CoreStrings.errorUnexpected;
     }
 
     state = RegisterViewState(

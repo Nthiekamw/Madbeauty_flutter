@@ -67,14 +67,14 @@ class LoginPage extends StatelessWidget {
   final VoidCallback onForgotPassword;
 
   bool get _submitIsOtpInfo =>
-      submitError == AppStrings.loginOtpSentEmail ||
-      submitError == AppStrings.loginOtpSentSms;
+      submitError == AuthStrings.loginOtpSentEmail ||
+      submitError == AuthStrings.loginOtpSentSms;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.loginTitle),
+        title: Text(AuthStrings.loginTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: isLoading ? null : onBack,
@@ -87,7 +87,7 @@ class LoginPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                AppStrings.loginDescription,
+                AuthStrings.loginDescription,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
@@ -95,17 +95,17 @@ class LoginPage extends StatelessWidget {
                 segments: const [
                   ButtonSegment(
                     value: AuthLoginMethod.password,
-                    label: Text(AppStrings.loginMethodPassword),
+                    label: Text(AuthStrings.loginMethodPassword),
                     icon: Icon(Icons.password_outlined),
                   ),
                   ButtonSegment(
                     value: AuthLoginMethod.emailOtp,
-                    label: Text(AppStrings.loginMethodEmailOtp),
+                    label: Text(AuthStrings.loginMethodEmailOtp),
                     icon: Icon(Icons.mail_outline),
                   ),
                   ButtonSegment(
                     value: AuthLoginMethod.phoneOtp,
-                    label: Text(AppStrings.loginMethodPhoneOtp),
+                    label: Text(AuthStrings.loginMethodPhoneOtp),
                     icon: Icon(Icons.sms_outlined),
                   ),
                 ],
@@ -123,12 +123,12 @@ class LoginPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppStrings.supabaseMissingTitle,
+                          ShellStrings.supabaseMissingTitle,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          AppStrings.supabaseMissingBody,
+                          ShellStrings.supabaseMissingBody,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -166,12 +166,12 @@ class LoginPage extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: !formEnabled || isLoading ? null : onGoogle,
                 icon: const Icon(Icons.g_mobiledata, size: 28),
-                label: Text(AppStrings.loginActionGoogle),
+                label: Text(AuthStrings.loginActionGoogle),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: isLoading ? null : onOpenRegister,
-                child: Text(AppStrings.loginActionOpenRegister),
+                child: Text(AuthStrings.loginActionOpenRegister),
               ),
             ],
           ),
@@ -195,7 +195,7 @@ class LoginPage extends StatelessWidget {
             ],
             autocorrect: false,
             textInputAction: TextInputAction.next,
-            label: AppStrings.loginFieldEmail,
+            label: AuthStrings.loginFieldEmail,
             errorText: emailError,
           ),
           const SizedBox(height: 8),
@@ -203,7 +203,7 @@ class LoginPage extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: !formEnabled || isLoading ? null : onForgotPassword,
-              child: Text(AppStrings.loginActionForgotPassword),
+              child: Text(AuthStrings.loginActionForgotPassword),
             ),
           ),
           const SizedBox(height: 8),
@@ -215,7 +215,7 @@ class LoginPage extends StatelessWidget {
             autofillHints: const [AutofillHints.password],
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => onPasswordFieldSubmitted(),
-            label: AppStrings.loginFieldPassword,
+            label: AuthStrings.loginFieldPassword,
             errorText: passwordError,
           ),
           const SizedBox(height: 24),
@@ -224,7 +224,7 @@ class LoginPage extends StatelessWidget {
             isLoading: isLoading,
             enabled: formEnabled,
             onPressed: onSubmitPassword,
-            child: Text(AppStrings.loginActionSubmit),
+            child: Text(AuthStrings.loginActionSubmit),
           ),
         ];
       case AuthLoginMethod.emailOtp:
@@ -237,7 +237,7 @@ class LoginPage extends StatelessWidget {
             autofillHints: const [AutofillHints.email],
             autocorrect: false,
             textInputAction: TextInputAction.next,
-            label: AppStrings.loginFieldEmail,
+            label: AuthStrings.loginFieldEmail,
             errorText: emailError,
           ),
           const SizedBox(height: 16),
@@ -246,7 +246,7 @@ class LoginPage extends StatelessWidget {
             isLoading: isLoading,
             enabled: formEnabled,
             onPressed: onSendOtp,
-            child: Text(AppStrings.loginActionSendOtp),
+            child: Text(AuthStrings.loginActionSendOtp),
           ),
           if (otpCodeSent) ...[
             const SizedBox(height: 16),
@@ -256,7 +256,7 @@ class LoginPage extends StatelessWidget {
               enabled: formEnabled,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
-              label: AppStrings.loginFieldOtp,
+              label: AuthStrings.loginFieldOtp,
               errorText: otpError,
             ),
             const SizedBox(height: 16),
@@ -265,7 +265,7 @@ class LoginPage extends StatelessWidget {
               isLoading: isLoading,
               enabled: formEnabled,
               onPressed: onVerifyOtp,
-              child: Text(AppStrings.loginActionVerifyOtp),
+              child: Text(AuthStrings.loginActionVerifyOtp),
             ),
           ],
         ];
@@ -278,7 +278,7 @@ class LoginPage extends StatelessWidget {
             keyboardType: TextInputType.phone,
             autofillHints: const [AutofillHints.telephoneNumber],
             textInputAction: TextInputAction.next,
-            label: AppStrings.loginFieldPhone,
+            label: AuthStrings.loginFieldPhone,
             errorText: phoneError,
           ),
           const SizedBox(height: 16),
@@ -287,7 +287,7 @@ class LoginPage extends StatelessWidget {
             isLoading: isLoading,
             enabled: formEnabled,
             onPressed: onSendOtp,
-            child: Text(AppStrings.loginActionSendOtp),
+            child: Text(AuthStrings.loginActionSendOtp),
           ),
           if (otpCodeSent) ...[
             const SizedBox(height: 16),
@@ -297,7 +297,7 @@ class LoginPage extends StatelessWidget {
               enabled: formEnabled,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
-              label: AppStrings.loginFieldOtp,
+              label: AuthStrings.loginFieldOtp,
               errorText: otpError,
             ),
             const SizedBox(height: 16),
@@ -306,7 +306,7 @@ class LoginPage extends StatelessWidget {
               isLoading: isLoading,
               enabled: formEnabled,
               onPressed: onVerifyOtp,
-              child: Text(AppStrings.loginActionVerifyOtp),
+              child: Text(AuthStrings.loginActionVerifyOtp),
             ),
           ],
         ];

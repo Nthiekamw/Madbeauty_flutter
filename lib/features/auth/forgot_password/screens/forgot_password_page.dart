@@ -32,7 +32,7 @@ class ForgotPasswordPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.forgotPasswordTitle),
+        title: Text(AuthStrings.forgotPasswordTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: isLoading ? null : onBack,
@@ -45,7 +45,7 @@ class ForgotPasswordPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                AppStrings.forgotPasswordDescription,
+                AuthStrings.forgotPasswordDescription,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -58,7 +58,7 @@ class ForgotPasswordPage extends StatelessWidget {
                 autocorrect: false,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onSubmit(),
-                label: AppStrings.loginFieldEmail,
+                label: AuthStrings.loginFieldEmail,
                 errorText: emailError,
               ),
               if (successMessage != null) ...[
@@ -103,7 +103,7 @@ class ForgotPasswordPage extends StatelessWidget {
                 isLoading: isLoading,
                 enabled: formEnabled,
                 onPressed: onSubmit,
-                child: Text(AppStrings.forgotPasswordSubmit),
+                child: Text(AuthStrings.forgotPasswordSubmit),
               ),
             ],
           ),

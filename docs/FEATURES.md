@@ -19,7 +19,7 @@ Synthèse **MVP** (première version utilisable) vs **V2** (extensions et maturi
 - [x] `go_router` avec garde d’auth et routes nommées
 - [x] Thème client (vert) / prestataire (bleu) + dark mode
 - [x] Widgets de base : `AppButton`, `AppTextField`, `AppAvatar`
-- [x] Chaînes centralisées (`AppStrings`)
+- [x] Chaînes centralisées (`CoreStrings`, `AuthStrings`, `ShellStrings`, `DiscoveryStrings` + `app_strings.dart`)
 
 ### Données & backend
 

@@ -36,7 +36,7 @@ lib/
 ├── app.dart                  # MaterialApp.router + RouterThemeScope
 ├── core/                     # Transversal, sans UI métier lourde
 │   ├── config/               # AppConfig, env
-│   ├── constants/            # AppStrings, AppArea
+│   ├── constants/            # Chaînes (CoreStrings, AuthStrings, …), AppArea
 │   ├── errors/               # AppFailure, FailureMapper
 │   ├── models/               # user_role, domain (Freezed)
 │   └── providers/            # connectivity, cache keys exposés

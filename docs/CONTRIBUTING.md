@@ -70,7 +70,7 @@ test(domain): roundtrip SupabaseDomainCodec avec mocks
 
 - Taille de PR **préférable < ~400 lignes** de diff utile (sinon découper).
 - Ne pas mélanger refactor massif et feature sans nécessité.
-- Respecter les conventions du projet : `AppStrings`, couches `features/` / `services/` / `core/`, pas de secrets dans le code.
+- Respecter les conventions du projet : chaînes dans `lib/core/constants/` (`CoreStrings`, `AuthStrings`, `ShellStrings`, `DiscoveryStrings`), couches `features/` / `services/` / `core/`, pas de secrets dans le code.
 
 ### Après merge
 

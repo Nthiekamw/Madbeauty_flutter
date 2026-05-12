@@ -133,7 +133,7 @@ class LoginController extends Notifier<LoginViewState> {
     if (auth.hasError) {
       final err = auth.error;
       submitErr =
-          err is AppFailure ? err.message : AppStrings.errorUnexpected;
+          err is AppFailure ? err.message : CoreStrings.errorUnexpected;
     }
 
     state = LoginViewState(
@@ -175,7 +175,7 @@ class LoginController extends Notifier<LoginViewState> {
         state = LoginViewState(
           authMethod: state.authMethod,
           otpCodeSent: true,
-          submitError: AppStrings.loginOtpSentEmail,
+          submitError: AuthStrings.loginOtpSentEmail,
         );
       } on AppFailure catch (e) {
         if (!ref.mounted) return;
@@ -187,7 +187,7 @@ class LoginController extends Notifier<LoginViewState> {
         if (!ref.mounted) return;
         state = LoginViewState(
           authMethod: state.authMethod,
-          submitError: AppStrings.errorUnexpected,
+          submitError: CoreStrings.errorUnexpected,
         );
       }
       return;
@@ -213,7 +213,7 @@ class LoginController extends Notifier<LoginViewState> {
         state = LoginViewState(
           authMethod: state.authMethod,
           otpCodeSent: true,
-          submitError: AppStrings.loginOtpSentSms,
+          submitError: AuthStrings.loginOtpSentSms,
         );
       } on AppFailure catch (e) {
         if (!ref.mounted) return;
@@ -225,7 +225,7 @@ class LoginController extends Notifier<LoginViewState> {
         if (!ref.mounted) return;
         state = LoginViewState(
           authMethod: state.authMethod,
-          submitError: AppStrings.errorUnexpected,
+          submitError: CoreStrings.errorUnexpected,
         );
       }
     }
@@ -307,7 +307,7 @@ class LoginController extends Notifier<LoginViewState> {
     if (auth.hasError) {
       final err = auth.error;
       submitErr =
-          err is AppFailure ? err.message : AppStrings.errorUnexpected;
+          err is AppFailure ? err.message : CoreStrings.errorUnexpected;
     }
 
     state = LoginViewState(
@@ -335,7 +335,7 @@ class LoginController extends Notifier<LoginViewState> {
       return false;
     } catch (_) {
       if (!ref.mounted) return false;
-      state = state.copyWith(submitError: AppStrings.errorUnexpected);
+      state = state.copyWith(submitError: CoreStrings.errorUnexpected);
       return false;
     }
   }

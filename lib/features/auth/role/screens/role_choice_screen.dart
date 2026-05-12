@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/errors/app_failure.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../router/app_router.dart';
 import '../../providers/auth_notifier.dart';
@@ -17,19 +18,31 @@ class RoleChoiceScreen extends ConsumerWidget {
     UserRole role,
     String targetRouteName,
   ) async {
-    if (ref.read(authSupabaseEnabledProvider)) {
-      await ref.read(roleServiceProvider).ensureRole(role);
-    }
-    await LocalCacheService.instance.setSelectedRole(role.value);
-    if (context.mounted) {
-      context.goNamed(targetRouteName);
+    try {
+      if (ref.read(authSupabaseEnabledProvider)) {
+        await ref.read(roleServiceProvider).ensureRole(role);
+      }
+      await LocalCacheService.instance.setSelectedRole(role.value);
+      if (context.mounted) {
+        context.goNamed(targetRouteName);
+      }
+    } on AppFailure catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(CoreStrings.errorUnexpected)),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.roleChoiceTitle)),
+      appBar: AppBar(title: const Text(AuthStrings.roleChoiceTitle)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -37,7 +50,7 @@ class RoleChoiceScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                AppStrings.roleChoiceDescription,
+                AuthStrings.roleChoiceDescription,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 24),
@@ -49,7 +62,7 @@ class RoleChoiceScreen extends ConsumerWidget {
                   AppRouteNames.home,
                 ),
                 icon: const Icon(Icons.person_outline),
-                label: const Text(AppStrings.roleChoiceClient),
+                label: const Text(AuthStrings.roleChoiceClient),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -60,7 +73,7 @@ class RoleChoiceScreen extends ConsumerWidget {
                   AppRouteNames.prestataire,
                 ),
                 icon: const Icon(Icons.storefront_outlined),
-                label: const Text(AppStrings.roleChoicePrestataire),
+                label: const Text(AuthStrings.roleChoicePrestataire),
               ),
             ],
           ),

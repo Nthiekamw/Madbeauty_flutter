@@ -5,6 +5,9 @@ enum AppArea {
 }
 
 AppArea appAreaFromPath(String path) {
+  if (path.startsWith('/prestataires')) {
+    return AppArea.client;
+  }
   if (path.startsWith('/prestataire')) {
     return AppArea.prestataire;
   }

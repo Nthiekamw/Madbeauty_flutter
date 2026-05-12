@@ -16,7 +16,7 @@ class StartupSplashScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                AppStrings.splashWelcomeBack,
+                ShellStrings.splashWelcomeBack,
                 style: textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
@@ -24,7 +24,7 @@ class StartupSplashScreen extends StatelessWidget {
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                AppStrings.splashCheckingSession,
+                ShellStrings.splashCheckingSession,
                 style: textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),

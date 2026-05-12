@@ -7,7 +7,7 @@ void main() {
     test('retourne une erreur si nom vide', () {
       expect(
         RegisterValidators.name(''),
-        AppStrings.registerValidationNameEmpty,
+        AuthStrings.registerValidationNameEmpty,
       );
     });
 
@@ -20,14 +20,14 @@ void main() {
     test('retourne une erreur si email vide', () {
       expect(
         RegisterValidators.email(''),
-        AppStrings.registerValidationEmailEmpty,
+        AuthStrings.registerValidationEmailEmpty,
       );
     });
 
     test('retourne une erreur si email invalide', () {
       expect(
         RegisterValidators.email('invalid-email'),
-        AppStrings.registerValidationEmailInvalid,
+        AuthStrings.registerValidationEmailInvalid,
       );
     });
 
@@ -40,7 +40,7 @@ void main() {
     test('retourne une erreur si mot de passe vide', () {
       expect(
         RegisterValidators.password(''),
-        AppStrings.registerValidationPasswordEmpty,
+        AuthStrings.registerValidationPasswordEmpty,
       );
     });
 

@@ -7,14 +7,14 @@ void main() {
     test('retourne une erreur si email vide', () {
       expect(
         LoginValidators.email(''),
-        AppStrings.loginValidationEmailEmpty,
+        AuthStrings.loginValidationEmailEmpty,
       );
     });
 
     test('retourne une erreur si email invalide', () {
       expect(
         LoginValidators.email('no-at-symbol'),
-        AppStrings.loginValidationEmailInvalid,
+        AuthStrings.loginValidationEmailInvalid,
       );
     });
 
@@ -27,7 +27,7 @@ void main() {
     test('retourne une erreur si mot de passe vide', () {
       expect(
         LoginValidators.password(''),
-        AppStrings.loginValidationPasswordEmpty,
+        AuthStrings.loginValidationPasswordEmpty,
       );
     });
 

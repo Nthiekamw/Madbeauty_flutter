@@ -8,7 +8,7 @@ class BookingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text(AppStrings.screenBooking)),
+      body: Center(child: Text(DiscoveryStrings.screenBooking)),
     );
   }
 }

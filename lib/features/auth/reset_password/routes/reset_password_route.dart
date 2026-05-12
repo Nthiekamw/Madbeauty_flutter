@@ -47,7 +47,7 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
     if (!AppConfig.hasSupabase) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.supabaseMissingTitle)),
+          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
         );
       }
       return;
@@ -61,7 +61,7 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
       final err = auth.error;
       setState(() {
         _submitError =
-            err is AppFailure ? err.message : AppStrings.errorUnexpected;
+            err is AppFailure ? err.message : CoreStrings.errorUnexpected;
       });
       return;
     }

@@ -65,7 +65,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     if (!mounted) return;
     if (opened) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.loginGoogleStarted)),
+        SnackBar(content: Text(AuthStrings.loginGoogleStarted)),
       );
     }
   }
@@ -75,7 +75,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     ref.listen<LoginViewState>(loginControllerProvider, (previous, next) {
       if (next.requestSupabaseSnack) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.supabaseMissingTitle)),
+          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
         );
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }

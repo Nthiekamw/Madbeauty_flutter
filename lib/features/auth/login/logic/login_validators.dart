@@ -6,31 +6,31 @@ abstract final class LoginValidators {
 
   /// Retourne un message d’erreur affichable ou `null` si la valeur est valide.
   static String? email(String trimmedValue) {
-    if (trimmedValue.isEmpty) return AppStrings.loginValidationEmailEmpty;
+    if (trimmedValue.isEmpty) return AuthStrings.loginValidationEmailEmpty;
     final emailOk = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(trimmedValue);
-    if (!emailOk) return AppStrings.loginValidationEmailInvalid;
+    if (!emailOk) return AuthStrings.loginValidationEmailInvalid;
     return null;
   }
 
   static String? password(String value) {
-    if (value.isEmpty) return AppStrings.loginValidationPasswordEmpty;
+    if (value.isEmpty) return AuthStrings.loginValidationPasswordEmpty;
     return null;
   }
 
   /// E.164 : + suivi du indicatif pays et du numéro (6 à 15 chiffres au total après le +).
   static String? phoneE164(String trimmedValue) {
     if (trimmedValue.isEmpty) {
-      return AppStrings.loginValidationPhoneEmpty;
+      return AuthStrings.loginValidationPhoneEmpty;
     }
     final ok = RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(trimmedValue);
-    if (!ok) return AppStrings.loginValidationPhoneInvalid;
+    if (!ok) return AuthStrings.loginValidationPhoneInvalid;
     return null;
   }
 
   static String? otpCode(String value) {
     final t = value.trim();
-    if (t.isEmpty) return AppStrings.loginValidationOtpEmpty;
-    if (t.length < 6) return AppStrings.loginValidationOtpTooShort;
+    if (t.isEmpty) return AuthStrings.loginValidationOtpEmpty;
+    if (t.length < 6) return AuthStrings.loginValidationOtpTooShort;
     return null;
   }
 }

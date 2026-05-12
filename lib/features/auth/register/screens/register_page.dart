@@ -48,7 +48,7 @@ class RegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.registerTitle),
+        title: const Text(AuthStrings.registerTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: isLoading ? null : onBack,
@@ -61,7 +61,7 @@ class RegisterPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                AppStrings.registerDescription,
+                AuthStrings.registerDescription,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -73,12 +73,12 @@ class RegisterPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppStrings.supabaseMissingTitle,
+                          ShellStrings.supabaseMissingTitle,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          AppStrings.supabaseMissingBody,
+                          ShellStrings.supabaseMissingBody,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -92,7 +92,7 @@ class RegisterPage extends StatelessWidget {
                 onChanged: onNameChanged,
                 enabled: formEnabled,
                 textInputAction: TextInputAction.next,
-                label: AppStrings.registerFieldName,
+                label: AuthStrings.registerFieldName,
                 errorText: nameError,
               ),
               const SizedBox(height: 16),
@@ -104,7 +104,7 @@ class RegisterPage extends StatelessWidget {
                 autofillHints: const [AutofillHints.username, AutofillHints.email],
                 autocorrect: false,
                 textInputAction: TextInputAction.next,
-                label: AppStrings.loginFieldEmail,
+                label: AuthStrings.loginFieldEmail,
                 errorText: emailError,
               ),
               const SizedBox(height: 16),
@@ -116,7 +116,7 @@ class RegisterPage extends StatelessWidget {
                 autofillHints: const [AutofillHints.newPassword],
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onPasswordFieldSubmitted(),
-                label: AppStrings.loginFieldPassword,
+                label: AuthStrings.loginFieldPassword,
                 errorText: passwordError,
               ),
               if (submitError != null) ...[
@@ -141,12 +141,12 @@ class RegisterPage extends StatelessWidget {
                 isLoading: isLoading,
                 enabled: formEnabled,
                 onPressed: onSubmit,
-                child: const Text(AppStrings.registerActionSubmit),
+                child: const Text(AuthStrings.registerActionSubmit),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: isLoading ? null : onOpenLogin,
-                child: const Text(AppStrings.registerActionBackToLogin),
+                child: const Text(AuthStrings.registerActionBackToLogin),
               ),
             ],
           ),

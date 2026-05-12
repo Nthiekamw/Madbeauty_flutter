@@ -44,7 +44,7 @@ class _RegisterRouteState extends ConsumerState<RegisterRoute> {
     ref.listen<RegisterViewState>(registerControllerProvider, (previous, next) {
       if (next.requestSupabaseSnack) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.supabaseMissingTitle)),
+          const SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
         );
         ref
             .read(registerControllerProvider.notifier)

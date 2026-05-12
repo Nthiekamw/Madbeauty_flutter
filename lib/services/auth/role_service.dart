@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/errors/app_failure.dart';
+import '../../core/errors/failure_mapper.dart';
 import '../../core/models/user_role.dart';
 import '../supabase/supabase_service.dart';
 
@@ -33,9 +35,17 @@ class RoleService {
     final user = _client.auth.currentUser;
     if (user == null) return;
 
-    await _client.from('user_roles').upsert({
-      'user_id': user.id,
-      'role': role.value,
-    });
+    try {
+      await _client.from('user_roles').upsert({
+        'user_id': user.id,
+        'role': role.value,
+      });
+    } on PostgrestException catch (e) {
+      throw FailureMapper.fromPostgrestException(e);
+    } on AppFailure {
+      rethrow;
+    } catch (e) {
+      throw FailureMapper.fromUnknown(e);
+    }
   }
 }

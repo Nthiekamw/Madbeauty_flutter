@@ -15,6 +15,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.loginTitle), findsOneWidget);
+    expect(find.text(AuthStrings.loginTitle), findsOneWidget);
   });
 }
