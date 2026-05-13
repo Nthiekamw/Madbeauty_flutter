@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- 👇 AJOUT GPS -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MadBeauty utilise votre position pour vous localiser et trouver des prestataires proches.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>MadBeauty utilise votre position pour vous localiser et trouver des prestataires proches.</string>
 </dict>
 </plist>
