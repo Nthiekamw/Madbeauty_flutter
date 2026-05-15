@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/errors/app_failure.dart';
-import '../../core/errors/failure_mapper.dart';
+import '../../core/errors/supabase_error_handler.dart';
 import '../../core/models/user_role.dart';
 import '../supabase/supabase_service.dart';
 
@@ -16,36 +15,38 @@ class RoleService {
     final user = _client.auth.currentUser;
     if (user == null) return const [];
 
-    final rows = await _client
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+    return SupabaseErrorHandler.run(
+      operation: 'role.getMyRoles',
+      action: () async {
+        final rows = await _client
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id);
 
-    final roles = <UserRole>[];
-    for (final row in rows as List<dynamic>) {
-      final roleValue = (row as Map<String, dynamic>)['role'] as String?;
-      if (roleValue == null) continue;
-      final parsed = UserRole.fromValue(roleValue);
-      if (parsed != null) roles.add(parsed);
-    }
-    return roles;
+        final roles = <UserRole>[];
+        for (final row in rows as List<dynamic>) {
+          final roleValue = (row as Map<String, dynamic>)['role'] as String?;
+          if (roleValue == null) continue;
+          final parsed = UserRole.fromValue(roleValue);
+          if (parsed != null) roles.add(parsed);
+        }
+        return roles;
+      },
+    );
   }
 
   Future<void> ensureRole(UserRole role) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
 
-    try {
-      await _client.from('user_roles').upsert({
-        'user_id': user.id,
-        'role': role.value,
-      });
-    } on PostgrestException catch (e) {
-      throw FailureMapper.fromPostgrestException(e);
-    } on AppFailure {
-      rethrow;
-    } catch (e) {
-      throw FailureMapper.fromUnknown(e);
-    }
+    await SupabaseErrorHandler.run(
+      operation: 'role.ensureRole',
+      action: () async {
+        await _client.from('user_roles').upsert({
+          'user_id': user.id,
+          'role': role.value,
+        });
+      },
+    );
   }
 }

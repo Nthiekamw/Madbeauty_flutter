@@ -96,7 +96,7 @@ class PrestataireHomeListCard extends StatelessWidget {
                 ],
                 if (!km.isInfinite && !km.isNaN)
                   Text(
-                    DiscoveryStrings.homeNearbyPrestatairesDistanceKm(km),
+                    DiscHome.nearbyKm(km),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.outline,
                     ),

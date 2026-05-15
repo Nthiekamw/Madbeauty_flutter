@@ -25,14 +25,14 @@ class ClientHomeExploreRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          DiscoveryStrings.homeClientExploreTitle,
+          DiscHome.inspireTitle,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
         ),
         const SizedBox(height: 6),
         Text(
-          DiscoveryStrings.homeClientExploreSubtitle,
+          DiscHome.inspireSub,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

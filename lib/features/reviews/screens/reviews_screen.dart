@@ -8,7 +8,7 @@ class ReviewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text(DiscoveryStrings.screenReviews)),
+      body: Center(child: Text(DiscNav.reviewsTitle)),
     );
   }
 }

@@ -107,6 +107,54 @@ void main() {
     );
     expect(LocalCacheService.instance.selectedRole, isNull);
   });
+
+  test('restaure la session initiale depuis le flux Supabase au redemarrage', () async {
+    final restoredUser = _userWithEmail('restored@madbeauty.app');
+    final fakeService = _FakeAuthService(
+      stream: Stream<AuthState>.value(
+        AuthState(
+          AuthChangeEvent.initialSession,
+          _sessionWithUser(restoredUser),
+        ),
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        authSupabaseEnabledProvider.overrideWithValue(true),
+        authServiceProvider.overrideWithValue(fakeService),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final user = await container.read(authNotifierProvider.future);
+
+    expect(user?.email, 'restored@madbeauty.app');
+    expect(
+      LocalCacheService.instance.getString(LocalCacheService.lastSignedInEmailKey),
+      'restored@madbeauty.app',
+    );
+  });
+
+  test('ne vide pas le role local si aucune session initiale est trouvee', () async {
+    await LocalCacheService.instance.setSelectedRole('prestataire');
+    final fakeService = _FakeAuthService(
+      stream: Stream<AuthState>.value(
+        const AuthState(AuthChangeEvent.initialSession, null),
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        authSupabaseEnabledProvider.overrideWithValue(true),
+        authServiceProvider.overrideWithValue(fakeService),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final user = await container.read(authNotifierProvider.future);
+
+    expect(user, isNull);
+    expect(LocalCacheService.instance.selectedRole, 'prestataire');
+  });
 }
 
 User _userWithEmail(String email) {
@@ -123,6 +171,16 @@ User _userWithEmail(String email) {
     'updated_at': '2026-01-01T00:00:00.000Z',
     'is_anonymous': false,
   })!;
+}
+
+Session _sessionWithUser(User user) {
+  return Session(
+    accessToken: 'access-token',
+    tokenType: 'bearer',
+    user: user,
+    expiresIn: 3600,
+    refreshToken: 'refresh-token',
+  );
 }
 
 class _FakeAuthService extends AuthService {

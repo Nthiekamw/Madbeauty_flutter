@@ -7,8 +7,9 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../core/models/domain/catalog/service_category.dart';
-import '../../../services/supabase/prestataire_catalog_repository.dart';
-import '../../../services/supabase/prestataire_catalog_providers.dart';
+import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
+import '../../../services/supabase/prestataire/catalog/prestataire_filters.dart';
+import '../../../services/supabase/prestataire/catalog/prestataire_service.dart';
 
 class _Unset {
   const _Unset();
@@ -68,8 +69,9 @@ class ListingCatalogViewState {
       categories: identical(categories, _unset)
           ? this.categories
           : categories as List<ServiceCategory>,
-      entries:
-          identical(entries, _unset) ? this.entries : entries as List<PrestataireCatalogEntry>,
+      entries: identical(entries, _unset)
+          ? this.entries
+          : entries as List<PrestataireCatalogEntry>,
       loadingInitial: loadingInitial ?? this.loadingInitial,
       loadingMore: loadingMore ?? this.loadingMore,
       errorMessage: identical(errorMessage, _unset)
@@ -89,8 +91,8 @@ class ListingCatalogViewState {
 /// Catalogue listing : 10 prestataires par page, « Voir plus » pour la suite.
 final listingCatalogNotifierProvider =
     NotifierProvider<ListingCatalogNotifier, ListingCatalogViewState>(
-  ListingCatalogNotifier.new,
-);
+      ListingCatalogNotifier.new,
+    );
 
 class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
   static const int pageSize = 10;
@@ -107,15 +109,15 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
     if (_started) return;
     _started = true;
     if (!AppConfig.hasSupabase) {
-    state = state.copyWith(
-      loadingInitial: false,
-      categories: const [],
-      entries: const [],
-      hasMore: false,
-      errorMessage: null,
-      refreshError: null,
-      loadMoreError: null,
-    );
+      state = state.copyWith(
+        loadingInitial: false,
+        categories: const [],
+        entries: const [],
+        hasMore: false,
+        errorMessage: null,
+        refreshError: null,
+        loadMoreError: null,
+      );
       return;
     }
     unawaited(_fetchFirstPage());
@@ -123,8 +125,8 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
 
   Future<void> refresh() async {
     if (!AppConfig.hasSupabase) return;
-    final repo = ref.read(prestataireCatalogRepositoryProvider);
-    if (repo == null) return;
+    final service = ref.read(prestataireServiceProvider);
+    if (service == null) return;
 
     state = state.copyWith(
       loadingInitial: true,
@@ -132,36 +134,40 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
       refreshError: null,
       loadMoreError: null,
     );
-    await _fetchPage(repo: repo, offset: 0, replaceEntries: true);
+    await _fetchPage(service: service, offset: 0, replaceEntries: true);
   }
 
   Future<void> loadMore() async {
     if (!AppConfig.hasSupabase) return;
     if (state.loadingMore || state.loadingInitial || !state.hasMore) return;
 
-    final repo = ref.read(prestataireCatalogRepositoryProvider);
-    if (repo == null) return;
+    final service = ref.read(prestataireServiceProvider);
+    if (service == null) return;
 
-    state = state.copyWith(loadingMore: true, loadMoreError: null, refreshError: null);
+    state = state.copyWith(
+      loadingMore: true,
+      loadMoreError: null,
+      refreshError: null,
+    );
     await _fetchPage(
-      repo: repo,
+      service: service,
       offset: state.entries.length,
       replaceEntries: false,
     );
   }
 
   Future<void> _fetchFirstPage() async {
-    final repo = ref.read(prestataireCatalogRepositoryProvider);
-    if (repo == null) {
+    final service = ref.read(prestataireServiceProvider);
+    if (service == null) {
       if (!ref.mounted) return;
       state = state.copyWith(loadingInitial: false, hasMore: false);
       return;
     }
-    await _fetchPage(repo: repo, offset: 0, replaceEntries: true);
+    await _fetchPage(service: service, offset: 0, replaceEntries: true);
   }
 
   Future<void> _fetchPage({
-    required PrestataireCatalogRepository repo,
+    required PrestataireService service,
     required int offset,
     required bool replaceEntries,
   }) async {
@@ -171,21 +177,23 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
 
       if (replaceEntries) {
         final results = await Future.wait([
-          repo.fetchServiceCategories(),
-          repo.fetchCatalogEntries(limit: pageSize, offset: offset),
+          service.getServiceCategories(),
+          service.getAll(
+            filters: PrestataireFilters(limit: pageSize, offset: offset),
+          ),
         ]);
         categories = results[0] as List<ServiceCategory>;
         batch = results[1] as List<PrestataireCatalogEntry>;
       } else {
         categories = state.categories;
-        batch = await repo.fetchCatalogEntries(limit: pageSize, offset: offset);
+        batch = await service.getAll(
+          filters: PrestataireFilters(limit: pageSize, offset: offset),
+        );
       }
 
       if (!ref.mounted) return;
 
-      final merged = replaceEntries
-          ? batch
-          : [...state.entries, ...batch];
+      final merged = replaceEntries ? batch : [...state.entries, ...batch];
 
       state = state.copyWith(
         loadingInitial: false,
@@ -211,7 +219,7 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
         state = state.copyWith(
           loadingInitial: false,
           loadingMore: false,
-          errorMessage: DiscoveryStrings.listingCatalogLoadError,
+          errorMessage: DiscList.catalogLoadErr,
           refreshError: null,
           loadMoreError: null,
           hasMore: false,
@@ -220,14 +228,14 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
         state = state.copyWith(
           loadingInitial: false,
           loadingMore: false,
-          refreshError: DiscoveryStrings.listingRefreshError,
+          refreshError: DiscList.refreshErr,
           loadMoreError: null,
         );
       } else {
         state = state.copyWith(
           loadingInitial: false,
           loadingMore: false,
-          loadMoreError: DiscoveryStrings.listingLoadMoreError,
+          loadMoreError: DiscList.loadMoreErr,
           refreshError: null,
         );
       }

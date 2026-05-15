@@ -7,10 +7,16 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../core/models/domain/catalog/service_category.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import '../models/listing_sort.dart';
+import '../../prestataire/models/prestataires_filter_state.dart';
+import '../../prestataire/providers/prestataire_filters_provider.dart';
+import '../../prestataire/providers/prestataires_provider.dart';
+import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
+import '../widgets/listing_map_view.dart';
 import '../widgets/listing_vertical_skeleton.dart';
 import '../widgets/prestataire_catalog_list_card.dart';
+
+enum _ListingViewMode { list, map }
 
 /// Exploration / recherche : catalogue paginé, filtres, tri, pull-to-refresh.
 class ListingScreen extends ConsumerStatefulWidget {
@@ -23,8 +29,7 @@ class ListingScreen extends ConsumerStatefulWidget {
 class _ListingScreenState extends ConsumerState<ListingScreen> {
   final _searchController = TextEditingController();
   bool _seededFromRoute = false;
-  ListingSort _sort = ListingSort.distance;
-  String? _selectedCategoryId;
+  _ListingViewMode _viewMode = _ListingViewMode.list;
 
   @override
   void initState() {
@@ -46,58 +51,21 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     super.didChangeDependencies();
     if (_seededFromRoute) return;
     final q = GoRouterState.of(context).uri.queryParameters['q']?.trim();
-    if (q != null && q.isNotEmpty) {
-      _searchController.text = q;
-    }
+    final initialQuery = q == null || q.isEmpty ? '' : q;
     _seededFromRoute = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _searchController.text = initialQuery;
+      ref.read(prestatairesFilterProvider.notifier).setQuery(initialQuery);
+    });
   }
 
   Future<void> _onRefresh() async {
     await ref.read(listingCatalogNotifierProvider.notifier).refresh();
   }
 
-  void _sortEntries(List<PrestataireCatalogEntry> list, ListingSort sort) {
-    switch (sort) {
-      case ListingSort.rating:
-        list.sort((a, b) {
-          final na = a.profile.noteMoyenne;
-          final nb = b.profile.noteMoyenne;
-          if (na != null && nb != null && na != nb) {
-            return nb.compareTo(na);
-          }
-          if (na != null && nb == null) return -1;
-          if (na == null && nb != null) return 1;
-          return b.profile.createdAt.compareTo(a.profile.createdAt);
-        });
-      case ListingSort.distance:
-        list.sort((a, b) {
-          final da = a.sortDistanceKm;
-          final db = b.sortDistanceKm;
-          final aInf = da.isInfinite;
-          final bInf = db.isInfinite;
-          if (aInf && bInf) return 0;
-          if (aInf) return 1;
-          if (bInf) return -1;
-          return da.compareTo(db);
-        });
-    }
-  }
-
-  List<PrestataireCatalogEntry> _filteredAndSorted(
-    List<PrestataireCatalogEntry> all,
-  ) {
-    final list = all
-        .where((e) => e.matchesSearch(_searchController.text))
-        .where((e) => e.matchesCategoryFilter(_selectedCategoryId))
-        .toList();
-    _sortEntries(list, _sort);
-    return list;
-  }
-
-  Widget _filtersBar(
-    ThemeData theme,
-    List<ServiceCategory> categories,
-  ) {
+  Widget _filtersBar(ThemeData theme, List<ServiceCategory> categories) {
+    final filters = ref.watch(prestatairesFilterProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -107,28 +75,30 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                DiscoveryStrings.listingSortLabel,
+                DiscList.sortLabel,
                 style: theme.textTheme.labelLarge,
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SegmentedButton<ListingSort>(
+                child: SegmentedButton<PrestatairesSort>(
                   segments: [
-                    ButtonSegment<ListingSort>(
-                      value: ListingSort.rating,
-                      label: Text(DiscoveryStrings.listingSortRating),
+                    ButtonSegment<PrestatairesSort>(
+                      value: PrestatairesSort.rating,
+                      label: Text(DiscList.sortRating),
                     ),
-                    ButtonSegment<ListingSort>(
-                      value: ListingSort.distance,
-                      label: Text(DiscoveryStrings.listingSortDistance),
+                    ButtonSegment<PrestatairesSort>(
+                      value: PrestatairesSort.distance,
+                      label: Text(DiscList.sortDistance),
                     ),
                   ],
                   emptySelectionAllowed: false,
                   showSelectedIcon: false,
-                  selected: {_sort},
+                  selected: {filters.sort},
                   onSelectionChanged: (selection) {
                     if (selection.isEmpty) return;
-                    setState(() => _sort = selection.first);
+                    ref
+                        .read(prestatairesFilterProvider.notifier)
+                        .setSort(selection.first);
                   },
                 ),
               ),
@@ -139,7 +109,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
             child: Text(
-              DiscoveryStrings.listingServicesLabel,
+              DiscList.svcTypeLabel,
               style: theme.textTheme.labelLarge,
             ),
           ),
@@ -152,10 +122,13 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(DiscoveryStrings.listingChipAll),
-                    selected: _selectedCategoryId == null,
-                    onSelected: (_) =>
-                        setState(() => _selectedCategoryId = null),
+                    label: Text(DiscList.chipAll),
+                    selected: filters.categoryId == null,
+                    onSelected: (_) {
+                      ref
+                          .read(prestatairesFilterProvider.notifier)
+                          .setCategoryId(null);
+                    },
                   ),
                 ),
                 ...categories.map((c) {
@@ -163,11 +136,11 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(c.nom),
-                      selected: _selectedCategoryId == c.id,
+                      selected: filters.categoryId == c.id,
                       onSelected: (selected) {
-                        setState(() {
-                          _selectedCategoryId = selected ? c.id : null;
-                        });
+                        ref
+                            .read(prestatairesFilterProvider.notifier)
+                            .setCategoryId(selected ? c.id : null);
                       },
                     ),
                   );
@@ -181,19 +154,37 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     );
   }
 
-  Widget _refreshableScrollable({
-    required Widget child,
-  }) {
+  Widget _viewModeSwitch() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: SegmentedButton<_ListingViewMode>(
+        segments: const [
+          ButtonSegment<_ListingViewMode>(
+            value: _ListingViewMode.list,
+            icon: Icon(Icons.list_alt_outlined),
+            label: Text(DiscList.modeList),
+          ),
+          ButtonSegment<_ListingViewMode>(
+            value: _ListingViewMode.map,
+            icon: Icon(Icons.map_outlined),
+            label: Text(DiscList.modeMap),
+          ),
+        ],
+        selected: {_viewMode},
+        onSelectionChanged: (selection) {
+          if (selection.isEmpty) return;
+          setState(() => _viewMode = selection.first);
+        },
+      ),
+    );
+  }
+
+  Widget _refreshableScrollable({required Widget child}) {
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: child,
-          ),
-        ],
+        slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
       ),
     );
   }
@@ -212,7 +203,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              DiscoveryStrings.listingCatalogEmpty,
+              DiscList.emptyCatalogTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
@@ -220,7 +211,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              DiscoveryStrings.listingPullToRefreshHint,
+              DiscList.pullDownHint,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -246,7 +237,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              DiscoveryStrings.listingFilterEmpty,
+              DiscList.emptyFilterTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
@@ -254,7 +245,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              DiscoveryStrings.listingFilterEmptyHint,
+              DiscList.emptyFilterHint,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -280,7 +271,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              DiscoveryStrings.listingCatalogLoadError,
+              DiscList.catalogLoadErr,
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
@@ -290,7 +281,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
             FilledButton.tonal(
               onPressed: () =>
                   ref.read(listingCatalogNotifierProvider.notifier).refresh(),
-              child: const Text(DiscoveryStrings.listingRetry),
+              child: const Text(DiscList.retry),
             ),
           ],
         ),
@@ -337,9 +328,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                       onPressed: state.loadingInitial
                           ? null
                           : () => ref
-                              .read(listingCatalogNotifierProvider.notifier)
-                              .loadMore(),
-                      child: Text(DiscoveryStrings.listingSeeMore),
+                                .read(listingCatalogNotifierProvider.notifier)
+                                .loadMore(),
+                      child: Text(DiscList.seeMore),
                     ),
             ),
         ],
@@ -371,7 +362,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: onRetry,
-                child: Text(DiscoveryStrings.listingRetry),
+                child: Text(DiscList.retry),
               ),
             ),
           ],
@@ -386,9 +377,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final catalogState = ref.watch(listingCatalogNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(DiscoveryStrings.screenListing),
-      ),
+      appBar: AppBar(title: Text(DiscNav.listingTitle)),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,7 +386,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: AppTextField(
                 controller: _searchController,
-                hint: DiscoveryStrings.listingSearchHint,
+                hint: DiscList.hintSearch,
                 textInputAction: TextInputAction.search,
                 prefixIcon: Icon(
                   Icons.search,
@@ -406,19 +395,23 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                 suffixIcon: _searchController.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: MaterialLocalizations.of(context)
-                            .deleteButtonTooltip,
+                        tooltip: MaterialLocalizations.of(
+                          context,
+                        ).deleteButtonTooltip,
                         onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                          });
+                          _searchController.clear();
+                          ref
+                              .read(prestatairesFilterProvider.notifier)
+                              .setQuery('');
                         },
                         icon: Icon(
                           Icons.clear,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (value) {
+                  ref.read(prestatairesFilterProvider.notifier).setQuery(value);
+                },
               ),
             ),
             if (!AppConfig.hasSupabase)
@@ -432,9 +425,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                 ),
               )
             else
-              Expanded(
-                child: _buildMainBody(theme, catalogState),
-              ),
+              Expanded(child: _buildMainBody(theme, catalogState)),
           ],
         ),
       ),
@@ -442,11 +433,14 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _buildMainBody(ThemeData theme, ListingCatalogViewState state) {
-    if (state.loadingInitial && state.entries.isEmpty && state.errorMessage == null) {
+    if (state.loadingInitial &&
+        state.entries.isEmpty &&
+        state.errorMessage == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _filtersBar(theme, state.categories),
+          _viewModeSwitch(),
           const Expanded(child: ListingVerticalSkeleton()),
         ],
       );
@@ -457,11 +451,8 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _filtersBar(theme, state.categories),
-          Expanded(
-            child: _refreshableScrollable(
-              child: _errorState(theme),
-            ),
-          ),
+          _viewModeSwitch(),
+          Expanded(child: _refreshableScrollable(child: _errorState(theme))),
         ],
       );
     }
@@ -470,9 +461,8 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _filtersBar(theme, state.categories),
-        Expanded(
-          child: _buildCatalogBody(theme, state),
-        ),
+        _viewModeSwitch(),
+        Expanded(child: _buildCatalogBody(theme, state)),
       ],
     );
   }
@@ -481,20 +471,22 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final all = state.entries;
 
     if (all.isEmpty) {
-      return _refreshableScrollable(
-        child: _emptyCatalogState(theme),
-      );
+      return _refreshableScrollable(child: _emptyCatalogState(theme));
     }
 
-    final filtered = _filteredAndSorted(all);
+    final filtered = ref.watch(prestatairesFilteredProvider).value ?? const [];
     if (filtered.isEmpty) {
-      return _refreshableScrollable(
-        child: _emptyFilterState(theme),
-      );
+      return _refreshableScrollable(child: _emptyFilterState(theme));
+    }
+
+    if (_viewMode == _ListingViewMode.map) {
+      return _buildMapBody(theme, state, filtered);
     }
 
     final showFooter =
-        state.hasMore || state.loadMoreError != null || state.refreshError != null;
+        state.hasMore ||
+        state.loadMoreError != null ||
+        state.refreshError != null;
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
@@ -509,6 +501,43 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
           if (showFooter) _loadMoreFooter(theme, state),
         ],
       ),
+    );
+  }
+
+  Widget _buildMapBody(
+    ThemeData theme,
+    ListingCatalogViewState state,
+    List<PrestataireCatalogEntry> filtered,
+  ) {
+    final locationAsync = ref.watch(clientLocationProvider);
+    final clientLocation = switch (locationAsync) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    final showFooter =
+        state.hasMore ||
+        state.loadMoreError != null ||
+        state.refreshError != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: ListingMapView(
+              entries: filtered,
+              clientLocation: clientLocation,
+              locationLoading: locationAsync.isLoading,
+            ),
+          ),
+        ),
+        if (showFooter)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _loadMoreFooter(theme, state),
+          ),
+      ],
     );
   }
 }

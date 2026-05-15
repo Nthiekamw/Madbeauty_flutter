@@ -54,7 +54,7 @@ class PrestataireCatalogSectionEmpty extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => context.pushListing(),
                 icon: const Icon(Icons.explore_outlined, size: 20),
-                label: Text(DiscoveryStrings.homePrestatairesEmptyCta),
+                label: Text(DiscHome.ctaBrowseCatalog),
               ),
             ],
           ),

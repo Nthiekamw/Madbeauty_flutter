@@ -27,4 +27,13 @@ abstract final class ShellStrings {
       'Remplis SUPABASE_URL et SUPABASE_ANON_KEY dans le fichier .env à la '
       'racine, puis lance avec --dart-define-from-file=.env '
       '(ou la configuration « MadBeauty (avec .env) » dans VS Code).';
+
+  static const String navClientHome = 'Accueil';
+  static const String navClientSearch = 'Recherche';
+  static const String navClientReservations = 'Réservations';
+  static const String navClientProfile = 'Profil';
+
+  static const String navPrestataireDashboard = 'Dashboard';
+  static const String navPrestataireAgenda = 'Agenda';
+  static const String navPrestataireProfile = 'Profil';
 }

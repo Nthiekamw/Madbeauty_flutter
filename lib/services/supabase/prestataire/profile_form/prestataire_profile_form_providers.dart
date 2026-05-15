@@ -1,0 +1,30 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../profile/profile_providers.dart';
+import '../../storage/storage_providers.dart';
+import '../../supabase_service.dart';
+import '../catalog/prestataire_catalog_providers.dart';
+import '../services/service_beaute_providers.dart';
+import 'prestataire_profile_form_service.dart';
+
+final prestataireProfileFormServiceProvider =
+    Provider<PrestataireProfileFormService?>((ref) {
+      final prestataireService = ref.watch(prestataireServiceProvider);
+      final serviceBeauteService = ref.watch(serviceBeauteServiceProvider);
+      final profileService = ref.watch(profileServiceProvider);
+      final storageService = ref.watch(storageServiceProvider);
+      if (prestataireService == null ||
+          serviceBeauteService == null ||
+          profileService == null ||
+          storageService == null) {
+        return null;
+      }
+
+      return PrestataireProfileFormService(
+        client: SupabaseService.client,
+        prestataireService: prestataireService,
+        serviceBeauteService: serviceBeauteService,
+        profileService: profileService,
+        storageService: storageService,
+      );
+    });

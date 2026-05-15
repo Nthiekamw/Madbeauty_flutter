@@ -6,6 +6,8 @@ part 'reservation.freezed.dart';
 part 'reservation.g.dart';
 
 /// [RESERVATIONS] — `statut` reste une chaîne (ex. confirmée, annulée) pour coller au schéma.
+typedef Booking = Reservation;
+
 @freezed
 abstract class Reservation with _$Reservation {
   const factory Reservation({

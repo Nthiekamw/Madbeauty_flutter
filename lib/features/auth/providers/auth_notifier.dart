@@ -55,20 +55,41 @@ final authNotifierProvider =
     AsyncNotifierProvider<AuthNotifier, User?>(AuthNotifier.new);
 
 class AuthNotifier extends AsyncNotifier<User?> {
+  static const _initialSessionTimeout = Duration(seconds: 2);
+
   AuthService get _auth => ref.read(authServiceProvider);
 
   Future<void> _cacheCurrentEmail(User? user) async {
     final email = user?.email;
     if (email == null || email.isEmpty) {
-      await LocalCacheService.instance.remove(LocalCacheService.lastSignedInEmailKey);
-      await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
-      await LocalCacheService.instance.clearSelectedRole();
       return;
     }
     await LocalCacheService.instance.setString(
       LocalCacheService.lastSignedInEmailKey,
       email,
     );
+  }
+
+  Future<void> _clearAuthCache() async {
+    await LocalCacheService.instance.remove(LocalCacheService.lastSignedInEmailKey);
+    await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
+    await LocalCacheService.instance.clearSelectedRole();
+  }
+
+  Future<User?> _readInitialUser() async {
+    final current = _auth.currentSession?.user ?? _auth.currentUser;
+    if (current != null) return current;
+
+    try {
+      final authState = await _auth.onAuthStateChange.first.timeout(
+        _initialSessionTimeout,
+      );
+      return authState.session?.user ??
+          _auth.currentSession?.user ??
+          _auth.currentUser;
+    } catch (_) {
+      return _auth.currentSession?.user ?? _auth.currentUser;
+    }
   }
 
   @override
@@ -96,7 +117,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     ref.onDispose(subscription.close);
 
-    final initialUser = _auth.currentSession?.user;
+    final initialUser = await _readInitialUser();
     await _cacheCurrentEmail(initialUser);
     return initialUser;
   }
@@ -123,7 +144,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await _auth.signOut();
-      await _cacheCurrentEmail(null);
+      await _clearAuthCache();
       return null;
     });
   }

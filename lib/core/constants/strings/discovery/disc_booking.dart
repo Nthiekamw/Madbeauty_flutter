@@ -1,0 +1,105 @@
+/// Flux réservation client (flow, erreurs métiers, listes personnelles).
+abstract final class DiscBk {
+  DiscBk._();
+
+  static const missingPrestaTitle = 'Prestataire manquant';
+  static const missingPrestaBody =
+      'Retourne sur une fiche prestataire pour choisir un service.';
+  static const svcLoadFailTitle = 'Services indisponibles';
+  static const svcLoadFailBody =
+      'Impossible de charger les services. Réessaie dans quelques instants.';
+  static const noSvcsTitle = 'Aucun service disponible';
+  static const noSvcsBody =
+      'Ce prestataire n’a pas encore publié de service réservable.';
+  static const stepService = '1. Choisis ton service';
+  static const stepDate = '2. Choisis une date';
+  static const stepDateSub =
+      'Les jours colorés acceptent des créneaux de réservation.';
+  static const stepSlots = '3. Choisis un créneau';
+  static const noSlotsDay = 'Aucun créneau disponible pour cette date.';
+  static const pickSlot = 'Choisis un créneau';
+  static const btnConfirmShort = 'Confirmer';
+  static const calMonthLabel = 'Mois';
+  static const bookedSlotTooltip = 'Créneau déjà réservé';
+
+  static const recapTitle = 'Récapitulatif';
+  static const recapPresta = 'Prestataire';
+  static const recapSvc = 'Service';
+  static const recapDate = 'Date';
+  static const recapTime = 'Heure';
+  static const recapPrice = 'Prix';
+  static const recapCta = 'Confirmer la réservation';
+  static const recapTrust =
+      'Vérifie les informations ci-dessus. Ta réservation ne sera enregistrée qu’après confirmation.';
+  static const recapPrestaBadTitle = 'Prestataire introuvable';
+  static const recapPrestaBadBody =
+      'Impossible d’afficher le récapitulatif. Retourne à la fiche prestataire et réessaie.';
+
+  static const doneAppBar = 'Réservation confirmée';
+  static const doneHeadline = 'C’est confirmé !';
+  static const doneBody =
+      'Ta réservation est enregistrée. Le prestataire pourra la valider sous peu.';
+  static const doneSeeMine = 'Voir mes réservations';
+
+  static const emptyListTitle = 'Aucune réservation';
+  static const emptyListBody = 'Tes prochaines réservations apparaîtront ici.';
+  static const listErrTitle = 'Impossible de charger';
+  static const listErrBody = 'Vérifie ta connexion et réessaie.';
+  static const unknownSvc = 'Service';
+  static const unknownPresta = 'Prestataire';
+
+  static const tabFuture = 'À venir';
+  static const tabPast = 'Passées';
+
+  static const badgePending = 'En attente';
+  static const badgeConfirmed = 'Confirmé';
+  static const badgeDone = 'Terminé';
+  static const badgeCancelled = 'Annulé';
+  static const badgeUnknown = 'Statut';
+
+  static const emptyFutureTitle = 'Aucune réservation à venir';
+  static const emptyFutureBody =
+      'Réserve un créneau avec un prestataire pour le voir ici.';
+  static const emptyPastTitle = 'Aucune réservation passée';
+  static const emptyPastBody =
+      'Tes rendez-vous déjà effectués apparaîtront ici.';
+  static const browsePresta = 'Trouver un prestataire';
+
+  static const revokeLabel = 'Annuler';
+  static const revokeAskTitle = 'Annuler la réservation ?';
+  static const revokeAskBody =
+      'Le prestataire sera informé si la réservation était déjà confirmée.';
+  static const revokeYes = 'Oui, annuler';
+  static const revokeFail =
+      'Impossible d’annuler maintenant. Réessaie.';
+
+  static const errSlotTaken =
+      'Ce créneau vient d’être réservé par quelqu’un d’autre. Choisis un autre horaire.';
+  static const errOffline =
+      'Connexion perdue. Vérifie ton réseau et réessaie.';
+  static const errNeedLogin =
+      'Connecte-toi pour confirmer ta réservation.';
+  static const errNeedClientProfile =
+      'Profil client incomplet. Reconnecte-toi ou contacte le support.';
+  static const errGenericSave =
+      'Impossible de confirmer la réservation. Réessaie dans un instant.';
+  static const errForbiddenBookingsLookup =
+      'Tu ne peux pas consulter les réservations de ce profil.';
+  static const errPrestaProfile =
+      'Profil prestataire introuvable. Connecte-toi avec le bon compte.';
+  static const errResMissing = 'Réservation introuvable.';
+  static const errResBadState =
+      'Impossible avec l’état actuel de la réservation.';
+
+  static String svcCountLabel(int count) =>
+      '$count service${count > 1 ? 's' : ''} disponible${count > 1 ? 's' : ''}';
+
+  static String continueWithSlot(String slot) => 'Confirmer - $slot';
+
+  static String selectionConfirmedLine({
+    required String serviceName,
+    required String date,
+    required String slot,
+  }) =>
+      'Service confirmé : $serviceName, $date à $slot';
+}

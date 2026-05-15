@@ -20,14 +20,14 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          DiscoveryStrings.homeTopRatedTitle,
+          DiscHome.topRatedTitle,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          DiscoveryStrings.homeTopRatedSubtitle,
+          DiscHome.topRatedSub,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -36,8 +36,8 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
         async.when(
           data: (value) => value.isEmpty
               ? PrestataireCatalogSectionEmpty(
-                  title: DiscoveryStrings.homeTopRatedEmptyTitle,
-                  body: DiscoveryStrings.homeTopRatedEmptyBody,
+                  title: DiscHome.topRatedEmptyTitle,
+                  body: DiscHome.topRatedEmptyBody,
                 )
               : SizedBox(
                   height: 172,
@@ -53,7 +53,7 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
                   ),
                 ),
           error: (_, __) => Text(
-            DiscoveryStrings.homeNearbyPrestatairesLoadError,
+            DiscHome.nearbyLoadFail,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
             ),

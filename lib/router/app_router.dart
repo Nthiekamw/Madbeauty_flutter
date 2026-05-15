@@ -9,37 +9,71 @@ import '../features/auth/providers/password_recovery_provider.dart';
 import '../features/auth/register/routes/register_route.dart';
 import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
+import '../features/booking/screens/booking_confirmation_screen.dart';
+import '../features/booking/screens/booking_screen.dart';
+import '../features/booking/screens/client_reservations_screen.dart';
+import '../features/dev/screens/async_state_test_screen.dart';
 import '../features/home/screens/home_screen.dart';
-import '../features/listing/screens/listing_screen.dart';
+import '../features/prestataire/screens/prestataire_agenda_screen.dart';
+import '../features/prestataire/screens/prestataire_dashboard_screen.dart';
 import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
+import '../features/profile/screens/profile_screen.dart';
+import '../features/search/screens/search_screen.dart';
 import '../features/splash/screens/startup_splash_screen.dart';
 import '../services/storage/local_cache_service.dart';
+import 'shell/client_shell_scaffold.dart';
+import 'shell/prestataire_shell_scaffold.dart';
+import 'shell/shell_route_pages.dart';
 
 abstract final class AppRoutes {
   static const String splash = '/splash';
-  static const String home = '/';
-  static const String listing = '/listing';
-  static const String prestataires = '/prestataires';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
   static const String role = '/role';
+  static const String prestataires = '/prestataires';
+  static const String booking = '/booking';
+  static const String bookingConfirmation = '/booking/confirmation';
+  static const String asyncStateTest = '/test/async-states';
+
+  static const String clientHome = '/client/home';
+  static const String clientSearch = '/client/search';
+  static const String clientReservations = '/client/reservations';
+  static const String clientProfile = '/client/profile';
+
+  static const String prestataireDashboard = '/prestataire/dashboard';
+  static const String prestataireAgenda = '/prestataire/agenda';
+  static const String prestataireProfile = '/prestataire/profile';
+
+  /// Anciennes routes — redirigées vers le shell client / prestataire.
+  static const String home = '/';
+  static const String listing = '/listing';
+  static const String myReservations = '/reservations';
   static const String prestataire = '/prestataire';
 }
 
 abstract final class AppRouteNames {
   static const String splash = 'splash';
-  static const String home = 'home';
-  static const String listing = 'listing';
-  static const String prestataireDetail = 'prestataire-detail';
   static const String login = 'login';
   static const String register = 'register';
   static const String forgotPassword = 'forgot-password';
   static const String resetPassword = 'reset-password';
   static const String role = 'role';
-  static const String prestataire = 'prestataire';
+  static const String prestataireDetail = 'prestataire-detail';
+  static const String booking = 'booking';
+  static const String bookingConfirmation = 'booking-confirmation';
+  static const String asyncStateTest = 'async-state-test';
+
+  static const String clientHome = 'client-home';
+  static const String clientSearch = 'client-search';
+  static const String clientReservations = 'client-reservations';
+  static const String clientProfile = 'client-profile';
+
+  static const String prestataireDashboard = 'prestataire-dashboard';
+  static const String prestataireAgenda = 'prestataire-agenda';
+  static const String prestataireProfile = 'prestataire-profile';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -48,7 +82,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     AsyncData(:final value) => value.event,
     _ => null,
   };
-  final recoveryPending = ref.watch(passwordRecoveryPendingProvider) ||
+  final recoveryPending =
+      ref.watch(passwordRecoveryPendingProvider) ||
       authEvent == AuthChangeEvent.passwordRecovery;
 
   final user = switch (auth) {
@@ -66,6 +101,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.register,
         AppRoutes.forgotPassword,
         AppRoutes.resetPassword,
+        AppRoutes.asyncStateTest,
       };
       final guestOnlyRoutes = <String>{
         AppRoutes.login,
@@ -76,10 +112,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       final selectedRole = LocalCacheService.instance.selectedRole;
       final preferredPath = switch (selectedRole) {
-        'prestataire' => AppRoutes.prestataire,
-        'client' => AppRoutes.home,
+        'prestataire' => AppRoutes.prestataireDashboard,
+        'client' => AppRoutes.clientHome,
         _ => AppRoutes.role,
       };
+
+      String? legacyRedirect() {
+        return switch (location) {
+          AppRoutes.home => preferredPath,
+          AppRoutes.listing => AppRoutes.clientSearch,
+          AppRoutes.myReservations => AppRoutes.clientReservations,
+          AppRoutes.prestataire when selectedRole == 'prestataire' =>
+            AppRoutes.prestataireProfile,
+          AppRoutes.prestataire => AppRoutes.clientHome,
+          _ => null,
+        };
+      }
+
+      final legacy = legacyRedirect();
+      if (legacy != null) return legacy;
 
       if (auth.isLoading) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
@@ -115,24 +166,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const StartupSplashScreen(),
       ),
       GoRoute(
-        name: AppRouteNames.home,
-        path: AppRoutes.home,
-        builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        name: AppRouteNames.listing,
-        path: AppRoutes.listing,
-        builder: (context, state) => const ListingScreen(),
-      ),
-      GoRoute(
-        name: AppRouteNames.prestataireDetail,
-        path: '${AppRoutes.prestataires}/:id',
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return PrestataireDetailScreen(prestataireId: id);
-        },
-      ),
-      GoRoute(
         name: AppRouteNames.login,
         path: AppRoutes.login,
         builder: (context, state) => const LoginRoute(),
@@ -157,10 +190,143 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.role,
         builder: (context, state) => const RoleChoiceScreen(),
       ),
+      StatefulShellRoute.indexedStack(
+        restorationScopeId: 'client-shell',
+        builder: (context, state, navigationShell) => ClientShellScaffold(
+          navigationShell: navigationShell,
+        ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.clientHome,
+                path: AppRoutes.clientHome,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const HomeScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.clientSearch,
+                path: AppRoutes.clientSearch,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const SearchScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.clientReservations,
+                path: AppRoutes.clientReservations,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const ClientReservationsScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.clientProfile,
+                path: AppRoutes.clientProfile,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const ProfileScreen(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      StatefulShellRoute.indexedStack(
+        restorationScopeId: 'prestataire-shell',
+        builder: (context, state, navigationShell) => PrestataireShellScaffold(
+          navigationShell: navigationShell,
+        ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.prestataireDashboard,
+                path: AppRoutes.prestataireDashboard,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const PrestataireDashboardScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.prestataireAgenda,
+                path: AppRoutes.prestataireAgenda,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const PrestataireAgendaScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.prestataireProfile,
+                path: AppRoutes.prestataireProfile,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const PrestataireHubScreen(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
-        name: AppRouteNames.prestataire,
-        path: AppRoutes.prestataire,
-        builder: (context, state) => const PrestataireHubScreen(),
+        name: AppRouteNames.prestataireDetail,
+        path: '${AppRoutes.prestataires}/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return PrestataireDetailScreen(prestataireId: id);
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.booking,
+        path: AppRoutes.booking,
+        builder: (context, state) => BookingScreen(
+          prestataireId: state.uri.queryParameters['prestataireId'],
+          serviceId: state.uri.queryParameters['serviceId'],
+        ),
+      ),
+      GoRoute(
+        name: AppRouteNames.bookingConfirmation,
+        path: AppRoutes.bookingConfirmation,
+        builder: (context, state) {
+          final params = state.uri.queryParameters;
+          final dateTime =
+              DateTime.tryParse(params['dateTime'] ?? '') ?? DateTime.now();
+          return BookingConfirmationScreen(
+            prestataireId: params['prestataireId'] ?? '',
+            serviceId: params['serviceId'] ?? '',
+            serviceName: params['serviceName'] ?? '',
+            price: double.tryParse(params['price'] ?? '') ?? 0,
+            durationMinutes: int.tryParse(params['durationMinutes'] ?? '') ?? 0,
+            dateTime: dateTime,
+          );
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.asyncStateTest,
+        path: AppRoutes.asyncStateTest,
+        builder: (context, state) => const AsyncStateTestScreen(),
       ),
     ],
   );

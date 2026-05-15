@@ -2,7 +2,7 @@
 
 Référence des tables **`public`**, colonnes, relations et **Row Level Security (RLS)** après application des migrations du dépôt.
 
-> Ordre d’application : `20260507140000_init_extensions` → `20260507215055_init_schema` (vide) → `20260508113500_auth_profiles_and_roles` → `20260510120000_domain_schema_core` (remplace `profiles` par `user_profiles`).
+> Ordre d’application : `20260507140000_init_extensions` → `20260507215055_init_schema` (vide) → `20260508113500_auth_profiles_and_roles` → `20260510120000_domain_schema_core` → `20260512200000_user_profiles_select_prestataire_catalog` → `20260512210000_user_roles_update_policy` → `20260512220000_categories_service_seed_types` → `20260512230000_profile_photos_storage` → `20260514110000_realisation_photos_storage` → `20260514122000_catalog_anon_and_role_profiles`.
 
 ---
 
@@ -46,7 +46,9 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `role` | `app_role` | PK (composite) |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-**Trigger auth** : `handle_new_user` sur `auth.users` insère une ligne `user_profiles` + rôle `client` dans `user_roles`.
+**Trigger auth** : `handle_new_user` sur `auth.users` insère une ligne `user_profiles`, le rôle `client` dans `user_roles` et une ligne `client_profiles`.
+
+**Trigger rôle** : `trg_user_roles_ensure_profile` sur `user_roles` crée automatiquement le profil métier associé au rôle ajouté (`client_profiles` pour `client`, `prestataire_profiles` pour `prestataire`).
 
 ---
 
@@ -220,17 +222,19 @@ erDiagram
 
 ---
 
-## RLS (policies `authenticated` sauf mention)
+## RLS (policies)
 
 Toutes les tables listées ci-dessous ont **RLS activé**.
 
 ### `user_profiles`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `user_profiles_select_own` | SELECT | `auth.uid() = user_id` |
-| `user_profiles_insert_own` | INSERT | idem `WITH CHECK` |
-| `user_profiles_update_own` | UPDATE | USING + WITH CHECK |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `user_profiles_select_own` | `authenticated` | SELECT | `auth.uid() = user_id` |
+| `user_profiles_select_linked_prestataire` | `authenticated` | SELECT | profil identité lié à un `prestataire_profiles` |
+| `user_profiles_select_linked_prestataire_anon` | `anon` | SELECT | idem pour le catalogue public |
+| `user_profiles_insert_own` | `authenticated` | INSERT | idem `WITH CHECK` |
+| `user_profiles_update_own` | `authenticated` | UPDATE | USING + WITH CHECK |
 
 ### `user_roles`
 
@@ -238,6 +242,7 @@ Toutes les tables listées ci-dessous ont **RLS activé**.
 |--------|----------|--------|
 | `user_roles_select_own` | SELECT | `auth.uid() = user_id` |
 | `user_roles_insert_own` | INSERT | `WITH CHECK` |
+| `user_roles_update_own` | UPDATE | USING + WITH CHECK |
 | `user_roles_delete_own` | DELETE | USING |
 
 ### `client_profiles`
@@ -250,34 +255,38 @@ Toutes les tables listées ci-dessous ont **RLS activé**.
 
 ### `prestataire_profiles`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `prestataire_profiles_select_authenticated` | SELECT | `true` (tous les utilisateurs connectés) |
-| `prestataire_profiles_insert_own` | INSERT | `auth.uid() = user_id` |
-| `prestataire_profiles_update_own` | UPDATE | USING + WITH CHECK |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `prestataire_profiles_select_authenticated` | `authenticated` | SELECT | `true` |
+| `prestataire_profiles_select_anon` | `anon` | SELECT | `true` pour catalogue / fiches publiques |
+| `prestataire_profiles_insert_own` | `authenticated` | INSERT | `auth.uid() = user_id` |
+| `prestataire_profiles_update_own` | `authenticated` | UPDATE | USING + WITH CHECK |
 
 ### `categories_service`
 
 | Policy | Rôle | Commande | Règle |
 |--------|------|----------|--------|
 | `categories_service_select_authenticated` | `authenticated` | SELECT | `true` |
+| `categories_service_select_anon` | `anon` | SELECT | `true` |
 | `categories_service_all_service_role` | `service_role` | ALL | `true` |
 
 Les clients **ne peuvent pas** insérer / modifier les catégories via l’API anon/authenticated ; seed / admin via `service_role`.
 
 ### `prestataire_specialites`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `prestataire_specialites_select_authenticated` | SELECT | `true` |
-| `prestataire_specialites_write_own` | ALL | ligne liée à un `prestataire_profiles` dont `user_id = auth.uid()` |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `prestataire_specialites_select_authenticated` | `authenticated` | SELECT | `true` |
+| `prestataire_specialites_select_anon` | `anon` | SELECT | `true` |
+| `prestataire_specialites_write_own` | `authenticated` | ALL | ligne liée à un `prestataire_profiles` dont `user_id = auth.uid()` |
 
 ### `services_beaute`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `services_beaute_select_authenticated` | SELECT | `true` |
-| `services_beaute_write_own` | ALL | prestataire propriétaire (`user_id = auth.uid()`) |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `services_beaute_select_authenticated` | `authenticated` | SELECT | `true` |
+| `services_beaute_select_anon` | `anon` | SELECT | `true` |
+| `services_beaute_write_own` | `authenticated` | ALL | prestataire propriétaire (`user_id = auth.uid()`) |
 
 ### `reservations`
 
@@ -289,19 +298,21 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 
 ### `avis`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `avis_select_authenticated` | SELECT | `true` |
-| `avis_insert_own_client` | INSERT | `client_id` = profil client du `auth.uid()` |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `avis_select_authenticated` | `authenticated` | SELECT | `true` |
+| `avis_select_anon` | `anon` | SELECT | `true` pour afficher les avis publics |
+| `avis_insert_own_client` | `authenticated` | INSERT | `client_id` = profil client du `auth.uid()` |
 
 (Pas de UPDATE/DELETE explicites : à ajouter si besoin métier.)
 
 ### `photos_realisation`
 
-| Policy | Commande | Règle |
-|--------|----------|--------|
-| `photos_realisation_select_authenticated` | SELECT | `true` |
-| `photos_realisation_write_own` | ALL | prestataire propriétaire |
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `photos_realisation_select_authenticated` | `authenticated` | SELECT | `true` |
+| `photos_realisation_select_anon` | `anon` | SELECT | `true` pour galerie publique |
+| `photos_realisation_write_own` | `authenticated` | ALL | prestataire propriétaire |
 
 ### `favoris`
 
@@ -328,15 +339,50 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 
 ---
 
+## Storage
+
+Les buckets sont créés par migrations SQL dans `storage.buckets`.
+
+| Bucket | Public | Taille max | MIME autorisés | Usage |
+|--------|--------|------------|----------------|-------|
+| `profile-photos` | oui | 5 MiB | `image/jpeg`, `image/png`, `image/webp` | avatars utilisateurs / prestataires |
+| `realisation-photos` | oui | 10 MiB | `image/jpeg`, `image/png`, `image/webp` | galerie réalisations prestataires |
+
+Policies `storage.objects` :
+
+| Policy | Bucket | Rôle | Commande | Règle |
+|--------|--------|------|----------|--------|
+| `profile_photos_select_public` | `profile-photos` | `public` | SELECT | lecture publique |
+| `profile_photos_insert_own_folder` | `profile-photos` | `authenticated` | INSERT | premier dossier = `auth.uid()` |
+| `profile_photos_update_own_folder` | `profile-photos` | `authenticated` | UPDATE | premier dossier = `auth.uid()` |
+| `profile_photos_delete_own_folder` | `profile-photos` | `authenticated` | DELETE | premier dossier = `auth.uid()` |
+| `realisation_photos_select_public` | `realisation-photos` | `public` | SELECT | lecture publique |
+| `realisation_photos_insert_own_prestataire` | `realisation-photos` | `authenticated` | INSERT | premier dossier = `prestataire_profiles.id` appartenant à `auth.uid()` |
+| `realisation_photos_update_own_prestataire` | `realisation-photos` | `authenticated` | UPDATE | idem |
+| `realisation_photos_delete_own_prestataire` | `realisation-photos` | `authenticated` | DELETE | idem |
+
+---
+
 ## Fonctions / triggers partagés
 
 | Objet | Rôle |
 |-------|------|
 | `public.set_updated_at()` | Met `updated_at` à `now()` (trigger avant UPDATE). |
-| `public.handle_new_user()` | Après création `auth.users` : upsert `user_profiles`, rôle `client` dans `user_roles`. |
+| `public.handle_new_user()` | Après création `auth.users` : upsert `user_profiles`, rôle `client` dans `user_roles`, création `client_profiles`. |
+| `public.ensure_profile_for_user_role()` | Après insertion dans `user_roles` : crée le profil métier associé au rôle (`client_profiles` ou `prestataire_profiles`). |
 
 ---
 
 ## Lecture invité (`anon`)
 
-La plupart des policies ci-dessus ciblent **`authenticated`**. Pour afficher catalogue / fiches sans compte, prévoir des policies **`anon`** ciblées (évolution produit).
+Les policies `anon` ouvrent uniquement la lecture du catalogue public :
+
+- `prestataire_profiles`
+- `user_profiles` liés à un profil prestataire
+- `categories_service`
+- `prestataire_specialites`
+- `services_beaute`
+- `avis`
+- `photos_realisation`
+
+Les tables privées (`client_profiles`, `reservations`, `favoris`, `conversations`, `messages`, `user_roles`) restent réservées aux utilisateurs authentifiés selon les policies ci-dessus.

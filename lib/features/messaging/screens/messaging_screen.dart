@@ -8,7 +8,7 @@ class MessagingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text(DiscoveryStrings.screenMessaging)),
+      body: Center(child: Text(DiscNav.messagingTitle)),
     );
   }
 }

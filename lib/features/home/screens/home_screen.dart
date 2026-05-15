@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -58,7 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _openListing({String? query}) {
     FocusScope.of(context).unfocus();
     final q = query ?? _searchController.text.trim();
-    context.pushListing(query: q.isEmpty ? null : q);
+    context.goClientSearch(query: q.isEmpty ? null : q);
   }
 
   String? _avatarUrlFromUser(User? user) {
@@ -145,14 +146,14 @@ class _ConnectedClientHome extends StatelessWidget {
       _ => (currentUser.userMetadata?['full_name'] as String?) ?? '',
     };
 
-    final greeting = DiscoveryStrings.homeClientGreeting(displayName);
+    final greeting = DiscHome.greeting(displayName);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       children: [
         ClientHomeHeader(
           greetingLine: greeting,
-          subtitle: DiscoveryStrings.homeClientDiscoveryLine,
+          subtitle: DiscHome.taglineDiscovery,
           displayName: displayName,
           email: email,
           avatarUrl: avatarUrl,
@@ -163,6 +164,10 @@ class _ConnectedClientHome extends StatelessWidget {
                 if (!context.mounted) return;
                 context.goPrestataire();
               }
+              if (value == 'async-state-test') {
+                if (!context.mounted) return;
+                context.pushAsyncStateTest();
+              }
               if (value == 'signout') {
                 await onSignOut();
               }
@@ -172,6 +177,11 @@ class _ConnectedClientHome extends StatelessWidget {
                 value: 'prestataire',
                 child: Text(ShellStrings.openPrestataireSpace),
               ),
+              if (kDebugMode)
+                const PopupMenuItem(
+                  value: 'async-state-test',
+                  child: Text('Tester loading / data / error'),
+                ),
               PopupMenuItem(
                 value: 'signout',
                 child: Text(ShellStrings.accountActionSignOut),
@@ -190,19 +200,16 @@ class _ConnectedClientHome extends StatelessWidget {
         const SizedBox(height: 20),
         AppTextField(
           controller: searchController,
-          hint: DiscoveryStrings.homeClientSearchHint,
+          hint: DiscHome.hintSearch,
           textInputAction: TextInputAction.search,
           prefixIcon: Icon(
             Icons.search,
             color: theme.colorScheme.onSurfaceVariant,
           ),
           suffixIcon: IconButton(
-            tooltip: DiscoveryStrings.homeClientSearchAction,
+            tooltip: DiscHome.actionSearch,
             onPressed: onSubmitSearch,
-            icon: Icon(
-              Icons.arrow_forward,
-              color: theme.colorScheme.primary,
-            ),
+            icon: Icon(Icons.arrow_forward, color: theme.colorScheme.primary),
           ),
           onSubmitted: (_) => onSubmitSearch(),
         ),
@@ -241,9 +248,7 @@ class _ConnectedClientHome extends StatelessWidget {
           children: [
             Icon(
               switch (isOnlineAsync) {
-                AsyncData(:final value) => value
-                    ? Icons.wifi
-                    : Icons.wifi_off,
+                AsyncData(:final value) => value ? Icons.wifi : Icons.wifi_off,
                 _ => Icons.wifi,
               },
               size: 18,
@@ -253,9 +258,10 @@ class _ConnectedClientHome extends StatelessWidget {
             Expanded(
               child: Text(
                 switch (isOnlineAsync) {
-                  AsyncData(:final value) => value
-                      ? ShellStrings.networkStatusOnline
-                      : ShellStrings.networkStatusOffline,
+                  AsyncData(:final value) =>
+                    value
+                        ? ShellStrings.networkStatusOnline
+                        : ShellStrings.networkStatusOffline,
                   _ => ShellStrings.networkStatusOnline,
                 },
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -310,29 +316,24 @@ class _GuestFallback extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(
-                switch (isOnlineAsync) {
-                  AsyncData(:final value) => value
+              child: Text(switch (isOnlineAsync) {
+                AsyncData(:final value) =>
+                  value
                       ? ShellStrings.networkStatusOnline
                       : ShellStrings.networkStatusOffline,
-                  _ => ShellStrings.networkStatusOnline,
-                },
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+                _ => ShellStrings.networkStatusOnline,
+              }, style: Theme.of(context).textTheme.bodyMedium),
             ),
           ),
           const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(
-                switch (cachedEmailAsync) {
-                  AsyncData(:final value) when value != null =>
-                    '${ShellStrings.accountCachedEmailPrefix} $value',
-                  _ => '${ShellStrings.accountCachedEmailPrefix} —',
-                },
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              child: Text(switch (cachedEmailAsync) {
+                AsyncData(:final value) when value != null =>
+                  '${ShellStrings.accountCachedEmailPrefix} $value',
+                _ => '${ShellStrings.accountCachedEmailPrefix} —',
+              }, style: Theme.of(context).textTheme.bodyMedium),
             ),
           ),
           const Spacer(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/constants/app_strings.dart';
 import 'router/app_router.dart';
@@ -21,6 +22,9 @@ class MadBeautyApp extends ConsumerWidget {
           themeMode: ThemeMode.system,
           theme: AppTheme.light(area),
           darkTheme: AppTheme.dark(area),
+          locale: const Locale('fr', 'FR'),
+          supportedLocales: const [Locale('fr', 'FR')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
           routerConfig: router,
         );
       },
