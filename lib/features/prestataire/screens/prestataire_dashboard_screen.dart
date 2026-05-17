@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../auth/widgets/role_switch_section.dart';
 import '../../../router/app_router.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../providers/current_prestataire_provider.dart';
+import '../logic/prestataire_profile_completeness.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 
@@ -28,8 +30,7 @@ class PrestataireDashboardScreen extends ConsumerWidget {
       body: async.when(
         data: (data) {
           final currentName = currentPrestataire?.nomSalon?.trim();
-          final hasProfile =
-              currentPrestataire != null || data.prestataireId != null;
+          final hasProfile = data.isProfessionallyComplete;
           final title = currentName != null && currentName.isNotEmpty
               ? currentName
               : data.nomSalon.trim().isNotEmpty
@@ -80,7 +81,9 @@ class PrestataireDashboardScreen extends ConsumerWidget {
                   DiscPrestaDash.editProfile,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              const RoleSwitchSection(sectionTitle: DiscNav.profileSpace),
+              const SizedBox(height: 16),
               _DashboardMetricGrid(
                 city: currentPrestataire?.ville ?? data.ville,
                 specialtiesCount: data.selectedCategoryIds.length,

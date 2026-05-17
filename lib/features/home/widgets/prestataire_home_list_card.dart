@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../core/geo/discovery_reference.dart';
+import '../../../core/geo/geo_point.dart';
 import '../../../core/geo/geo_utils.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
@@ -12,11 +12,13 @@ class PrestataireHomeListCard extends StatelessWidget {
   const PrestataireHomeListCard({
     super.key,
     required this.profile,
-    this.showDistanceFromReference = false,
+    this.distanceOrigin,
   });
 
   final PrestataireProfile profile;
-  final bool showDistanceFromReference;
+
+  /// Si fourni et que le profil a des coordonnées, affiche la distance.
+  final GeoPoint? distanceOrigin;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +28,11 @@ class PrestataireHomeListCard extends StatelessWidget {
     final ville = profile.ville?.trim();
     final la = profile.latitude;
     final lo = profile.longitude;
-    final km = showDistanceFromReference && la != null && lo != null
+    final origin = distanceOrigin;
+    final km = origin != null && la != null && lo != null
         ? haversineDistanceKm(
-            lat1: kDiscoveryReferenceLatitude,
-            lon1: kDiscoveryReferenceLongitude,
+            lat1: origin.latitude,
+            lon1: origin.longitude,
             lat2: la,
             lon2: lo,
           )

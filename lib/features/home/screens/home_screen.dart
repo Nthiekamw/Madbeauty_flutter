@@ -8,6 +8,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../models/home_profile_snapshot.dart';
 import '../providers/home_profile_provider.dart';
 import '../widgets/client_home_explore_row.dart';
@@ -96,6 +97,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (!ok || !mounted) return;
                   await ref.read(authNotifierProvider.notifier).signOut();
                 },
+                onOpenPrestataireSpace: () =>
+                    PrestataireNavigation.openSpace(context, ref),
               )
             : _GuestFallback(
                 isOnlineAsync: isOnlineAsync,
@@ -122,6 +125,7 @@ class _ConnectedClientHome extends StatelessWidget {
     required this.currentUser,
     required this.avatarUrl,
     required this.onSignOut,
+    required this.onOpenPrestataireSpace,
   });
 
   final TextEditingController searchController;
@@ -132,6 +136,7 @@ class _ConnectedClientHome extends StatelessWidget {
   final User currentUser;
   final String? avatarUrl;
   final Future<void> Function() onSignOut;
+  final Future<void> Function() onOpenPrestataireSpace;
 
   @override
   Widget build(BuildContext context) {
@@ -161,8 +166,7 @@ class _ConnectedClientHome extends StatelessWidget {
             icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurface),
             onSelected: (value) async {
               if (value == 'prestataire') {
-                if (!context.mounted) return;
-                context.goPrestataire();
+                await onOpenPrestataireSpace();
               }
               if (value == 'async-state-test') {
                 if (!context.mounted) return;
@@ -345,7 +349,7 @@ class _GuestFallback extends StatelessWidget {
           const SizedBox(height: 12),
           AppButton(
             variant: AppButtonVariant.secondary,
-            onPressed: context.goPrestataire,
+            onPressed: context.pushRegister,
             child: Text(ShellStrings.openPrestataireSpace),
           ),
           if (AppConfig.hasSupabase) ...[

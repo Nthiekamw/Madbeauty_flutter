@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../features/auth/logic/auth_role_cache.dart';
 import '../features/auth/forgot_password/routes/forgot_password_route.dart';
+import '../features/auth/onboarding/screens/onboarding_screen.dart';
 import '../features/auth/login/routes/login_route.dart';
+import '../features/auth/welcome/screens/auth_welcome_screen.dart';
 import '../features/auth/providers/auth_notifier.dart';
 import '../features/auth/providers/password_recovery_provider.dart';
 import '../features/auth/register/routes/register_route.dart';
@@ -18,16 +22,18 @@ import '../features/prestataire/screens/prestataire_agenda_screen.dart';
 import '../features/prestataire/screens/prestataire_dashboard_screen.dart';
 import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
+import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/splash/screens/startup_splash_screen.dart';
-import '../services/storage/local_cache_service.dart';
 import 'shell/client_shell_scaffold.dart';
 import 'shell/prestataire_shell_scaffold.dart';
 import 'shell/shell_route_pages.dart';
 
 abstract final class AppRoutes {
   static const String splash = '/splash';
+  static const String onboarding = '/onboarding';
+  static const String welcome = '/welcome';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
@@ -37,6 +43,7 @@ abstract final class AppRoutes {
   static const String booking = '/booking';
   static const String bookingConfirmation = '/booking/confirmation';
   static const String asyncStateTest = '/test/async-states';
+  static const String becomePrestataire = '/become-prestataire';
 
   static const String clientHome = '/client/home';
   static const String clientSearch = '/client/search';
@@ -56,6 +63,8 @@ abstract final class AppRoutes {
 
 abstract final class AppRouteNames {
   static const String splash = 'splash';
+  static const String onboarding = 'onboarding';
+  static const String welcome = 'welcome';
   static const String login = 'login';
   static const String register = 'register';
   static const String forgotPassword = 'forgot-password';
@@ -65,6 +74,7 @@ abstract final class AppRouteNames {
   static const String booking = 'booking';
   static const String bookingConfirmation = 'booking-confirmation';
   static const String asyncStateTest = 'async-state-test';
+  static const String becomePrestataire = 'become-prestataire';
 
   static const String clientHome = 'client-home';
   static const String clientSearch = 'client-search';
@@ -97,32 +107,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final location = state.matchedLocation;
       final publicRoutes = <String>{
         AppRoutes.splash,
+        AppRoutes.onboarding,
+        AppRoutes.welcome,
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.forgotPassword,
         AppRoutes.resetPassword,
-        AppRoutes.asyncStateTest,
+        if (kDebugMode) AppRoutes.asyncStateTest,
       };
       final guestOnlyRoutes = <String>{
+        AppRoutes.welcome,
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.forgotPassword,
       };
-      final requiresAuth = !publicRoutes.contains(location);
 
-      final selectedRole = LocalCacheService.instance.selectedRole;
-      final preferredPath = switch (selectedRole) {
-        'prestataire' => AppRoutes.prestataireDashboard,
-        'client' => AppRoutes.clientHome,
-        _ => AppRoutes.role,
-      };
+      final preferredPath = AuthRoleCache.preferredAuthenticatedPath();
+      final effectiveRole = AuthRoleCache.preferredAuthenticatedRole();
 
       String? legacyRedirect() {
         return switch (location) {
           AppRoutes.home => preferredPath,
           AppRoutes.listing => AppRoutes.clientSearch,
           AppRoutes.myReservations => AppRoutes.clientReservations,
-          AppRoutes.prestataire when selectedRole == 'prestataire' =>
+          AppRoutes.prestataire when effectiveRole == 'prestataire' =>
             AppRoutes.prestataireProfile,
           AppRoutes.prestataire => AppRoutes.clientHome,
           _ => null,
@@ -148,12 +156,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (user == null) {
-        if (location == AppRoutes.splash) return AppRoutes.login;
-        if (requiresAuth) return AppRoutes.login;
-        return null;
+        if (publicRoutes.contains(location)) return null;
+        return AppRoutes.welcome;
       }
 
-      if (location == AppRoutes.splash || guestOnlyRoutes.contains(location)) {
+      if (location == AppRoutes.splash ||
+          location == AppRoutes.onboarding ||
+          location == AppRoutes.welcome ||
+          guestOnlyRoutes.contains(location)) {
         return preferredPath;
       }
 
@@ -164,6 +174,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.splash,
         path: AppRoutes.splash,
         builder: (context, state) => const StartupSplashScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.onboarding,
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.welcome,
+        path: AppRoutes.welcome,
+        builder: (context, state) => const AuthWelcomeScreen(),
       ),
       GoRoute(
         name: AppRouteNames.login,
@@ -189,6 +209,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.role,
         path: AppRoutes.role,
         builder: (context, state) => const RoleChoiceScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.becomePrestataire,
+        path: AppRoutes.becomePrestataire,
+        builder: (context, state) => const BecomePrestataireScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',

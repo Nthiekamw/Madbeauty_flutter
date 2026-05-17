@@ -12,8 +12,10 @@ abstract final class DiscHome {
       'Un tap pour ouvrir le listing avec ce thème.';
 
   static const nearbyTitle = 'Prestataires proches';
-  static const nearbySub =
-      'Tri par distance (référence Paris) — ta position remplacera ce repère plus tard.';
+  static const nearbySubWithLocation =
+      'Triés par distance depuis ta position (rayon 50 km).';
+  static const nearbySubNoLocation =
+      'Active la localisation pour voir les pros autour de toi. En attendant, tri depuis Paris.';
   static const nearbyEmptyTitle = 'Aucun prestataire proche';
   static const nearbyEmptyBody =
       'Aucun profil ne correspond encore : base vide ou personne n’a renseigné sa position. '

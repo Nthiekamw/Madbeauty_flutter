@@ -7,6 +7,7 @@ import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/widgets/app_avatar.dart';
+import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../providers/prestataire_detail_provider.dart';
 
 /// Fiche publique d’un prestataire (catalogue client).
@@ -18,6 +19,11 @@ class PrestataireDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(prestataireDetailProvider(prestataireId));
+    final isOwnAsync = ref.watch(isOwnPrestataireProfileProvider(prestataireId));
+    final isOwnProfile = isOwnAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => false,
+    );
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -48,8 +54,13 @@ class PrestataireDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               _TrustHighlights(isVerified: data.profile.isVerified),
+              if (isOwnProfile) ...[
+                const SizedBox(height: 16),
+                const _OwnProfileBookingBanner(),
+              ],
               const SizedBox(height: 16),
               _PrimaryActions(
+                canBook: !isOwnProfile,
                 onBook: () =>
                     context.pushBooking(prestataireId: data.profile.id),
               ),
@@ -98,18 +109,21 @@ class PrestataireDetailScreen extends ConsumerWidget {
                 for (final service in data.services)
                   _ServiceCard(
                     service: service,
+                    canBook: !isOwnProfile,
                     onBook: () => context.pushBooking(
                       prestataireId: data.profile.id,
                       serviceId: service.id,
                     ),
                   ),
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  onPressed: () =>
-                      context.pushBooking(prestataireId: data.profile.id),
-                  icon: const Icon(Icons.calendar_month_outlined),
-                  label: const Text(DiscPrestaDetail.actionBook),
-                ),
+                if (!isOwnProfile) ...[
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        context.pushBooking(prestataireId: data.profile.id),
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text(DiscPrestaDetail.actionBook),
+                  ),
+                ],
               ],
               const SizedBox(height: 24),
               const _SectionTitle(
@@ -357,10 +371,44 @@ class _TrustChip extends StatelessWidget {
   }
 }
 
+class _OwnProfileBookingBanner extends StatelessWidget {
+  const _OwnProfileBookingBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: theme.colorScheme.onSecondaryContainer,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                DiscPrestaDetail.ownProfileBookHint,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PrimaryActions extends StatelessWidget {
-  const _PrimaryActions({required this.onBook});
+  const _PrimaryActions({required this.onBook, required this.canBook});
 
   final VoidCallback onBook;
+  final bool canBook;
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +416,7 @@ class _PrimaryActions extends StatelessWidget {
       children: [
         Expanded(
           child: FilledButton.icon(
-            onPressed: onBook,
+            onPressed: canBook ? onBook : null,
             icon: const Icon(Icons.calendar_month_outlined),
             label: const Text(DiscPrestaDetail.actionBook),
           ),
@@ -403,10 +451,15 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({required this.service, required this.onBook});
+  const _ServiceCard({
+    required this.service,
+    required this.onBook,
+    required this.canBook,
+  });
 
   final ServiceBeaute service;
   final VoidCallback onBook;
+  final bool canBook;
 
   @override
   Widget build(BuildContext context) {
@@ -449,7 +502,7 @@ class _ServiceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 FilledButton.tonal(
-                  onPressed: onBook,
+                  onPressed: canBook ? onBook : null,
                   child: const Text(
                     DiscPrestaDetail.actionBookSvc,
                   ),

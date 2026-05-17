@@ -24,6 +24,11 @@ final class BookingNotAuthenticatedFailure extends BookingCreateFailure {
       : super(DiscBk.errNeedLogin);
 }
 
+final class BookingCannotReserveOwnServiceFailure extends BookingCreateFailure {
+  const BookingCannotReserveOwnServiceFailure()
+      : super(DiscBk.cannotBookOwnShort);
+}
+
 /// Liste de réservations demandée avec un clientId différent du compte connecté.
 final class BookingForbiddenLookupFailure extends AppFailure {
   const BookingForbiddenLookupFailure()

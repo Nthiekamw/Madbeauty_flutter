@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../location/location_providers.dart';
 import '../../profile/profile_providers.dart';
 import '../../storage/storage_providers.dart';
 import '../../supabase_service.dart';
@@ -26,5 +27,6 @@ final prestataireProfileFormServiceProvider =
         serviceBeauteService: serviceBeauteService,
         profileService: profileService,
         storageService: storageService,
+        geocodingService: ref.watch(geocodingServiceProvider),
       );
     });

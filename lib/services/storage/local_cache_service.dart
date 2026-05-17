@@ -6,6 +6,8 @@ class LocalCacheService {
   static const String lastSignedInEmailKey = 'auth.last_signed_in_email';
   static const String profileSnapshotKey = 'profile.snapshot';
   static const String selectedRoleKey = 'auth.selected_role';
+  static const String cachedServerRolesKey = 'auth.cached_server_roles';
+  static const String onboardingCompletedKey = 'app.onboarding_completed';
 
   static LocalCacheService? _instance;
 
@@ -37,4 +39,21 @@ class LocalCacheService {
   Future<bool> setSelectedRole(String role) => setString(selectedRoleKey, role);
 
   Future<bool> clearSelectedRole() => remove(selectedRoleKey);
+
+  List<String> get cachedServerRoles {
+    final raw = getString(cachedServerRolesKey);
+    if (raw == null || raw.isEmpty) return const [];
+    return raw.split(',').where((r) => r.isNotEmpty).toList();
+  }
+
+  Future<bool> setCachedServerRoles(List<String> roles) =>
+      setString(cachedServerRolesKey, roles.join(','));
+
+  Future<bool> clearCachedServerRoles() => remove(cachedServerRolesKey);
+
+  bool get onboardingCompleted =>
+      _prefs.getBool(onboardingCompletedKey) ?? false;
+
+  Future<bool> setOnboardingCompleted({bool value = true}) =>
+      _prefs.setBool(onboardingCompletedKey, value);
 }

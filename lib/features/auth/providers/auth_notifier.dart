@@ -74,6 +74,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await LocalCacheService.instance.remove(LocalCacheService.lastSignedInEmailKey);
     await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
     await LocalCacheService.instance.clearSelectedRole();
+    await LocalCacheService.instance.clearCachedServerRoles();
   }
 
   Future<User?> _readInitialUser() async {
@@ -153,14 +154,23 @@ class AuthNotifier extends AsyncNotifier<User?> {
     required String email,
     required String password,
     required String displayName,
+    String? prenom,
+    String? nom,
+    String? phone,
   }) async {
     if (!ref.read(authSupabaseEnabledProvider)) return;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final meta = <String, dynamic>{
+        'full_name': displayName,
+        if ((prenom ?? '').trim().isNotEmpty) 'prenom': prenom!.trim(),
+        if ((nom ?? '').trim().isNotEmpty) 'nom': nom!.trim(),
+        if ((phone ?? '').trim().isNotEmpty) 'phone': phone!.trim(),
+      };
       final response = await _auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': displayName},
+        data: meta,
         emailRedirectTo: AppConfig.authEmailRedirectTo,
       );
       final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;

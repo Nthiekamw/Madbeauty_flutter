@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../router/app_router.dart';
+import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../providers/auth_notifier.dart';
 import '../models/login_view_state.dart';
@@ -21,15 +23,11 @@ class LoginRoute extends ConsumerStatefulWidget {
 class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _phoneController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -38,23 +36,6 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     await ref.read(loginControllerProvider.notifier).submit(
           rawEmail: _emailController.text,
           rawPassword: _passwordController.text,
-        );
-  }
-
-  Future<void> _sendOtp() async {
-    FocusScope.of(context).unfocus();
-    await ref.read(loginControllerProvider.notifier).sendOtp(
-          rawEmail: _emailController.text,
-          rawPhone: _phoneController.text,
-        );
-  }
-
-  Future<void> _verifyOtp() async {
-    FocusScope.of(context).unfocus();
-    await ref.read(loginControllerProvider.notifier).verifyOtp(
-          rawEmail: _emailController.text,
-          rawPhone: _phoneController.text,
-          rawOtp: _otpController.text,
         );
   }
 
@@ -81,7 +62,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       }
       if (next.shouldPopRoute) {
         if (context.mounted) {
-          context.goRoleChoice();
+          PostAuthNavigation.navigate(context, ref);
         }
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
       }
@@ -95,32 +76,21 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
 
     return LoginPage(
       showSupabaseConfigCard: !AppConfig.hasSupabase,
-      authMethod: loginUi.authMethod,
-      onAuthMethodChanged:
-          ref.read(loginControllerProvider.notifier).setAuthMethod,
       emailController: _emailController,
       passwordController: _passwordController,
-      phoneController: _phoneController,
-      otpController: _otpController,
       emailError: loginUi.emailError,
       passwordError: loginUi.passwordError,
-      phoneError: loginUi.phoneError,
-      otpError: loginUi.otpError,
       submitError: loginUi.submitError,
-      otpCodeSent: loginUi.otpCodeSent,
       isLoading: isLoading,
       formEnabled: formEnabled,
-      onBack: () => context.canPop() ? context.pop() : context.goHome(),
+      onBack: () =>
+          context.canPop() ? context.pop() : context.goNamed(AppRouteNames.welcome),
       onSubmitPassword: _submitPassword,
-      onSendOtp: _sendOtp,
-      onVerifyOtp: _verifyOtp,
       onOpenRegister: context.pushRegister,
       onPasswordFieldSubmitted: _submitPassword,
       onEmailChanged: ref.read(loginControllerProvider.notifier).onEmailChanged,
       onPasswordChanged:
           ref.read(loginControllerProvider.notifier).onPasswordChanged,
-      onPhoneChanged: ref.read(loginControllerProvider.notifier).onPhoneChanged,
-      onOtpChanged: ref.read(loginControllerProvider.notifier).onOtpChanged,
       onGoogle: _google,
       onForgotPassword: context.pushForgotPassword,
     );

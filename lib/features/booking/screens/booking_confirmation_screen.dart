@@ -12,6 +12,7 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../prestataire/providers/prestataire_detail_provider.dart';
+import '../providers/is_own_prestataire_profile_provider.dart';
 import '../logic/booking_create_failure.dart';
 import '../logic/booking_formatters.dart';
 import '../widgets/booking_message.dart';
@@ -62,6 +63,13 @@ class _BookingConfirmationScreenState
 
     final prestataireAsync = ref.watch(
       prestataireDetailProvider(widget.prestataireId),
+    );
+    final isOwnAsync = ref.watch(
+      isOwnPrestataireProfileProvider(widget.prestataireId),
+    );
+    final isOwnProfile = isOwnAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => false,
     );
 
     return Scaffold(
@@ -208,11 +216,20 @@ class _BookingConfirmationScreenState
                   ),
                 ),
               ],
+              if (isOwnProfile) ...[
+                const SizedBox(height: 12),
+                BookingMessage(
+                  icon: Icons.person_outline,
+                  title: DiscBk.cannotBookOwnTitle,
+                  message: DiscBk.cannotBookOwnBody,
+                ),
+              ],
               const SizedBox(height: 20),
               AppButton(
                 isLoading: _isSubmitting,
-                enabled: !_isSubmitting,
-                onPressed: _isSubmitting ? null : _confirm,
+                enabled: !_isSubmitting && !isOwnProfile,
+                onPressed:
+                    _isSubmitting || isOwnProfile ? null : _confirm,
                 child: const Text(DiscBk.recapCta),
               ),
             ],

@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/geo/geo_point.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
+import '../../listing/providers/discovery_origin_provider.dart';
 import '../../listing/providers/listing_catalog_provider.dart';
 import '../models/prestataires_filter_state.dart';
 import 'prestataire_filters_provider.dart';
@@ -28,15 +30,17 @@ final prestatairesFilteredProvider =
     Provider<AsyncValue<List<PrestataireCatalogEntry>>>((ref) {
       final asyncList = ref.watch(prestatairesListProvider);
       final filters = ref.watch(prestatairesFilterProvider);
+      final origin = ref.watch(discoveryOriginProvider);
       return asyncList.whenData(
-        (entries) => filterPrestataireEntries(entries, filters),
+        (entries) => filterPrestataireEntries(entries, filters, origin: origin),
       );
     });
 
 List<PrestataireCatalogEntry> filterPrestataireEntries(
   List<PrestataireCatalogEntry> entries,
-  PrestatairesFilterState filters,
-) {
+  PrestatairesFilterState filters, {
+  required GeoPoint origin,
+}) {
   final list = entries
       .where((e) => e.matchesSearch(filters.query))
       .where((e) => e.matchesCategoryFilter(filters.categoryId))
@@ -46,7 +50,7 @@ List<PrestataireCatalogEntry> filterPrestataireEntries(
     case PrestatairesSort.rating:
       list.sort(_compareByRating);
     case PrestatairesSort.distance:
-      list.sort(_compareByDistance);
+      list.sort((a, b) => _compareByDistance(a, b, origin));
   }
 
   return list;
@@ -61,9 +65,13 @@ int _compareByRating(PrestataireCatalogEntry a, PrestataireCatalogEntry b) {
   return b.profile.createdAt.compareTo(a.profile.createdAt);
 }
 
-int _compareByDistance(PrestataireCatalogEntry a, PrestataireCatalogEntry b) {
-  final da = a.sortDistanceKm;
-  final db = b.sortDistanceKm;
+int _compareByDistance(
+  PrestataireCatalogEntry a,
+  PrestataireCatalogEntry b,
+  GeoPoint origin,
+) {
+  final da = a.distanceKmFrom(origin);
+  final db = b.distanceKmFrom(origin);
   final aInf = da.isInfinite;
   final bInf = db.isInfinite;
   if (aInf && bInf) return 0;

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../auth/widgets/role_switch_section.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../router/app_router.dart';
 import '../../../router/navigation_extensions.dart';
@@ -322,7 +323,12 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       body: async.when(
         data: (data) {
           _hydrate(data);
-          return _PrestataireProfileForm(
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const RoleSwitchSection(sectionTitle: DiscNav.profileSpace),
+              Expanded(
+                child: _PrestataireProfileForm(
             data: data,
             currentStep: _currentStep,
             saving: _saving,
@@ -365,6 +371,9 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             onAddService: _addService,
             onRemoveService: _removeService,
             onServicesChanged: () => setState(() => _servicesError = null),
+                ),
+              ),
+            ],
           );
         },
         error: (_, __) => PrestataireProfileLoadError(

@@ -5,6 +5,8 @@ import 'app_router.dart';
 
 extension AppNavigationX on BuildContext {
   void goSplash() => goNamed(AppRouteNames.splash);
+  void goOnboarding() => goNamed(AppRouteNames.onboarding);
+  void goWelcome() => goNamed(AppRouteNames.welcome);
   void goHome() => goNamed(AppRouteNames.clientHome);
   void goClientSearch({String? query}) {
     final q = query?.trim();
@@ -36,6 +38,7 @@ extension AppNavigationX on BuildContext {
   void goPrestataireAgenda() => goNamed(AppRouteNames.prestataireAgenda);
   void goPrestataireProfile() => goNamed(AppRouteNames.prestataireProfile);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
+  void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void goMyReservations() => goNamed(AppRouteNames.clientReservations);
 
   void goBooking({String? prestataireId, String? serviceId}) {

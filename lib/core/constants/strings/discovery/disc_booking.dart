@@ -85,6 +85,11 @@ abstract final class DiscBk {
       'Impossible de confirmer la réservation. Réessaie dans un instant.';
   static const errForbiddenBookingsLookup =
       'Tu ne peux pas consulter les réservations de ce profil.';
+  static const cannotBookOwnTitle = 'Réservation impossible';
+  static const cannotBookOwnBody =
+      'Tu ne peux pas réserver tes propres services. Consulte ta fiche comme les autres clients, mais passe par un autre compte ou un autre prestataire pour réserver.';
+  static const cannotBookOwnShort =
+      'Tu ne peux pas réserver ton propre service.';
   static const errPrestaProfile =
       'Profil prestataire introuvable. Connecte-toi avec le bon compte.';
   static const errResMissing = 'Réservation introuvable.';

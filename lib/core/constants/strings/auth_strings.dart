@@ -4,7 +4,7 @@ abstract final class AuthStrings {
 
   static const String loginTitle = 'Connexion';
   static String get loginDescription =>
-      'Choisis comment te connecter : mot de passe, code e-mail, SMS ou Google.';
+      'Connecte-toi avec ton e-mail et ton mot de passe, ou avec Google.';
   static const String loginActionOpenRegister = 'Créer un compte';
 
   static const String loginMethodPassword = 'Mot de passe';
@@ -78,4 +78,70 @@ abstract final class AuthStrings {
 
   static const String authEmailNotConfirmed =
       'Ton e-mail n’est pas encore confirmé. Vérifie ta boîte mail et clique sur le lien de confirmation.';
+
+  static const String onboardingSkip = 'Passer';
+  static const String onboardingCtaNext = 'Suivant';
+  static const String onboardingCtaEnd = 'C’est parti';
+  static const String onboardingPage1Title = 'MadBeauty près de toi';
+  static const String onboardingPage1Body =
+      'Découvre des professionnels de la beauté autour de toi et réserve en quelques gestes.';
+  static const String onboardingPage2Title = 'Réservation simple';
+  static const String onboardingPage2Body =
+      'Choisis ton service, une date et un créneau : ta demande part directement au prestataire.';
+  static const String onboardingPage3Title = 'Un compte, deux espaces';
+  static const String onboardingPage3Body =
+      'Passe du mode client au mode pro quand tu veux — tout reste dans la même app.';
+
+  static const String welcomeTitle = 'Bienvenue';
+  static const String welcomeSubtitle =
+      'Connecte-toi ou crée un compte pour continuer.';
+  static const String welcomeRegister = 'Inscription';
+  static const String welcomeLogin = 'Connexion';
+
+  static const String registerStepIdentityTitle = 'Tes informations';
+  static const String registerStepRoleTitle = 'Ton profil';
+  static const String registerStepExtrasTitle = 'Détails';
+  static const String registerFieldPrenom = 'Prénom';
+  static const String registerFieldNom = 'Nom';
+  static const String registerFieldPhone = 'Téléphone';
+  static const String registerFieldConfirmPassword =
+      'Confirmer le mot de passe';
+  static const String registerValidationPrenomEmpty = 'Saisis ton prénom.';
+  static const String registerValidationNomEmpty = 'Saisis ton nom.';
+  static const String registerValidationPhoneEmpty = 'Saisis ton téléphone.';
+  static const String registerValidationPasswordMismatch =
+      'Les mots de passe ne correspondent pas.';
+  static const String registerChooseClient = 'Je suis client';
+  static const String registerChoosePresta = 'Je suis prestataire';
+  static const String registerFieldAdresse = 'Adresse (optionnel)';
+  static const String registerFieldSalon = 'Nom du salon / activité';
+  static const String registerFieldVille = 'Ville';
+  static const String registerFieldBioPresta = 'Bio (optionnel)';
+  static const String registerWizardSubmit = 'Créer mon compte';
+  static const String registerWizardNext = 'Continuer';
+  static const String registerOrDivider = 'ou';
+  static const String registerActionGoogle = 'Continuer avec Google';
+  static const String registerGooglePhoneHint =
+      'Google ne fournit pas ton numéro : renseigne-le pour finaliser ton compte.';
+
+  static const String loginPasswordTabEmail = 'E-mail';
+  static const String loginPasswordTabPhone = 'Téléphone';
+  static const String loginPasswordPhoneSoon =
+      'La connexion avec le téléphone et le mot de passe arrive bientôt. Utilise pour l’instant l’e-mail de ton compte.';
+  static const String loginMethodOtpLater =
+      'Connexion par code (e-mail / SMS) — à venir';
+
+  static const String profileBecomePresta = 'Devenir prestataire';
+  static const String profileSwitchToPresta = 'Espace prestataire';
+  static const String profileSwitchToClient = 'Espace client';
+  static const String profileDualRoleHint =
+      'Tu as un profil client et un profil prestataire : choisis l’espace à afficher.';
+
+  static const String becomePrestaStep1Title =
+      'Étape 1 — Ton activité';
+  static const String becomePrestaStep1Body =
+      'Indique le nom de ton salon ou activité et ta ville. '
+      'Tu compléteras ensuite photo, spécialités et services.';
+  static const String becomePrestaStep1Submit =
+      'Continuer vers le profil complet';
 }

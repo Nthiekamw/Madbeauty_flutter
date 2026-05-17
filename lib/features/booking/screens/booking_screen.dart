@@ -11,6 +11,7 @@ import '../providers/booking_selection_provider.dart';
 import '../providers/booking_services_provider.dart';
 import '../providers/booked_slots_provider.dart';
 import '../widgets/booking_message.dart';
+import '../providers/is_own_prestataire_profile_provider.dart';
 import '../widgets/booking_step_one_content.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
@@ -40,6 +41,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final prestataireId = widget.prestataireId?.trim();
     final selection = ref.watch(bookingSelectionProvider);
     final availabilityRules = ref.watch(bookingAvailabilityRulesProvider);
+    final isOwnAsync = prestataireId == null || prestataireId.isEmpty
+        ? null
+        : ref.watch(isOwnPrestataireProfileProvider(prestataireId));
 
     return Scaffold(
       appBar: AppBar(title: const Text(DiscNav.bookingFlowTitle)),
@@ -49,7 +53,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               title: DiscBk.missingPrestaTitle,
               message: DiscBk.missingPrestaBody,
             )
-          : ref
+          : switch (isOwnAsync) {
+              AsyncLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              AsyncData(:final value) when value => const BookingMessage(
+                icon: Icons.person_outline,
+                title: DiscBk.cannotBookOwnTitle,
+                message: DiscBk.cannotBookOwnBody,
+              ),
+              _ => ref
                 .watch(bookingActiveServicesProvider(prestataireId))
                 .when(
                   loading: () =>
@@ -112,6 +125,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     );
                   },
                 ),
+            },
     );
   }
 

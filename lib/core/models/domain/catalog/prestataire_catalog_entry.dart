@@ -1,4 +1,4 @@
-import '../../../geo/discovery_reference.dart';
+import '../../../geo/geo_point.dart';
 import '../../../geo/geo_utils.dart';
 import '../user/prestataire_profile.dart';
 
@@ -22,14 +22,14 @@ class PrestataireCatalogEntry {
   /// Identifiants [categories_service.id] liés via [prestataire_specialites].
   final List<String> specialtyCategoryIds;
 
-  /// Distance depuis le repère « découverte » (Paris) ; [double.infinity] si sans GPS.
-  double get sortDistanceKm {
+  /// Distance depuis [origin] ; [double.infinity] si le profil n’a pas de coordonnées.
+  double distanceKmFrom(GeoPoint origin) {
     final la = profile.latitude;
     final lo = profile.longitude;
     if (la == null || lo == null) return double.infinity;
     return haversineDistanceKm(
-      lat1: kDiscoveryReferenceLatitude,
-      lon1: kDiscoveryReferenceLongitude,
+      lat1: origin.latitude,
+      lon1: origin.longitude,
       lat2: la,
       lon2: lo,
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../listing/providers/discovery_origin_provider.dart';
 import '../providers/nearby_prestataires_provider.dart';
 import 'prestataire_catalog_section_empty.dart';
 import 'prestataire_home_list_card.dart';
@@ -14,6 +15,8 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(nearbyPrestatairesProvider);
+    final origin = ref.watch(discoveryOriginProvider);
+    final usesClientLocation = ref.watch(discoveryUsesClientLocationProvider);
     final theme = Theme.of(context);
 
     return Column(
@@ -27,7 +30,9 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          DiscHome.nearbySub,
+          usesClientLocation
+              ? DiscHome.nearbySubWithLocation
+              : DiscHome.nearbySubNoLocation,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -48,7 +53,7 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       return PrestataireHomeListCard(
                         profile: value[index],
-                        showDistanceFromReference: true,
+                        distanceOrigin: origin,
                       );
                     },
                   ),

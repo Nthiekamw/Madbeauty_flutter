@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/service_category.dart';
+import '../../../location/geocoding_service.dart';
 import '../../profile/profile_service.dart';
 import '../../storage/storage_service.dart';
 import '../catalog/prestataire_filters.dart';
@@ -85,17 +86,20 @@ class PrestataireProfileFormService {
     required ServiceBeauteService serviceBeauteService,
     required ProfileService profileService,
     required StorageService storageService,
+    required GeocodingService geocodingService,
   }) : _client = client,
        _prestataireService = prestataireService,
        _serviceBeauteService = serviceBeauteService,
        _profileService = profileService,
-       _storageService = storageService;
+       _storageService = storageService,
+       _geocodingService = geocodingService;
 
   final SupabaseClient _client;
   final PrestataireService _prestataireService;
   final ServiceBeauteService _serviceBeauteService;
   final ProfileService _profileService;
   final StorageService _storageService;
+  final GeocodingService _geocodingService;
 
   Future<PrestataireProfileFormData> fetch() => SupabaseErrorHandler.run(
     operation: 'prestataireProfileForm.fetch',
@@ -172,12 +176,16 @@ class PrestataireProfileFormService {
         );
       }
 
+      final coords = await _geocodingService.geocodeAddress(payload.ville);
+
       final prestataireId = await _prestataireService.upsert(
         PrestataireUpsertData(
           userId: user.id,
           nomSalon: payload.nomSalon,
           bio: payload.bio,
           ville: payload.ville,
+          latitude: coords?.latitude,
+          longitude: coords?.longitude,
         ),
       );
 

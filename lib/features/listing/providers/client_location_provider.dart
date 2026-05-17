@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../services/location/geolocation_service.dart';
+import '../../../services/location/location_providers.dart';
 
-final geolocationServiceProvider = Provider<GeolocationService>((ref) {
-  return GeolocationService();
-});
+export '../../../services/location/location_providers.dart'
+    show ClientLocation, geocodingServiceProvider, geolocationServiceProvider;
 
 final clientLocationProvider = FutureProvider.autoDispose<ClientLocation?>((
   ref,
