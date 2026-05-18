@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 
-const _green      = Color(0xFF2D7A4F);
-const _greenLight = Color(0xFFE8F5EE);
+const _brown      = Color(0xFF8B6340);
+const _brownLight = Color(0xFFF2E8D9);
 const _textDark   = Color(0xFF1A1A1A);
 const _textGrey   = Color(0xFF8E8E93);
 
@@ -37,7 +37,7 @@ class _StepConditionsServiceState extends State<StepConditionsService> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Row(children: [
-        Icon(Icons.description, color: _green, size: 22),
+        Icon(Icons.description, color: _brown, size: 22),
         SizedBox(width: 8),
         Text('Conditions de service',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _textDark)),
@@ -51,8 +51,8 @@ class _StepConditionsServiceState extends State<StepConditionsService> {
       SizedBox(width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: () {},
-          icon: const Icon(Icons.add, color: _green),
-          label: const Text('Ajouter une condition', style: TextStyle(color: _green)),
+          icon: const Icon(Icons.add, color: _brown),
+          label: const Text('Ajouter une condition', style: TextStyle(color: _brown)),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: Color(0xFFE0E0E0)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
@@ -76,11 +76,11 @@ class _StepConditionsServiceState extends State<StepConditionsService> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: sel ? _greenLight : Colors.white,
+              color: sel ? _brownLight : Colors.white,
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: sel ? _green : const Color(0xFFE8E8E8), width: sel ? 2 : 1),
+              border: Border.all(color: sel ? _brown : const Color(0xFFE8E8E8), width: sel ? 2 : 1),
             ),
-            child: Text(c, style: TextStyle(fontSize: 14, color: sel ? _green : _textDark,
+            child: Text(c, style: TextStyle(fontSize: 14, color: sel ? _brown : _textDark,
               fontWeight: sel ? FontWeight.w600 : FontWeight.w400)),
           ),
         );
@@ -115,7 +115,7 @@ class _StepConditionsServiceState extends State<StepConditionsService> {
             child: ElevatedButton(
               onPressed: widget.onSave,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
+                backgroundColor: _brown,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
                 elevation: 0,
               ),

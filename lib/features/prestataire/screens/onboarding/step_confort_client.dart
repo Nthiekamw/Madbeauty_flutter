@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 
-const _green      = Color(0xFF2D7A4F);
-const _greenLight = Color(0xFFE8F5EE);
+const _brown      = Color(0xFF8B6340);
+const _brownLight = Color(0xFFF2E8D9);
 const _textDark   = Color(0xFF1A1A1A);
 const _textGrey   = Color(0xFF8E8E93);
 
@@ -51,7 +51,7 @@ class _StepConfortClientState extends State<StepConfortClient> {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Row(children: [
-        Icon(Icons.favorite_outline, color: _green, size: 22),
+        Icon(Icons.favorite_outline, color: _brown, size: 22),
         SizedBox(width: 8),
         Text('Confort client',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _textDark)),
@@ -82,13 +82,13 @@ class _StepConfortClientState extends State<StepConfortClient> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: sel ? _greenLight : Colors.white,
+                  color: sel ? _brownLight : Colors.white,
                   borderRadius: BorderRadius.circular(50),
-                  border: Border.all(color: sel ? _green : const Color(0xFFE8E8E8), width: sel ? 2 : 1),
+                  border: Border.all(color: sel ? _brown : const Color(0xFFE8E8E8), width: sel ? 2 : 1),
                 ),
                 child: Text(c, textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14,
-                    color: sel ? _green : _textGrey,
+                    color: sel ? _brown : _textGrey,
                     fontWeight: sel ? FontWeight.w700 : FontWeight.w400)),
               ),
             );
@@ -100,15 +100,15 @@ class _StepConfortClientState extends State<StepConfortClient> {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: _greenLight,
+          color: _brownLight,
           borderRadius: BorderRadius.circular(50),
-          border: Border.all(color: _green.withOpacity(0.3)),
+          border: Border.all(color: _brown.withOpacity(0.3)),
         ),
         child: Row(children: [
-          const Icon(Icons.favorite_outline, color: _green, size: 18),
+          const Icon(Icons.favorite_outline, color: _brown, size: 18),
           const SizedBox(width: 8),
           Text('${_selected.length} services de confort sélectionnés',
-            style: const TextStyle(color: _green, fontSize: 14, fontWeight: FontWeight.w600)),
+            style: const TextStyle(color: _brown, fontSize: 14, fontWeight: FontWeight.w600)),
         ]),
       ),
 
@@ -132,7 +132,7 @@ class _StepConfortClientState extends State<StepConfortClient> {
             child: ElevatedButton(
               onPressed: widget.onSave,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
+                backgroundColor: _brown,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
                 elevation: 0,
               ),
