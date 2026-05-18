@@ -6,6 +6,7 @@ import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../router/navigation_extensions.dart';
 import '../models/booked_slots_query.dart';
 import '../models/booking_slot.dart';
+import '../../prestataire/providers/disponibilite_provider.dart';
 import '../providers/booking_availability_provider.dart';
 import '../providers/booking_selection_provider.dart';
 import '../providers/booking_services_provider.dart';
@@ -40,7 +41,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   Widget build(BuildContext context) {
     final prestataireId = widget.prestataireId?.trim();
     final selection = ref.watch(bookingSelectionProvider);
-    final availabilityRules = ref.watch(bookingAvailabilityRulesProvider);
+    final availabilityAsync = prestataireId == null || prestataireId.isEmpty
+        ? null
+        : ref.watch(bookingAvailabilityForPrestaProvider(prestataireId));
     final isOwnAsync = prestataireId == null || prestataireId.isEmpty
         ? null
         : ref.watch(isOwnPrestataireProfileProvider(prestataireId));
@@ -97,11 +100,33 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         };
                     _clearSlotIfBooked(bookedSlots);
 
+                    final rules = switch (availabilityAsync) {
+                      AsyncData(:final value) => value,
+                      _ => ref.read(bookingAvailabilityRulesProvider),
+                    };
+
+                    final creneauxAsync = ref.watch(
+                      creneauxDisponiblesProvider((
+                        prestataireId: prestataireId,
+                        date: selection.selectedDay,
+                      )),
+                    );
+                    final daySlots = switch (creneauxAsync) {
+                      AsyncData(:final value) => value
+                          .map(
+                            (s) => BookingSlot(hour: s.hour, minute: s.minute),
+                          )
+                          .toList(),
+                      _ => const <BookingSlot>[],
+                    };
+
                     return BookingStepOneContent(
                       services: services,
                       selectedService: selectedService,
                       selection: selection,
-                      availabilityRules: availabilityRules,
+                      availabilityRules: rules,
+                      daySlots: daySlots,
+                      daySlotsLoading: creneauxAsync.isLoading,
                       bookedSlots: bookedSlots,
                       bookedSlotsLoading: bookedSlotsAsync.isLoading,
                       canConfirm:

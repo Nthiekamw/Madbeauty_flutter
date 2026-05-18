@@ -21,6 +21,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/prestataire/screens/prestataire_agenda_screen.dart';
 import '../features/prestataire/screens/prestataire_dashboard_screen.dart';
 import '../features/prestataire/screens/prestataire_detail_screen.dart';
+import '../features/prestataire/screens/prestataire_horaires_screen.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -53,6 +54,7 @@ abstract final class AppRoutes {
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
   static const String prestataireProfile = '/prestataire/profile';
+  static const String prestataireHoraires = '/prestataire/horaires';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
   static const String home = '/';
@@ -84,6 +86,7 @@ abstract final class AppRouteNames {
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
   static const String prestataireProfile = 'prestataire-profile';
+  static const String prestataireHoraires = 'prestataire-horaires';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -352,6 +355,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.asyncStateTest,
         path: AppRoutes.asyncStateTest,
         builder: (context, state) => const AsyncStateTestScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireHoraires,
+        path: AppRoutes.prestataireHoraires,
+        builder: (context, state) => const PrestataireHorairesScreen(),
       ),
     ],
   );

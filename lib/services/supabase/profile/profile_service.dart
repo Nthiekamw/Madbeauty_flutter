@@ -68,6 +68,28 @@ class ProfileService {
         },
       );
 
+  Future<void> upsertIdentity({
+    required String userId,
+    String? prenom,
+    String? nom,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'profile.upsertIdentity',
+        action: () async {
+          final p = prenom?.trim();
+          final n = nom?.trim();
+          await _client.from('user_profiles').upsert(
+            {
+              'user_id': userId,
+              if (p != null && p.isNotEmpty) 'prenom': p,
+              if (n != null && n.isNotEmpty) 'nom': n,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            },
+            onConflict: 'user_id',
+          );
+        },
+      );
+
   Future<void> upsertAvatar({
     required String userId,
     required String avatarUrl,

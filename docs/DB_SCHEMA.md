@@ -2,7 +2,7 @@
 
 Référence des tables **`public`**, colonnes, relations et **Row Level Security (RLS)** après application des migrations du dépôt.
 
-> Ordre d’application : `20260507140000_init_extensions` → `20260507215055_init_schema` (vide) → `20260508113500_auth_profiles_and_roles` → `20260510120000_domain_schema_core` → `20260512200000_user_profiles_select_prestataire_catalog` → `20260512210000_user_roles_update_policy` → `20260512220000_categories_service_seed_types` → `20260512230000_profile_photos_storage` → `20260514110000_realisation_photos_storage` → `20260514122000_catalog_anon_and_role_profiles`.
+> Ordre d’application : `20260507140000_init_extensions` → `20260507215055_init_schema` (vide) → `20260508113500_auth_profiles_and_roles` → `20260510120000_domain_schema_core` → `20260512200000_user_profiles_select_prestataire_catalog` → `20260512210000_user_roles_update_policy` → `20260512220000_categories_service_seed_types` → `20260512230000_profile_photos_storage` → `20260514110000_realisation_photos_storage` → `20260514122000_catalog_anon_and_role_profiles` → `20260515100000_booking_unique_active_slot` → `20260518120000_reservations_notes_prestataire_realtime` → `20260518140000_disponibilites_indisponibilites`.
 
 ---
 
@@ -116,6 +116,39 @@ Table de liaison **prestataire ↔ catégorie**.
 
 ---
 
+## Disponibilités prestataire
+
+### `public.disponibilites`
+
+Plages horaires **récurrentes** (base des créneaux réservables côté app).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK, `default gen_random_uuid()` |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
+| `jour_semaine` | `smallint` | NOT NULL, `0`–`6` (`0` = dimanche, convention PostgreSQL `DOW`) |
+| `heure_debut` | `time` | NOT NULL |
+| `heure_fin` | `time` | NOT NULL, `heure_fin > heure_debut` |
+
+**Index** : `prestataire_id`, `(prestataire_id, jour_semaine)`.
+
+Plusieurs lignes par jour possibles (ex. matin + après-midi).
+
+### `public.indisponibilites`
+
+Fermetures **ponctuelles** (congés, jour off).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK, `default gen_random_uuid()` |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
+| `date_debut` | `timestamptz` | NOT NULL |
+| `date_fin` | `timestamptz` | NOT NULL, `date_fin > date_debut` |
+
+**Index** : `prestataire_id`, `(prestataire_id, date_debut, date_fin)`.
+
+---
+
 ## Réservations, avis, médias, favoris
 
 ### `public.reservations`
@@ -129,6 +162,7 @@ Table de liaison **prestataire ↔ catégorie**.
 | `date_heure` | `timestamptz` | NOT NULL |
 | `statut` | `text` | NOT NULL, default `'en_attente'` |
 | `notes_client` | `text` | nullable |
+| `notes_prestataire` | `text` | nullable (motif de refus, note pro) |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
 **Index** : `date_heure`, `client_id`, `prestataire_id`.
@@ -287,6 +321,20 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 | `services_beaute_select_authenticated` | `authenticated` | SELECT | `true` |
 | `services_beaute_select_anon` | `anon` | SELECT | `true` |
 | `services_beaute_write_own` | `authenticated` | ALL | prestataire propriétaire (`user_id = auth.uid()`) |
+
+### `disponibilites`
+
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `disponibilites_select_authenticated` | `authenticated` | SELECT | `true` (clients qui réservent) |
+| `disponibilites_write_own` | `authenticated` | ALL | prestataire propriétaire |
+
+### `indisponibilites`
+
+| Policy | Rôle | Commande | Règle |
+|--------|------|----------|--------|
+| `indisponibilites_select_authenticated` | `authenticated` | SELECT | `true` |
+| `indisponibilites_write_own` | `authenticated` | ALL | prestataire propriétaire |
 
 ### `reservations`
 

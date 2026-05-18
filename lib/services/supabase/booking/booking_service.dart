@@ -8,6 +8,7 @@ import '../../../core/models/domain/booking/reservation.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../features/booking/logic/booking_create_failure.dart';
 import '../../../features/booking/models/client_reservation_summary.dart';
+import '../../../features/prestataire/models/prestataire_reservation_item.dart';
 import '../profile/profile_service.dart';
 import 'booking_reservation_service.dart';
 
@@ -81,6 +82,51 @@ class BookingService {
 
   Future<void> cancel(String bookingId) async {
     await cancelClientReservation(bookingId);
+  }
+
+  /// Refus prestataire : en attente → annulée (+ motif optionnel).
+  Future<void> rejectByPrestataire(
+    String bookingId, {
+    String? reason,
+  }) async {
+    await SupabaseErrorHandler.run(
+      operation: 'booking.rejectByPrestataire',
+      action: () async {
+        await _requirePrestataireId();
+
+        final payload = <String, dynamic>{'statut': 'annulee'};
+        final trimmed = reason?.trim();
+        if (trimmed != null && trimmed.isNotEmpty) {
+          payload['notes_prestataire'] = trimmed;
+        }
+
+        final updated = await _client
+            .from('reservations')
+            .update(payload)
+            .eq('id', bookingId)
+            .eq('statut', 'en_attente')
+            .select('id');
+
+        final got = updated as List<dynamic>;
+        if (got.isNotEmpty) return;
+
+        final snapshot = await _client
+            .from('reservations')
+            .select('statut')
+            .eq('id', bookingId)
+            .maybeSingle();
+
+        if (snapshot == null) {
+          throw AppFailure(DiscBk.errResMissing);
+        }
+        final raw = snapshot['statut'];
+        final s =
+            raw is String ? raw.trim().toLowerCase().replaceAll('é', 'e') : '';
+        if (const {'annulee', 'cancelled', 'canceled'}.contains(s)) return;
+
+        throw AppFailure(DiscBk.errResBadState);
+      },
+    );
   }
 
   Future<void> cancelClientReservation(String reservationId) async {
@@ -226,6 +272,101 @@ class BookingService {
         return SupabaseDomainCodec.reservation(
           Map<String, dynamic>.from(response),
         );
+      },
+    );
+  }
+
+  Future<List<PrestataireReservationItem>> listForCurrentPrestataire() async {
+    return SupabaseErrorHandler.run(
+      operation: 'booking.listForCurrentPrestataire',
+      action: () async {
+        final prestataireId = await _requirePrestataireId();
+        final response = await _client
+            .from('reservations')
+            .select(
+              'id, date_heure, statut, client_id, notes_client, notes_prestataire, '
+              'services_beaute(nom), client_profiles(user_id)',
+            )
+            .eq('prestataire_id', prestataireId)
+            .order('date_heure', ascending: true);
+
+        final rows = response as List<dynamic>;
+        if (rows.isEmpty) return const [];
+
+        final items = <PrestataireReservationItem>[];
+        final userIds = <String>[];
+
+        for (final raw in rows) {
+          final map = Map<String, dynamic>.from(raw as Map);
+          final client = map['client_profiles'];
+          final userId =
+              client is Map ? client['user_id'] as String? : null;
+          if (userId != null && userId.isNotEmpty) userIds.add(userId);
+
+          final service = map['services_beaute'];
+          items.add(
+            PrestataireReservationItem(
+              id: map['id'] as String,
+              dateHeure: DateTime.parse(
+                map['date_heure'] as String,
+              ).toLocal(),
+              statut: map['statut'] as String,
+              serviceName: service is Map
+                  ? (service['nom'] as String?)?.trim() ?? ''
+                  : '',
+              clientName: '',
+              notesClient: map['notes_client'] as String?,
+              notesPrestataire: map['notes_prestataire'] as String?,
+            ),
+          );
+        }
+
+        final profileSvc = _profileService;
+        if (profileSvc == null || userIds.isEmpty) {
+          return items
+              .map(
+                (e) => PrestataireReservationItem(
+                  id: e.id,
+                  dateHeure: e.dateHeure,
+                  statut: e.statut,
+                  serviceName: e.serviceName.isEmpty
+                      ? DiscPrestaDash.unknownService
+                      : e.serviceName,
+                  clientName: DiscPrestaDash.unknownClient,
+                  notesClient: e.notesClient,
+                  notesPrestataire: e.notesPrestataire,
+                ),
+              )
+              .toList();
+        }
+
+        final profileMap = await profileSvc.getByUserIds(userIds.toSet().toList());
+        return List.generate(items.length, (i) {
+          final item = items[i];
+          final map = Map<String, dynamic>.from(rows[i] as Map);
+          final client = map['client_profiles'];
+          final userId =
+              client is Map ? client['user_id'] as String? : null;
+          final profile = userId != null ? profileMap[userId] : null;
+          final parts = [
+            profile?.prenom?.trim(),
+            profile?.nom?.trim(),
+          ].where((p) => p != null && p.isNotEmpty).cast<String>();
+          final clientName = parts.isEmpty
+              ? DiscPrestaDash.unknownClient
+              : parts.join(' ');
+          return PrestataireReservationItem(
+            id: item.id,
+            dateHeure: item.dateHeure,
+            statut: item.statut,
+            serviceName: item.serviceName.isEmpty
+                ? DiscPrestaDash.unknownService
+                : item.serviceName,
+            clientName: clientName,
+            notesClient: item.notesClient,
+            notesPrestataire: item.notesPrestataire,
+          );
+        });
       },
     );
   }

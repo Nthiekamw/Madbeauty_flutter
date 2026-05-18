@@ -16,6 +16,23 @@ abstract final class ShellStrings {
 
   static const String profileLabelName = 'Nom :';
   static const String profileLabelEmail = 'Email :';
+  static const String profileNameFallback = 'Utilisateur';
+  static const String profileRoleClient = 'Client';
+  static const String profileRolePresta = 'Prestataire';
+  static const String profileRoleDual = 'Client et prestataire';
+  static const String profileRoleUnknown = 'Compte';
+  static const String profileEditName = 'Modifier le nom';
+  static const String profileEditPhoto = 'Modifier la photo';
+  static const String profileEditNameTitle = 'Nom affiché';
+  static const String profileFieldPrenom = 'Prénom';
+  static const String profileFieldNom = 'Nom';
+  static const String profileSave = 'Enregistrer';
+  static const String profileSaveOk = 'Profil mis à jour.';
+  static const String profileSaveErr =
+      'Impossible d’enregistrer. Réessaie dans un instant.';
+  static const String profileNameRequired =
+      'Indique au moins un prénom ou un nom.';
+  static const String profileVersionLabel = 'Version';
   static const String profileSourceCache = 'Source profil : cache local';
   static const String profileSourceLive = 'Source profil : Supabase';
 

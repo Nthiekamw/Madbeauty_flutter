@@ -20,6 +20,8 @@ class BookingStepOneContent extends StatelessWidget {
     required this.selectedService,
     required this.selection,
     required this.availabilityRules,
+    required this.daySlots,
+    required this.daySlotsLoading,
     required this.bookedSlots,
     required this.bookedSlotsLoading,
     required this.canConfirm,
@@ -34,6 +36,8 @@ class BookingStepOneContent extends StatelessWidget {
   final ServiceBeaute selectedService;
   final BookingSelectionState selection;
   final BookingAvailabilityRules availabilityRules;
+  final List<BookingSlot> daySlots;
+  final bool daySlotsLoading;
   final Set<BookingSlot> bookedSlots;
   final bool bookedSlotsLoading;
   final bool canConfirm;
@@ -45,7 +49,7 @@ class BookingStepOneContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slots = availabilityRules.slotsForDay(selection.selectedDay);
+    final slots = daySlots;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -87,7 +91,9 @@ class BookingStepOneContent extends StatelessWidget {
           subtitle: formatBookingDate(selection.selectedDay),
         ),
         const SizedBox(height: 10),
-        if (slots.isEmpty)
+        if (daySlotsLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (slots.isEmpty)
           Text(
             DiscBk.noSlotsDay,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
