@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../listing/providers/discovery_origin_provider.dart';
 import '../providers/nearby_prestataires_provider.dart';
+import '../../../router/navigation_extensions.dart';
+import 'client_home_section_header.dart';
+import '../theme/home_styles.dart';
 import 'prestataire_catalog_section_empty.dart';
 import 'prestataire_home_list_card.dart';
 import 'prestataire_horizontal_list_skeleton.dart';
@@ -22,22 +25,15 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          DiscHome.nearbyTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          usesClientLocation
+        ClientHomeSectionHeader(
+          title: DiscHome.nearbyTitle,
+          subtitle: usesClientLocation
               ? DiscHome.nearbySubWithLocation
               : DiscHome.nearbySubNoLocation,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          actionLabel: DiscHome.ctaSeeAll,
+          onAction: () => context.goClientSearch(),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         async.when(
           data: (value) => value.isEmpty
               ? PrestataireCatalogSectionEmpty(
@@ -45,7 +41,7 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
                   body: DiscHome.nearbyEmptyBody,
                 )
               : SizedBox(
-                  height: 172,
+                  height: HomeStyles.horizontalSectionHeight,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: value.length,
@@ -64,7 +60,10 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
               color: theme.colorScheme.error,
             ),
           ),
-          loading: () => const PrestataireHorizontalListSkeleton(),
+          loading: () => const PrestataireHorizontalListSkeleton(
+            height: HomeStyles.horizontalSectionHeight,
+            cardWidth: HomeStyles.listCardWidth,
+          ),
         ),
       ],
     );

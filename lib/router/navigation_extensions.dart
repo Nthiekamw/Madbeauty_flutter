@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/prestataire/models/prestataire_profile_edit_section.dart';
 import 'app_router.dart';
 
 extension AppNavigationX on BuildContext {
@@ -37,6 +38,20 @@ extension AppNavigationX on BuildContext {
       goNamed(AppRouteNames.prestataireDashboard);
   void goPrestataireAgenda() => goNamed(AppRouteNames.prestataireAgenda);
   void goPrestataireProfile() => goNamed(AppRouteNames.prestataireProfile);
+  void pushPrestataireProfileEdit() =>
+      pushNamed(AppRouteNames.prestataireProfileEdit);
+
+  void pushPrestataireProfileEditSection(
+    PrestataireProfileEditSection section,
+  ) =>
+      pushNamed(
+        AppRouteNames.prestataireProfileEdit,
+        queryParameters: {'section': section.queryValue},
+      );
+  void goPrestataireProfileComplete() =>
+      goNamed(AppRouteNames.prestataireProfileComplete);
+  void pushPrestataireProfileComplete() =>
+      pushNamed(AppRouteNames.prestataireProfileComplete);
   void pushPrestataireHoraires() => pushNamed(AppRouteNames.prestataireHoraires);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);

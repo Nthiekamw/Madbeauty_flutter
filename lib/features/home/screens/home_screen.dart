@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,17 +6,15 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
-import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../models/home_profile_snapshot.dart';
 import '../providers/home_profile_provider.dart';
-import '../widgets/client_home_explore_row.dart';
 import '../widgets/client_home_header.dart';
-import '../widgets/client_home_nearby_prestataires_section.dart';
-import '../widgets/client_home_top_rated_prestataires_section.dart';
+import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/widgets/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -73,43 +70,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authNotifierProvider);
     final isAuthLoading = auth.isLoading;
-    final isOnlineAsync = ref.watch(onlineStatusProvider);
     final cachedEmailAsync = ref.watch(cachedLastSignedInEmailProvider);
     final profileSnapshotAsync = ref.watch(homeProfileSnapshotProvider);
     final currentUser = switch (auth) {
       AsyncData(:final value) => value,
       _ => null,
     };
+    final isGuestBrowsing = ref.watch(isGuestBrowsingProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Widget body;
+    if (currentUser != null) {
+      body = _ConnectedClientHome(
+        searchController: _searchController,
+        onSubmitSearch: () => _openListing(),
+        onExplorePick: (topic) => _openListing(query: topic),
+        profileSnapshotAsync: profileSnapshotAsync,
+        currentUser: currentUser,
+        avatarUrl: _avatarUrlFromUser(currentUser),
+      );
+    } else if (isGuestBrowsing) {
+      body = _GuestBrowseHome(
+        searchController: _searchController,
+        onSubmitSearch: () => _openListing(),
+        onExplorePick: (topic) => _openListing(query: topic),
+      );
+    } else {
+      body = _GuestFallback(
+        cachedEmailAsync: cachedEmailAsync,
+        isAuthLoading: isAuthLoading,
+        onSignOut: () async {
+          final ok = await _confirmSignOut();
+          if (!ok || !mounted) return;
+          await ref.read(authNotifierProvider.notifier).signOut();
+        },
+      );
+    }
 
     return Scaffold(
-      body: SafeArea(
-        child: currentUser != null
-            ? _ConnectedClientHome(
-                searchController: _searchController,
-                onSubmitSearch: () => _openListing(),
-                onExplorePick: (topic) => _openListing(query: topic),
-                isOnlineAsync: isOnlineAsync,
-                profileSnapshotAsync: profileSnapshotAsync,
-                currentUser: currentUser,
-                avatarUrl: _avatarUrlFromUser(currentUser),
-                onSignOut: () async {
-                  final ok = await _confirmSignOut();
-                  if (!ok || !mounted) return;
-                  await ref.read(authNotifierProvider.notifier).signOut();
-                },
-                onOpenPrestataireSpace: () =>
-                    PrestataireNavigation.openSpace(context, ref),
-              )
-            : _GuestFallback(
-                isOnlineAsync: isOnlineAsync,
-                cachedEmailAsync: cachedEmailAsync,
-                isAuthLoading: isAuthLoading,
-                onSignOut: () async {
-                  final ok = await _confirmSignOut();
-                  if (!ok || !mounted) return;
-                  await ref.read(authNotifierProvider.notifier).signOut();
-                },
-              ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          BrandBackground(isDark: isDark),
+          SafeArea(child: body),
+        ],
       ),
     );
   }
@@ -120,23 +124,17 @@ class _ConnectedClientHome extends StatelessWidget {
     required this.searchController,
     required this.onSubmitSearch,
     required this.onExplorePick,
-    required this.isOnlineAsync,
     required this.profileSnapshotAsync,
     required this.currentUser,
     required this.avatarUrl,
-    required this.onSignOut,
-    required this.onOpenPrestataireSpace,
   });
 
   final TextEditingController searchController;
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
-  final AsyncValue<bool> isOnlineAsync;
   final AsyncValue<HomeProfileSnapshot?> profileSnapshotAsync;
   final User currentUser;
   final String? avatarUrl;
-  final Future<void> Function() onSignOut;
-  final Future<void> Function() onOpenPrestataireSpace;
 
   @override
   Widget build(BuildContext context) {
@@ -151,143 +149,67 @@ class _ConnectedClientHome extends StatelessWidget {
       _ => (currentUser.userMetadata?['full_name'] as String?) ?? '',
     };
 
-    final greeting = DiscHome.greeting(displayName);
+    final fromCache = switch (profileSnapshotAsync) {
+      AsyncData(:final value) when value != null => value.isFromCache,
+      _ => false,
+    };
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      children: [
-        ClientHomeHeader(
-          greetingLine: greeting,
-          subtitle: DiscHome.taglineDiscovery,
-          displayName: displayName,
-          email: email,
-          avatarUrl: avatarUrl,
-          menuButton: PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurface),
-            onSelected: (value) async {
-              if (value == 'prestataire') {
-                await onOpenPrestataireSpace();
-              }
-              if (value == 'async-state-test') {
-                if (!context.mounted) return;
-                context.pushAsyncStateTest();
-              }
-              if (value == 'signout') {
-                await onSignOut();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'prestataire',
-                child: Text(ShellStrings.openPrestataireSpace),
-              ),
-              if (kDebugMode)
-                const PopupMenuItem(
-                  value: 'async-state-test',
-                  child: Text('Tester loading / data / error'),
-                ),
-              PopupMenuItem(
-                value: 'signout',
-                child: Text(ShellStrings.accountActionSignOut),
-              ),
-            ],
-          ),
+    return ClientHomeScrollContent(
+      searchController: searchController,
+      onSubmitSearch: onSubmitSearch,
+      onExplorePick: onExplorePick,
+      header: ClientHomeHeader(
+        greetingLine: DiscHome.greeting(displayName),
+        subtitle: DiscHome.taglineDiscovery,
+        displayName: displayName,
+        email: email,
+        avatarUrl: avatarUrl,
+        onAvatarTap: () => context.goClientProfile(),
+      ),
+      footer: clientHomeProfileCacheFooter(theme, fromCache),
+    );
+  }
+}
+
+/// Accueil client sans compte : découverte catalogue uniquement.
+class _GuestBrowseHome extends StatelessWidget {
+  const _GuestBrowseHome({
+    required this.searchController,
+    required this.onSubmitSearch,
+    required this.onExplorePick,
+  });
+
+  final TextEditingController searchController;
+  final VoidCallback onSubmitSearch;
+  final ValueChanged<String> onExplorePick;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ClientHomeScrollContent(
+      searchController: searchController,
+      onSubmitSearch: onSubmitSearch,
+      onExplorePick: onExplorePick,
+      header: ClientHomeHeader(
+        greetingLine: AuthStrings.guestHomeGreeting,
+        subtitle: AuthStrings.guestHomeSubtitle,
+        displayName: '',
+        email: '',
+        trailing: IconButton.filledTonal(
+          tooltip: AuthStrings.guestHomeSignIn,
+          onPressed: () => context.pushLogin(),
+          icon: const Icon(Icons.login_rounded),
         ),
-        const SizedBox(height: 24),
-        Text(
-          CoreStrings.tagline,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
+      ),
+      footer: Text(
+        AuthStrings.welcomeGuestHint,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          height: 1.4,
         ),
-        const SizedBox(height: 20),
-        AppTextField(
-          controller: searchController,
-          hint: DiscHome.hintSearch,
-          textInputAction: TextInputAction.search,
-          prefixIcon: Icon(
-            Icons.search,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          suffixIcon: IconButton(
-            tooltip: DiscHome.actionSearch,
-            onPressed: onSubmitSearch,
-            icon: Icon(Icons.arrow_forward, color: theme.colorScheme.primary),
-          ),
-          onSubmitted: (_) => onSubmitSearch(),
-        ),
-        const SizedBox(height: 28),
-        ClientHomeExploreRow(onPick: onExplorePick),
-        if (AppConfig.hasSupabase) ...[
-          const SizedBox(height: 28),
-          const ClientHomeNearbyPrestatairesSection(),
-          const SizedBox(height: 28),
-          const ClientHomeTopRatedPrestatairesSection(),
-        ],
-        if (!AppConfig.hasSupabase) ...[
-          const SizedBox(height: 28),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ShellStrings.supabaseMissingTitle,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    ShellStrings.supabaseMissingBody,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Icon(
-              switch (isOnlineAsync) {
-                AsyncData(:final value) => value ? Icons.wifi : Icons.wifi_off,
-                _ => Icons.wifi,
-              },
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                switch (isOnlineAsync) {
-                  AsyncData(:final value) =>
-                    value
-                        ? ShellStrings.networkStatusOnline
-                        : ShellStrings.networkStatusOffline,
-                  _ => ShellStrings.networkStatusOnline,
-                },
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (switch (profileSnapshotAsync) {
-          AsyncData(:final value) when value != null => value.isFromCache,
-          _ => false,
-        }) ...[
-          const SizedBox(height: 8),
-          Text(
-            ShellStrings.profileSourceCache,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
@@ -295,19 +217,19 @@ class _ConnectedClientHome extends StatelessWidget {
 /// Cas dégradé (session absente alors que la route est encore affichée).
 class _GuestFallback extends StatelessWidget {
   const _GuestFallback({
-    required this.isOnlineAsync,
     required this.cachedEmailAsync,
     required this.isAuthLoading,
     required this.onSignOut,
   });
 
-  final AsyncValue<bool> isOnlineAsync;
   final AsyncValue<String?> cachedEmailAsync;
   final bool isAuthLoading;
   final Future<void> Function() onSignOut;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -315,29 +237,26 @@ class _GuestFallback extends StatelessWidget {
         children: [
           Text(CoreStrings.appName, style: AppTextStyles.display(context)),
           const SizedBox(height: 12),
-          Text(CoreStrings.tagline, style: AppTextStyles.body(context)),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(switch (isOnlineAsync) {
-                AsyncData(:final value) =>
-                  value
-                      ? ShellStrings.networkStatusOnline
-                      : ShellStrings.networkStatusOffline,
-                _ => ShellStrings.networkStatusOnline,
-              }, style: Theme.of(context).textTheme.bodyMedium),
-            ),
+          Text(
+            CoreStrings.tagline,
+            style: AppTextStyles.body(context),
           ),
           const SizedBox(height: 16),
-          Card(
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: theme.colorScheme.surface.withValues(alpha: 0.9),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(switch (cachedEmailAsync) {
-                AsyncData(:final value) when value != null =>
-                  '${ShellStrings.accountCachedEmailPrefix} $value',
-                _ => '${ShellStrings.accountCachedEmailPrefix} —',
-              }, style: Theme.of(context).textTheme.bodyMedium),
+              padding: const EdgeInsets.all(14),
+              child: Text(
+                switch (cachedEmailAsync) {
+                  AsyncData(:final value) when value != null =>
+                    '${ShellStrings.accountCachedEmailPrefix} $value',
+                  _ => '${ShellStrings.accountCachedEmailPrefix} —',
+                },
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
           ),
           const Spacer(),

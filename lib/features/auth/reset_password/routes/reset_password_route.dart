@@ -5,6 +5,7 @@ import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../navigation/post_auth_navigation.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/password_recovery_provider.dart';
 import '../logic/reset_password_validators.dart';
@@ -67,16 +68,34 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
     }
 
     ref.read(passwordRecoveryPendingProvider.notifier).clear();
-    if (mounted) {
-      context.goRoleChoice();
-    }
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(AuthStrings.resetPasswordSuccess)),
+    );
+
+    await PostAuthNavigation.navigate(context, ref);
   }
 
   @override
   Widget build(BuildContext context) {
     final authAsync = ref.watch(authNotifierProvider);
+    final recoveryActive = ref.watch(isPasswordRecoveryActiveProvider);
     final isLoading = authAsync.isLoading;
-    final formEnabled = AppConfig.hasSupabase && !isLoading;
+    final formEnabled = AppConfig.hasSupabase && !isLoading && recoveryActive;
+
+    if (authAsync.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!recoveryActive) {
+      return ResetPasswordInvalidLinkPage(
+        onRequestNewLink: () => context.pushForgotPassword(),
+        onBackToLogin: () => context.goLogin(),
+      );
+    }
 
     return ResetPasswordPage(
       passwordController: _passwordController,

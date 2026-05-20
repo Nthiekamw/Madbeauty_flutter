@@ -3,7 +3,7 @@ abstract final class ShellStrings {
   ShellStrings._();
 
   static const String splashCheckingSession = 'Vérification de la session...';
-  static const String splashWelcomeBack = 'Bienvenue sur MadBeauty';
+  static const String splashWelcomeBack = 'Beauté & coiffure, à portée de main';
 
   static const String signInOrSignUp = 'Connexion / inscription';
   static const String openPrestataireSpace = 'Espace prestataire';
@@ -38,6 +38,25 @@ abstract final class ShellStrings {
 
   static const String networkStatusOnline = 'Statut réseau : en ligne';
   static const String networkStatusOffline = 'Statut réseau : hors connexion';
+  static const String offlineModeBanner =
+      'Mode hors ligne — données en cache. Connexion requise pour réserver ou modifier ton profil.';
+  static const String offlineActionBlocked =
+      'Cette action nécessite une connexion Internet.';
+  static const String offlineActionQueued =
+      'Action enregistrée. Elle sera envoyée dès que tu seras en ligne.';
+  static String offlinePendingBanner(int count) =>
+      count == 1
+          ? '1 action en attente de synchronisation'
+          : '$count actions en attente de synchronisation';
+  static String offlineSyncDone(int count) =>
+      count == 1
+          ? '1 action synchronisée.'
+          : '$count actions synchronisées.';
+  static const String offlineSyncPartialFail =
+      'Certaines actions n’ont pas pu être synchronisées. Réessaie plus tard.';
+  static const String offlineDataFromCache = 'Données enregistrées localement';
+  static const String offlineCatalogCacheOnly =
+      'Catalogue hors ligne (dernière synchro). Reconnecte-toi pour actualiser.';
 
   static const String supabaseMissingTitle = 'Supabase non configuré';
   static const String supabaseMissingBody =

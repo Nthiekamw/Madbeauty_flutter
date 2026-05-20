@@ -60,6 +60,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
   AuthService get _auth => ref.read(authServiceProvider);
 
   Future<void> _cacheCurrentEmail(User? user) async {
+    if (user != null) {
+      await LocalCacheService.instance.setGuestModeActive(false);
+    }
     final email = user?.email;
     if (email == null || email.isEmpty) {
       return;
@@ -75,6 +78,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
     await LocalCacheService.instance.clearSelectedRole();
     await LocalCacheService.instance.clearCachedServerRoles();
+    await LocalCacheService.instance.setGuestModeActive(false);
   }
 
   Future<User?> _readInitialUser() async {

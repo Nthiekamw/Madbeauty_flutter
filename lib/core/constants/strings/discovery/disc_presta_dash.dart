@@ -2,11 +2,13 @@
 abstract final class DiscPrestaDash {
   DiscPrestaDash._();
 
+  static const pageSubtitle =
+      'Demandes en attente, rendez-vous du jour et de la semaine.';
   static const welcome =
       'Ton profil est prêt à être visible par les clients.';
   static const profileMissing =
       'Complète ton profil professionnel pour commencer.';
-  static const editProfile = 'Modifier mon profil';
+  static const manageSectionsTitle = 'Ma vitrine';
   static const editHoraires = 'Mes horaires';
   static const svcCount = 'Services';
   static const specialties = 'Spécialités';

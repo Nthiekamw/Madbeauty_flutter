@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/domain/user/user_profile.dart';
+import '../../../core/providers/offline_providers.dart';
+import '../../../services/offline/offline_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../auth/providers/auth_notifier.dart';
 
@@ -16,5 +18,16 @@ final currentUserProfileProvider =
 
       final service = ref.watch(profileServiceProvider);
       if (service == null) return null;
-      return service.getByUserId(user.id);
+
+      final loader = ref.read(offlineDataLoaderProvider);
+      final cache = OfflineCacheService.instance;
+
+      return loader.load<UserProfile?>(
+        fallback: null,
+        readCache: cache.readUserProfile,
+        writeCache: (data) async {
+          if (data != null) await cache.saveUserProfile(data);
+        },
+        fetchRemote: () => service.getByUserId(user.id),
+      );
     });

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/providers/offline_providers.dart';
+import '../../../services/offline/offline_cache_service.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../services/supabase/supabase_service.dart';
 import '../models/prestataire_reservation_item.dart';
@@ -41,8 +43,19 @@ class PrestataireAgendaNotifier
     final service = ref.read(bookingServiceProvider);
     if (service == null) return const [];
 
-    final items = await service.listForCurrentPrestataire();
-    _subscribe(presta.id);
+    final loader = ref.read(offlineDataLoaderProvider);
+    final cache = OfflineCacheService.instance;
+
+    final items = await loader.load<List<PrestataireReservationItem>>(
+      fallback: const <PrestataireReservationItem>[],
+      readCache: cache.readPrestataireAgenda,
+      writeCache: cache.savePrestataireAgenda,
+      fetchRemote: () => service.listForCurrentPrestataire(),
+    );
+
+    if (ref.read(isOnlineProvider)) {
+      _subscribe(presta.id);
+    }
     return items;
   }
 

@@ -5,18 +5,20 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
-import '../../../core/models/domain/catalog/service_category.dart';
-import '../../../shared/widgets/app_text_field.dart';
-import '../../prestataire/models/prestataires_filter_state.dart';
+import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery_search_card.dart';
 import '../../prestataire/providers/prestataire_filters_provider.dart';
 import '../../prestataire/providers/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
+import '../widgets/listing_filters_panel.dart';
 import '../widgets/listing_map_view.dart';
 import '../widgets/listing_vertical_skeleton.dart';
 import '../widgets/prestataire_catalog_list_card.dart';
-
-enum _ListingViewMode { list, map }
 
 /// Exploration / recherche : catalogue paginé, filtres, tri, pull-to-refresh.
 class ListingScreen extends ConsumerStatefulWidget {
@@ -29,19 +31,25 @@ class ListingScreen extends ConsumerStatefulWidget {
 class _ListingScreenState extends ConsumerState<ListingScreen> {
   final _searchController = TextEditingController();
   bool _seededFromRoute = false;
-  _ListingViewMode _viewMode = _ListingViewMode.list;
+  ListingViewMode _viewMode = ListingViewMode.list;
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(listingCatalogNotifierProvider.notifier).loadInitialIfNeeded();
     });
   }
 
+  void _onSearchTextChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -64,117 +72,44 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     await ref.read(listingCatalogNotifierProvider.notifier).refresh();
   }
 
-  Widget _filtersBar(ThemeData theme, List<ServiceCategory> categories) {
-    final filters = ref.watch(prestatairesFilterProvider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                DiscList.sortLabel,
-                style: theme.textTheme.labelLarge,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SegmentedButton<PrestatairesSort>(
-                  segments: [
-                    ButtonSegment<PrestatairesSort>(
-                      value: PrestatairesSort.rating,
-                      label: Text(DiscList.sortRating),
-                    ),
-                    ButtonSegment<PrestatairesSort>(
-                      value: PrestatairesSort.distance,
-                      label: Text(DiscList.sortDistance),
-                    ),
-                  ],
-                  emptySelectionAllowed: false,
-                  showSelectedIcon: false,
-                  selected: {filters.sort},
-                  onSelectionChanged: (selection) {
-                    if (selection.isEmpty) return;
-                    ref
-                        .read(prestatairesFilterProvider.notifier)
-                        .setSort(selection.first);
-                  },
+  Widget _searchBar(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: DiscoverySearchCard(
+        controller: _searchController,
+        hint: DiscList.hintSearch,
+        onChanged: (value) {
+          ref.read(prestatairesFilterProvider.notifier).setQuery(value);
+        },
+        suffixIcon: _searchController.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: MaterialLocalizations.of(
+                  context,
+                ).deleteButtonTooltip,
+                onPressed: () {
+                  _searchController.clear();
+                  ref.read(prestatairesFilterProvider.notifier).setQuery('');
+                },
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-            ],
-          ),
-        ),
-        if (categories.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text(
-              DiscList.svcTypeLabel,
-              style: theme.textTheme.labelLarge,
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(DiscList.chipAll),
-                    selected: filters.categoryId == null,
-                    onSelected: (_) {
-                      ref
-                          .read(prestatairesFilterProvider.notifier)
-                          .setCategoryId(null);
-                    },
-                  ),
-                ),
-                ...categories.map((c) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(c.nom),
-                      selected: filters.categoryId == c.id,
-                      onSelected: (selected) {
-                        ref
-                            .read(prestatairesFilterProvider.notifier)
-                            .setCategoryId(selected ? c.id : null);
-                      },
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
-      ],
+      ),
     );
   }
 
-  Widget _viewModeSwitch() {
+  Widget _resultsCountBar(ThemeData theme, int count) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: SegmentedButton<_ListingViewMode>(
-        segments: const [
-          ButtonSegment<_ListingViewMode>(
-            value: _ListingViewMode.list,
-            icon: Icon(Icons.list_alt_outlined),
-            label: Text(DiscList.modeList),
-          ),
-          ButtonSegment<_ListingViewMode>(
-            value: _ListingViewMode.map,
-            icon: Icon(Icons.map_outlined),
-            label: Text(DiscList.modeMap),
-          ),
-        ],
-        selected: {_viewMode},
-        onSelectionChanged: (selection) {
-          if (selection.isEmpty) return;
-          setState(() => _viewMode = selection.first);
-        },
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: Text(
+        DiscList.resultsCount(count),
+        style: theme.textTheme.labelLarge?.copyWith(
+          fontFamily: AppFonts.body,
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.primary,
+        ),
       ),
     );
   }
@@ -185,106 +120,6 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
-      ),
-    );
-  }
-
-  Widget _emptyCatalogState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.storefront_outlined,
-              size: 56,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              DiscList.emptyCatalogTitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              DiscList.pullDownHint,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyFilterState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off_outlined,
-              size: 56,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              DiscList.emptyFilterTitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              DiscList.emptyFilterHint,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _errorState(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.cloud_off_outlined,
-              size: 56,
-              color: theme.colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              DiscList.catalogLoadErr,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.tonal(
-              onPressed: () =>
-                  ref.read(listingCatalogNotifierProvider.notifier).refresh(),
-              child: const Text(DiscList.retry),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -376,71 +211,45 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final theme = Theme.of(context);
     final catalogState = ref.watch(listingCatalogNotifierProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(DiscNav.listingTitle)),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: AppTextField(
-                controller: _searchController,
-                hint: DiscList.hintSearch,
-                textInputAction: TextInputAction.search,
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).deleteButtonTooltip,
-                        onPressed: () {
-                          _searchController.clear();
-                          ref
-                              .read(prestatairesFilterProvider.notifier)
-                              .setQuery('');
-                        },
-                        icon: Icon(
-                          Icons.clear,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                onChanged: (value) {
-                  ref.read(prestatairesFilterProvider.notifier).setQuery(value);
-                },
+    return DiscoveryBrandScaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const DiscoveryScreenHeader(
+            title: DiscNav.searchTitle,
+            subtitle: DiscList.searchSubtitle,
+          ),
+          _searchBar(theme),
+          if (!AppConfig.hasSupabase)
+            Expanded(
+              child: DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: ShellStrings.supabaseMissingTitle,
+                body: ShellStrings.supabaseMissingBody,
+                iconColor: theme.colorScheme.error,
               ),
-            ),
-            if (!AppConfig.hasSupabase)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    ShellStrings.supabaseMissingBody,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
-              )
-            else
-              Expanded(child: _buildMainBody(theme, catalogState)),
-          ],
-        ),
+            )
+          else
+            Expanded(child: _buildMainBody(theme, catalogState)),
+        ],
       ),
     );
   }
 
   Widget _buildMainBody(ThemeData theme, ListingCatalogViewState state) {
+    final filtersPanel = ListingFiltersPanel(
+      categories: state.categories,
+      viewMode: _viewMode,
+      onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+    );
+
     if (state.loadingInitial &&
         state.entries.isEmpty &&
         state.errorMessage == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _filtersBar(theme, state.categories),
-          _viewModeSwitch(),
+          filtersPanel,
           const Expanded(child: ListingVerticalSkeleton()),
         ],
       );
@@ -450,9 +259,21 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _filtersBar(theme, state.categories),
-          _viewModeSwitch(),
-          Expanded(child: _refreshableScrollable(child: _errorState(theme))),
+          filtersPanel,
+          Expanded(
+            child: _refreshableScrollable(
+              child: DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: DiscList.catalogLoadErr,
+                body: DiscList.pullDownHint,
+                iconColor: theme.colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () => ref
+                    .read(listingCatalogNotifierProvider.notifier)
+                    .refresh(),
+              ),
+            ),
+          ),
         ],
       );
     }
@@ -460,8 +281,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _filtersBar(theme, state.categories),
-        _viewModeSwitch(),
+        filtersPanel,
         Expanded(child: _buildCatalogBody(theme, state)),
       ],
     );
@@ -471,15 +291,27 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final all = state.entries;
 
     if (all.isEmpty) {
-      return _refreshableScrollable(child: _emptyCatalogState(theme));
+      return _refreshableScrollable(
+        child: DiscoveryEmptyState(
+          icon: Icons.storefront_outlined,
+          title: DiscList.emptyCatalogTitle,
+          body: DiscList.pullDownHint,
+        ),
+      );
     }
 
     final filtered = ref.watch(prestatairesFilteredProvider).value ?? const [];
     if (filtered.isEmpty) {
-      return _refreshableScrollable(child: _emptyFilterState(theme));
+      return _refreshableScrollable(
+        child: DiscoveryEmptyState(
+          icon: Icons.search_off_rounded,
+          title: DiscList.emptyFilterTitle,
+          body: DiscList.emptyFilterHint,
+        ),
+      );
     }
 
-    if (_viewMode == _ListingViewMode.map) {
+    if (_viewMode == ListingViewMode.map) {
       return _buildMapBody(theme, state, filtered);
     }
 
@@ -492,8 +324,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       onRefresh: _onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: [
+          _resultsCountBar(theme, filtered.length),
           for (var i = 0; i < filtered.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
             PrestataireCatalogListCard(entry: filtered[i]),
@@ -522,19 +355,42 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _resultsCountBar(theme, filtered.length),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: ListingMapView(
-              entries: filtered,
-              clientLocation: clientLocation,
-              locationLoading: locationAsync.isLoading,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: DiscoveryStyles.cardBorderRadius,
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.14),
+                ),
+                boxShadow: theme.brightness == Brightness.light
+                    ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.06,
+                          ),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: ClipRRect(
+                borderRadius: DiscoveryStyles.cardBorderRadius,
+                child: ListingMapView(
+                  entries: filtered,
+                  clientLocation: clientLocation,
+                  locationLoading: locationAsync.isLoading,
+                ),
+              ),
             ),
           ),
         ),
         if (showFooter)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _loadMoreFooter(theme, state),
           ),
       ],

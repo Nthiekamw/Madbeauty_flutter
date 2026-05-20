@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/auth_form_styles.dart';
+
 /// Variante visuelle du bouton (rempli vs contour).
 enum AppButtonVariant {
   primary,
@@ -46,14 +48,13 @@ class AppButton extends StatelessWidget {
     return switch (variant) {
       AppButtonVariant.primary => FilledButton(
           onPressed: effectiveOnPressed,
+          style: AuthFormStyles.primaryButtonStyle(Theme.of(context)),
           child: content,
         ),
       AppButtonVariant.secondary => OutlinedButton(
           onPressed: effectiveOnPressed,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: colorScheme.primary,
-            side: BorderSide(color: colorScheme.primary),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          style: AuthFormStyles.secondaryButtonStyle(Theme.of(context)).copyWith(
+            foregroundColor: WidgetStatePropertyAll(colorScheme.primary),
           ),
           child: content,
         ),

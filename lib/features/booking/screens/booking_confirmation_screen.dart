@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../core/providers/runtime_providers.dart';
+import '../../../services/offline/offline_queue_helper.dart';
+import '../../../services/offline/pending_offline_action.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart'
     show
@@ -45,6 +46,7 @@ class _BookingConfirmationScreenState
     extends ConsumerState<BookingConfirmationScreen> {
   bool _isSubmitting = false;
   bool _isSuccess = false;
+  bool _queuedOffline = false;
   String? _errorMessage;
 
   @override
@@ -57,6 +59,7 @@ class _BookingConfirmationScreenState
         ),
         body: BookingSuccessView(
           onViewReservations: () => context.goMyReservations(),
+          body: _queuedOffline ? DiscBk.doneBodyQueued : DiscBk.doneBody,
         ),
       );
     }
@@ -248,10 +251,36 @@ class _BookingConfirmationScreenState
       return;
     }
 
-    final isOnline = await ref.read(connectivityServiceProvider).isOnline();
-    if (!isOnline) {
+    final detail = ref.read(prestataireDetailProvider(widget.prestataireId)).value;
+    final profile = detail?.profile;
+    final salon = profile?.nomSalon?.trim();
+    final prestataireName =
+        salon != null && salon.isNotEmpty ? salon : 'Salon';
+
+    final localId = PendingOfflineAction.newLocalReservationId();
+    final queued = await enqueueIfOffline(
+      ref: ref,
+      context: context,
+      action: PendingOfflineAction.create(
+        type: OfflineActionType.bookingCreate,
+        payload: {
+          'localReservationId': localId,
+          'prestataireId': widget.prestataireId,
+          'serviceId': widget.serviceId,
+          'dateHeure': widget.dateTime.toIso8601String(),
+          'serviceName': widget.serviceName,
+          'prestataireName': prestataireName,
+          'prestataireAvatarUrl': detail?.avatarUrl,
+        },
+      ),
+    );
+
+    if (queued) {
+      if (!mounted) return;
       setState(() {
-        _errorMessage = DiscBk.errOffline;
+        _isSubmitting = false;
+        _isSuccess = true;
+        _queuedOffline = true;
       });
       return;
     }
@@ -273,6 +302,7 @@ class _BookingConfirmationScreenState
       setState(() {
         _isSubmitting = false;
         _isSuccess = true;
+        _queuedOffline = false;
       });
     } catch (error) {
       if (!mounted) return;

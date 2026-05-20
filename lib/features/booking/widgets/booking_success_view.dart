@@ -4,9 +4,14 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app_button.dart';
 
 class BookingSuccessView extends StatefulWidget {
-  const BookingSuccessView({super.key, required this.onViewReservations});
+  const BookingSuccessView({
+    super.key,
+    required this.onViewReservations,
+    this.body = DiscBk.doneBody,
+  });
 
   final VoidCallback onViewReservations;
+  final String body;
 
   @override
   State<BookingSuccessView> createState() => _BookingSuccessViewState();
@@ -68,7 +73,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
           ),
           const SizedBox(height: 12),
           Text(
-            DiscBk.doneBody,
+            widget.body,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

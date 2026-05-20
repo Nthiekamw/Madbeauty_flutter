@@ -171,9 +171,21 @@ class _PrestataireHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final display = profile.nomAffiche?.trim();
     final salon = profile.nomSalon?.trim();
-    final title = salon != null && salon.isNotEmpty ? salon : 'Salon';
+    final title = display != null && display.isNotEmpty
+        ? display
+        : salon != null && salon.isNotEmpty
+        ? salon
+        : 'Salon';
     final ville = profile.ville?.trim();
+    final cp = profile.codePostal?.trim();
+    final adresse = profile.adresse?.trim();
+    final locationLine = [
+      if (adresse != null && adresse.isNotEmpty) adresse,
+      if (cp != null && cp.isNotEmpty) cp,
+      if (ville != null && ville.isNotEmpty) ville,
+    ].join(', ');
 
     return Card(
       elevation: 0,
@@ -201,8 +213,11 @@ class _PrestataireHero extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      if (ville != null && ville.isNotEmpty)
-                        _MetaLine(icon: Icons.place_outlined, text: ville),
+                      if (locationLine.isNotEmpty)
+                        _MetaLine(
+                          icon: Icons.place_outlined,
+                          text: locationLine,
+                        ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,

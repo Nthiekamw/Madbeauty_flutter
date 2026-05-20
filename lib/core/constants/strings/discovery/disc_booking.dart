@@ -39,6 +39,9 @@ abstract final class DiscBk {
   static const doneHeadline = 'C’est confirmé !';
   static const doneBody =
       'Ta réservation est enregistrée. Le prestataire pourra la valider sous peu.';
+  static const doneBodyQueued =
+      'Ta réservation sera envoyée dès que tu seras reconnecté(e). '
+      'Tu la retrouveras dans « Mes réservations » en attendant.';
   static const doneSeeMine = 'Voir mes réservations';
 
   static const emptyListTitle = 'Aucune réservation';
@@ -48,10 +51,13 @@ abstract final class DiscBk {
   static const unknownSvc = 'Service';
   static const unknownPresta = 'Prestataire';
 
+  static const reservationsSubtitle =
+      'Tes rendez-vous à venir et ton historique.';
   static const tabFuture = 'À venir';
   static const tabPast = 'Passées';
 
   static const badgePending = 'En attente';
+  static const badgeSyncPending = 'En attente d’envoi';
   static const badgeConfirmed = 'Confirmé';
   static const badgeDone = 'Terminé';
   static const badgeCancelled = 'Annulé';

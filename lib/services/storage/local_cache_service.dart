@@ -8,6 +8,7 @@ class LocalCacheService {
   static const String selectedRoleKey = 'auth.selected_role';
   static const String cachedServerRolesKey = 'auth.cached_server_roles';
   static const String onboardingCompletedKey = 'app.onboarding_completed';
+  static const String guestModeActiveKey = 'auth.guest_mode_active';
 
   static LocalCacheService? _instance;
 
@@ -56,4 +57,10 @@ class LocalCacheService {
 
   Future<bool> setOnboardingCompleted({bool value = true}) =>
       _prefs.setBool(onboardingCompletedKey, value);
+
+  bool get guestModeActive => _prefs.getBool(guestModeActiveKey) ?? false;
+
+  Future<bool> setGuestModeActive(bool value) =>
+      _prefs.setBool(guestModeActiveKey, value);
 }
+

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../widgets/auth_error_banner.dart';
+import '../../widgets/auth_form_card.dart';
+import '../../widgets/auth_form_scaffold.dart';
 
+/// Formulaire d’inscription simple (legacy) — le flux principal est le wizard.
 class RegisterPage extends StatelessWidget {
   const RegisterPage({
     super.key,
@@ -46,111 +51,95 @@ class RegisterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AuthStrings.registerTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: isLoading ? null : onBack,
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                AuthStrings.registerDescription,
-                style: Theme.of(context).textTheme.bodyMedium,
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    return AuthFormScaffold(
+      title: AuthStrings.registerTitle,
+      subtitle: AuthStrings.registerDescription,
+      onBack: onBack,
+      isBackEnabled: !isLoading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (showSupabaseConfigCard) ...[
+            AuthFormCard(
+              child: Text(
+                ShellStrings.supabaseMissingBody,
+                style: theme.textTheme.bodyMedium,
               ),
-              const SizedBox(height: 24),
-              if (showSupabaseConfigCard) ...[
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          ShellStrings.supabaseMissingTitle,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          ShellStrings.supabaseMissingBody,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          AuthFormCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppTextField(
+                  controller: nameController,
+                  onChanged: onNameChanged,
+                  enabled: formEnabled,
+                  textInputAction: TextInputAction.next,
+                  label: AuthStrings.registerFieldName,
+                  errorText: nameError,
+                  prefixIcon: Icon(Icons.person_outline, color: muted),
                 ),
-                const SizedBox(height: 24),
-              ],
-              AppTextField(
-                controller: nameController,
-                onChanged: onNameChanged,
-                enabled: formEnabled,
-                textInputAction: TextInputAction.next,
-                label: AuthStrings.registerFieldName,
-                errorText: nameError,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: emailController,
-                onChanged: onEmailChanged,
-                enabled: formEnabled,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.username, AutofillHints.email],
-                autocorrect: false,
-                textInputAction: TextInputAction.next,
-                label: AuthStrings.loginFieldEmail,
-                errorText: emailError,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: passwordController,
-                onChanged: onPasswordChanged,
-                enabled: formEnabled,
-                obscureText: true,
-                autofillHints: const [AutofillHints.newPassword],
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => onPasswordFieldSubmitted(),
-                label: AuthStrings.loginFieldPassword,
-                errorText: passwordError,
-              ),
-              if (submitError != null) ...[
-                const SizedBox(height: 16),
-                Material(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      submitError!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onErrorContainer,
-                          ),
-                    ),
-                  ),
+                const SizedBox(height: 14),
+                AppTextField(
+                  controller: emailController,
+                  onChanged: onEmailChanged,
+                  enabled: formEnabled,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.username, AutofillHints.email],
+                  autocorrect: false,
+                  textInputAction: TextInputAction.next,
+                  label: AuthStrings.loginFieldEmail,
+                  errorText: emailError,
+                  prefixIcon: Icon(Icons.mail_outline, color: muted),
+                ),
+                const SizedBox(height: 14),
+                AppTextField(
+                  controller: passwordController,
+                  onChanged: onPasswordChanged,
+                  enabled: formEnabled,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => onPasswordFieldSubmitted(),
+                  label: AuthStrings.loginFieldPassword,
+                  errorText: passwordError,
+                  prefixIcon: Icon(Icons.lock_outline, color: muted),
+                ),
+                if (submitError != null) ...[
+                  const SizedBox(height: 16),
+                  AuthErrorBanner(message: submitError!),
+                ],
+                const SizedBox(height: 20),
+                AppButton(
+                  variant: AppButtonVariant.primary,
+                  isLoading: isLoading,
+                  enabled: formEnabled,
+                  onPressed: onSubmit,
+                  child: const Text(AuthStrings.registerActionSubmit),
                 ),
               ],
-              const SizedBox(height: 24),
-              AppButton(
-                variant: AppButtonVariant.primary,
-                isLoading: isLoading,
-                enabled: formEnabled,
-                onPressed: onSubmit,
-                child: const Text(AuthStrings.registerActionSubmit),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: isLoading ? null : onOpenLogin,
-                child: const Text(AuthStrings.registerActionBackToLogin),
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton(
+              onPressed: isLoading ? null : onOpenLogin,
+              child: Text(
+                AuthStrings.registerActionBackToLogin,
+                style: TextStyle(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

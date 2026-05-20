@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../router/navigation_extensions.dart';
 import '../providers/top_rated_prestataires_provider.dart';
+import '../theme/home_styles.dart';
+import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
 import 'prestataire_home_list_card.dart';
 import 'prestataire_horizontal_list_skeleton.dart';
@@ -19,20 +22,13 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          DiscHome.topRatedTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+        ClientHomeSectionHeader(
+          title: DiscHome.topRatedTitle,
+          subtitle: DiscHome.topRatedSub,
+          actionLabel: DiscHome.ctaSeeAll,
+          onAction: () => context.goClientSearch(),
         ),
-        const SizedBox(height: 6),
-        Text(
-          DiscHome.topRatedSub,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         async.when(
           data: (value) => value.isEmpty
               ? PrestataireCatalogSectionEmpty(
@@ -40,7 +36,7 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
                   body: DiscHome.topRatedEmptyBody,
                 )
               : SizedBox(
-                  height: 172,
+                  height: HomeStyles.horizontalSectionHeight,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: value.length,
@@ -58,7 +54,10 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
               color: theme.colorScheme.error,
             ),
           ),
-          loading: () => const PrestataireHorizontalListSkeleton(),
+          loading: () => const PrestataireHorizontalListSkeleton(
+            height: HomeStyles.horizontalSectionHeight,
+            cardWidth: HomeStyles.listCardWidth,
+          ),
         ),
       ],
     );

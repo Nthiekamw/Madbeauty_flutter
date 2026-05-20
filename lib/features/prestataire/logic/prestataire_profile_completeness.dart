@@ -1,16 +1,64 @@
 import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 
-/// Critères alignés sur [PrestataireHubScreen] (profil visible / réservable).
+/// Critères alignés spec onboarding prestataire.
 extension PrestataireProfileCompleteness on PrestataireProfileFormData {
   bool get hasMinimalPrestaIdentity =>
       nomSalon.trim().isNotEmpty && ville.trim().isNotEmpty;
 
+  bool get hasDisplayName => nomAffiche.trim().isNotEmpty;
+
+  bool get hasSalonAddress => adresse.trim().isNotEmpty;
+
+  bool get hasPostalCode => codePostal.trim().isNotEmpty;
+
+  bool get hasWorkLocation => lieuTravail != null;
+
+  bool get hasRealisationGallery => realisationPhotos.isNotEmpty;
+
+  bool get servicesAreValid =>
+      services.isNotEmpty &&
+      services.every(
+        (s) =>
+            s.nom.trim().isNotEmpty &&
+            s.categorieId != null &&
+            s.categorieId!.trim().isNotEmpty,
+      );
+
   bool get isProfessionallyComplete {
     final hasAvatar = avatarUrl != null && avatarUrl!.trim().isNotEmpty;
     return hasMinimalPrestaIdentity &&
-        bio.trim().isNotEmpty &&
+        hasDisplayName &&
+        hasSalonAddress &&
+        hasPostalCode &&
+        hasWorkLocation &&
+        description.trim().isNotEmpty &&
         hasAvatar &&
-        selectedCategoryIds.isNotEmpty &&
-        services.isNotEmpty;
+        servicesAreValid &&
+        hasRealisationGallery;
   }
+
+  List<PrestaCompletionChecklistItem> get missingChecklistItems {
+    final items = <PrestaCompletionChecklistItem>[];
+    if (!hasMinimalPrestaIdentity ||
+        !hasDisplayName ||
+        !hasSalonAddress ||
+        !hasPostalCode ||
+        !hasWorkLocation ||
+        description.trim().isEmpty) {
+      items.add(PrestaCompletionChecklistItem.basics);
+    }
+    if (!servicesAreValid) {
+      items.add(PrestaCompletionChecklistItem.services);
+    }
+    if (!hasRealisationGallery) {
+      items.add(PrestaCompletionChecklistItem.gallery);
+    }
+    return items;
+  }
+}
+
+enum PrestaCompletionChecklistItem {
+  basics,
+  services,
+  gallery,
 }

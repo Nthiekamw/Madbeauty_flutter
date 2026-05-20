@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_fonts.dart';
+import '../theme/home_styles.dart';
 
 /// État vide homogène pour les sections catalogue de l’accueil client.
 class PrestataireCatalogSectionEmpty extends StatelessWidget {
@@ -22,8 +24,13 @@ class PrestataireCatalogSectionEmpty extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5,
+          ),
+          borderRadius: HomeStyles.cardBorderRadius,
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -39,7 +46,8 @@ class PrestataireCatalogSectionEmpty extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),

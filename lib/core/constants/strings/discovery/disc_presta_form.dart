@@ -4,24 +4,45 @@ abstract final class DiscPrestaForm {
 
   static const intro =
       'Complète ton profil professionnel pour apparaître dans le catalogue client.';
-  static const stepBasics = 'Infos de base';
-  static const stepSpecialties = 'Spécialités';
-  static const stepServices = 'Services';
+  static const stepBasics = 'Vitrine & salon';
+  static const stepLocation = 'Adresse & lieu';
+  static const stepServices = 'Services & tarifs';
+  static const stepGallery = 'Réalisations';
   static const avatarLabel = 'Photo de profil';
   static const avatarPick = 'Choisir une photo';
   static const avatarChange = 'Changer la photo';
   static const salonName = 'Nom du salon / activité';
-  static const bio = 'Bio';
-  static const bioHint =
-      'Présente ton style, ton expérience, tes prestations…';
+  static const displayName = 'Nom affiché';
+  static const displayNameHint = 'Visible par les clientes';
+  static const bio = 'Présentation (optionnel)';
+  static const bioHint = 'Texte libre complémentaire';
+  static const description = 'Description';
+  static const descriptionHint = '200 caractères max — accroche pour le catalogue';
+  static const experienceYears = 'Années d’expérience (optionnel)';
+  static const experiencePro = 'Expérience professionnelle (optionnel)';
+  static const experienceProHint = '150 caractères max';
   static const city = 'Ville';
+  static const postalCode = 'Code postal';
+  static const postalCodeHint = 'ex. 75000';
+  static const salonAddress = 'Adresse';
+  static const salonAddressHint = 'Salon ou domicile — numéro et rue';
+  static const workLocationTitle = 'Où travaillez-vous ?';
+  static const workLocationHome = 'À mon domicile';
+  static const workLocationClient = 'Chez la cliente';
+  static const workLocationBoth = 'Les deux';
   static const specialtiesHint =
       'Choisis un ou plusieurs types de services proposés.';
   static const svcAdd = 'Ajouter un service';
   static const svcName = 'Nom du service';
+  static const svcDescription = 'Description (optionnel)';
+  static const svcCategory = 'Catégorie';
+  static const svcCategoryPick = 'Choisir une catégorie';
   static const svcPrice = 'Prix (€)';
   static const svcDuration = 'Durée (min)';
   static const svcDelete = 'Supprimer ce service';
+  static const suggestionTitle = 'Suggérer une catégorie';
+  static const suggestionNom = 'Nom de la catégorie suggérée';
+  static const suggestionDesc = 'Description (optionnel)';
   static const back = 'Retour';
   static const onward = 'Continuer';
   static const save = 'Enregistrer';
@@ -32,17 +53,19 @@ abstract final class DiscPrestaForm {
       'Impossible de charger ton profil prestataire. Réessaie.';
   static const missingSupabase =
       'Supabase n’est pas configuré : impossible d’enregistrer ton profil.';
-  static const reqNameSalon =
-      'Saisis le nom de ton salon ou activité.';
+  static const reqNameSalon = 'Saisis le nom de ton salon ou activité.';
+  static const reqDisplayName = 'Saisis ton nom affiché.';
   static const reqPhoto = 'Ajoute une photo de profil.';
-  static const reqBio = 'Saisis une bio.';
+  static const reqDescription = 'Saisis une description.';
   static const reqCity = 'Saisis ta ville.';
-  static const bioTooLong =
-      'La bio doit faire 300 caractères maximum.';
-  static const reqSpecialty =
-      'Sélectionne au moins une spécialité.';
+  static const reqPostalCode = 'Saisis ton code postal.';
+  static const reqAddress = 'Saisis ton adresse.';
+  static const reqWorkLocation = 'Indique où tu travailles.';
+  static const descriptionTooLong = '200 caractères maximum.';
+  static const experienceProTooLong = '150 caractères maximum.';
   static const reqService = 'Ajoute au moins un service.';
   static const reqSvcName = 'Saisis le nom du service.';
+  static const reqSvcCategory = 'Choisis une catégorie pour ce service.';
   static const svcPriceBad = 'Prix invalide.';
   static const svcDurationBad = 'Durée invalide.';
   static const saveErr =

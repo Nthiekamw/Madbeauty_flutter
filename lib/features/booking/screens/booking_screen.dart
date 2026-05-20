@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../auth/guest/guest_mode_provider.dart';
+import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../router/navigation_extensions.dart';
 import '../models/booked_slots_query.dart';
@@ -39,6 +41,17 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(isGuestBrowsingProvider)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text(DiscNav.bookingFlowTitle)),
+        body: const GuestAccountPrompt(
+          icon: Icons.event_available_outlined,
+          title: AuthStrings.guestBookingTitle,
+          message: AuthStrings.guestBookingBody,
+        ),
+      );
+    }
+
     final prestataireId = widget.prestataireId?.trim();
     final selection = ref.watch(bookingSelectionProvider);
     final availabilityAsync = prestataireId == null || prestataireId.isEmpty

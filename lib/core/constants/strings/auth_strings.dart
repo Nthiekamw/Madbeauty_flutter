@@ -44,6 +44,19 @@ abstract final class AuthStrings {
   static const String forgotPasswordSubmit = 'Envoyer le lien';
   static const String forgotPasswordSuccess =
       'Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.';
+  static const String forgotPasswordSuccessHint =
+      'Ouvre le lien sur le même téléphone où MadBeauty est installée. '
+      'L’app s’ouvrira sur l’écran « Nouveau mot de passe ».';
+
+  static const String resetPasswordRecoveryHeadline = 'Choisis un nouveau mot de passe';
+  static const String resetPasswordRecoveryHint =
+      'Tu viens du lien reçu par e-mail. Une fois enregistré, tu pourras te connecter normalement.';
+  static const String resetPasswordLinkInvalidTitle = 'Lien invalide ou expiré';
+  static const String resetPasswordLinkInvalidBody =
+      'Ce lien ne fonctionne plus. Demande un nouveau lien depuis la connexion.';
+  static const String resetPasswordRequestNewLink = 'Demander un nouveau lien';
+  static const String resetPasswordSuccess =
+      'Mot de passe mis à jour. Tu peux continuer.';
 
   static const String resetPasswordTitle = 'Nouveau mot de passe';
   static const String resetPasswordDescription =
@@ -69,10 +82,16 @@ abstract final class AuthStrings {
       'Saisis ton mot de passe.';
 
   static const String roleChoiceTitle = 'Choisis ton espace';
+  static const String roleChoiceSubtitle =
+      'Comment veux-tu utiliser MadBeauty aujourd’hui ?';
   static const String roleChoiceDescription =
-      'Sélectionne le rôle avec lequel tu veux continuer.';
+      'Tu pourras ajouter l’autre espace plus tard depuis ton profil.';
   static const String roleChoiceClient = 'Je suis client';
+  static const String roleChoiceClientHint =
+      'Réserver des prestations beauté près de chez moi.';
   static const String roleChoicePrestataire = 'Je suis prestataire';
+  static const String roleChoicePrestataireHint =
+      'Gérer mon salon, mes services et mes réservations.';
   static const String roleChoiceSyncForbidden =
       'Synchronisation du rôle refusée par le serveur. Mets à jour l’app ou réessaie dans un instant.';
 
@@ -94,13 +113,45 @@ abstract final class AuthStrings {
 
   static const String welcomeTitle = 'Bienvenue';
   static const String welcomeSubtitle =
-      'Connecte-toi ou crée un compte pour continuer.';
+      'Connecte-toi, crée un compte, ou explore sans inscription.';
   static const String welcomeRegister = 'Inscription';
   static const String welcomeLogin = 'Connexion';
+  static const String welcomeContinueGuest = 'Continuer sans compte';
+  static const String welcomeGuestHint =
+      'Parcours les prestataires et les services. La réservation nécessite un compte.';
+
+  static const String guestHomeGreeting = 'Bienvenue sur MadBeauty';
+  static const String guestHomeSubtitle =
+      'Découvre les prestataires près de chez toi.';
+  static const String guestHomeSignIn = 'Se connecter';
+  static const String guestProfileTitle = 'Ton espace compte';
+  static const String guestProfileBody =
+      'Crée un compte ou connecte-toi pour gérer ton profil, tes réservations et devenir prestataire.';
+  static const String guestReservationsTitle = 'Tes réservations';
+  static const String guestReservationsBody =
+      'Connecte-toi pour réserver un créneau et suivre tes rendez-vous.';
+  static const String guestBookingTitle = 'Réservation';
+  static const String guestBookingBody =
+      'Un compte est nécessaire pour confirmer une réservation.';
+  static const String guestCtaLogin = 'Connexion';
+  static const String guestCtaRegister = 'Créer un compte';
+  static const String welcomeFeatureDualRole = 'Client ou prestataire';
+  static const String welcomeFeatureSecure = 'Compte sécurisé';
 
   static const String registerStepIdentityTitle = 'Tes informations';
+  static const String registerStepIdentitySubtitle =
+      'Quelques infos pour créer ton compte MadBeauty.';
   static const String registerStepRoleTitle = 'Ton profil';
+  static const String registerStepRoleSubtitle =
+      'Comment veux-tu utiliser l’application ?';
   static const String registerStepExtrasTitle = 'Détails';
+  static const String registerStepExtrasClientSubtitle =
+      'Optionnel : aide les prestataires à mieux te localiser.';
+  static const String registerStepExtrasPrestaSubtitle =
+      'Présente ton activité aux futures clientes.';
+  static const String registerStepLabelIdentity = 'Compte';
+  static const String registerStepLabelRole = 'Profil';
+  static const String registerStepLabelExtras = 'Détails';
   static const String registerFieldPrenom = 'Prénom';
   static const String registerFieldNom = 'Nom';
   static const String registerFieldPhone = 'Téléphone';
@@ -112,13 +163,24 @@ abstract final class AuthStrings {
   static const String registerValidationPasswordMismatch =
       'Les mots de passe ne correspondent pas.';
   static const String registerChooseClient = 'Je suis client';
+  static const String registerChooseClientHint =
+      'Réserver des prestations beauté près de chez moi.';
   static const String registerChoosePresta = 'Je suis prestataire';
+  static const String registerChoosePrestaHint =
+      'Gérer mon salon, mes services et mes réservations.';
   static const String registerFieldAdresse = 'Adresse (optionnel)';
   static const String registerFieldSalon = 'Nom du salon / activité';
+  static const String registerFieldSalonAdresse = 'Adresse du salon';
+  static const String registerFieldPostalCode = 'Code postal';
+  static const String registerFieldDisplayName = 'Nom affiché';
+  static const String registerFieldDescriptionPresta = 'Description courte';
   static const String registerFieldVille = 'Ville';
-  static const String registerFieldBioPresta = 'Bio (optionnel)';
+  static const String registerFieldBioPresta = 'Présentation (optionnel)';
   static const String registerWizardSubmit = 'Créer mon compte';
   static const String registerWizardNext = 'Continuer';
+  static const String registerDraftRestored =
+      'Ton inscription a été reprise là où tu l’avais laissée.';
+  static const String registerDraftRestart = 'Recommencer';
   static const String registerOrDivider = 'ou';
   static const String registerActionGoogle = 'Continuer avec Google';
   static const String registerGooglePhoneHint =

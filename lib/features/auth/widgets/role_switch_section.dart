@@ -5,6 +5,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/user_role.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery_menu_tile.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../navigation/client_navigation.dart';
 import '../providers/my_roles_provider.dart';
@@ -42,11 +44,11 @@ class RoleSwitchSection extends ConsumerWidget {
           if (sectionTitle != null && sectionTitle!.isNotEmpty) {
             children.add(
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Text(
                   sectionTitle!,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -57,11 +59,12 @@ class RoleSwitchSection extends ConsumerWidget {
           if (hasClient && hasPresta) {
             children.add(
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
                   AuthStrings.profileDualRoleHint,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
                   ),
                 ),
               ),
@@ -146,29 +149,12 @@ class _RoleSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.primary),
-      title: Text(title),
-      subtitle: isCurrent
-          ? Text(
-              'Actuel',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-            )
-          : subtitle != null
-          ? Text(
-              subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            )
-          : null,
-      trailing: showChevron
-          ? Icon(Icons.chevron_right, color: theme.colorScheme.outline)
-          : null,
+    return DiscoveryMenuTile(
+      icon: icon,
+      title: title,
+      subtitle: isCurrent ? 'Actuel' : subtitle,
       onTap: onTap,
+      showChevron: showChevron || (!isCurrent && onTap != null),
     );
   }
 }

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../router/app_router.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/widgets/app_avatar.dart';
-import '../../auth/widgets/role_switch_section.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
-import '../providers/current_prestataire_provider.dart';
 import '../models/prestataire_reservation_item.dart';
+import '../providers/current_prestataire_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/prestataire_appointment_tile.dart';
 import '../widgets/prestataire_dashboard_section.dart';
 import '../widgets/prestataire_pending_request_card.dart';
 import '../widgets/prestataire_profile_load_error.dart';
+import '../widgets/prestataire_profile_manage_menu.dart';
+import '../widgets/prestataire_salon_hero.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
   const PrestataireDashboardScreen({super.key});
@@ -60,12 +60,8 @@ class _PrestataireDashboardScreenState
       AsyncData(:final value) => value,
       _ => null,
     };
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(DiscNav.prestDashboard),
-      ),
+    return DiscoveryBrandScaffold(
       body: profileAsync.when(
         data: (data) {
           final currentName = currentPrestataire?.nomSalon?.trim();
@@ -79,68 +75,51 @@ class _PrestataireDashboardScreenState
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              padding: const EdgeInsets.only(bottom: 32),
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    AppAvatar(
-                      imageUrl: data.avatarUrl,
-                      displayName: title,
-                      radius: 36,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            data.isProfessionallyComplete
-                                ? DiscPrestaDash.welcome
-                                : DiscPrestaDash.profileMissing,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                const DiscoveryScreenHeader(
+                  title: DiscNav.prestDashboard,
+                  subtitle: DiscPrestaDash.pageSubtitle,
+                ),
+                PrestataireSalonHero(
+                  title: title,
+                  subtitle: data.isProfessionallyComplete
+                      ? DiscPrestaDash.welcome
+                      : DiscPrestaDash.profileMissing,
+                  avatarUrl: data.avatarUrl,
+                  trailing: _CompletenessBadge(
+                    complete: data.isProfessionallyComplete,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: () =>
-                      context.goNamed(AppRouteNames.prestataireProfile),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text(DiscPrestaDash.editProfile),
+                PrestataireProfileManageMenu(
+                  showHeader: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () => context.pushPrestataireHoraires(),
-                  icon: const Icon(Icons.schedule_outlined),
-                  label: const Text(DiscPrestaDash.editHoraires),
-                ),
-                const SizedBox(height: 8),
-                const RoleSwitchSection(sectionTitle: DiscNav.profileSpace),
-                const SizedBox(height: 24),
-                dashboardAsync.when(
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator(),
+                if (!data.isProfessionallyComplete) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: OutlinedButton(
+                      onPressed: () => context.pushPrestataireProfileComplete(),
+                      child: const Text(DiscPrestaProfile.incompleteCta),
                     ),
                   ),
-                  error: (_, __) => Text(
-                    DiscPrestaDash.loadErr,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
+                ],
+                const SizedBox(height: 20),
+                dashboardAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      DiscPrestaDash.loadErr,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                   data: (dashboard) => Column(
@@ -148,6 +127,7 @@ class _PrestataireDashboardScreenState
                     children: [
                       PrestataireDashboardSection(
                         title: DiscPrestaDash.pendingTitle,
+                        badgeCount: dashboard.pending.length,
                         child: dashboard.pending.isEmpty
                             ? const PrestataireDashboardEmptyHint(
                                 message: DiscPrestaDash.pendingEmpty,
@@ -174,9 +154,10 @@ class _PrestataireDashboardScreenState
                                 ],
                               ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       PrestataireDashboardSection(
                         title: DiscPrestaDash.todayTitle,
+                        badgeCount: dashboard.todayConfirmed.length,
                         child: dashboard.todayConfirmed.isEmpty
                             ? const PrestataireDashboardEmptyHint(
                                 message: DiscPrestaDash.todayEmpty,
@@ -199,9 +180,10 @@ class _PrestataireDashboardScreenState
                               ),
                       ),
                       if (dashboard.weekConfirmed.isNotEmpty) ...[
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                         PrestataireDashboardSection(
                           title: DiscPrestaDash.weekTitle,
+                          badgeCount: dashboard.weekConfirmed.length,
                           child: Column(
                             children: [
                               for (final item in dashboard.weekConfirmed)
@@ -224,6 +206,49 @@ class _PrestataireDashboardScreenState
           onRetry: () => ref.invalidate(prestataireProfileFormProvider),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+class _CompletenessBadge extends StatelessWidget {
+  const _CompletenessBadge({required this.complete});
+
+  final bool complete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: complete
+            ? theme.colorScheme.primary.withValues(alpha: 0.14)
+            : theme.colorScheme.errorContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            complete ? Icons.check_circle_outline : Icons.info_outline,
+            size: 16,
+            color: complete
+                ? theme.colorScheme.primary
+                : theme.colorScheme.error,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            complete ? 'Profil complet' : 'À compléter',
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: complete
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onErrorContainer,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -253,9 +278,7 @@ class _TodayAppointment extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: busy ? null : onMarkDone,
-              child: Text(
-                busy ? '…' : DiscPrestaAgenda.markDone,
-              ),
+              child: Text(busy ? '…' : DiscPrestaAgenda.markDone),
             ),
           ),
         ],

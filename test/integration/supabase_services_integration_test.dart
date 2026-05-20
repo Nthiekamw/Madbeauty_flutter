@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:madbeauty/core/models/domain/user/lieu_travail.dart';
 import 'package:madbeauty/core/models/domain/user/user_profile.dart';
 import 'package:madbeauty/services/supabase/prestataire/catalog/prestataire_filters.dart';
 import 'package:madbeauty/services/supabase/prestataire/catalog/prestataire_service.dart';
@@ -98,15 +99,22 @@ void main() {
         await formService.save(
           PrestataireProfileSavePayload(
             nomSalon: salonName,
+            nomAffiche: salonName,
             bio: 'Profil créé par le test intégration Supabase.',
+            description: 'Salon de test intégration.',
+            experienceProfessionnelle: '',
+            anneesExperience: '',
             ville: 'Paris',
+            adresse: '10 rue de Test',
+            codePostal: '75001',
+            lieuTravail: LieuTravail.both,
             avatarBytes: _onePixelPng,
             avatarFileName: 'form_avatar_$runId.png',
             avatarMimeType: 'image/png',
-            categoryIds: {categoryId},
             services: [
               PrestataireServiceFormData(
                 nom: serviceName,
+                categorieId: categoryId,
                 prix: 25,
                 dureeMinutes: 45,
               ),

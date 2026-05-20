@@ -30,6 +30,7 @@ abstract final class DiscHome {
   static const topRatedEmptyBody =
       'Aucune note moyenne enregistrée pour l’instant. Ouvre le catalogue pour découvrir les salons.';
   static const ctaBrowseCatalog = 'Voir le catalogue';
+  static const ctaSeeAll = 'Tout voir';
 
   /// Distance affichée (Haversine, [km]).
   static String nearbyKm(double km) {

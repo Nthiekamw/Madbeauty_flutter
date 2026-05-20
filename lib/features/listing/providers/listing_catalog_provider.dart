@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/providers/offline_providers.dart';
+import '../../../services/offline/offline_cache_service.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../core/models/domain/catalog/service_category.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
@@ -171,6 +173,32 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
     required int offset,
     required bool replaceEntries,
   }) async {
+    final online = ref.read(isOnlineProvider);
+    if (!online) {
+      final cached = OfflineCacheService.instance.readListingCatalog();
+      if (!ref.mounted) return;
+      if (cached.entries.isEmpty) {
+        state = state.copyWith(
+          loadingInitial: false,
+          loadingMore: false,
+          errorMessage: DiscList.catalogLoadErr,
+          hasMore: false,
+        );
+        return;
+      }
+      state = state.copyWith(
+        loadingInitial: false,
+        loadingMore: false,
+        categories: cached.categories,
+        entries: cached.entries,
+        hasMore: false,
+        errorMessage: null,
+        refreshError: ShellStrings.offlineCatalogCacheOnly,
+        loadMoreError: null,
+      );
+      return;
+    }
+
     try {
       late final List<ServiceCategory> categories;
       late final List<PrestataireCatalogEntry> batch;
@@ -205,6 +233,13 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
         refreshError: null,
         loadMoreError: null,
       );
+
+      if (replaceEntries) {
+        await OfflineCacheService.instance.saveListingCatalog(
+          categories: categories,
+          entries: merged,
+        );
+      }
     } catch (e, st) {
       assert(() {
         FlutterError.dumpErrorToConsole(
@@ -214,6 +249,21 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
       }());
 
       if (!ref.mounted) return;
+
+      final cached = OfflineCacheService.instance.readListingCatalog();
+      if (replaceEntries && cached.entries.isNotEmpty) {
+        state = state.copyWith(
+          loadingInitial: false,
+          loadingMore: false,
+          categories: cached.categories,
+          entries: cached.entries,
+          hasMore: false,
+          errorMessage: null,
+          refreshError: ShellStrings.offlineCatalogCacheOnly,
+          loadMoreError: null,
+        );
+        return;
+      }
 
       if (replaceEntries && state.entries.isEmpty) {
         state = state.copyWith(

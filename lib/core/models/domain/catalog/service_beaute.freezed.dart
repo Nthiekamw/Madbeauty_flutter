@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServiceBeaute {
 
- String get id; String get prestataireId; String get nom; int get dureeMinutes;@DecimalConverter() double get prix; bool get isActif;
+ String get id; String get prestataireId; String get nom; String? get description;@JsonKey(name: 'categorie_id') String? get categorieId; int get dureeMinutes;@DecimalConverter() double get prix; bool get isActif;
 /// Create a copy of ServiceBeaute
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ServiceBeauteCopyWith<ServiceBeaute> get copyWith => _$ServiceBeauteCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceBeaute&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.nom, nom) || other.nom == nom)&&(identical(other.dureeMinutes, dureeMinutes) || other.dureeMinutes == dureeMinutes)&&(identical(other.prix, prix) || other.prix == prix)&&(identical(other.isActif, isActif) || other.isActif == isActif));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServiceBeaute&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.nom, nom) || other.nom == nom)&&(identical(other.description, description) || other.description == description)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.dureeMinutes, dureeMinutes) || other.dureeMinutes == dureeMinutes)&&(identical(other.prix, prix) || other.prix == prix)&&(identical(other.isActif, isActif) || other.isActif == isActif));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,prestataireId,nom,dureeMinutes,prix,isActif);
+int get hashCode => Object.hash(runtimeType,id,prestataireId,nom,description,categorieId,dureeMinutes,prix,isActif);
 
 @override
 String toString() {
-  return 'ServiceBeaute(id: $id, prestataireId: $prestataireId, nom: $nom, dureeMinutes: $dureeMinutes, prix: $prix, isActif: $isActif)';
+  return 'ServiceBeaute(id: $id, prestataireId: $prestataireId, nom: $nom, description: $description, categorieId: $categorieId, dureeMinutes: $dureeMinutes, prix: $prix, isActif: $isActif)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ServiceBeauteCopyWith<$Res>  {
   factory $ServiceBeauteCopyWith(ServiceBeaute value, $Res Function(ServiceBeaute) _then) = _$ServiceBeauteCopyWithImpl;
 @useResult
 $Res call({
- String id, String prestataireId, String nom, int dureeMinutes,@DecimalConverter() double prix, bool isActif
+ String id, String prestataireId, String nom, String? description,@JsonKey(name: 'categorie_id') String? categorieId, int dureeMinutes,@DecimalConverter() double prix, bool isActif
 });
 
 
@@ -65,12 +65,14 @@ class _$ServiceBeauteCopyWithImpl<$Res>
 
 /// Create a copy of ServiceBeaute
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? prestataireId = null,Object? nom = null,Object? dureeMinutes = null,Object? prix = null,Object? isActif = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? prestataireId = null,Object? nom = null,Object? description = freezed,Object? categorieId = freezed,Object? dureeMinutes = null,Object? prix = null,Object? isActif = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,prestataireId: null == prestataireId ? _self.prestataireId : prestataireId // ignore: cast_nullable_to_non_nullable
 as String,nom: null == nom ? _self.nom : nom // ignore: cast_nullable_to_non_nullable
-as String,dureeMinutes: null == dureeMinutes ? _self.dureeMinutes : dureeMinutes // ignore: cast_nullable_to_non_nullable
+as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,categorieId: freezed == categorieId ? _self.categorieId : categorieId // ignore: cast_nullable_to_non_nullable
+as String?,dureeMinutes: null == dureeMinutes ? _self.dureeMinutes : dureeMinutes // ignore: cast_nullable_to_non_nullable
 as int,prix: null == prix ? _self.prix : prix // ignore: cast_nullable_to_non_nullable
 as double,isActif: null == isActif ? _self.isActif : isActif // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -158,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String nom,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String nom,  String? description, @JsonKey(name: 'categorie_id')  String? categorieId,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServiceBeaute() when $default != null:
-return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.prix,_that.isActif);case _:
+return $default(_that.id,_that.prestataireId,_that.nom,_that.description,_that.categorieId,_that.dureeMinutes,_that.prix,_that.isActif);case _:
   return orElse();
 
 }
@@ -179,10 +181,10 @@ return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String nom,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String nom,  String? description, @JsonKey(name: 'categorie_id')  String? categorieId,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)  $default,) {final _that = this;
 switch (_that) {
 case _ServiceBeaute():
-return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.prix,_that.isActif);case _:
+return $default(_that.id,_that.prestataireId,_that.nom,_that.description,_that.categorieId,_that.dureeMinutes,_that.prix,_that.isActif);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +201,10 @@ return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String prestataireId,  String nom,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String prestataireId,  String nom,  String? description, @JsonKey(name: 'categorie_id')  String? categorieId,  int dureeMinutes, @DecimalConverter()  double prix,  bool isActif)?  $default,) {final _that = this;
 switch (_that) {
 case _ServiceBeaute() when $default != null:
-return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.prix,_that.isActif);case _:
+return $default(_that.id,_that.prestataireId,_that.nom,_that.description,_that.categorieId,_that.dureeMinutes,_that.prix,_that.isActif);case _:
   return null;
 
 }
@@ -214,14 +216,16 @@ return $default(_that.id,_that.prestataireId,_that.nom,_that.dureeMinutes,_that.
 @JsonSerializable()
 
 class _ServiceBeaute implements ServiceBeaute {
-  const _ServiceBeaute({required this.id, required this.prestataireId, required this.nom, required this.dureeMinutes, @DecimalConverter() required this.prix, this.isActif = true});
+  const _ServiceBeaute({required this.id, required this.prestataireId, required this.nom, this.description, @JsonKey(name: 'categorie_id') this.categorieId, this.dureeMinutes = 60, @DecimalConverter() this.prix = 0, this.isActif = true});
   factory _ServiceBeaute.fromJson(Map<String, dynamic> json) => _$ServiceBeauteFromJson(json);
 
 @override final  String id;
 @override final  String prestataireId;
 @override final  String nom;
-@override final  int dureeMinutes;
-@override@DecimalConverter() final  double prix;
+@override final  String? description;
+@override@JsonKey(name: 'categorie_id') final  String? categorieId;
+@override@JsonKey() final  int dureeMinutes;
+@override@JsonKey()@DecimalConverter() final  double prix;
 @override@JsonKey() final  bool isActif;
 
 /// Create a copy of ServiceBeaute
@@ -237,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceBeaute&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.nom, nom) || other.nom == nom)&&(identical(other.dureeMinutes, dureeMinutes) || other.dureeMinutes == dureeMinutes)&&(identical(other.prix, prix) || other.prix == prix)&&(identical(other.isActif, isActif) || other.isActif == isActif));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServiceBeaute&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.nom, nom) || other.nom == nom)&&(identical(other.description, description) || other.description == description)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.dureeMinutes, dureeMinutes) || other.dureeMinutes == dureeMinutes)&&(identical(other.prix, prix) || other.prix == prix)&&(identical(other.isActif, isActif) || other.isActif == isActif));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,prestataireId,nom,dureeMinutes,prix,isActif);
+int get hashCode => Object.hash(runtimeType,id,prestataireId,nom,description,categorieId,dureeMinutes,prix,isActif);
 
 @override
 String toString() {
-  return 'ServiceBeaute(id: $id, prestataireId: $prestataireId, nom: $nom, dureeMinutes: $dureeMinutes, prix: $prix, isActif: $isActif)';
+  return 'ServiceBeaute(id: $id, prestataireId: $prestataireId, nom: $nom, description: $description, categorieId: $categorieId, dureeMinutes: $dureeMinutes, prix: $prix, isActif: $isActif)';
 }
 
 
@@ -257,7 +261,7 @@ abstract mixin class _$ServiceBeauteCopyWith<$Res> implements $ServiceBeauteCopy
   factory _$ServiceBeauteCopyWith(_ServiceBeaute value, $Res Function(_ServiceBeaute) _then) = __$ServiceBeauteCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String prestataireId, String nom, int dureeMinutes,@DecimalConverter() double prix, bool isActif
+ String id, String prestataireId, String nom, String? description,@JsonKey(name: 'categorie_id') String? categorieId, int dureeMinutes,@DecimalConverter() double prix, bool isActif
 });
 
 
@@ -274,12 +278,14 @@ class __$ServiceBeauteCopyWithImpl<$Res>
 
 /// Create a copy of ServiceBeaute
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? prestataireId = null,Object? nom = null,Object? dureeMinutes = null,Object? prix = null,Object? isActif = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? prestataireId = null,Object? nom = null,Object? description = freezed,Object? categorieId = freezed,Object? dureeMinutes = null,Object? prix = null,Object? isActif = null,}) {
   return _then(_ServiceBeaute(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,prestataireId: null == prestataireId ? _self.prestataireId : prestataireId // ignore: cast_nullable_to_non_nullable
 as String,nom: null == nom ? _self.nom : nom // ignore: cast_nullable_to_non_nullable
-as String,dureeMinutes: null == dureeMinutes ? _self.dureeMinutes : dureeMinutes // ignore: cast_nullable_to_non_nullable
+as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String?,categorieId: freezed == categorieId ? _self.categorieId : categorieId // ignore: cast_nullable_to_non_nullable
+as String?,dureeMinutes: null == dureeMinutes ? _self.dureeMinutes : dureeMinutes // ignore: cast_nullable_to_non_nullable
 as int,prix: null == prix ? _self.prix : prix // ignore: cast_nullable_to_non_nullable
 as double,isActif: null == isActif ? _self.isActif : isActif // ignore: cast_nullable_to_non_nullable
 as bool,

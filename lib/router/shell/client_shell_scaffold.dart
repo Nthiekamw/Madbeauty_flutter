@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../shared/widgets/offline_shell.dart';
 import 'shell_nav_badge_icon.dart';
 
 class ClientShellScaffold extends ConsumerWidget {
@@ -19,7 +20,7 @@ class ClientShellScaffold extends ConsumerWidget {
     final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
-      body: navigationShell,
+      body: OfflineShell(child: navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {

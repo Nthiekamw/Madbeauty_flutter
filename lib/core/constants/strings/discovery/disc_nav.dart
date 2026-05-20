@@ -3,7 +3,7 @@ abstract final class DiscNav {
   DiscNav._();
 
   static const prestHub = 'Espace prestataire';
-  static const prestDashboard = 'Dashboard prestataire';
+  static const prestDashboard = 'Dashboard';
   static const prestAgenda = 'Agenda';
   static const prestAgendaSoonTitle = 'Agenda bientôt disponible';
   static const prestAgendaSoonBody =
@@ -15,6 +15,8 @@ abstract final class DiscNav {
   static const messagingTitle = 'Messages';
   static const statsTitle = 'Statistiques';
   static const profileTitle = 'Profil';
+  static const profileSubtitle =
+      'Photo, compte et bascule entre espaces client et pro.';
   static const reviewsTitle = 'Avis';
 
   static const profileSpace = 'Espace personnel';

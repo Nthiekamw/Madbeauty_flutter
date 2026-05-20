@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 /// Statut affiché côté client (indépendant des libellés bruts en base).
 enum ClientReservationUiStatus {
   pending,
+  syncPending,
   confirmed,
   done,
   cancelled,
@@ -13,6 +14,9 @@ enum ClientReservationUiStatus {
 
 ClientReservationUiStatus clientReservationUiStatusFromStatut(String raw) {
   final s = raw.trim().toLowerCase();
+  if (const {'sync_pending'}.contains(s)) {
+    return ClientReservationUiStatus.syncPending;
+  }
   if (const {'en_attente', 'pending'}.contains(s)) {
     return ClientReservationUiStatus.pending;
   }
@@ -50,6 +54,7 @@ ClientReservationUiStatus clientReservationUiStatusFromStatut(String raw) {
 
 String clientReservationStatusLabel(ClientReservationUiStatus status) =>
     switch (status) {
+      ClientReservationUiStatus.syncPending => DiscBk.badgeSyncPending,
       ClientReservationUiStatus.pending => DiscBk.badgePending,
       ClientReservationUiStatus.confirmed =>
         DiscBk.badgeConfirmed,
@@ -62,6 +67,7 @@ String clientReservationStatusLabel(ClientReservationUiStatus status) =>
 
 bool clientReservationCanCancel(ClientReservationUiStatus status) {
   return status == ClientReservationUiStatus.pending ||
+      status == ClientReservationUiStatus.syncPending ||
       status == ClientReservationUiStatus.confirmed;
 }
 
@@ -70,6 +76,10 @@ ChipStyleReservationStatus chipColorsForReservationStatus(
   ClientReservationUiStatus status,
 ) {
   return switch (status) {
+    ClientReservationUiStatus.syncPending => ChipStyleReservationStatus(
+        backgroundColor: cs.surfaceContainerHighest,
+        foregroundColor: cs.onSurfaceVariant,
+      ),
     ClientReservationUiStatus.pending => ChipStyleReservationStatus(
         backgroundColor: cs.tertiaryContainer,
         foregroundColor: cs.onTertiaryContainer,

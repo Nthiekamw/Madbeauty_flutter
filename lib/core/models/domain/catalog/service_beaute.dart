@@ -12,8 +12,10 @@ abstract class ServiceBeaute with _$ServiceBeaute {
     required String id,
     required String prestataireId,
     required String nom,
-    required int dureeMinutes,
-    @DecimalConverter() required double prix,
+    String? description,
+    @JsonKey(name: 'categorie_id') String? categorieId,
+    @Default(60) int dureeMinutes,
+    @DecimalConverter() @Default(0) double prix,
     @Default(true) bool isActif,
   }) = _ServiceBeaute;
 

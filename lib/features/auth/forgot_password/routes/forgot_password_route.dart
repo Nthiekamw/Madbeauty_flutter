@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
+import '../../guest/guest_mode_provider.dart';
 import '../../login/logic/login_validators.dart';
 import '../../providers/auth_notifier.dart';
 import '../screens/forgot_password_page.dart';
@@ -23,6 +24,14 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
   String? _submitError;
   String? _successMessage;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      exitGuestMode(ref);
+    });
+  }
 
   @override
   void dispose() {

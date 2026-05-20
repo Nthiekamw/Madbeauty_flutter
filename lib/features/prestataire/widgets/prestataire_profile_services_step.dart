@@ -2,21 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/models/domain/catalog/service_category.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../models/prestataire_service_field_set.dart';
 
 class PrestataireProfileServicesStep extends StatelessWidget {
   const PrestataireProfileServicesStep({
     super.key,
+    required this.categories,
     required this.services,
     required this.errorText,
+    required this.suggestionNomController,
+    required this.suggestionDescController,
     required this.onAdd,
     required this.onRemove,
     required this.onChanged,
   });
 
+  final List<ServiceCategory> categories;
   final List<PrestataireServiceFieldSet> services;
   final String? errorText;
+  final TextEditingController suggestionNomController;
+  final TextEditingController suggestionDescController;
   final VoidCallback onAdd;
   final ValueChanged<int> onRemove;
   final VoidCallback onChanged;
@@ -30,6 +37,7 @@ class PrestataireProfileServicesStep extends StatelessWidget {
         for (var i = 0; i < services.length; i++) ...[
           _ServiceCard(
             index: i,
+            categories: categories,
             service: services[i],
             onRemove: () => onRemove(i),
             onChanged: onChanged,
@@ -50,6 +58,24 @@ class PrestataireProfileServicesStep extends StatelessWidget {
           icon: const Icon(Icons.add),
           label: const Text(DiscPrestaForm.svcAdd),
         ),
+        const SizedBox(height: 20),
+        Text(
+          DiscPrestaForm.suggestionTitle,
+          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        AppTextField(
+          controller: suggestionNomController,
+          label: DiscPrestaForm.suggestionNom,
+          onChanged: (_) => onChanged(),
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          controller: suggestionDescController,
+          label: DiscPrestaForm.suggestionDesc,
+          maxLines: 2,
+          onChanged: (_) => onChanged(),
+        ),
       ],
     );
   }
@@ -58,12 +84,14 @@ class PrestataireProfileServicesStep extends StatelessWidget {
 class _ServiceCard extends StatelessWidget {
   const _ServiceCard({
     required this.index,
+    required this.categories,
     required this.service,
     required this.onRemove,
     required this.onChanged,
   });
 
   final int index;
+  final List<ServiceCategory> categories;
   final PrestataireServiceFieldSet service;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
@@ -71,6 +99,11 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final categoryLabel = categories
+        .where((c) => c.id == service.categorieId)
+        .map((c) => c.nom)
+        .firstOrNull;
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -87,8 +120,7 @@ class _ServiceCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip:
-                      DiscPrestaForm.svcDelete,
+                  tooltip: DiscPrestaForm.svcDelete,
                   onPressed: onRemove,
                   icon: const Icon(Icons.delete_outline),
                 ),
@@ -106,6 +138,35 @@ class _ServiceCard extends StatelessWidget {
               },
             ),
             const SizedBox(height: 12),
+            AppTextField(
+              controller: service.descriptionController,
+              label: DiscPrestaForm.svcDescription,
+              maxLines: 2,
+              onChanged: (_) => onChanged(),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: service.categorieId,
+              decoration: InputDecoration(
+                labelText: DiscPrestaForm.svcCategory,
+                errorText: service.categorieError,
+                border: const OutlineInputBorder(),
+              ),
+              hint: const Text(DiscPrestaForm.svcCategoryPick),
+              items: [
+                for (final cat in categories)
+                  DropdownMenuItem(value: cat.id, child: Text(cat.nom)),
+              ],
+              onChanged: (value) {
+                service.categorieId = value;
+                service.categorieError = null;
+                onChanged();
+              },
+            ),
+            if (categoryLabel != null) ...[
+              const SizedBox(height: 4),
+            ],
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -118,7 +179,6 @@ class _ServiceCard extends StatelessWidget {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                     ],
-                    textInputAction: TextInputAction.next,
                     onChanged: (_) {
                       service.prixError = null;
                       onChanged();
@@ -129,14 +189,10 @@ class _ServiceCard extends StatelessWidget {
                 Expanded(
                   child: AppTextField(
                     controller: service.dureeController,
-                    label:
-                        DiscPrestaForm.svcDuration,
+                    label: DiscPrestaForm.svcDuration,
                     errorText: service.dureeError,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    textInputAction: TextInputAction.done,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     onChanged: (_) {
                       service.dureeError = null;
                       onChanged();

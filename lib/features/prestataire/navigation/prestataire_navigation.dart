@@ -28,7 +28,7 @@ abstract final class PrestataireNavigation {
     await _goDashboardOrCompleteProfile(context, ref);
   }
 
-  /// Après inscription prestataire : dashboard + message « complète ton profil ».
+  /// Après inscription prestataire : parcours guidé de complétion du profil.
   static Future<void> afterPrestaRegistration(
     BuildContext context,
     WidgetRef ref,
@@ -36,7 +36,7 @@ abstract final class PrestataireNavigation {
     await LocalCacheService.instance.setSelectedRole('prestataire');
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
-    context.goPrestataireDashboard();
+    context.goPrestataireProfileComplete();
   }
 
   /// Après [BecomePrestataireScreen] : hub pour photo, spécialités, services.
@@ -47,6 +47,8 @@ abstract final class PrestataireNavigation {
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
     context.goPrestataireProfile();
+    if (!context.mounted) return;
+    context.pushPrestataireProfileEdit();
   }
 
   /// Bascule client → prestataire : hub si profil incomplet, sinon dashboard.
@@ -103,7 +105,7 @@ abstract final class PrestataireNavigation {
     if (data.isProfessionallyComplete) {
       context.goPrestataireDashboard();
     } else {
-      context.goPrestataireProfile();
+      context.goPrestataireProfileComplete();
     }
   }
 }

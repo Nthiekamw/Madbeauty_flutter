@@ -4,7 +4,9 @@ import '../../../location/location_providers.dart';
 import '../../profile/profile_providers.dart';
 import '../../storage/storage_providers.dart';
 import '../../supabase_service.dart';
+import '../catalog/categorie_suggestion_providers.dart';
 import '../catalog/prestataire_catalog_providers.dart';
+import '../photos/photo_realisation_providers.dart';
 import '../services/service_beaute_providers.dart';
 import 'prestataire_profile_form_service.dart';
 
@@ -28,5 +30,8 @@ final prestataireProfileFormServiceProvider =
         profileService: profileService,
         storageService: storageService,
         geocodingService: ref.watch(geocodingServiceProvider),
+        photoRealisationService: ref.watch(photoRealisationServiceProvider),
+        categorieSuggestionService:
+            ref.watch(categorieSuggestionServiceProvider),
       );
     });

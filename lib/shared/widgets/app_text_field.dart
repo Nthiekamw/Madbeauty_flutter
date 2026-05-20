@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Champ texte avec bordure outline alignée sur le thème Material 3.
+import '../theme/auth_form_styles.dart';
+
+/// Champ texte avec bordure outline arrondie (Material 3).
 class AppTextField extends StatelessWidget {
   const AppTextField({
     super.key,
@@ -24,7 +26,15 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.inputFormatters,
+    this.borderRadius = AuthFormStyles.fieldRadius,
+    this.filled = true,
   });
+
+  /// Rayon des coins (défaut auth : 16).
+  final double borderRadius;
+
+  /// Fond léger dans le champ (recommandé sur écrans auth).
+  final bool filled;
 
   final TextEditingController? controller;
   final FocusNode? focusNode;
@@ -48,6 +58,18 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final radius = BorderRadius.circular(borderRadius);
+    final outline = theme.colorScheme.outline.withValues(alpha: 0.35);
+    final focused = theme.colorScheme.primary;
+
+    OutlineInputBorder border(Color color, {double width = 1}) {
+      return OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: color, width: width),
+      );
+    }
+
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -69,7 +91,19 @@ class AppTextField extends StatelessWidget {
         errorText: errorText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
-        border: const OutlineInputBorder(),
+        filled: filled,
+        fillColor: filled
+            ? theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.45 : 0.65,
+              )
+            : null,
+        border: border(outline),
+        enabledBorder: border(outline),
+        focusedBorder: border(focused, width: 1.6),
+        errorBorder: border(theme.colorScheme.error),
+        focusedErrorBorder: border(theme.colorScheme.error, width: 1.6),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

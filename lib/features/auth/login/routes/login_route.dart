@@ -7,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../router/app_router.dart';
 import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
@@ -23,6 +24,14 @@ class LoginRoute extends ConsumerStatefulWidget {
 class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      exitGuestMode(ref);
+    });
+  }
 
   @override
   void dispose() {

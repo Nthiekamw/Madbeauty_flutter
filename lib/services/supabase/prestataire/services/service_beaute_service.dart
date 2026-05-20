@@ -8,14 +8,18 @@ class ServiceBeauteUpsertData {
     this.id,
     required this.prestataireId,
     required this.nom,
-    required this.prix,
-    required this.dureeMinutes,
+    this.description,
+    this.categorieId,
+    this.prix = 0,
+    this.dureeMinutes = 60,
     this.isActif = true,
   });
 
   final String? id;
   final String prestataireId;
   final String nom;
+  final String? description;
+  final String? categorieId;
   final double prix;
   final int dureeMinutes;
   final bool isActif;
@@ -52,6 +56,12 @@ class ServiceBeauteService {
             'prix': service.prix,
             'duree_minutes': service.dureeMinutes,
             'is_actif': service.isActif,
+            if (service.description != null &&
+                service.description!.trim().isNotEmpty)
+              'description': service.description!.trim(),
+            if (service.categorieId != null &&
+                service.categorieId!.trim().isNotEmpty)
+              'categorie_id': service.categorieId!.trim(),
           };
 
           final id = service.id;

@@ -1,16 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../features/auth/logic/auth_role_cache.dart';
 import '../features/auth/forgot_password/routes/forgot_password_route.dart';
 import '../features/auth/onboarding/screens/onboarding_screen.dart';
 import '../features/auth/login/routes/login_route.dart';
 import '../features/auth/welcome/screens/auth_welcome_screen.dart';
+import '../features/auth/guest/guest_mode_provider.dart';
+import '../features/auth/guest/guest_route_policy.dart';
 import '../features/auth/providers/auth_notifier.dart';
-import '../features/auth/providers/password_recovery_provider.dart';
+import '../features/auth/providers/password_recovery_provider.dart'
+    show isPasswordRecoveryActiveProvider;
 import '../features/auth/register/routes/register_route.dart';
+import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
 import '../features/booking/screens/booking_confirmation_screen.dart';
@@ -22,7 +24,10 @@ import '../features/prestataire/screens/prestataire_agenda_screen.dart';
 import '../features/prestataire/screens/prestataire_dashboard_screen.dart';
 import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_horaires_screen.dart';
+import '../features/prestataire/models/prestataire_profile_edit_section.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
+import '../features/prestataire/screens/prestataire_profile_completion_screen.dart';
+import '../features/prestataire/screens/prestataire_profile_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
@@ -54,6 +59,8 @@ abstract final class AppRoutes {
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
   static const String prestataireProfile = '/prestataire/profile';
+  static const String prestataireProfileEdit = '/prestataire/profile/edit';
+  static const String prestataireProfileComplete = '/prestataire/profile/complete';
   static const String prestataireHoraires = '/prestataire/horaires';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
@@ -86,23 +93,20 @@ abstract final class AppRouteNames {
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
   static const String prestataireProfile = 'prestataire-profile';
+  static const String prestataireProfileEdit = 'prestataire-profile-edit';
+  static const String prestataireProfileComplete = 'prestataire-profile-complete';
   static const String prestataireHoraires = 'prestataire-horaires';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authNotifierProvider);
-  final authEvent = switch (ref.watch(authStateStreamProvider)) {
-    AsyncData(:final value) => value.event,
-    _ => null,
-  };
-  final recoveryPending =
-      ref.watch(passwordRecoveryPendingProvider) ||
-      authEvent == AuthChangeEvent.passwordRecovery;
+  final recoveryActive = ref.watch(isPasswordRecoveryActiveProvider);
 
   final user = switch (auth) {
     AsyncData(:final value) => value,
     _ => null,
   };
+  final guestMode = ref.watch(guestModeProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -147,7 +151,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
 
-      if (recoveryPending) {
+      if (recoveryActive) {
         if (location != AppRoutes.resetPassword) {
           return AppRoutes.resetPassword;
         }
@@ -155,12 +159,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (location == AppRoutes.resetPassword) {
-        return user == null ? AppRoutes.login : preferredPath;
+        if (user == null) return AppRoutes.login;
+        return null;
       }
 
+      final registerDraftPending =
+          RegisterWizardDraftStore.instance.hasDraft;
+
       if (user == null) {
+        if (guestMode) {
+          if (GuestRoutePolicy.requiresAccount(location)) {
+            return location == AppRoutes.bookingConfirmation
+                ? AppRoutes.login
+                : AppRoutes.clientHome;
+          }
+          if (GuestRoutePolicy.isBrowsableAsGuest(location)) return null;
+        }
         if (publicRoutes.contains(location)) return null;
         return AppRoutes.welcome;
+      }
+
+      if (location == AppRoutes.register && registerDraftPending) {
+        return null;
       }
 
       if (location == AppRoutes.splash ||
@@ -311,7 +331,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.prestataireProfile,
                 pageBuilder: (context, state) => shellTabPage(
                   key: state.pageKey,
-                  child: const PrestataireHubScreen(),
+                  child: const PrestataireProfileScreen(),
                 ),
               ),
             ],
@@ -360,6 +380,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.prestataireHoraires,
         path: AppRoutes.prestataireHoraires,
         builder: (context, state) => const PrestataireHorairesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireProfileEdit,
+        path: AppRoutes.prestataireProfileEdit,
+        builder: (context, state) {
+          final section = PrestataireProfileEditSection.fromQuery(
+            state.uri.queryParameters['section'],
+          );
+          return PrestataireHubScreen(focusedSection: section);
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireProfileComplete,
+        path: AppRoutes.prestataireProfileComplete,
+        builder: (context, state) =>
+            const PrestataireProfileCompletionScreen(),
       ),
     ],
   );

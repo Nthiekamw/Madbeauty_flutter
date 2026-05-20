@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../auth/widgets/role_switch_section.dart';
+import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
@@ -37,10 +40,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     List<PrestataireReservationItem> all,
     DateTime day,
   ) {
-    final list =
-        all.where((r) => isSameDay(r.dateHeure, day)).toList()
-          ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
-    return list;
+    return all.where((r) => isSameDay(r.dateHeure, day)).toList()
+      ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
   }
 
   PrestataireReservationActions get _actions =>
@@ -60,35 +61,18 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(DiscNav.prestAgenda),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: Text(
-                DiscPrestaAgenda.realtimeHint,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return DiscoveryBrandScaffold(
       body: agendaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              DiscPrestaAgenda.loadErr,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
+          child: DiscoveryEmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: DiscPrestaAgenda.loadErr,
+            body: DiscList.pullDownHint,
+            iconColor: theme.colorScheme.error,
+            actionLabel: DiscList.retry,
+            onAction: () =>
+                ref.read(prestataireAgendaProvider.notifier).reload(),
           ),
         ),
         data: (reservations) {
@@ -99,9 +83,33 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                 ref.read(prestataireAgendaProvider.notifier).reload(),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: const EdgeInsets.only(bottom: 32),
               children: [
-                const RoleSwitchSection(sectionTitle: DiscNav.profileSpace),
+                const DiscoveryScreenHeader(
+                  title: DiscNav.prestAgenda,
+                  subtitle: DiscPrestaAgenda.pageSubtitle,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.sync_rounded,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        DiscPrestaAgenda.realtimeHint,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 12),
                 PrestataireAgendaWeekCalendar(
                   focusedDay: _focusedDay,
@@ -122,41 +130,82 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   },
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  formatBookingDate(_selectedDay),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          formatBookingDate(_selectedDay),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (dayReservations.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${dayReservations.length}',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontFamily: AppFonts.body,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 10),
                 if (dayReservations.isEmpty)
-                  const PrestataireDashboardEmptyHint(
-                    message: DiscPrestaAgenda.dayEmpty,
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: PrestataireDashboardEmptyHint(
+                      message: DiscPrestaAgenda.dayEmpty,
+                    ),
                   )
                 else
-                  for (final item in dayReservations)
-                    PrestataireAgendaReservationCard(
-                      item: item,
-                      busy: _actingReservationId == item.id,
-                      onAccept: _actingReservationId != null
-                          ? null
-                          : () => _runAction(
-                              item.id,
-                              () => _actions.accept(item.id),
-                            ),
-                      onReject: _actingReservationId != null
-                          ? null
-                          : () => _runAction(
-                              item.id,
-                              () => _actions.reject(item.id),
-                            ),
-                      onMarkDone: _actingReservationId != null
-                          ? null
-                          : () => _runAction(
-                              item.id,
-                              () => _actions.markDone(item.id),
-                            ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        for (final item in dayReservations)
+                          PrestataireAgendaReservationCard(
+                            item: item,
+                            busy: _actingReservationId == item.id,
+                            onAccept: _actingReservationId != null
+                                ? null
+                                : () => _runAction(
+                                    item.id,
+                                    () => _actions.accept(item.id),
+                                  ),
+                            onReject: _actingReservationId != null
+                                ? null
+                                : () => _runAction(
+                                    item.id,
+                                    () => _actions.reject(item.id),
+                                  ),
+                            onMarkDone: _actingReservationId != null
+                                ? null
+                                : () => _runAction(
+                                    item.id,
+                                    () => _actions.markDone(item.id),
+                                  ),
+                          ),
+                      ],
                     ),
+                  ),
               ],
             ),
           );

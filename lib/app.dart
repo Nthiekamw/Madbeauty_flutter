@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/constants/app_strings.dart';
+import 'features/auth/navigation/auth_recovery_navigation.dart';
 import 'router/app_router.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/router_theme_scope.dart';
@@ -12,6 +13,7 @@ class MadBeautyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    listenPasswordRecoveryNavigation(ref);
     final router = ref.watch(goRouterProvider);
     return RouterThemeScope(
       router: router,

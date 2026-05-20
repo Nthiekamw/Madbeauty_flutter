@@ -8,11 +8,17 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../core/models/user_role.dart';
-import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
+import '../../../services/offline/offline_actions.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_menu_tile.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../auth/guest/guest_mode_provider.dart';
+import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../auth/widgets/role_switch_section.dart';
@@ -44,11 +50,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annuler'),
+            child: const Text(CoreStrings.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Se déconnecter'),
+            child: const Text(ShellStrings.accountActionSignOut),
           ),
         ],
       ),
@@ -79,11 +85,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    final isOnline = await ref.read(connectivityServiceProvider).isOnline();
-    if (!isOnline) {
-      _showSnack(ShellStrings.profileSaveErr);
-      return;
-    }
+    if (!await ensureOnline(context, ref)) return;
 
     setState(() => _savingName = true);
     try {
@@ -139,14 +141,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    final isOnline = await ref.read(connectivityServiceProvider).isOnline();
-    if (!isOnline) {
+    if (!await ensureOnline(context, ref)) {
       if (mounted) {
         setState(() {
           _savingPhoto = false;
           _avatarPreviewBytes = null;
         });
-        _showSnack(ShellStrings.profileSaveErr);
       }
       return;
     }
@@ -177,12 +177,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (ref.watch(isGuestBrowsingProvider)) {
+      return DiscoveryBrandScaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DiscoveryScreenHeader(
+              title: DiscNav.profileTitle,
+              subtitle: DiscNav.profileSubtitle,
+            ),
+            Expanded(
+              child: GuestAccountPrompt(
+                icon: Icons.person_outline,
+                title: AuthStrings.guestProfileTitle,
+                message: AuthStrings.guestProfileBody,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final authSnapshot = ref.watch(authNotifierProvider);
     final user = switch (authSnapshot) {
       AsyncData(:final value) => value,
@@ -206,13 +230,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final rolesLabel = profileRolesLabel(roles);
     final loadingProfile = profileAsync.isLoading && profile == null;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscNav.profileTitle)),
+    return DiscoveryBrandScaffold(
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
+          const DiscoveryScreenHeader(
+            title: DiscNav.profileTitle,
+            subtitle: DiscNav.profileSubtitle,
+          ),
           if (loadingProfile)
             const Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.all(40),
               child: Center(child: CircularProgressIndicator()),
             )
           else
@@ -227,40 +255,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onEditName: _savingName ? null : () => _editName(profile),
             ),
           if (_savingName)
-            const LinearProgressIndicator(minHeight: 2),
-          const Divider(height: 24),
-          const RoleSwitchSection(sectionTitle: DiscNav.profileSpace),
-          ListTile(
-            leading: Icon(
-              Icons.event_available_outlined,
-              color: theme.colorScheme.primary,
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: LinearProgressIndicator(minHeight: 2),
             ),
-            title: Text(DiscNav.myReservationsTitle),
-            subtitle: Text(
-              DiscNav.profileResHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          const SizedBox(height: 20),
+          DiscoverySurfaceCard(
+            child: RoleSwitchSection(
+              sectionTitle: DiscNav.profileSpace,
+              padding: EdgeInsets.zero,
             ),
-            trailing: Icon(
-              Icons.chevron_right,
-              color: theme.colorScheme.outline,
-            ),
-            onTap: () => context.goMyReservations(),
           ),
-          const Divider(height: 1),
-          ListTile(
-            leading: Icon(Icons.logout, color: theme.colorScheme.error),
-            title: Text(
-              ShellStrings.accountActionSignOut,
-              style: TextStyle(color: theme.colorScheme.error),
+          const SizedBox(height: 16),
+          DiscoverySurfaceCard(
+            child: Column(
+              children: [
+                DiscoveryMenuTile(
+                  icon: Icons.event_available_rounded,
+                  title: DiscNav.myReservationsTitle,
+                  subtitle: DiscNav.profileResHint,
+                  onTap: () => context.goMyReservations(),
+                ),
+                Divider(
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                  color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                ),
+                DiscoveryMenuTile(
+                  icon: Icons.logout_rounded,
+                  title: ShellStrings.accountActionSignOut,
+                  onTap: _confirmSignOut,
+                  destructive: true,
+                  showChevron: false,
+                ),
+              ],
             ),
-            onTap: _confirmSignOut,
           ),
           const SizedBox(height: 24),
           versionAsync.when(
             data: (version) => Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 '${ShellStrings.profileVersionLabel} $version',
                 textAlign: TextAlign.center,
@@ -269,8 +304,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ),
-            loading: () => const SizedBox(height: 48),
-            error: (_, __) => const SizedBox(height: 48),
+            loading: () => const SizedBox(height: 24),
+            error: (_, __) => const SizedBox(height: 24),
           ),
         ],
       ),

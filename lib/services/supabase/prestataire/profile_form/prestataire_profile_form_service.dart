@@ -3,24 +3,32 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/supabase_error_handler.dart';
+import '../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../core/models/domain/catalog/service_category.dart';
+import '../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../location/geocoding_service.dart';
 import '../../profile/profile_service.dart';
 import '../../storage/storage_service.dart';
+import '../catalog/categorie_suggestion_service.dart';
 import '../catalog/prestataire_filters.dart';
 import '../catalog/prestataire_service.dart';
+import '../photos/photo_realisation_service.dart';
 import '../services/service_beaute_service.dart';
 
 class PrestataireServiceFormData {
   const PrestataireServiceFormData({
     this.id,
     required this.nom,
-    required this.prix,
-    required this.dureeMinutes,
+    this.description = '',
+    this.categorieId,
+    this.prix = 0,
+    this.dureeMinutes = 60,
   });
 
   final String? id;
   final String nom;
+  final String description;
+  final String? categorieId;
   final double prix;
   final int dureeMinutes;
 }
@@ -29,54 +37,106 @@ class PrestataireProfileFormData {
   const PrestataireProfileFormData({
     this.prestataireId,
     required this.nomSalon,
+    required this.nomAffiche,
     required this.bio,
+    required this.description,
+    required this.experienceProfessionnelle,
+    required this.anneesExperience,
     required this.ville,
+    this.adresse = '',
+    this.codePostal = '',
+    this.lieuTravail,
     this.avatarUrl,
     required this.categories,
     required this.selectedCategoryIds,
     required this.services,
+    this.realisationPhotos = const [],
+    this.suggestionCategorieNom = '',
+    this.suggestionCategorieDescription = '',
   });
 
   final String? prestataireId;
   final String nomSalon;
+  final String nomAffiche;
   final String bio;
+  final String description;
+  final String experienceProfessionnelle;
+  final String anneesExperience;
   final String ville;
+  final String adresse;
+  final String codePostal;
+  final LieuTravail? lieuTravail;
   final String? avatarUrl;
   final List<ServiceCategory> categories;
   final Set<String> selectedCategoryIds;
   final List<PrestataireServiceFormData> services;
+  final List<PhotoRealisation> realisationPhotos;
+  final String suggestionCategorieNom;
+  final String suggestionCategorieDescription;
 
   static const empty = PrestataireProfileFormData(
     nomSalon: '',
+    nomAffiche: '',
     bio: '',
+    description: '',
+    experienceProfessionnelle: '',
+    anneesExperience: '',
     ville: '',
+    adresse: '',
+    codePostal: '',
+    lieuTravail: null,
     avatarUrl: null,
     categories: [],
     selectedCategoryIds: {},
     services: [],
+    realisationPhotos: [],
+    suggestionCategorieNom: '',
+    suggestionCategorieDescription: '',
   );
 }
 
 class PrestataireProfileSavePayload {
   const PrestataireProfileSavePayload({
     required this.nomSalon,
+    required this.nomAffiche,
     required this.bio,
+    required this.description,
+    required this.experienceProfessionnelle,
+    required this.anneesExperience,
     required this.ville,
+    required this.adresse,
+    required this.codePostal,
+    required this.lieuTravail,
     this.avatarBytes,
     this.avatarFileName,
     this.avatarMimeType,
-    required this.categoryIds,
     required this.services,
+    this.suggestionCategorieNom = '',
+    this.suggestionCategorieDescription = '',
   });
 
   final String nomSalon;
+  final String nomAffiche;
   final String bio;
+  final String description;
+  final String experienceProfessionnelle;
+  final String anneesExperience;
   final String ville;
+  final String adresse;
+  final String codePostal;
+  final LieuTravail lieuTravail;
   final Uint8List? avatarBytes;
   final String? avatarFileName;
   final String? avatarMimeType;
-  final Set<String> categoryIds;
   final List<PrestataireServiceFormData> services;
+  final String suggestionCategorieNom;
+  final String suggestionCategorieDescription;
+
+  Set<String> get categoryIdsFromServices => services
+      .map((s) => s.categorieId)
+      .whereType<String>()
+      .where((id) => id.trim().isNotEmpty)
+      .toSet();
 }
 
 class PrestataireProfileFormService {
@@ -87,12 +147,16 @@ class PrestataireProfileFormService {
     required ProfileService profileService,
     required StorageService storageService,
     required GeocodingService geocodingService,
+    PhotoRealisationService? photoRealisationService,
+    CategorieSuggestionService? categorieSuggestionService,
   }) : _client = client,
        _prestataireService = prestataireService,
        _serviceBeauteService = serviceBeauteService,
        _profileService = profileService,
        _storageService = storageService,
-       _geocodingService = geocodingService;
+       _geocodingService = geocodingService,
+       _photoRealisationService = photoRealisationService,
+       _categorieSuggestionService = categorieSuggestionService;
 
   final SupabaseClient _client;
   final PrestataireService _prestataireService;
@@ -100,6 +164,8 @@ class PrestataireProfileFormService {
   final ProfileService _profileService;
   final StorageService _storageService;
   final GeocodingService _geocodingService;
+  final PhotoRealisationService? _photoRealisationService;
+  final CategorieSuggestionService? _categorieSuggestionService;
 
   Future<PrestataireProfileFormData> fetch() => SupabaseErrorHandler.run(
     operation: 'prestataireProfileForm.fetch',
@@ -113,12 +179,19 @@ class PrestataireProfileFormService {
       if (prestataire == null) {
         return PrestataireProfileFormData(
           nomSalon: '',
+          nomAffiche: '',
           bio: '',
+          description: '',
+          experienceProfessionnelle: '',
+          anneesExperience: '',
           ville: '',
+          adresse: '',
+          codePostal: '',
           avatarUrl: userProfile?.avatarUrl,
           categories: categories,
           selectedCategoryIds: const {},
           services: const [],
+          realisationPhotos: const [],
         );
       }
 
@@ -128,11 +201,28 @@ class PrestataireProfileFormService {
         prestataire.id,
       );
 
+      final photos = await _photoRealisationService
+              ?.getByPrestataire(prestataire.id) ??
+          const <PhotoRealisation>[];
+
+      final suggestions = await _categorieSuggestionService
+              ?.getByPrestataire(prestataire.id) ??
+          const [];
+      final suggestion = suggestions.isNotEmpty ? suggestions.first : null;
+
       return PrestataireProfileFormData(
         prestataireId: prestataire.id,
         nomSalon: prestataire.nomSalon?.trim() ?? '',
+        nomAffiche: prestataire.nomAffiche?.trim() ?? '',
         bio: prestataire.bio?.trim() ?? '',
+        description: prestataire.description?.trim() ?? '',
+        experienceProfessionnelle:
+            prestataire.experienceProfessionnelle?.trim() ?? '',
+        anneesExperience: prestataire.anneesExperience?.trim() ?? '',
         ville: prestataire.ville?.trim() ?? '',
+        adresse: prestataire.adresse?.trim() ?? '',
+        codePostal: prestataire.codePostal?.trim() ?? '',
+        lieuTravail: prestataire.lieuTravail,
         avatarUrl: userProfile?.avatarUrl,
         categories: categories,
         selectedCategoryIds: Set<String>.from(
@@ -142,10 +232,15 @@ class PrestataireProfileFormService {
           return PrestataireServiceFormData(
             id: service.id,
             nom: service.nom,
+            description: service.description?.trim() ?? '',
+            categorieId: service.categorieId,
             prix: service.prix,
             dureeMinutes: service.dureeMinutes,
           );
         }).toList(),
+        realisationPhotos: photos,
+        suggestionCategorieNom: suggestion?.nom.trim() ?? '',
+        suggestionCategorieDescription: suggestion?.description?.trim() ?? '',
       );
     },
   );
@@ -176,7 +271,13 @@ class PrestataireProfileFormService {
         );
       }
 
-      final coords = await _geocodingService.geocodeAddress(payload.ville);
+      final coords = await _geocodingService.geocodeAddress(
+        _geocodeQuery(
+          adresse: payload.adresse,
+          codePostal: payload.codePostal,
+          ville: payload.ville,
+        ),
+      );
 
       final prestataireId = await _prestataireService.upsert(
         PrestataireUpsertData(
@@ -184,6 +285,22 @@ class PrestataireProfileFormService {
           nomSalon: payload.nomSalon,
           bio: payload.bio,
           ville: payload.ville,
+          adresse: payload.adresse.trim().isEmpty ? null : payload.adresse.trim(),
+          codePostal:
+              payload.codePostal.trim().isEmpty ? null : payload.codePostal.trim(),
+          nomAffiche:
+              payload.nomAffiche.trim().isEmpty ? null : payload.nomAffiche.trim(),
+          lieuTravail: payload.lieuTravail,
+          anneesExperience: payload.anneesExperience.trim().isEmpty
+              ? null
+              : payload.anneesExperience.trim(),
+          experienceProfessionnelle:
+              payload.experienceProfessionnelle.trim().isEmpty
+              ? null
+              : payload.experienceProfessionnelle.trim(),
+          description: payload.description.trim().isEmpty
+              ? null
+              : payload.description.trim(),
           latitude: coords?.latitude,
           longitude: coords?.longitude,
         ),
@@ -191,9 +308,14 @@ class PrestataireProfileFormService {
 
       await _prestataireService.replaceSpecialties(
         prestataireId: prestataireId,
-        categoryIds: payload.categoryIds,
+        categoryIds: payload.categoryIdsFromServices,
       );
       await _syncServices(prestataireId, payload.services);
+      await _categorieSuggestionService?.replaceForPrestataire(
+        prestataireId: prestataireId,
+        nom: payload.suggestionCategorieNom,
+        description: payload.suggestionCategorieDescription,
+      );
     },
   );
 
@@ -216,10 +338,25 @@ class PrestataireProfileFormService {
           id: service.id,
           prestataireId: prestataireId,
           nom: service.nom,
+          description: service.description,
+          categorieId: service.categorieId,
           prix: service.prix,
           dureeMinutes: service.dureeMinutes,
         ),
       );
     }
+  }
+
+  static String _geocodeQuery({
+    required String adresse,
+    required String codePostal,
+    required String ville,
+  }) {
+    final parts = <String>[
+      if (adresse.trim().isNotEmpty) adresse.trim(),
+      if (codePostal.trim().isNotEmpty) codePostal.trim(),
+      if (ville.trim().isNotEmpty) ville.trim(),
+    ];
+    return parts.isEmpty ? ville.trim() : parts.join(', ');
   }
 }

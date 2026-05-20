@@ -2,8 +2,17 @@
 abstract final class DiscList {
   DiscList._();
 
+  static const searchSubtitle =
+      'Filtre par salon, ville ou type de prestation.';
+  static const filtersTitle = 'Filtres';
   static const hintSearch =
       'Filtrer par salon, ville, type de service (coiffure, manucure, maquillage…)…';
+
+  static String resultsCount(int count) {
+    if (count <= 0) return 'Aucun résultat';
+    if (count == 1) return '1 prestataire';
+    return '$count prestataires';
+  }
   static const chipAll = 'Tout';
   static const modeList = 'Liste';
   static const modeMap = 'Carte';

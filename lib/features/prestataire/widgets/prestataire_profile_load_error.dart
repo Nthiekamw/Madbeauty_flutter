@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
 
 class PrestataireProfileLoadError extends StatelessWidget {
   const PrestataireProfileLoadError({
@@ -12,27 +13,14 @@ class PrestataireProfileLoadError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              DiscPrestaForm.loadErr,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: onRetry,
-              child: const Text(DiscList.retry),
-            ),
-          ],
-        ),
+      child: DiscoveryEmptyState(
+        icon: Icons.cloud_off_outlined,
+        title: DiscPrestaForm.loadErr,
+        body: DiscList.pullDownHint,
+        iconColor: Theme.of(context).colorScheme.error,
+        actionLabel: DiscList.retry,
+        onAction: onRetry,
       ),
     );
   }

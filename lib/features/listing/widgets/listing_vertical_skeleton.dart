@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../shared/theme/discovery_styles.dart';
+
 /// Squelette pour liste verticale du catalogue (écran listing).
 class ListingVerticalSkeleton extends StatelessWidget {
   const ListingVerticalSkeleton({super.key, this.rowCount = 8});
@@ -24,7 +26,7 @@ class ListingVerticalSkeleton extends StatelessWidget {
       highlightColor: highlight,
       period: const Duration(milliseconds: 1200),
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         itemCount: rowCount,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
@@ -32,7 +34,7 @@ class ListingVerticalSkeleton extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
             ),
             padding: const EdgeInsets.all(12),
             child: Row(

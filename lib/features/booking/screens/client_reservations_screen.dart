@@ -3,10 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/offline/offline_queue_helper.dart';
+import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../auth/guest/guest_mode_provider.dart';
+import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
-import '../widgets/booking_message.dart';
 import '../widgets/client_reservation_card.dart';
 
 class ClientReservationsScreen extends ConsumerStatefulWidget {
@@ -59,6 +66,23 @@ class _ClientReservationsScreenState
     }
 
     setState(() => _cancellingId = item.id);
+
+    final queued = await enqueueIfOffline(
+      ref: ref,
+      context: context,
+      action: PendingOfflineAction.create(
+        type: OfflineActionType.bookingCancel,
+        payload: {'reservationId': item.id},
+      ),
+    );
+    if (queued) {
+      if (mounted) {
+        setState(() => _cancellingId = null);
+        invalidateClientReservations(ref);
+      }
+      return;
+    }
+
     try {
       await bookingService.cancel(item.id);
       if (!mounted) return;
@@ -77,53 +101,105 @@ class _ClientReservationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(isGuestBrowsingProvider)) {
+      return DiscoveryBrandScaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DiscoveryScreenHeader(
+              title: DiscNav.myReservationsTitle,
+              subtitle: DiscBk.reservationsSubtitle,
+            ),
+            Expanded(
+              child: GuestAccountPrompt(
+                icon: Icons.event_outlined,
+                title: AuthStrings.guestReservationsTitle,
+                message: AuthStrings.guestReservationsBody,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final reservationsAsync = ref.watch(clientReservationsProvider);
 
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(DiscNav.myReservationsTitle),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: DiscBk.tabFuture),
-              Tab(text: DiscBk.tabPast),
-            ],
-          ),
-        ),
-        body: reservationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 48),
-                BookingMessage(
-                  icon: Icons.cloud_off_outlined,
-                  title: DiscBk.listErrTitle,
-                  message: DiscBk.listErrBody,
-                ),
-              ],
+      child: DiscoveryBrandScaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const DiscoveryScreenHeader(
+              title: DiscNav.myReservationsTitle,
+              subtitle: DiscBk.reservationsSubtitle,
             ),
-          ),
-          data: (all) => TabBarView(
-            children: [
-              _tabList(
-                items: _upcoming(all),
-                emptyTitle:
-                    DiscBk.emptyFutureTitle,
-                emptyBody:
-                    DiscBk.emptyFutureBody,
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: DiscoverySurfaceCard(
+                padding: const EdgeInsets.all(6),
+                child: TabBar(
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle:
+                      Theme.of(context).textTheme.labelLarge,
+                  indicator: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
+                  unselectedLabelColor:
+                      Theme.of(context).colorScheme.onSurfaceVariant,
+                  tabs: const [
+                    Tab(text: DiscBk.tabFuture),
+                    Tab(text: DiscBk.tabPast),
+                  ],
+                ),
               ),
-              _tabList(
-                items: _past(all),
-                emptyTitle:
-                    DiscBk.emptyPastTitle,
-                emptyBody: DiscBk.emptyPastBody,
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: reservationsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (_, __) => RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      DiscoveryEmptyState(
+                        icon: Icons.cloud_off_outlined,
+                        title: DiscBk.listErrTitle,
+                        body: DiscBk.listErrBody,
+                        iconColor: Theme.of(context).colorScheme.error,
+                        actionLabel: DiscList.retry,
+                        onAction: _refresh,
+                      ),
+                    ],
+                  ),
+                ),
+                data: (all) => TabBarView(
+                  children: [
+                    _tabList(
+                      items: _upcoming(all),
+                      emptyTitle: DiscBk.emptyFutureTitle,
+                      emptyBody: DiscBk.emptyFutureBody,
+                    ),
+                    _tabList(
+                      items: _past(all),
+                      emptyTitle: DiscBk.emptyPastTitle,
+                      emptyBody: DiscBk.emptyPastBody,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -131,16 +207,14 @@ class _ClientReservationsScreenState
 
   List<ClientReservationSummary> _upcoming(List<ClientReservationSummary> all) {
     final now = DateTime.now();
-    final out = all.where((r) => !r.dateHeure.isBefore(now)).toList()
+    return all.where((r) => !r.dateHeure.isBefore(now)).toList()
       ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
-    return out;
   }
 
   List<ClientReservationSummary> _past(List<ClientReservationSummary> all) {
     final now = DateTime.now();
-    final out = all.where((r) => r.dateHeure.isBefore(now)).toList()
+    return all.where((r) => r.dateHeure.isBefore(now)).toList()
       ..sort((a, b) => b.dateHeure.compareTo(a.dateHeure));
-    return out;
   }
 
   Widget _tabList({
@@ -153,33 +227,13 @@ class _ClientReservationsScreenState
         onRefresh: _refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           children: [
-            Icon(
-              Icons.event_busy_outlined,
-              size: 56,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              emptyTitle,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              emptyBody,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 28),
-            FilledButton(
-              onPressed: () => context.goClientSearch(),
-              child: const Text(
-                DiscBk.browsePresta,
-              ),
+            DiscoveryEmptyState(
+              icon: Icons.event_busy_outlined,
+              title: emptyTitle,
+              body: emptyBody,
+              actionLabel: DiscBk.browsePresta,
+              onAction: () => context.goClientSearch(),
             ),
           ],
         ),
@@ -190,9 +244,9 @@ class _ClientReservationsScreenState
       onRefresh: _refresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final item = items[index];
           final ui = clientReservationUiStatusFromStatut(item.statut);
@@ -200,9 +254,7 @@ class _ClientReservationsScreenState
           return ClientReservationCard(
             item: item,
             cancelLoading: _cancellingId == item.id,
-            onCancel: canCancel
-                ? () => _confirmCancel(item)
-                : null,
+            onCancel: canCancel ? () => _confirmCancel(item) : null,
           );
         },
       ),

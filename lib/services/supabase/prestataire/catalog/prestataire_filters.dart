@@ -1,3 +1,5 @@
+import '../../../../core/models/domain/user/lieu_travail.dart';
+
 class PrestataireFilters {
   const PrestataireFilters({
     this.query,
@@ -18,6 +20,13 @@ class PrestataireUpsertData {
     required this.nomSalon,
     required this.bio,
     required this.ville,
+    this.adresse,
+    this.codePostal,
+    this.nomAffiche,
+    this.lieuTravail,
+    this.anneesExperience,
+    this.experienceProfessionnelle,
+    this.description,
     this.latitude,
     this.longitude,
   });
@@ -26,6 +35,13 @@ class PrestataireUpsertData {
   final String nomSalon;
   final String bio;
   final String ville;
+  final String? adresse;
+  final String? codePostal;
+  final String? nomAffiche;
+  final LieuTravail? lieuTravail;
+  final String? anneesExperience;
+  final String? experienceProfessionnelle;
+  final String? description;
   final double? latitude;
   final double? longitude;
 }

@@ -105,6 +105,27 @@ class PrestataireService {
                 'nom_salon': prestataire.nomSalon.trim(),
                 'bio': prestataire.bio.trim(),
                 'ville': prestataire.ville.trim(),
+                if (prestataire.adresse != null &&
+                    prestataire.adresse!.trim().isNotEmpty)
+                  'adresse': prestataire.adresse!.trim(),
+                if (prestataire.codePostal != null &&
+                    prestataire.codePostal!.trim().isNotEmpty)
+                  'code_postal': prestataire.codePostal!.trim(),
+                if (prestataire.nomAffiche != null &&
+                    prestataire.nomAffiche!.trim().isNotEmpty)
+                  'nom_affiche': prestataire.nomAffiche!.trim(),
+                if (prestataire.lieuTravail != null)
+                  'lieu_travail': prestataire.lieuTravail!.value,
+                if (prestataire.anneesExperience != null &&
+                    prestataire.anneesExperience!.trim().isNotEmpty)
+                  'annees_experience': prestataire.anneesExperience!.trim(),
+                if (prestataire.experienceProfessionnelle != null &&
+                    prestataire.experienceProfessionnelle!.trim().isNotEmpty)
+                  'experience_professionnelle':
+                      prestataire.experienceProfessionnelle!.trim(),
+                if (prestataire.description != null &&
+                    prestataire.description!.trim().isNotEmpty)
+                  'description': prestataire.description!.trim(),
                 if (prestataire.latitude != null)
                   'latitude': prestataire.latitude,
                 if (prestataire.longitude != null)

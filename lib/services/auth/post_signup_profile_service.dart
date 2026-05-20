@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/errors/supabase_error_handler.dart';
+import '../../core/models/domain/user/lieu_travail.dart';
 import '../location/geocoding_service.dart';
 import '../supabase/supabase_service.dart';
 
@@ -55,16 +56,42 @@ class PostSignupProfileService {
     required String userId,
     required String nomSalon,
     required String ville,
+    String? adresse,
+    String? codePostal,
+    String? nomAffiche,
+    LieuTravail? lieuTravail,
     String? bio,
+    String? description,
+    String? anneesExperience,
+    String? experienceProfessionnelle,
   }) {
     return SupabaseErrorHandler.run(
       operation: 'postSignup.updatePrestataireExtras',
       action: () async {
-        final coords = await _geocoding.geocodeAddress(ville);
+        final geoQuery = _geocodeQuery(
+          adresse: adresse,
+          codePostal: codePostal,
+          ville: ville,
+        );
+        final coords = await _geocoding.geocodeAddress(geoQuery);
         await _client.from('prestataire_profiles').update({
           'nom_salon': nomSalon.trim(),
           'ville': ville.trim(),
+          if (adresse != null && adresse.trim().isNotEmpty)
+            'adresse': adresse.trim(),
+          if (codePostal != null && codePostal.trim().isNotEmpty)
+            'code_postal': codePostal.trim(),
+          if (nomAffiche != null && nomAffiche.trim().isNotEmpty)
+            'nom_affiche': nomAffiche.trim(),
+          if (lieuTravail != null) 'lieu_travail': lieuTravail.value,
           if (bio != null && bio.trim().isNotEmpty) 'bio': bio.trim(),
+          if (description != null && description.trim().isNotEmpty)
+            'description': description.trim(),
+          if (anneesExperience != null && anneesExperience.trim().isNotEmpty)
+            'annees_experience': anneesExperience.trim(),
+          if (experienceProfessionnelle != null &&
+              experienceProfessionnelle.trim().isNotEmpty)
+            'experience_professionnelle': experienceProfessionnelle.trim(),
           if (coords != null) ...{
             'latitude': coords.latitude,
             'longitude': coords.longitude,
@@ -72,5 +99,18 @@ class PostSignupProfileService {
         }).eq('user_id', userId);
       },
     );
+  }
+
+  static String _geocodeQuery({
+    String? adresse,
+    String? codePostal,
+    required String ville,
+  }) {
+    final parts = <String>[
+      if (adresse != null && adresse.trim().isNotEmpty) adresse.trim(),
+      if (codePostal != null && codePostal.trim().isNotEmpty) codePostal.trim(),
+      if (ville.trim().isNotEmpty) ville.trim(),
+    ];
+    return parts.isEmpty ? ville.trim() : parts.join(', ');
   }
 }
