@@ -10,6 +10,8 @@ abstract final class DiscPrestaDetail {
   static const badgeVerified = 'Profil vérifié';
   static const badgeNewTalent = 'Nouvelle pépite';
   static const bioTitle = 'À propos';
+  static const comfortTitle = 'Confort client';
+  static const conditionsTitle = 'Conditions de service';
   static const specialtiesTitle = 'Spécialités';
   static const galleryTitle = 'Réalisations';
   static const svcTitle = 'Services';

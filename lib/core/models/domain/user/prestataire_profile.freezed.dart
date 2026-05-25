@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PrestataireProfile {
 
- String get id; String get userId; String? get nomSalon; String? get bio; String? get ville; String? get adresse;@JsonKey(name: 'code_postal') String? get codePostal;@JsonKey(name: 'nom_affiche') String? get nomAffiche;@JsonKey(name: 'lieu_travail')@LieuTravailConverter() LieuTravail? get lieuTravail;@JsonKey(name: 'annees_experience') String? get anneesExperience;@JsonKey(name: 'experience_professionnelle') String? get experienceProfessionnelle; String? get description; double? get latitude; double? get longitude; double? get noteMoyenne; bool get isVerified;@IsoDateTimeConverter() DateTime get createdAt;
+ String get id; String get userId; String? get nomSalon; String? get bio; String? get ville; String? get adresse;@JsonKey(name: 'code_postal') String? get codePostal;@JsonKey(name: 'nom_affiche') String? get nomAffiche;@JsonKey(name: 'lieu_travail')@LieuTravailConverter() LieuTravail? get lieuTravail;@JsonKey(name: 'annees_experience') String? get anneesExperience;@JsonKey(name: 'experience_professionnelle') String? get experienceProfessionnelle; String? get description;@JsonKey(name: 'confort_client') List<String> get confortClient;@JsonKey(name: 'conditions_service', fromJson: _conditionsServiceFromJson) List<String> get conditionsService; double? get latitude; double? get longitude; double? get noteMoyenne; bool get isVerified;@IsoDateTimeConverter() DateTime get createdAt;
 /// Create a copy of PrestataireProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -225,7 +225,7 @@ return $default(_that.id,_that.userId,_that.nomSalon,_that.bio,_that.ville,_that
 @JsonSerializable()
 
 class _PrestataireProfile implements PrestataireProfile {
-  const _PrestataireProfile({required this.id, required this.userId, this.nomSalon, this.bio, this.ville, this.adresse, @JsonKey(name: 'code_postal') this.codePostal, @JsonKey(name: 'nom_affiche') this.nomAffiche, @JsonKey(name: 'lieu_travail')@LieuTravailConverter() this.lieuTravail, @JsonKey(name: 'annees_experience') this.anneesExperience, @JsonKey(name: 'experience_professionnelle') this.experienceProfessionnelle, this.description, this.latitude, this.longitude, this.noteMoyenne, this.isVerified = false, @IsoDateTimeConverter() required this.createdAt});
+  const _PrestataireProfile({required this.id, required this.userId, this.nomSalon, this.bio, this.ville, this.adresse, @JsonKey(name: 'code_postal') this.codePostal, @JsonKey(name: 'nom_affiche') this.nomAffiche, @JsonKey(name: 'lieu_travail')@LieuTravailConverter() this.lieuTravail, @JsonKey(name: 'annees_experience') this.anneesExperience, @JsonKey(name: 'experience_professionnelle') this.experienceProfessionnelle, this.description, @JsonKey(name: 'confort_client') this.confortClient = const [], @JsonKey(name: 'conditions_service', fromJson: _conditionsServiceFromJson) this.conditionsService = const [], this.latitude, this.longitude, this.noteMoyenne, this.isVerified = false, @IsoDateTimeConverter() required this.createdAt});
   factory _PrestataireProfile.fromJson(Map<String, dynamic> json) => _$PrestataireProfileFromJson(json);
 
 @override final  String id;
@@ -240,6 +240,8 @@ class _PrestataireProfile implements PrestataireProfile {
 @override@JsonKey(name: 'annees_experience') final  String? anneesExperience;
 @override@JsonKey(name: 'experience_professionnelle') final  String? experienceProfessionnelle;
 @override final  String? description;
+@override@JsonKey(name: 'confort_client') final  List<String> confortClient;
+@override@JsonKey(name: 'conditions_service', fromJson: _conditionsServiceFromJson) final  List<String> conditionsService;
 @override final  double? latitude;
 @override final  double? longitude;
 @override final  double? noteMoyenne;

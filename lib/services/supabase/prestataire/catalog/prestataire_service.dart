@@ -126,6 +126,8 @@ class PrestataireService {
                 if (prestataire.description != null &&
                     prestataire.description!.trim().isNotEmpty)
                   'description': prestataire.description!.trim(),
+                'confort_client': prestataire.confortClient,
+                'conditions_service': prestataire.conditionsService,
                 if (prestataire.latitude != null)
                   'latitude': prestataire.latitude,
                 if (prestataire.longitude != null)

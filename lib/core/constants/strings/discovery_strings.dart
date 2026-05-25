@@ -12,3 +12,4 @@ export 'discovery/disc_presta_detail.dart';
 export 'discovery/disc_presta_form.dart';
 export 'discovery/disc_presta_profile.dart';
 export 'discovery/disc_presta_completion.dart';
+export 'discovery/disc_presta_comfort.dart';

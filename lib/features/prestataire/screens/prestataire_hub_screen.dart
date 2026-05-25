@@ -16,6 +16,7 @@ import '../models/prestataire_profile_edit_section.dart';
 import '../models/prestataire_service_field_set.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/prestataire_profile_basics_step.dart';
+import '../widgets/prestataire_profile_client_experience_step.dart';
 import '../widgets/prestataire_profile_gallery_step.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_services_step.dart';
@@ -46,6 +47,8 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   final _suggestionNomController = TextEditingController();
   final _suggestionDescController = TextEditingController();
   final _services = <PrestataireServiceFieldSet>[];
+  final _selectedComfortIds = <String>{};
+  final _selectedConditionIds = <String>{};
 
   var _currentStep = 0;
   var _hydrated = false;
@@ -118,6 +121,12 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     _codePostalController.text = data.codePostal;
     _adresseController.text = data.adresse;
     _lieuTravail = data.lieuTravail;
+    _selectedComfortIds
+      ..clear()
+      ..addAll(data.confortClient);
+    _selectedConditionIds
+      ..clear()
+      ..addAll(data.conditionsService);
     _suggestionNomController.text = data.suggestionCategorieNom;
     _suggestionDescController.text = data.suggestionCategorieDescription;
     _galleryPhotos = List<PhotoRealisation>.from(data.realisationPhotos);
@@ -266,6 +275,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         PrestataireProfileEditSection.location => _validateLocation(),
         PrestataireProfileEditSection.services => _validateServices(),
         PrestataireProfileEditSection.gallery => _validateGallery(),
+        PrestataireProfileEditSection.clientExperience => true,
       };
     }
     return switch (_currentStep) {
@@ -354,7 +364,45 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       }).toList(),
       suggestionCategorieNom: _suggestionNomController.text.trim(),
       suggestionCategorieDescription: _suggestionDescController.text.trim(),
+      confortClient: _selectedComfortIds.toList(),
+      conditionsService: _selectedConditionIds.toList(),
     );
+  }
+
+  void _toggleComfort(String id) {
+    setState(() {
+      if (_selectedComfortIds.contains(id)) {
+        _selectedComfortIds.remove(id);
+      } else {
+        _selectedComfortIds.add(id);
+      }
+    });
+  }
+
+  void _toggleCondition(String id) {
+    setState(() {
+      if (_selectedConditionIds.contains(id)) {
+        _selectedConditionIds.remove(id);
+      } else {
+        _selectedConditionIds.add(id);
+      }
+    });
+  }
+
+  void _addCustomComfort(String encodedId) {
+    setState(() {
+      if (!_selectedComfortIds.contains(encodedId)) {
+        _selectedComfortIds.add(encodedId);
+      }
+    });
+  }
+
+  void _addCustomCondition(String encodedId) {
+    setState(() {
+      if (!_selectedConditionIds.contains(encodedId)) {
+        _selectedConditionIds.add(encodedId);
+      }
+    });
   }
 
   void _continue() {
@@ -516,6 +564,12 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             services: _services,
             suggestionNomController: _suggestionNomController,
             suggestionDescController: _suggestionDescController,
+            selectedComfortIds: _selectedComfortIds,
+            selectedConditionIds: _selectedConditionIds,
+            onComfortToggled: _toggleComfort,
+            onConditionToggled: _toggleCondition,
+            onAddCustomComfort: _addCustomComfort,
+            onAddCustomCondition: _addCustomCondition,
             avatarError: _avatarError,
             nomError: _nomError,
             nomAfficheError: _nomAfficheError,
@@ -594,6 +648,12 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.services,
     required this.suggestionNomController,
     required this.suggestionDescController,
+    required this.selectedComfortIds,
+    required this.selectedConditionIds,
+    required this.onComfortToggled,
+    required this.onConditionToggled,
+    required this.onAddCustomComfort,
+    required this.onAddCustomCondition,
     required this.avatarError,
     required this.nomError,
     required this.nomAfficheError,
@@ -641,6 +701,12 @@ class _PrestataireProfileForm extends StatelessWidget {
   final List<PrestataireServiceFieldSet> services;
   final TextEditingController suggestionNomController;
   final TextEditingController suggestionDescController;
+  final Set<String> selectedComfortIds;
+  final Set<String> selectedConditionIds;
+  final ValueChanged<String> onComfortToggled;
+  final ValueChanged<String> onConditionToggled;
+  final ValueChanged<String> onAddCustomComfort;
+  final ValueChanged<String> onAddCustomCondition;
   final String? avatarError;
   final String? nomError;
   final String? nomAfficheError;
@@ -745,6 +811,16 @@ class _PrestataireProfileForm extends StatelessWidget {
         onRemoveExisting: onRemoveGalleryPhoto,
         onRemovePending: onRemovePendingGallery,
       ),
+      PrestataireProfileEditSection.clientExperience =>
+        PrestataireProfileClientExperienceStep(
+          selectedComfortIds: selectedComfortIds,
+          selectedConditionIds: selectedConditionIds,
+          onComfortToggled: onComfortToggled,
+          onConditionToggled: onConditionToggled,
+          onAddCustomComfort: onAddCustomComfort,
+          onAddCustomCondition: onAddCustomCondition,
+          onChanged: onBasicsChanged,
+        ),
     };
   }
 

@@ -13,6 +13,8 @@ import '../../auth/widgets/role_switch_section.dart';
 import '../../profile/providers/app_version_provider.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../providers/prestataire_profile_form_provider.dart';
+import '../models/prestataire_profile_edit_section.dart';
+import '../widgets/prestataire_client_experience_section.dart';
 import '../widgets/prestataire_completeness_badge.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_manage_menu.dart';
@@ -140,6 +142,39 @@ class PrestataireProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ],
+              const SizedBox(height: 16),
+              if (data.confortClient.isNotEmpty ||
+                  data.conditionsService.isNotEmpty)
+                PrestataireClientExperienceSection(
+                  comfortIds: data.confortClient,
+                  conditionIds: data.conditionsService,
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: DiscoverySurfaceCard(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        PrestataireSectionHeader(
+                          icon: Icons.favorite_outline_rounded,
+                          title: DiscPrestaComfort.sectionComfortTitle,
+                          subtitle: DiscPrestaComfort.emptyComfort,
+                          iconColor: theme.colorScheme.tertiary,
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: () => context.pushPrestataireProfileEditSection(
+                            PrestataireProfileEditSection.clientExperience,
+                          ),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text(DiscPrestaComfort.menuTitle),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
               const PrestataireProfileManageMenu(),
               if (data.prestataireId != null) ...[

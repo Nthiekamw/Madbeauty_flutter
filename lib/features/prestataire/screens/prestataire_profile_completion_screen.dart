@@ -312,6 +312,8 @@ class _PrestataireProfileCompletionScreenState
       }).toList(),
       suggestionCategorieNom: _suggestionNomController.text,
       suggestionCategorieDescription: _suggestionDescController.text,
+      confortClient: _loadedData?.confortClient ?? const [],
+      conditionsService: _loadedData?.conditionsService ?? const [],
     );
   }
 
