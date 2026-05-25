@@ -53,6 +53,8 @@ class PrestataireProfileFormData {
     this.realisationPhotos = const [],
     this.suggestionCategorieNom = '',
     this.suggestionCategorieDescription = '',
+    this.confortClient = const [],
+    this.conditionsService = const [],
   });
 
   final String? prestataireId;
@@ -73,6 +75,8 @@ class PrestataireProfileFormData {
   final List<PhotoRealisation> realisationPhotos;
   final String suggestionCategorieNom;
   final String suggestionCategorieDescription;
+  final List<String> confortClient;
+  final List<String> conditionsService;
 
   static const empty = PrestataireProfileFormData(
     nomSalon: '',
@@ -92,6 +96,8 @@ class PrestataireProfileFormData {
     realisationPhotos: [],
     suggestionCategorieNom: '',
     suggestionCategorieDescription: '',
+    confortClient: [],
+    conditionsService: const [],
   );
 }
 
@@ -113,6 +119,8 @@ class PrestataireProfileSavePayload {
     required this.services,
     this.suggestionCategorieNom = '',
     this.suggestionCategorieDescription = '',
+    this.confortClient = const [],
+    this.conditionsService = const [],
   });
 
   final String nomSalon;
@@ -131,6 +139,8 @@ class PrestataireProfileSavePayload {
   final List<PrestataireServiceFormData> services;
   final String suggestionCategorieNom;
   final String suggestionCategorieDescription;
+  final List<String> confortClient;
+  final List<String> conditionsService;
 
   Set<String> get categoryIdsFromServices => services
       .map((s) => s.categorieId)
@@ -241,6 +251,8 @@ class PrestataireProfileFormService {
         realisationPhotos: photos,
         suggestionCategorieNom: suggestion?.nom.trim() ?? '',
         suggestionCategorieDescription: suggestion?.description?.trim() ?? '',
+        confortClient: List<String>.from(prestataire.confortClient),
+        conditionsService: List<String>.from(prestataire.conditionsService),
       );
     },
   );
@@ -301,6 +313,8 @@ class PrestataireProfileFormService {
           description: payload.description.trim().isEmpty
               ? null
               : payload.description.trim(),
+          confortClient: payload.confortClient,
+          conditionsService: payload.conditionsService,
           latitude: coords?.latitude,
           longitude: coords?.longitude,
         ),

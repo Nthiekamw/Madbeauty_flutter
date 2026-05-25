@@ -9,6 +9,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../providers/prestataire_detail_provider.dart';
+import '../widgets/prestataire_client_experience_section.dart';
 
 /// Fiche publique d’un prestataire (catalogue client).
 class PrestataireDetailScreen extends ConsumerWidget {
@@ -74,6 +75,14 @@ class PrestataireDetailScreen extends ConsumerWidget {
                   style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
                 ),
               ],
+              PrestataireClientExperienceSection(
+                comfortIds: data.profile.confortClient,
+                conditionIds: data.profile.conditionsService,
+                padding: EdgeInsets.zero,
+              ),
+              if (data.profile.confortClient.isNotEmpty ||
+                  data.profile.conditionsService.isNotEmpty)
+                const SizedBox(height: 24),
               if (data.specialtyNames.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 const _SectionTitle(

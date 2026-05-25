@@ -7,6 +7,17 @@ import 'lieu_travail_converter.dart';
 part 'prestataire_profile.freezed.dart';
 part 'prestataire_profile.g.dart';
 
+List<String> _conditionsServiceFromJson(dynamic raw) {
+  if (raw == null) return [];
+  if (raw is List) {
+    return raw.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+  }
+  if (raw is String && raw.trim().isNotEmpty) {
+    return [raw.trim()];
+  }
+  return [];
+}
+
 /// [PRESTATAIRE_PROFILES]
 @freezed
 abstract class PrestataireProfile with _$PrestataireProfile {
@@ -25,6 +36,10 @@ abstract class PrestataireProfile with _$PrestataireProfile {
     @JsonKey(name: 'annees_experience') String? anneesExperience,
     @JsonKey(name: 'experience_professionnelle') String? experienceProfessionnelle,
     String? description,
+    @JsonKey(name: 'confort_client') @Default([]) List<String> confortClient,
+    @JsonKey(name: 'conditions_service', fromJson: _conditionsServiceFromJson)
+    @Default([])
+    List<String> conditionsService,
     double? latitude,
     double? longitude,
     double? noteMoyenne,

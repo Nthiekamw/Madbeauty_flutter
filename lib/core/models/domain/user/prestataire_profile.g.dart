@@ -22,6 +22,12 @@ _PrestataireProfile _$PrestataireProfileFromJson(Map<String, dynamic> json) =>
       anneesExperience: json['annees_experience'] as String?,
       experienceProfessionnelle: json['experience_professionnelle'] as String?,
       description: json['description'] as String?,
+      confortClient:
+          (json['confort_client'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      conditionsService: _conditionsServiceFromJson(json['conditions_service']),
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       noteMoyenne: (json['note_moyenne'] as num?)?.toDouble(),
@@ -43,6 +49,8 @@ Map<String, dynamic> _$PrestataireProfileToJson(_PrestataireProfile instance) =>
       'annees_experience': instance.anneesExperience,
       'experience_professionnelle': instance.experienceProfessionnelle,
       'description': instance.description,
+      'confort_client': instance.confortClient,
+      'conditions_service': instance.conditionsService,
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'note_moyenne': instance.noteMoyenne,

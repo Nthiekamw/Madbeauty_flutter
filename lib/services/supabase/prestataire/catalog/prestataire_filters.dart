@@ -27,6 +27,8 @@ class PrestataireUpsertData {
     this.anneesExperience,
     this.experienceProfessionnelle,
     this.description,
+    this.confortClient = const [],
+    this.conditionsService = const [],
     this.latitude,
     this.longitude,
   });
@@ -42,6 +44,8 @@ class PrestataireUpsertData {
   final String? anneesExperience;
   final String? experienceProfessionnelle;
   final String? description;
+  final List<String> confortClient;
+  final List<String> conditionsService;
   final double? latitude;
   final double? longitude;
 }
