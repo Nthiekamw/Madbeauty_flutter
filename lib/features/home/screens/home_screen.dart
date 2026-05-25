@@ -14,6 +14,7 @@ import '../widgets/client_home_header.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/theme/prototype_palette.dart';
 import '../../../shared/widgets/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -108,13 +109,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          BrandBackground(isDark: isDark),
-          SafeArea(child: body),
-        ],
-      ),
+      backgroundColor: isDark ? null : PrototypePalette.creamClient,
+      body: isDark
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                BrandBackground(isDark: isDark),
+                SafeArea(child: body),
+              ],
+            )
+          : SafeArea(child: body),
     );
   }
 }

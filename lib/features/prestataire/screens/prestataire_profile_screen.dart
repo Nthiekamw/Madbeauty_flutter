@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/prototype/prototype_tab_body.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/widgets/role_switch_section.dart';
 import '../../profile/providers/app_version_provider.dart';
@@ -18,7 +17,7 @@ import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_manage_menu.dart';
 import '../widgets/prestataire_profile_stats_strip.dart';
 import '../widgets/prestataire_section_header.dart';
-import '../widgets/prestataire_salon_hero.dart';
+import '../../../shared/widgets/app_avatar.dart';
 
 /// Onglet Profil de l’espace prestataire (compte + raccourcis pro).
 class PrestataireProfileScreen extends ConsumerWidget {
@@ -53,8 +52,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
     final versionAsync = ref.watch(appVersionProvider);
     final email = ref.watch(authNotifierProvider).value?.email?.trim() ?? '';
 
-    return DiscoveryBrandScaffold(
-      body: profileAsync.when(
+    return PrototypeTabBody(
+      child: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => PrestataireProfileLoadError(
           onRetry: () => ref.invalidate(prestataireProfileFormProvider),
@@ -70,17 +69,38 @@ class PrestataireProfileScreen extends ConsumerWidget {
           ].join(' · ');
 
           return ListView(
-            padding: const EdgeInsets.only(bottom: 32),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
             children: [
-              const DiscoveryScreenHeader(
-                title: DiscPrestaProfile.title,
-                subtitle: DiscPrestaProfile.pageSubtitle,
-              ),
-              PrestataireSalonHero(
-                title: title,
-                subtitle: subtitle,
-                avatarUrl: data.avatarUrl,
-                trailing: PrestataireCompletenessBadge(complete: complete),
+              DiscoverySurfaceCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    AppAvatar(
+                      imageUrl: data.avatarUrl,
+                      displayName: title,
+                      radius: 40,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    PrestataireCompletenessBadge(complete: complete),
+                  ],
+                ),
               ),
               if (!complete) ...[
                 const SizedBox(height: 16),

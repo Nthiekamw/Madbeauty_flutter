@@ -212,12 +212,14 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final catalogState = ref.watch(listingCatalogNotifierProvider);
 
     return DiscoveryBrandScaffold(
+      backgroundColor: const Color(0xFFF5EFE6),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const DiscoveryScreenHeader(
             title: DiscNav.searchTitle,
             subtitle: DiscList.searchSubtitle,
+            whiteBar: true,
           ),
           _searchBar(theme),
           if (!AppConfig.hasSupabase)

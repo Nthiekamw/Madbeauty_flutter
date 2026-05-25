@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/theme/prototype_palette.dart';
 import '../../../shared/widgets/app_avatar.dart';
 
 const int _kMaxChips = 3;
@@ -28,21 +28,24 @@ class PrestataireCatalogListCard extends StatelessWidget {
     final rating = profile.noteMoyenne;
 
     return Material(
-      color: theme.colorScheme.surface.withValues(
-        alpha: isDark ? 0.92 : 0.98,
-      ),
-      elevation: isDark ? 0 : 1,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-      borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+      color: isDark
+          ? theme.colorScheme.surface.withValues(alpha: 0.92)
+          : PrototypePalette.cardWhite,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
-        borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.14),
+              color: isDark
+                  ? theme.colorScheme.outline.withValues(alpha: 0.14)
+                  : PrototypePalette.goldLight.withValues(alpha: 0.5),
             ),
+            boxShadow: isDark ? null : PrototypePalette.cardShadow(),
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),

@@ -5,9 +5,8 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/prototype/prototype_tab_body.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../logic/prestataire_reservation_actions.dart';
@@ -100,8 +99,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return DiscoveryBrandScaffold(
-      body: agendaAsync.when(
+    return PrototypeTabBody(
+      child: agendaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(
           child: DiscoveryEmptyState(
@@ -124,12 +123,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                 ref.read(prestataireAgendaProvider.notifier).reload(),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 32),
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
               children: [
-                const DiscoveryScreenHeader(
-                  title: DiscNav.prestAgenda,
-                  subtitle: DiscPrestaAgenda.pageSubtitle,
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                   child: DecoratedBox(

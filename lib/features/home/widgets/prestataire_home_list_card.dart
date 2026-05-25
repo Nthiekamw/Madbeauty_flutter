@@ -6,6 +6,7 @@ import '../../../core/geo/geo_utils.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/theme/prototype_palette.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../theme/home_styles.dart';
 
@@ -43,21 +44,24 @@ class PrestataireHomeListCard extends StatelessWidget {
     final rating = profile.noteMoyenne;
 
     return Material(
-      color: theme.colorScheme.surface.withValues(
-        alpha: isDark ? 0.9 : 0.98,
-      ),
-      elevation: isDark ? 0 : 1,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-      borderRadius: HomeStyles.cardBorderRadius,
+      color: isDark
+          ? theme.colorScheme.surface.withValues(alpha: 0.9)
+          : PrototypePalette.cardWhite,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
-        borderRadius: HomeStyles.cardBorderRadius,
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: HomeStyles.cardBorderRadius,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.16),
+              color: isDark
+                  ? theme.colorScheme.outline.withValues(alpha: 0.16)
+                  : PrototypePalette.goldLight.withValues(alpha: 0.5),
             ),
+            boxShadow: isDark ? null : PrototypePalette.cardShadow(),
           ),
           child: SizedBox(
             width: HomeStyles.listCardWidth,

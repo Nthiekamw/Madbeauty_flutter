@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/discovery_styles.dart';
+import '../theme/prototype_layout.dart';
+import '../theme/prototype_palette.dart';
 import 'app_text_field.dart';
 
 /// Barre de recherche sur fond brand (accueil, catalogue).
@@ -12,6 +13,7 @@ class DiscoverySearchCard extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.suffixIcon,
+    this.compact = false,
   });
 
   final TextEditingController controller;
@@ -19,43 +21,47 @@ class DiscoverySearchCard extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onSubmitted;
   final Widget? suffixIcon;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final rem = PrototypeLayout(context).rem;
+    final radius = BorderRadius.circular(rem * (compact ? 8 : 8));
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: isDark ? 0.94 : 0.98,
-        ),
-        borderRadius: DiscoveryStyles.cardBorderRadius,
+        color: isDark
+            ? theme.colorScheme.surface.withValues(alpha: 0.94)
+            : PrototypePalette.cardWhite,
+        borderRadius: radius,
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.14),
+          color: isDark
+              ? theme.colorScheme.outline.withValues(alpha: 0.14)
+              : PrototypePalette.goldLight.withValues(alpha: 0.6),
         ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.07),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+        boxShadow: isDark ? null : PrototypePalette.cardShadow(opacity: 0.07),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: EdgeInsets.fromLTRB(
+          rem * 1.2,
+          rem * (compact ? 0.8 : 1),
+          rem * 1.2,
+          rem * (compact ? 0.8 : 1),
+        ),
         child: AppTextField(
           controller: controller,
           hint: hint,
           textInputAction: TextInputAction.search,
-          borderRadius: DiscoveryStyles.chipRadius,
+          borderRadius: rem * 6,
           onChanged: onChanged,
           onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: isDark
+                ? theme.colorScheme.onSurfaceVariant
+                : PrototypePalette.textGrey,
           ),
           suffixIcon: suffixIcon,
         ),

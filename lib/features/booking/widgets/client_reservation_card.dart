@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/theme/prototype_palette.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../logic/booking_formatters.dart';
@@ -42,21 +42,24 @@ class ClientReservationCard extends StatelessWidget {
         onCancel != null && clientReservationCanCancel(uiStatus);
 
     return Material(
-      color: theme.colorScheme.surface.withValues(
-        alpha: isDark ? 0.92 : 0.98,
-      ),
-      elevation: isDark ? 0 : 1,
-      shadowColor: cs.primary.withValues(alpha: 0.1),
-      borderRadius: DiscoveryStyles.cardBorderRadius,
+      color: isDark
+          ? theme.colorScheme.surface.withValues(alpha: 0.92)
+          : PrototypePalette.cardWhite,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: DiscoveryStyles.cardBorderRadius,
+        borderRadius: BorderRadius.circular(16),
         onTap: null,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: DiscoveryStyles.cardBorderRadius,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: cs.outline.withValues(alpha: 0.14),
+              color: isDark
+                  ? cs.outline.withValues(alpha: 0.14)
+                  : PrototypePalette.goldLight.withValues(alpha: 0.5),
             ),
+            boxShadow: isDark ? null : PrototypePalette.cardShadow(),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),

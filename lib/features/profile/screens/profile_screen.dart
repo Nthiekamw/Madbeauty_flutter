@@ -231,13 +231,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final loadingProfile = profileAsync.isLoading && profile == null;
 
     return DiscoveryBrandScaffold(
+      backgroundColor: const Color(0xFFF2EBE0),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
-          const DiscoveryScreenHeader(
-            title: DiscNav.profileTitle,
-            subtitle: DiscNav.profileSubtitle,
-          ),
           if (loadingProfile)
             const Padding(
               padding: EdgeInsets.all(40),

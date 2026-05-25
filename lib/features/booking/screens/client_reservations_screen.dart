@@ -9,7 +9,7 @@ import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/prototype/prototype_segment_toggle.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_ui_status.dart';
@@ -136,39 +136,19 @@ class _ClientReservationsScreenState
     return DefaultTabController(
       length: 2,
       child: DiscoveryBrandScaffold(
+        backgroundColor: const Color(0xFFF5EFE6),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const DiscoveryScreenHeader(
               title: DiscNav.myReservationsTitle,
               subtitle: DiscBk.reservationsSubtitle,
+              whiteBar: true,
             ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: DiscoverySurfaceCard(
-                padding: const EdgeInsets.all(6),
-                child: TabBar(
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  unselectedLabelStyle:
-                      Theme.of(context).textTheme.labelLarge,
-                  indicator: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  labelColor: Theme.of(context).colorScheme.onPrimary,
-                  unselectedLabelColor:
-                      Theme.of(context).colorScheme.onSurfaceVariant,
-                  tabs: const [
-                    Tab(text: DiscBk.tabFuture),
-                    Tab(text: DiscBk.tabPast),
-                  ],
-                ),
-              ),
+              child: _PrototypeReservationTabs(),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -279,6 +259,25 @@ class _ClientReservationsScreenState
           );
         },
       ),
+    );
+  }
+}
+
+/// Onglets À venir / Passées avec le style segmenté Madbeauty_flutter.
+class _PrototypeReservationTabs extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final controller = DefaultTabController.of(context);
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return PrototypeSegmentToggle(
+          labels: const [DiscBk.tabFuture, DiscBk.tabPast],
+          selectedIndex: controller.index,
+          onChanged: controller.animateTo,
+        );
+      },
     );
   }
 }
