@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
+import 'prestataire_section_header.dart';
 
 class PrestataireDashboardSection extends StatelessWidget {
   const PrestataireDashboardSection({
     super.key,
+    required this.icon,
     required this.title,
     required this.child,
+    this.subtitle,
     this.badgeCount,
+    this.emptyTitle,
+    this.emptyMessage,
+    this.isEmpty = false,
+    this.iconColor,
   });
 
+  final IconData icon;
   final String title;
+  final String? subtitle;
   final Widget child;
   final int? badgeCount;
+  final String? emptyTitle;
+  final String? emptyMessage;
+  final bool isEmpty;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -24,41 +38,24 @@ class PrestataireDashboardSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ),
-              if (badgeCount != null && badgeCount! > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontFamily: AppFonts.body,
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-            ],
+          PrestataireSectionHeader(
+            icon: icon,
+            title: title,
+            subtitle: subtitle,
+            badgeCount: badgeCount,
+            iconColor: iconColor,
           ),
-          const SizedBox(height: 12),
-          child,
+          const SizedBox(height: 14),
+          if (isEmpty && emptyTitle != null && emptyMessage != null)
+            DiscoveryEmptyState(
+              icon: icon,
+              title: emptyTitle!,
+              body: emptyMessage!,
+              iconColor: (iconColor ?? theme.colorScheme.primary)
+                  .withValues(alpha: 0.8),
+            )
+          else
+            child,
         ],
       ),
     );

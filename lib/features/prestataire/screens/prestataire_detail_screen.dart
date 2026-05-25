@@ -291,23 +291,29 @@ class _RatingPill extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < 5; i++)
-            Icon(
-              i < (note ?? 0).round() ? Icons.star : Icons.star_border,
-              size: 16,
-              color: theme.colorScheme.primary,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < 5; i++)
+              Icon(
+                i < (note ?? 0).round() ? Icons.star : Icons.star_border,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

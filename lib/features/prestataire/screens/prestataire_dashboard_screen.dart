@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../router/navigation_extensions.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
-import '../../booking/logic/client_reservation_ui_status.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/current_prestataire_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/prestataire_appointment_tile.dart';
+import '../widgets/prestataire_agenda_reservation_card.dart';
+import '../widgets/prestataire_completeness_badge.dart';
 import '../widgets/prestataire_dashboard_section.dart';
-import '../widgets/prestataire_pending_request_card.dart';
+import '../widgets/prestataire_dashboard_stats_strip.dart';
+import '../widgets/prestataire_profile_incomplete_banner.dart';
 import '../widgets/prestataire_profile_load_error.dart';
-import '../widgets/prestataire_profile_manage_menu.dart';
 import '../widgets/prestataire_salon_hero.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
@@ -54,6 +54,7 @@ class _PrestataireDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
     final currentPrestataire = switch (ref.watch(currentPrestataireProvider)) {
@@ -87,111 +88,95 @@ class _PrestataireDashboardScreenState
                       ? DiscPrestaDash.welcome
                       : DiscPrestaDash.profileMissing,
                   avatarUrl: data.avatarUrl,
-                  trailing: _CompletenessBadge(
+                  trailing: PrestataireCompletenessBadge(
                     complete: data.isProfessionallyComplete,
                   ),
                 ),
-                const SizedBox(height: 16),
-                PrestataireProfileManageMenu(
-                  showHeader: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                ),
-                if (!data.isProfessionallyComplete) ...[
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: OutlinedButton(
-                      onPressed: () => context.pushPrestataireProfileComplete(),
-                      child: const Text(DiscPrestaProfile.incompleteCta),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 20),
+                if (!data.isProfessionallyComplete)
+                  const PrestataireProfileIncompleteBanner(),
                 dashboardAsync.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
                   ),
                   error: (_, __) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      DiscPrestaDash.loadErr,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    padding: const EdgeInsets.all(20),
+                    child: DiscoveryEmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: DiscPrestaDash.loadErr,
+                      body: DiscList.pullDownHint,
+                      iconColor: theme.colorScheme.error,
+                      actionLabel: DiscList.retry,
+                      onAction: () =>
+                          ref.invalidate(prestataireDashboardProvider),
                     ),
                   ),
                   data: (dashboard) => Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      PrestataireDashboardSection(
-                        title: DiscPrestaDash.pendingTitle,
-                        badgeCount: dashboard.pending.length,
-                        child: dashboard.pending.isEmpty
-                            ? const PrestataireDashboardEmptyHint(
-                                message: DiscPrestaDash.pendingEmpty,
-                              )
-                            : Column(
-                                children: [
-                                  for (final item in dashboard.pending)
-                                    PrestatairePendingRequestCard(
-                                      item: item,
-                                      busy: _actingReservationId == item.id,
-                                      onAccept: _actingReservationId != null
-                                          ? null
-                                          : () => _runAction(
-                                              item.id,
-                                              () => _actions.accept(item.id),
-                                            ),
-                                      onReject: _actingReservationId != null
-                                          ? null
-                                          : () => _runAction(
-                                              item.id,
-                                              () => _actions.reject(item.id),
-                                            ),
-                                    ),
-                                ],
-                              ),
+                      const SizedBox(height: 16),
+                      PrestataireDashboardStatsStrip(
+                        pendingCount: dashboard.pending.length,
+                        todayCount: dashboard.todayConfirmed.length,
+                        weekCount: dashboard.weekConfirmed.length,
                       ),
                       const SizedBox(height: 16),
                       PrestataireDashboardSection(
+                        icon: Icons.inbox_rounded,
+                        title: DiscPrestaDash.pendingTitle,
+                        subtitle: DiscPrestaDash.pendingEmpty,
+                        badgeCount: dashboard.pending.length,
+                        isEmpty: dashboard.pending.isEmpty,
+                        emptyTitle: DiscPrestaDash.pendingEmptyTitle,
+                        emptyMessage: DiscPrestaDash.pendingEmpty,
+                        iconColor: theme.colorScheme.tertiary,
+                        child: _ReservationTimeline(
+                          items: dashboard.pending,
+                          actingId: _actingReservationId,
+                          onAccept: (id) =>
+                              _runAction(id, () => _actions.accept(id)),
+                          onReject: (id) =>
+                              _runAction(id, () => _actions.reject(id)),
+                          onMarkDone: (id) =>
+                              _runAction(id, () => _actions.markDone(id)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      PrestataireDashboardSection(
+                        icon: Icons.today_rounded,
                         title: DiscPrestaDash.todayTitle,
+                        subtitle: DiscPrestaDash.todayEmpty,
                         badgeCount: dashboard.todayConfirmed.length,
-                        child: dashboard.todayConfirmed.isEmpty
-                            ? const PrestataireDashboardEmptyHint(
-                                message: DiscPrestaDash.todayEmpty,
-                              )
-                            : Column(
-                                children: [
-                                  for (final item in dashboard.todayConfirmed)
-                                    _TodayAppointment(
-                                      item: item,
-                                      busy: _actingReservationId == item.id,
-                                      onMarkDone:
-                                          _actingReservationId != null
-                                          ? null
-                                          : () => _runAction(
-                                              item.id,
-                                              () => _actions.markDone(item.id),
-                                            ),
-                                    ),
-                                ],
-                              ),
+                        isEmpty: dashboard.todayConfirmed.isEmpty,
+                        emptyTitle: DiscPrestaDash.todayEmptyTitle,
+                        emptyMessage: DiscPrestaDash.todayEmpty,
+                        child: _ReservationTimeline(
+                          items: dashboard.todayConfirmed,
+                          actingId: _actingReservationId,
+                          onAccept: (id) =>
+                              _runAction(id, () => _actions.accept(id)),
+                          onReject: (id) =>
+                              _runAction(id, () => _actions.reject(id)),
+                          onMarkDone: (id) =>
+                              _runAction(id, () => _actions.markDone(id)),
+                        ),
                       ),
                       if (dashboard.weekConfirmed.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         PrestataireDashboardSection(
+                          icon: Icons.date_range_rounded,
                           title: DiscPrestaDash.weekTitle,
                           badgeCount: dashboard.weekConfirmed.length,
-                          child: Column(
-                            children: [
-                              for (final item in dashboard.weekConfirmed)
-                                PrestataireAppointmentTile(
-                                  item: item,
-                                  showDate: true,
-                                ),
-                            ],
+                          iconColor: theme.colorScheme.secondary,
+                          child: _ReservationTimeline(
+                            items: dashboard.weekConfirmed,
+                            actingId: _actingReservationId,
+                            onAccept: (id) =>
+                                _runAction(id, () => _actions.accept(id)),
+                            onReject: (id) =>
+                                _runAction(id, () => _actions.reject(id)),
+                            onMarkDone: (id) =>
+                                _runAction(id, () => _actions.markDone(id)),
                           ),
                         ),
                       ],
@@ -211,78 +196,40 @@ class _PrestataireDashboardScreenState
   }
 }
 
-class _CompletenessBadge extends StatelessWidget {
-  const _CompletenessBadge({required this.complete});
-
-  final bool complete;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: complete
-            ? theme.colorScheme.primary.withValues(alpha: 0.14)
-            : theme.colorScheme.errorContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            complete ? Icons.check_circle_outline : Icons.info_outline,
-            size: 16,
-            color: complete
-                ? theme.colorScheme.primary
-                : theme.colorScheme.error,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            complete ? 'Profil complet' : 'À compléter',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: complete
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onErrorContainer,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TodayAppointment extends StatelessWidget {
-  const _TodayAppointment({
-    required this.item,
+class _ReservationTimeline extends StatelessWidget {
+  const _ReservationTimeline({
+    required this.items,
+    required this.actingId,
+    required this.onAccept,
+    required this.onReject,
     required this.onMarkDone,
-    this.busy = false,
   });
 
-  final PrestataireReservationItem item;
-  final VoidCallback? onMarkDone;
-  final bool busy;
+  final List<PrestataireReservationItem> items;
+  final String? actingId;
+  final void Function(String id) onAccept;
+  final void Function(String id) onReject;
+  final void Function(String id) onMarkDone;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PrestataireAppointmentTile(item: item),
-        if (clientReservationUiStatusFromStatut(item.statut) ==
-            ClientReservationUiStatus.confirmed) ...[
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: busy ? null : onMarkDone,
-              child: Text(busy ? '…' : DiscPrestaAgenda.markDone),
-            ),
-          ),
-        ],
-      ],
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 4),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final busy = actingId == item.id;
+        return PrestataireAgendaReservationCard(
+          item: item,
+          busy: busy,
+          showTimelineConnector: index < items.length - 1,
+          onAccept: busy ? null : () => onAccept(item.id),
+          onReject: busy ? null : () => onReject(item.id),
+          onMarkDone: busy ? null : () => onMarkDone(item.id),
+        );
+      },
     );
   }
 }

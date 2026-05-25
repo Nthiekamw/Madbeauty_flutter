@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
 import '../models/prestataire_profile_edit_section.dart';
+import 'prestataire_section_header.dart';
 
 /// Raccourcis pour modifier chaque bloc du profil prestataire.
 class PrestataireProfileManageMenu extends StatelessWidget {
@@ -26,40 +26,24 @@ class PrestataireProfileManageMenu extends StatelessWidget {
     return Padding(
       padding: padding,
       child: DiscoverySurfaceCard(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (showHeader) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      DiscPrestaProfile.sectionPro,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      DiscPrestaProfile.sectionProHint,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
+            if (showHeader)
+              PrestataireSectionHeader(
+                icon: Icons.storefront_rounded,
+                title: DiscPrestaProfile.sectionPro,
+                subtitle: DiscPrestaProfile.sectionProHint,
+                iconColor: theme.colorScheme.primary,
               ),
-            ],
+            if (showHeader) const SizedBox(height: 8),
             for (var i = 0; i < sections.length; i++) ...[
-              if (i > 0 || showHeader)
+              if (i > 0)
                 Divider(
                   height: 1,
-                  indent: 16,
-                  endIndent: 16,
+                  indent: 4,
+                  endIndent: 4,
                   color: theme.colorScheme.outline.withValues(alpha: 0.12),
                 ),
               DiscoveryMenuTile(
@@ -73,8 +57,8 @@ class PrestataireProfileManageMenu extends StatelessWidget {
             ],
             Divider(
               height: 1,
-              indent: 16,
-              endIndent: 16,
+              indent: 4,
+              endIndent: 4,
               color: theme.colorScheme.outline.withValues(alpha: 0.12),
             ),
             DiscoveryMenuTile(

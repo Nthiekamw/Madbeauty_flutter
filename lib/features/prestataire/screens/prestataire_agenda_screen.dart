@@ -8,12 +8,13 @@ import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
 import '../../booking/logic/booking_formatters.dart';
+import '../../booking/logic/client_reservation_ui_status.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/prestataire_agenda_provider.dart';
-import '../widgets/prestataire_agenda_reservation_card.dart';
+import '../widgets/prestataire_agenda_day_section.dart';
+import '../widgets/prestataire_agenda_stats_strip.dart';
 import '../widgets/prestataire_agenda_week_calendar.dart';
-import '../widgets/prestataire_dashboard_section.dart';
 
 class PrestataireAgendaScreen extends ConsumerStatefulWidget {
   const PrestataireAgendaScreen({super.key});
@@ -36,12 +37,49 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     _selectedDay = _focusedDay;
   }
 
+  void _goToToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    setState(() {
+      _selectedDay = today;
+      _focusedDay = today;
+    });
+  }
+
   List<PrestataireReservationItem> _dayItems(
     List<PrestataireReservationItem> all,
     DateTime day,
   ) {
     return all.where((r) => isSameDay(r.dateHeure, day)).toList()
       ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
+  }
+
+  int _pendingCount(List<PrestataireReservationItem> all) {
+    return all
+        .where(
+          (r) =>
+              clientReservationUiStatusFromStatut(r.statut) ==
+              ClientReservationUiStatus.pending,
+        )
+        .length;
+  }
+
+  int _weekCount(List<PrestataireReservationItem> all, DateTime anchor) {
+    final start = anchor.subtract(Duration(days: anchor.weekday - 1));
+    final end = start.add(const Duration(days: 6));
+    return all
+        .where((r) {
+          final d = DateTime(
+            r.dateHeure.year,
+            r.dateHeure.month,
+            r.dateHeure.day,
+          );
+          return !d.isBefore(start) &&
+              !d.isAfter(end) &&
+              clientReservationUiStatusFromStatut(r.statut) !=
+                  ClientReservationUiStatus.cancelled;
+        })
+        .length;
   }
 
   PrestataireReservationActions get _actions =>
@@ -77,6 +115,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
         ),
         data: (reservations) {
           final dayReservations = _dayItems(reservations, _selectedDay);
+          final pendingCount = _pendingCount(reservations);
+          final weekCount = _weekCount(reservations, _focusedDay);
 
           return RefreshIndicator(
             onRefresh: () =>
@@ -90,31 +130,56 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   subtitle: DiscPrestaAgenda.pageSubtitle,
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.sync_rounded,
-                        size: 16,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DiscPrestaAgenda.realtimeHint,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontFamily: AppFonts.body,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.18,
                         ),
                       ),
-                    ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.sync_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              DiscPrestaAgenda.realtimeHint,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontFamily: AppFonts.body,
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                PrestataireAgendaStatsStrip(
+                  selectedDayCount: dayReservations.length,
+                  pendingCount: pendingCount,
+                  weekCount: weekCount,
+                ),
+                const SizedBox(height: 16),
                 PrestataireAgendaWeekCalendar(
                   focusedDay: _focusedDay,
                   selectedDay: _selectedDay,
                   reservations: reservations,
+                  onTodayPressed: _goToToday,
                   onDaySelected: (selected, focused) {
                     setState(() {
                       _selectedDay = DateTime(
@@ -130,82 +195,15 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   },
                 ),
                 const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          formatBookingDate(_selectedDay),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontFamily: AppFonts.display,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (dayReservations.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${dayReservations.length}',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                PrestataireAgendaDaySection(
+                  dateLabel: formatBookingDate(_selectedDay),
+                  items: dayReservations,
+                  busyReservationId: _actingReservationId,
+                  onAccept: (id) => _runAction(id, () => _actions.accept(id)),
+                  onReject: (id) => _runAction(id, () => _actions.reject(id)),
+                  onMarkDone: (id) =>
+                      _runAction(id, () => _actions.markDone(id)),
                 ),
-                const SizedBox(height: 10),
-                if (dayReservations.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: PrestataireDashboardEmptyHint(
-                      message: DiscPrestaAgenda.dayEmpty,
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        for (final item in dayReservations)
-                          PrestataireAgendaReservationCard(
-                            item: item,
-                            busy: _actingReservationId == item.id,
-                            onAccept: _actingReservationId != null
-                                ? null
-                                : () => _runAction(
-                                    item.id,
-                                    () => _actions.accept(item.id),
-                                  ),
-                            onReject: _actingReservationId != null
-                                ? null
-                                : () => _runAction(
-                                    item.id,
-                                    () => _actions.reject(item.id),
-                                  ),
-                            onMarkDone: _actingReservationId != null
-                                ? null
-                                : () => _runAction(
-                                    item.id,
-                                    () => _actions.markDone(item.id),
-                                  ),
-                          ),
-                      ],
-                    ),
-                  ),
               ],
             ),
           );

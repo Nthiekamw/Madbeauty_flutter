@@ -12,12 +12,14 @@ class PrestataireSalonHero extends StatelessWidget {
     required this.subtitle,
     this.avatarUrl,
     this.trailing,
+    this.footer,
   });
 
   final String title;
   final String subtitle;
   final String? avatarUrl;
   final Widget? trailing;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -35,64 +37,96 @@ class PrestataireSalonHero extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               theme.colorScheme.primaryContainer.withValues(
-                alpha: isDark ? 0.55 : 0.85,
+                alpha: isDark ? 0.55 : 0.88,
               ),
               theme.colorScheme.surface.withValues(
-                alpha: isDark ? 0.35 : 0.75,
+                alpha: isDark ? 0.4 : 0.82,
               ),
             ],
           ),
-          border: Border.all(color: primary.withValues(alpha: 0.12)),
+          border: Border.all(color: primary.withValues(alpha: 0.14)),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: primary.withValues(alpha: 0.25),
-                    width: 2.5,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: primary.withValues(alpha: 0.3),
+                        width: 2.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: AppAvatar(
+                      imageUrl: avatarUrl,
+                      displayName: title,
+                      radius: 34,
+                    ),
                   ),
-                ),
-                child: AppAvatar(
-                  imageUrl: avatarUrl,
-                  displayName: title,
-                  radius: 32,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                        height: 1.1,
-                      ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontFamily: AppFonts.display,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.4,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ),
+                            if (trailing != null) ...[
+                              const SizedBox(width: 8),
+                              trailing!,
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontFamily: AppFonts.body,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontFamily: AppFonts.body,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                    ),
-                    if (trailing != null) ...[
-                      const SizedBox(height: 10),
-                      trailing!,
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
+              if (footer != null) ...[
+                const SizedBox(height: 14),
+                footer!,
+              ],
             ],
           ),
         ),

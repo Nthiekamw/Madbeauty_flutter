@@ -8,6 +8,17 @@ abstract final class DiscPrestaDash {
       'Ton profil est prêt à être visible par les clients.';
   static const profileMissing =
       'Complète ton profil professionnel pour commencer.';
+  static const badgeComplete = 'Profil complet';
+  static const badgeIncomplete = 'À compléter';
+  static const profileIncompleteTitle = 'Profil incomplet';
+  static const profileIncompleteBanner =
+      'Complète ta vitrine dans l’onglet Profil';
+  static const statPending = 'En attente';
+  static const statToday = 'Aujourd’hui';
+  static const statWeek = 'Cette semaine';
+  static const pendingEmptyTitle = 'Aucune demande';
+  static const todayEmptyTitle = 'Journée libre';
+  static const weekEmptyTitle = 'Semaine calme';
   static const manageSectionsTitle = 'Ma vitrine';
   static const editHoraires = 'Mes horaires';
   static const svcCount = 'Services';

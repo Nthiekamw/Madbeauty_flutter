@@ -29,7 +29,16 @@ abstract final class DiscPrestaProfile {
   static const horaires = 'Mes horaires';
   static const menuHorairesHint = 'Créneaux et indisponibilités';
   static const publicFiche = 'Voir ma fiche publique';
+  static const publicFicheHint =
+      'Aperçu tel que les clientes voient ton salon';
+  static const sectionBio = 'À propos';
+  static const sectionSpaceHint =
+      'Basculer entre espace cliente et prestataire';
   static const sectionAccount = 'Compte';
+  static const sectionAccountHint = 'E-mail connecté à MadBeauty';
+  static const statServices = 'Services';
+  static const statSpecialties = 'Spécialités';
+  static const statPhotos = 'Réalisations';
   static String servicesCount(int n) =>
       n <= 1 ? '$n service' : '$n services';
   static String specialtiesCount(int n) =>
