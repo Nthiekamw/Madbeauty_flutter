@@ -5,7 +5,7 @@ import '../../../shared/theme/app_fonts.dart';
 import '../theme/home_styles.dart';
 import 'client_home_section_header.dart';
 
-/// Puces « inspiration » vers la recherche / listing.
+/// Grille de catégories visuelles vers la recherche / listing.
 class ClientHomeExploreRow extends StatelessWidget {
   const ClientHomeExploreRow({
     super.key,
@@ -14,12 +14,37 @@ class ClientHomeExploreRow extends StatelessWidget {
 
   final ValueChanged<String> onPick;
 
-  static const List<({String label, IconData icon})> _topics = [
-    (label: 'Tresses', icon: Icons.waves_rounded),
-    (label: 'Locks', icon: Icons.all_inclusive_rounded),
-    (label: 'Coiffure afro', icon: Icons.face_retouching_natural_outlined),
-    (label: 'Coupe', icon: Icons.content_cut_rounded),
-    (label: 'Entretien', icon: Icons.spa_outlined),
+  static const List<({String label, IconData icon, Color color})> _topics = [
+    (
+      label: 'Tresses',
+      icon: Icons.waves_rounded,
+      color: Color(0xFF7C3AED),
+    ),
+    (
+      label: 'Locks',
+      icon: Icons.all_inclusive_rounded,
+      color: Color(0xFF0EA5E9),
+    ),
+    (
+      label: 'Coiffure afro',
+      icon: Icons.face_retouching_natural_outlined,
+      color: Color(0xFFEC4899),
+    ),
+    (
+      label: 'Coupe',
+      icon: Icons.content_cut_rounded,
+      color: Color(0xFF10B981),
+    ),
+    (
+      label: 'Entretien',
+      icon: Icons.spa_outlined,
+      color: Color(0xFFF59E0B),
+    ),
+    (
+      label: 'Coloration',
+      icon: Icons.palette_outlined,
+      color: Color(0xFFEF4444),
+    ),
   ];
 
   @override
@@ -32,36 +57,42 @@ class ClientHomeExploreRow extends StatelessWidget {
           subtitle: DiscHome.inspireSub,
         ),
         const SizedBox(height: 14),
-        SizedBox(
-          height: MediaQuery.sizeOf(context).width / 100 * 9.5,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: _topics.length,
-            itemBuilder: (context, index) {
-              final topic = _topics[index];
-              return _ExploreChip(
-                label: topic.label,
-                icon: topic.icon,
-                onTap: () => onPick(topic.label),
-              );
-            },
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.1,
           ),
+          itemCount: _topics.length,
+          itemBuilder: (context, index) {
+            final topic = _topics[index];
+            return _ExploreTile(
+              label: topic.label,
+              icon: topic.icon,
+              accentColor: topic.color,
+              onTap: () => onPick(topic.label),
+            );
+          },
         ),
       ],
     );
   }
 }
 
-class _ExploreChip extends StatelessWidget {
-  const _ExploreChip({
+class _ExploreTile extends StatelessWidget {
+  const _ExploreTile({
     required this.label,
     required this.icon,
+    required this.accentColor,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
+  final Color accentColor;
   final VoidCallback onTap;
 
   @override
@@ -69,86 +100,61 @@ class _ExploreChip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    if (isDark) {
-      final primary = theme.colorScheme.primary;
-      return Material(
-        color: theme.colorScheme.surface.withValues(alpha: 0.85),
-        shape: RoundedRectangleBorder(
-          borderRadius: HomeStyles.chipBorderRadius,
-          side: BorderSide(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: HomeStyles.cardBorderRadius,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: HomeStyles.cardBorderRadius,
+            color: theme.colorScheme.surface.withValues(
+              alpha: isDark ? 0.85 : 0.95,
+            ),
+            border: Border.all(
+              color: accentColor.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: isDark ? 0.08 : 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: HomeStyles.chipBorderRadius,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 18, color: primary),
-                const SizedBox(width: 8),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: accentColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Icon(icon, size: 22, color: accentColor),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   label,
-                  style: theme.textTheme.labelLarge?.copyWith(
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      );
-    }
-
-    return _PrototypeExploreChip(label: label, icon: icon, onTap: onTap);
-  }
-}
-
-class _PrototypeExploreChip extends StatelessWidget {
-  const _PrototypeExploreChip({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final rem = MediaQuery.sizeOf(context).width / 100;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(right: rem * 2),
-        padding: EdgeInsets.symmetric(horizontal: rem * 3.5, vertical: rem * 1.8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEDE0CC),
-          borderRadius: BorderRadius.circular(rem * 6),
-          border: Border.all(
-            color: const Color(0xFFEDE0CC).withValues(alpha: 0.5),
-            width: 1.2,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: rem * 3.8, color: const Color(0xFF8B6340)),
-            SizedBox(width: rem * 1.5),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: rem * 3,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF8B6340),
-              ),
-            ),
-          ],
         ),
       ),
     );

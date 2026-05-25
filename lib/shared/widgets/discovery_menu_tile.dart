@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_fonts.dart';
-import '../theme/prototype_palette.dart';
 
 /// Ligne d’action dans une carte profil / menu client.
 class DiscoveryMenuTile extends StatelessWidget {
@@ -27,11 +26,9 @@ class DiscoveryMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final color = destructive
         ? theme.colorScheme.error
-        : (iconColor ??
-            (isDark ? theme.colorScheme.primary : PrototypePalette.gold));
+        : (iconColor ?? theme.colorScheme.primary);
 
     return Material(
       color: Colors.transparent,
@@ -45,9 +42,7 @@ class DiscoveryMenuTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? color.withValues(alpha: 0.1)
-                      : PrototypePalette.goldLight,
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 22),

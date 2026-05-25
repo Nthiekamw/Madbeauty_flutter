@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/theme/prototype_palette.dart';
 
 /// Tuile de métrique (bandeaux dashboard, agenda, profil).
 class PrestataireMetricTile extends StatelessWidget {
@@ -25,47 +24,23 @@ class PrestataireMetricTile extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark
-            ? null
-            : PrototypePalette.cardWhite,
-        gradient: isDark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accent.withValues(alpha: 0.22),
-                  theme.colorScheme.surface.withValues(alpha: 0.55),
-                ],
-              )
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? accent.withValues(alpha: 0.22)
-              : PrototypePalette.goldLight.withValues(alpha: 0.5),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: isDark ? 0.22 : 0.14),
+            theme.colorScheme.surface.withValues(alpha: isDark ? 0.55 : 0.92),
+          ],
         ),
-        boxShadow: isDark ? null : PrototypePalette.cardShadow(),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? accent.withValues(alpha: 0.15)
-                    : PrototypePalette.brownMid,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: isDark ? accent : PrototypePalette.gold,
-              ),
-            ),
+            Icon(icon, size: 20, color: accent),
             const SizedBox(height: 8),
             Text(
               value,

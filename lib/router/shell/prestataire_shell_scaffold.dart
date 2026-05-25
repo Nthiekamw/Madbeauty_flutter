@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../shared/theme/prototype_palette.dart';
+import '../../core/constants/app_strings.dart';
 import '../../shared/widgets/offline_shell.dart';
-import 'prestataire_shell_bottom_nav.dart';
-import 'prestataire_shell_header.dart';
 
 class PrestataireShellScaffold extends StatelessWidget {
   const PrestataireShellScaffold({
@@ -14,33 +12,40 @@ class PrestataireShellScaffold extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const int clientsTabIndex = 2;
-
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = navigationShell.currentIndex;
-    final usePrototypeChrome = selectedIndex != clientsTabIndex;
-
     return Scaffold(
-      backgroundColor: usePrototypeChrome
-          ? PrototypePalette.creamPrestataire
-          : null,
-      body: Column(
-        children: [
-          if (usePrototypeChrome) const PrestataireShellHeader(),
-          Expanded(
-            child: OfflineShell(child: navigationShell),
-          ),
-        ],
-      ),
-      bottomNavigationBar: PrestataireShellBottomNav(
-        selectedIndex: selectedIndex,
-        onTap: (index) {
+      body: OfflineShell(child: navigationShell),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
           navigationShell.goBranch(
             index,
-            initialLocation: index == selectedIndex,
+            initialLocation: index == navigationShell.currentIndex,
           );
         },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: ShellStrings.navPrestataireDashboard,
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: ShellStrings.navPrestataireAgenda,
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: ShellStrings.navPrestataireClients,
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: ShellStrings.navPrestataireProfile,
+          ),
+        ],
       ),
     );
   }

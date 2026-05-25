@@ -5,12 +5,10 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/theme/prototype_layout.dart';
-import '../../../shared/theme/prototype_palette.dart';
+import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app_avatar.dart';
-import '../../../shared/widgets/prototype/prototype_white_header_bar.dart';
 
-/// En-tête profil : carte hero (dark) ou bandeau blanc (style Madbeauty_flutter).
+/// En-tête profil : carte hero, photo, nom, e-mail, rôle.
 class ProfileAccountHeader extends StatelessWidget {
   const ProfileAccountHeader({
     super.key,
@@ -37,184 +35,59 @@ class ProfileAccountHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    if (isDark) {
-      return _DarkProfileHeader(
-        profile: profile,
-        displayName: displayName,
-        email: email,
-        rolesLabel: rolesLabel,
-        avatarBytes: avatarBytes,
-        onEditPhoto: onEditPhoto,
-        onEditName: onEditName,
-        photoLoading: photoLoading,
-      );
-    }
-
-    final layout = PrototypeLayout(context);
-    final rem = layout.rem;
-
-    return PrototypeWhiteHeaderBar(
-      padding: EdgeInsets.fromLTRB(rem * 4, rem * 6, rem * 4, rem * 6),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Container(
-                width: rem * 24,
-                height: rem * 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: PrototypePalette.gold, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: PrototypePalette.gold.withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: _AvatarPreview(
-                  radius: rem * 11.5,
-                  imageUrl: profile?.avatarUrl,
-                  displayName: displayName,
-                  email: email,
-                  avatarBytes: avatarBytes,
-                ),
-              ),
-              if (photoLoading)
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                  ),
-                )
-              else if (onEditPhoto != null)
-                GestureDetector(
-                  onTap: onEditPhoto,
-                  child: Container(
-                    width: rem * 8,
-                    height: rem * 8,
-                    decoration: BoxDecoration(
-                      color: PrototypePalette.gold,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: rem * 4.5,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: rem * 4),
-          Text(
-            displayName,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: rem * 5.5,
-              fontWeight: FontWeight.w800,
-              color: PrototypePalette.textDark,
-            ),
-          ),
-          SizedBox(height: rem),
-          Text(
-            rolesLabel,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: rem * 3.5,
-              color: PrototypePalette.textGrey,
-            ),
-          ),
-          if (onEditName != null) ...[
-            SizedBox(height: rem * 2),
-            TextButton.icon(
-              onPressed: onEditName,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text(ShellStrings.profileEditName),
-            ),
-          ],
-          SizedBox(height: rem * 3),
-          Text(
-            email.isNotEmpty ? email : '—',
-            style: TextStyle(
-              fontSize: rem * 3.2,
-              color: PrototypePalette.textMed,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DarkProfileHeader extends StatelessWidget {
-  const _DarkProfileHeader({
-    required this.displayName,
-    required this.email,
-    required this.rolesLabel,
-    this.profile,
-    this.avatarBytes,
-    this.onEditPhoto,
-    this.onEditName,
-    this.photoLoading = false,
-  });
-
-  final UserProfile? profile;
-  final String displayName;
-  final String email;
-  final String rolesLabel;
-  final Uint8List? avatarBytes;
-  final VoidCallback? onEditPhoto;
-  final VoidCallback? onEditName;
-  final bool photoLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final tertiary = theme.colorScheme.tertiary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: DiscoveryStyles.heroBorderRadius,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            stops: const [0.0, 0.6, 1.0],
             colors: [
-              theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
-              theme.colorScheme.surface.withValues(alpha: 0.75),
+              primary.withValues(alpha: isDark ? 0.4 : 0.65),
+              theme.colorScheme.primaryContainer.withValues(
+                alpha: isDark ? 0.6 : 0.88,
+              ),
+              tertiary.withValues(alpha: isDark ? 0.2 : 0.3),
             ],
           ),
-          border: Border.all(color: primary.withValues(alpha: 0.12)),
+          border: Border.all(
+            color: primary.withValues(alpha: isDark ? 0.3 : 0.18),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: primary.withValues(alpha: isDark ? 0.15 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
           child: Column(
             children: [
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  DecoratedBox(
+                  Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: primary.withValues(alpha: 0.25),
-                        width: 2.5,
+                        color: primary.withValues(alpha: 0.3),
+                        width: 3,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: _AvatarPreview(
                       radius: 52,
@@ -241,20 +114,22 @@ class _DarkProfileHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                    )
-                  else if (onEditPhoto != null)
+                    ),
+                  if (onEditPhoto != null && !photoLoading)
                     Material(
                       color: primary,
                       shape: const CircleBorder(),
+                      elevation: 4,
+                      shadowColor: primary.withValues(alpha: 0.4),
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: onEditPhoto,
-                        child: const Padding(
-                          padding: EdgeInsets.all(10),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
                           child: Icon(
                             Icons.camera_alt_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -267,21 +142,42 @@ class _DarkProfileHeader extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
                 ),
               ),
               if (onEditName != null) ...[
                 const SizedBox(height: 4),
                 TextButton.icon(
                   onPressed: onEditName,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: primary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    backgroundColor: primary.withValues(alpha: 0.08),
+                  ),
+                  icon: const Icon(Icons.edit_rounded, size: 15),
                   label: const Text(ShellStrings.profileEditName),
                 ),
               ],
+              const SizedBox(height: 16),
+              _InfoChip(
+                icon: Icons.mail_outline_rounded,
+                label: ShellStrings.profileLabelEmail,
+                value: email.isNotEmpty ? email : '—',
+              ),
               const SizedBox(height: 8),
-              Text(
-                email.isNotEmpty ? email : '—',
-                style: theme.textTheme.bodyMedium,
+              _InfoChip(
+                icon: Icons.badge_outlined,
+                label: 'Rôle',
+                value: rolesLabel,
               ),
             ],
           ),
@@ -320,6 +216,58 @@ class _AvatarPreview extends StatelessWidget {
       imageUrl: imageUrl,
       displayName: displayName,
       email: email,
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.4 : 0.65,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontFamily: AppFonts.body,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+                children: [
+                  TextSpan(
+                    text: '$label ',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: value),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

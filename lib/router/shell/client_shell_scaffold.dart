@@ -19,7 +19,6 @@ class ClientShellScaffold extends ConsumerWidget {
     final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2EBE0),
       body: OfflineShell(child: navigationShell),
       bottomNavigationBar: SafeArea(
         top: false,

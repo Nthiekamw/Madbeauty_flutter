@@ -3,18 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/prototype/prototype_tab_body.dart';
+import '../../../shared/widgets/discovery_screen_header.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
+import '../providers/current_prestataire_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/prestataire_agenda_reservation_card.dart';
+import '../widgets/prestataire_completeness_badge.dart';
 import '../widgets/prestataire_dashboard_section.dart';
 import '../widgets/prestataire_dashboard_stats_strip.dart';
 import '../widgets/prestataire_profile_incomplete_banner.dart';
 import '../widgets/prestataire_profile_load_error.dart';
+import '../widgets/prestataire_salon_hero.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
   const PrestataireDashboardScreen({super.key});
@@ -54,15 +58,41 @@ class _PrestataireDashboardScreenState
     final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
-    return PrototypeTabBody(
-      child: profileAsync.when(
+    final currentPrestataire = switch (ref.watch(currentPrestataireProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+
+    return DiscoveryBrandScaffold(
+      body: profileAsync.when(
         data: (data) {
+          final currentName = currentPrestataire?.nomSalon?.trim();
+          final title = currentName != null && currentName.isNotEmpty
+              ? currentName
+              : data.nomSalon.trim().isNotEmpty
+              ? data.nomSalon.trim()
+              : DiscNav.prestDashboard;
+
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 32),
+              padding: const EdgeInsets.only(bottom: 32),
               children: [
+                const DiscoveryScreenHeader(
+                  title: DiscNav.prestDashboard,
+                  subtitle: DiscPrestaDash.pageSubtitle,
+                ),
+                PrestataireSalonHero(
+                  title: title,
+                  subtitle: data.isProfessionallyComplete
+                      ? DiscPrestaDash.welcome
+                      : DiscPrestaDash.profileMissing,
+                  avatarUrl: data.avatarUrl,
+                  trailing: PrestataireCompletenessBadge(
+                    complete: data.isProfessionallyComplete,
+                  ),
+                ),
                 if (!data.isProfessionallyComplete)
                   const PrestataireProfileIncompleteBanner(),
                 dashboardAsync.when(

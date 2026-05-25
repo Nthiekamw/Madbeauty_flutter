@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/theme/prototype_palette.dart';
+import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../logic/booking_formatters.dart';
@@ -26,6 +26,7 @@ class ClientReservationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final primary = cs.primary;
 
     final prestataireLabel =
         item.prestataireName?.trim().isNotEmpty == true
@@ -42,132 +43,213 @@ class ClientReservationCard extends StatelessWidget {
         onCancel != null && clientReservationCanCancel(uiStatus);
 
     return Material(
-      color: isDark
-          ? theme.colorScheme.surface.withValues(alpha: 0.92)
-          : PrototypePalette.cardWhite,
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: null,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark
-                  ? cs.outline.withValues(alpha: 0.14)
-                  : PrototypePalette.goldLight.withValues(alpha: 0.5),
-            ),
-            boxShadow: isDark ? null : PrototypePalette.cardShadow(),
+      color: Colors.transparent,
+      borderRadius: DiscoveryStyles.cardBorderRadius,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: DiscoveryStyles.cardBorderRadius,
+          color: theme.colorScheme.surface.withValues(
+            alpha: isDark ? 0.92 : 0.98,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppAvatar(
-                      imageUrl: item.prestataireAvatarUrl,
-                      displayName: prestataireLabel,
-                      radius: 30,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            prestataireLabel,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
+          border: Border.all(
+            color: chipStyle.backgroundColor.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AppAvatar(
+                        imageUrl: item.prestataireAvatarUrl,
+                        displayName: prestataireLabel,
+                        radius: 30,
+                      ),
+                      Positioned(
+                        bottom: -2,
+                        right: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: chipStyle.backgroundColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surface,
+                              width: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            serviceLabel,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontFamily: AppFonts.body,
-                            ),
+                          child: Icon(
+                            _statusIcon(uiStatus),
+                            size: 10,
+                            color: chipStyle.foregroundColor,
                           ),
-                          const SizedBox(height: 10),
-                          _MetaRow(
-                            icon: Icons.calendar_today_outlined,
-                            text: formatBookingDate(item.dateHeure),
-                          ),
-                          const SizedBox(height: 4),
-                          _MetaRow(
-                            icon: Icons.schedule_rounded,
-                            text: formatBookingTime(item.dateHeure),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: chipStyle.backgroundColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        clientReservationStatusLabel(uiStatus),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontFamily: AppFonts.body,
-                          color: chipStyle.foregroundColor,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          prestataireLabel,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.content_cut_rounded,
+                              size: 13,
+                              color: primary,
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                serviceLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontFamily: AppFonts.body,
+                                  fontWeight: FontWeight.w600,
+                                  color: primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    if (showCancel)
-                      AppButton(
-                        variant: AppButtonVariant.secondary,
-                        isLoading: cancelLoading,
-                        enabled: !cancelLoading,
-                        onPressed: onCancel,
-                        child: Text(DiscBk.revokeLabel),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: chipStyle.backgroundColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      clientReservationStatusLabel(uiStatus),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFonts.body,
+                        color: chipStyle.foregroundColor,
+                        fontWeight: FontWeight.w700,
                       ),
-                  ],
-                ),
-              ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: isDark ? 0.07 : 0.04),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(14),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: primary.withValues(alpha: isDark ? 0.1 : 0.07),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  _MetaChip(
+                    icon: Icons.calendar_today_rounded,
+                    text: formatBookingDate(item.dateHeure),
+                    theme: theme,
+                  ),
+                  const SizedBox(width: 8),
+                  _MetaChip(
+                    icon: Icons.schedule_rounded,
+                    text: formatBookingTime(item.dateHeure),
+                    theme: theme,
+                  ),
+                  const Spacer(),
+                  if (showCancel)
+                    AppButton(
+                      variant: AppButtonVariant.secondary,
+                      isLoading: cancelLoading,
+                      enabled: !cancelLoading,
+                      onPressed: onCancel,
+                      child: Text(DiscBk.revokeLabel),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  IconData _statusIcon(ClientReservationUiStatus status) {
+    switch (status) {
+      case ClientReservationUiStatus.confirmed:
+        return Icons.check_rounded;
+      case ClientReservationUiStatus.pending:
+        return Icons.hourglass_top_rounded;
+      case ClientReservationUiStatus.cancelled:
+        return Icons.close_rounded;
+      case ClientReservationUiStatus.done:
+        return Icons.done_all_rounded;
+      case ClientReservationUiStatus.syncPending:
+        return Icons.sync_rounded;
+      case ClientReservationUiStatus.unknown:
+        return Icons.help_outline_rounded;
+    }
+  }
 }
 
-class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.icon, required this.text});
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({
+    required this.icon,
+    required this.text,
+    required this.theme,
+  });
 
   final IconData icon;
   final String text;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 6),
+        Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 5),
         Text(
           text,
           style: theme.textTheme.bodySmall?.copyWith(
             fontFamily: AppFonts.body,
             color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
