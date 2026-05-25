@@ -22,6 +22,8 @@ import '../features/dev/screens/async_state_test_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/prestataire/screens/prestataire_agenda_screen.dart';
 import '../features/prestataire/screens/prestataire_dashboard_screen.dart';
+import '../features/prestataire/screens/prestataire_history_screen.dart';
+import '../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_horaires_screen.dart';
 import '../features/prestataire/models/prestataire_profile_edit_section.dart';
@@ -59,6 +61,9 @@ abstract final class AppRoutes {
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
   static const String prestataireProfile = '/prestataire/profile';
+  static const String prestataireClients = '/prestataire/clients';
+  static const String prestataireReservationDetail =
+      '/prestataire/reservations/:id';
   static const String prestataireProfileEdit = '/prestataire/profile/edit';
   static const String prestataireProfileComplete = '/prestataire/profile/complete';
   static const String prestataireHoraires = '/prestataire/horaires';
@@ -93,6 +98,9 @@ abstract final class AppRouteNames {
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
   static const String prestataireProfile = 'prestataire-profile';
+  static const String prestataireClients = 'prestataire-clients';
+  static const String prestataireReservationDetail =
+      'prestataire-reservation-detail';
   static const String prestataireProfileEdit = 'prestataire-profile-edit';
   static const String prestataireProfileComplete = 'prestataire-profile-complete';
   static const String prestataireHoraires = 'prestataire-horaires';
@@ -327,6 +335,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                name: AppRouteNames.prestataireClients,
+                path: AppRoutes.prestataireClients,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const PrestataireHistoryScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 name: AppRouteNames.prestataireProfile,
                 path: AppRoutes.prestataireProfile,
                 pageBuilder: (context, state) => shellTabPage(
@@ -337,6 +357,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireReservationDetail,
+        path: AppRoutes.prestataireReservationDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return PrestataireReservationDetailScreen(reservationId: id);
+        },
       ),
       GoRoute(
         name: AppRouteNames.prestataireDetail,

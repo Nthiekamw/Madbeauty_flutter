@@ -14,6 +14,7 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onMarkDone,
+    this.onTap,
     this.busy = false,
     this.showTimelineConnector = true,
   });
@@ -22,6 +23,7 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onMarkDone;
+  final VoidCallback? onTap;
   final bool busy;
   final bool showTimelineConnector;
 
@@ -94,28 +96,35 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(
-                    alpha: isDark ? 0.65 : 0.9,
-                  ),
-                  borderRadius: DiscoveryStyles.cardBorderRadius,
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.12),
-                  ),
-                  boxShadow: isDark
-                      ? null
-                      : [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+              child: Material(
+                color: theme.colorScheme.surface.withValues(
+                  alpha: isDark ? 0.65 : 0.9,
                 ),
-                child: ClipRRect(
+                borderRadius: DiscoveryStyles.cardBorderRadius,
+                child: InkWell(
+                  onTap: onTap,
                   borderRadius: DiscoveryStyles.cardBorderRadius,
-                  child: Column(
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: DiscoveryStyles.cardBorderRadius,
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(
+                          alpha: 0.12,
+                        ),
+                      ),
+                      boxShadow: isDark
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: accent.withValues(alpha: 0.08),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: DiscoveryStyles.cardBorderRadius,
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       DecoratedBox(
@@ -260,6 +269,8 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -16,6 +16,7 @@ class PrestataireAgendaDaySection extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onMarkDone,
+    required this.onItemTap,
     this.busyReservationId,
   });
 
@@ -24,6 +25,7 @@ class PrestataireAgendaDaySection extends StatelessWidget {
   final void Function(String id) onAccept;
   final void Function(String id) onReject;
   final void Function(String id) onMarkDone;
+  final void Function(String id) onItemTap;
   final String? busyReservationId;
 
   @override
@@ -121,6 +123,7 @@ class PrestataireAgendaDaySection extends StatelessWidget {
                   item: item,
                   busy: busy,
                   showTimelineConnector: !isLast,
+                  onTap: () => onItemTap(item.id),
                   onAccept: busy
                       ? null
                       : () => onAccept(item.id),

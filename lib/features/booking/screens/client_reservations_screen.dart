@@ -28,6 +28,15 @@ class _ClientReservationsScreenState
     extends ConsumerState<ClientReservationsScreen> {
   String? _cancellingId;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      invalidateClientReservations(ref);
+    });
+  }
+
   Future<void> _refresh() async {
     invalidateClientReservations(ref);
     await ref.read(clientReservationsProvider.future);
@@ -207,13 +216,25 @@ class _ClientReservationsScreenState
 
   List<ClientReservationSummary> _upcoming(List<ClientReservationSummary> all) {
     final now = DateTime.now();
-    return all.where((r) => !r.dateHeure.isBefore(now)).toList()
+    return all
+        .where((r) {
+          if (r.dateHeure.isBefore(now)) return false;
+          final ui = clientReservationUiStatusFromStatut(r.statut);
+          return ui != ClientReservationUiStatus.cancelled;
+        })
+        .toList()
       ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
   }
 
   List<ClientReservationSummary> _past(List<ClientReservationSummary> all) {
     final now = DateTime.now();
-    return all.where((r) => r.dateHeure.isBefore(now)).toList()
+    return all
+        .where((r) {
+          final ui = clientReservationUiStatusFromStatut(r.statut);
+          if (ui == ClientReservationUiStatus.cancelled) return true;
+          return r.dateHeure.isBefore(now);
+        })
+        .toList()
       ..sort((a, b) => b.dateHeure.compareTo(a.dateHeure));
   }
 

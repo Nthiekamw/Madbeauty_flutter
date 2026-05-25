@@ -24,6 +24,9 @@ class ClientShellScaffold extends ConsumerWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
+          if (index == reservationsTabIndex) {
+            invalidateClientReservations(ref);
+          }
           navigationShell.goBranch(
             index,
             initialLocation: index == selectedIndex,

@@ -36,6 +36,11 @@ class PrestataireShellScaffold extends StatelessWidget {
             label: ShellStrings.navPrestataireAgenda,
           ),
           NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: ShellStrings.navPrestataireClients,
+          ),
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: ShellStrings.navPrestataireProfile,

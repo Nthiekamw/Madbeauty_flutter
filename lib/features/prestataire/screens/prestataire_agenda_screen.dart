@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
@@ -203,6 +204,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   onReject: (id) => _runAction(id, () => _actions.reject(id)),
                   onMarkDone: (id) =>
                       _runAction(id, () => _actions.markDone(id)),
+                  onItemTap: (id) =>
+                      context.pushPrestataireReservationDetail(id),
                 ),
               ],
             ),

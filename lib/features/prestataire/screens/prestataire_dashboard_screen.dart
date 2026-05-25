@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../router/navigation_extensions.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
@@ -139,6 +140,8 @@ class _PrestataireDashboardScreenState
                               _runAction(id, () => _actions.reject(id)),
                           onMarkDone: (id) =>
                               _runAction(id, () => _actions.markDone(id)),
+                          onItemTap: (id) =>
+                              context.pushPrestataireReservationDetail(id),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -159,6 +162,8 @@ class _PrestataireDashboardScreenState
                               _runAction(id, () => _actions.reject(id)),
                           onMarkDone: (id) =>
                               _runAction(id, () => _actions.markDone(id)),
+                          onItemTap: (id) =>
+                              context.pushPrestataireReservationDetail(id),
                         ),
                       ),
                       if (dashboard.weekConfirmed.isNotEmpty) ...[
@@ -177,6 +182,8 @@ class _PrestataireDashboardScreenState
                                 _runAction(id, () => _actions.reject(id)),
                             onMarkDone: (id) =>
                                 _runAction(id, () => _actions.markDone(id)),
+                            onItemTap: (id) =>
+                                context.pushPrestataireReservationDetail(id),
                           ),
                         ),
                       ],
@@ -203,6 +210,7 @@ class _ReservationTimeline extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onMarkDone,
+    required this.onItemTap,
   });
 
   final List<PrestataireReservationItem> items;
@@ -210,6 +218,7 @@ class _ReservationTimeline extends StatelessWidget {
   final void Function(String id) onAccept;
   final void Function(String id) onReject;
   final void Function(String id) onMarkDone;
+  final void Function(String id) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +234,7 @@ class _ReservationTimeline extends StatelessWidget {
           item: item,
           busy: busy,
           showTimelineConnector: index < items.length - 1,
+          onTap: () => onItemTap(item.id),
           onAccept: busy ? null : () => onAccept(item.id),
           onReject: busy ? null : () => onReject(item.id),
           onMarkDone: busy ? null : () => onMarkDone(item.id),
