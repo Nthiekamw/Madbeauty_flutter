@@ -12,6 +12,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
 import '../logic/prestataire_profile_completeness.dart';
@@ -320,7 +321,7 @@ class _PrestataireProfileCompletionScreenState
   Future<bool> _saveProfile() async {
     final service = ref.read(prestataireProfileFormServiceProvider);
     if (service == null) {
-      _snack(DiscPrestaForm.missingSupabase);
+      _snack(DiscPrestaForm.missingSupabase, kind: AppSnackKind.warning);
       return false;
     }
     setState(() {
@@ -351,7 +352,7 @@ class _PrestataireProfileCompletionScreenState
           _busy = false;
           _uploadProgress = null;
         });
-        _snack(e.message);
+        _snack(e.message, kind: AppSnackKind.error);
       }
       return false;
     } catch (_) {
@@ -360,7 +361,7 @@ class _PrestataireProfileCompletionScreenState
           _busy = false;
           _uploadProgress = null;
         });
-        _snack(DiscPrestaForm.saveErr);
+        _snack(DiscPrestaForm.saveErr, kind: AppSnackKind.error);
       }
       return false;
     }
@@ -371,7 +372,7 @@ class _PrestataireProfileCompletionScreenState
     final prestataireId = _loadedData?.prestataireId ??
         (await ref.read(prestataireProfileFormProvider.future)).prestataireId;
     if (photoService == null || prestataireId == null) {
-      _snack(DiscPrestaForm.missingSupabase);
+      _snack(DiscPrestaForm.missingSupabase, kind: AppSnackKind.warning);
       return false;
     }
     if (_pendingGallery.isEmpty) return true;
@@ -411,7 +412,7 @@ class _PrestataireProfileCompletionScreenState
           _busy = false;
           _uploadProgress = null;
         });
-        _snack(e.message);
+        _snack(e.message, kind: AppSnackKind.error);
       }
       return false;
     } catch (_) {
@@ -420,7 +421,7 @@ class _PrestataireProfileCompletionScreenState
           _busy = false;
           _uploadProgress = null;
         });
-        _snack(DiscPrestaForm.saveErr);
+        _snack(DiscPrestaForm.saveErr, kind: AppSnackKind.error);
       }
       return false;
     }
@@ -442,10 +443,9 @@ class _PrestataireProfileCompletionScreenState
     }
   }
 
-  void _snack(String message) {
+  void _snack(String message, {AppSnackKind kind = AppSnackKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message: message, kind: kind);
   }
 
   Future<void> _onPrimaryAction(PrestataireProfileFormData data) async {

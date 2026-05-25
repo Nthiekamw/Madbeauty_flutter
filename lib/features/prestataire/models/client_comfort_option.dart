@@ -81,7 +81,7 @@ class ClientComfortOption {
           ClientComfortOption(
             id: id,
             label: label,
-            icon: Icons.add_circle_outline_rounded,
+            icon: Icons.star_outline_rounded,
           ),
         );
         continue;

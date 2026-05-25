@@ -8,6 +8,7 @@ import '../../../../core/errors/app_failure.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../login/logic/login_validators.dart';
 import '../../providers/auth_notifier.dart';
+import '../../../../shared/widgets/app_snack_bar.dart';
 import '../screens/forgot_password_page.dart';
 
 class ForgotPasswordRoute extends ConsumerStatefulWidget {
@@ -52,9 +53,7 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
 
     if (!AppConfig.hasSupabase) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
-        );
+        AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
       }
       return;
     }

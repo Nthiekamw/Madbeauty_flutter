@@ -106,11 +106,24 @@ final clientPendingReservationsCountProvider = FutureProvider<int>((ref) async {
   return service.countPendingForCurrentClient();
 });
 
+/// Signal incrémenté après chaque création/annulation de réservation.
+/// Utilisé par [ClientReservationsScreen] pour déclencher un refresh même
+/// quand l'écran est déjà monté dans le shell persistant.
+class _RefreshSignalNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void increment() => state = state + 1;
+}
+
+final reservationsRefreshSignalProvider =
+    NotifierProvider<_RefreshSignalNotifier, int>(_RefreshSignalNotifier.new);
+
 void invalidateClientReservations(WidgetRef ref) {
   ref.invalidate(clientReservationsProvider);
   ref.invalidate(clientPendingReservationsCountProvider);
   ref.invalidate(bookingsClientProvider);
   ref.invalidate(bookingsPrestataireProvider);
+  ref.read(reservationsRefreshSignalProvider.notifier).increment();
 }
 
 void invalidateClientReservationsFromRef(Ref ref) {

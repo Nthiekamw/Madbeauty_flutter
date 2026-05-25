@@ -24,26 +24,30 @@ class DiscoveryScreenHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final effectiveIconColor = iconColor ?? primary;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 360;
+    final iconBoxSize = isCompact ? 40.0 : 48.0;
+    final iconSize = isCompact ? 20.0 : 24.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: EdgeInsets.fromLTRB(isCompact ? 16 : 20, 16, isCompact ? 16 : 20, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
             Container(
-              width: 48,
-              height: 48,
+              width: iconBoxSize,
+              height: iconBoxSize,
               decoration: BoxDecoration(
                 color: effectiveIconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: effectiveIconColor.withValues(alpha: 0.2),
                 ),
               ),
-              child: Icon(icon, color: effectiveIconColor, size: 24),
+              child: Icon(icon, color: effectiveIconColor, size: iconSize),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
           ],
           Expanded(
             child: Column(
@@ -57,10 +61,11 @@ class DiscoveryScreenHeader extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
                     height: 1.1,
+                    fontSize: isCompact ? 20 : null,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(

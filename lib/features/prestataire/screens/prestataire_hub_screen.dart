@@ -20,6 +20,7 @@ import '../widgets/prestataire_profile_client_experience_step.dart';
 import '../widgets/prestataire_profile_gallery_step.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_services_step.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 
 /// Formulaire de profil professionnel prestataire.
 class PrestataireHubScreen extends ConsumerStatefulWidget {
@@ -458,7 +459,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
 
     final service = ref.read(prestataireProfileFormServiceProvider);
     if (service == null) {
-      _showSnack(DiscPrestaForm.missingSupabase);
+      _showSnack(DiscPrestaForm.missingSupabase, kind: AppSnackKind.warning);
       return;
     }
 
@@ -496,7 +497,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _uploadProgress = null;
         _hydrate(updated, force: true);
       });
-      _showSnack(DiscPrestaForm.savedToast);
+      _showSnack(DiscPrestaForm.savedToast, kind: AppSnackKind.success);
       if (mounted) {
         if (context.canPop()) {
           context.pop();
@@ -510,22 +511,20 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _saving = false;
         _uploadProgress = null;
       });
-      _showSnack(e.message);
+      _showSnack(e.message, kind: AppSnackKind.error);
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _saving = false;
         _uploadProgress = null;
       });
-      _showSnack(DiscPrestaForm.saveErr);
+      _showSnack(DiscPrestaForm.saveErr, kind: AppSnackKind.error);
     }
   }
 
-  void _showSnack(String message) {
+  void _showSnack(String message, {AppSnackKind kind = AppSnackKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message: message, kind: kind);
   }
 
   @override

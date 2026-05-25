@@ -16,6 +16,7 @@ import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
@@ -81,7 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final profileService = ref.read(profileServiceProvider);
     if (profileService == null) {
-      _showSnack(ShellStrings.profileSaveErr);
+      _showSnack(ShellStrings.profileSaveErr, kind: AppSnackKind.error);
       return;
     }
 
@@ -95,9 +96,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         nom: result.nom,
       );
       _invalidateProfile();
-      if (mounted) _showSnack(ShellStrings.profileSaveOk);
+      if (mounted) _showSnack(ShellStrings.profileSaveOk, kind: AppSnackKind.success);
     } catch (_) {
-      if (mounted) _showSnack(ShellStrings.profileSaveErr);
+      if (mounted) _showSnack(ShellStrings.profileSaveErr, kind: AppSnackKind.error);
     } finally {
       if (mounted) setState(() => _savingName = false);
     }
@@ -119,7 +120,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       uploadFile = await StorageUploadFile.fromXFile(picked);
       StorageService.validateImageFile(uploadFile);
     } on AppFailure catch (e) {
-      if (mounted) _showSnack(e.message);
+      if (mounted) _showSnack(e.message, kind: AppSnackKind.error);
       return;
     }
 
@@ -136,7 +137,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _savingPhoto = false;
           _avatarPreviewBytes = null;
         });
-        _showSnack(ShellStrings.profileSaveErr);
+        _showSnack(ShellStrings.profileSaveErr, kind: AppSnackKind.error);
       }
       return;
     }
@@ -163,7 +164,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _savingPhoto = false;
           _avatarPreviewBytes = null;
         });
-        _showSnack(ShellStrings.profileSaveOk);
+        _showSnack(ShellStrings.profileSaveOk, kind: AppSnackKind.success);
       }
     } catch (_) {
       if (mounted) {
@@ -171,15 +172,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _savingPhoto = false;
           _avatarPreviewBytes = null;
         });
-        _showSnack(ShellStrings.profileSaveErr);
+        _showSnack(ShellStrings.profileSaveErr, kind: AppSnackKind.error);
       }
     }
   }
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _showSnack(String message, {AppSnackKind kind = AppSnackKind.info}) {
+    AppSnackBar.show(context, message: message, kind: kind);
   }
 
   @override

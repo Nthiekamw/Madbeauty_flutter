@@ -27,6 +27,8 @@ class PrestataireCatalogListCard extends StatelessWidget {
     final url = entry.avatarUrl;
     final display = entry.displayName;
     final rating = profile.noteMoyenne;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 360;
 
     return Material(
       color: Colors.transparent,
@@ -57,7 +59,12 @@ class PrestataireCatalogListCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                padding: EdgeInsets.fromLTRB(
+                  isCompact ? 10 : 14,
+                  isCompact ? 10 : 14,
+                  isCompact ? 10 : 14,
+                  12,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

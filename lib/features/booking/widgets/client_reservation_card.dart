@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../logic/booking_formatters.dart';
 import '../logic/client_reservation_ui_status.dart';
@@ -192,13 +191,41 @@ class ClientReservationCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (showCancel)
-                    AppButton(
-                      variant: AppButtonVariant.secondary,
-                      isLoading: cancelLoading,
-                      enabled: !cancelLoading,
-                      onPressed: onCancel,
-                      child: Text(DiscBk.revokeLabel),
-                    ),
+                    cancelLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primary,
+                            ),
+                          )
+                        : OutlinedButton(
+                            onPressed: onCancel,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 34),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 0,
+                              ),
+                              side: BorderSide(
+                                color: primary.withValues(alpha: 0.5),
+                              ),
+                              foregroundColor: primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              DiscBk.revokeLabel,
+                              style: TextStyle(
+                                fontFamily: AppFonts.body,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                 ],
               ),
             ),

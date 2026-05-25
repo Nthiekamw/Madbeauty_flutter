@@ -11,6 +11,7 @@ import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
+import '../../../../shared/widgets/app_snack_bar.dart';
 import '../screens/login_page.dart';
 
 /// Entrée route `/login` : Riverpod, navigation et [SnackBar] (hors design).
@@ -54,9 +55,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         await ref.read(loginControllerProvider.notifier).startGoogleSignIn();
     if (!mounted) return;
     if (opened) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AuthStrings.loginGoogleStarted)),
-      );
+      AppSnackBar.info(context, AuthStrings.loginGoogleStarted);
     }
   }
 
@@ -64,9 +63,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
   Widget build(BuildContext context) {
     ref.listen<LoginViewState>(loginControllerProvider, (previous, next) {
       if (next.requestSupabaseSnack) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
-        );
+        AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }
       if (next.shouldPopRoute) {

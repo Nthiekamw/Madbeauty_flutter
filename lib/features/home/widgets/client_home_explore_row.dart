@@ -57,23 +57,27 @@ class ClientHomeExploreRow extends StatelessWidget {
           subtitle: DiscHome.inspireSub,
         ),
         const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.1,
-          ),
-          itemCount: _topics.length,
-          itemBuilder: (context, index) {
-            final topic = _topics[index];
-            return _ExploreTile(
-              label: topic.label,
-              icon: topic.icon,
-              accentColor: topic.color,
-              onTap: () => onPick(topic.label),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // 3 colonnes avec espacement, hauteur calculée proportionnellement
+            const spacing = 10.0;
+            final tileW = (constraints.maxWidth - spacing * 2) / 3;
+            final tileH = tileW * 0.9;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: _topics.map((topic) {
+                return SizedBox(
+                  width: tileW,
+                  height: tileH,
+                  child: _ExploreTile(
+                    label: topic.label,
+                    icon: topic.icon,
+                    accentColor: topic.color,
+                    onTap: () => onPick(topic.label),
+                  ),
+                );
+              }).toList(),
             );
           },
         ),

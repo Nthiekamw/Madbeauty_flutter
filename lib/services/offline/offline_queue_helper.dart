@@ -5,6 +5,7 @@ import '../../core/constants/app_strings.dart';
 import '../../core/providers/offline_providers.dart';
 import '../../core/providers/offline_queue_providers.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../shared/widgets/app_snack_bar.dart';
 import 'pending_offline_action.dart';
 
 /// Met une action en file si hors ligne ; retourne `true` si mise en file.
@@ -19,8 +20,6 @@ Future<bool> enqueueIfOffline({
   invalidateClientReservations(ref);
 
   if (!context.mounted) return true;
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text(ShellStrings.offlineActionQueued)),
-  );
+  AppSnackBar.info(context, ShellStrings.offlineActionQueued);
   return true;
 }

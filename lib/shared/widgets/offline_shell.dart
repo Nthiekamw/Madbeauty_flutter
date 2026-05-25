@@ -5,6 +5,7 @@ import '../../core/constants/app_strings.dart';
 import '../../core/providers/offline_providers.dart';
 import '../../core/providers/offline_queue_providers.dart';
 import '../../services/offline/offline_sync_service.dart';
+import 'app_snack_bar.dart';
 
 /// Enveloppe les shells connectés : bannières hors ligne / file d’attente + contenu.
 class OfflineShell extends ConsumerWidget {
@@ -19,19 +20,18 @@ class OfflineShell extends ConsumerWidget {
       next,
     ) {
       if (next == null) return;
-      final messenger = ScaffoldMessenger.of(context);
       if (next.syncedCount > 0) {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(ShellStrings.offlineSyncDone(next.syncedCount)),
-          ),
+        AppSnackBar.show(
+          context,
+          message: ShellStrings.offlineSyncDone(next.syncedCount),
+          kind: AppSnackKind.success,
         );
       }
       if (next.failedCount > 0) {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text(ShellStrings.offlineSyncPartialFail),
-          ),
+        AppSnackBar.show(
+          context,
+          message: ShellStrings.offlineSyncPartialFail,
+          kind: AppSnackKind.warning,
         );
       }
       ref.read(lastOfflineSyncResultProvider.notifier).value = null;

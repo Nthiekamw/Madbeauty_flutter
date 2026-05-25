@@ -9,6 +9,7 @@ import '../../navigation/post_auth_navigation.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/password_recovery_provider.dart';
 import '../logic/reset_password_validators.dart';
+import '../../../../shared/widgets/app_snack_bar.dart';
 import '../screens/reset_password_page.dart';
 
 class ResetPasswordRoute extends ConsumerStatefulWidget {
@@ -47,9 +48,7 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
 
     if (!AppConfig.hasSupabase) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ShellStrings.supabaseMissingTitle)),
-        );
+        AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
       }
       return;
     }
@@ -70,9 +69,7 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
     ref.read(passwordRecoveryPendingProvider.notifier).clear();
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(AuthStrings.resetPasswordSuccess)),
-    );
+    AppSnackBar.success(context, AuthStrings.resetPasswordSuccess);
 
     await PostAuthNavigation.navigate(context, ref);
   }

@@ -7,6 +7,7 @@ import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../providers/prestataire_bookings_invalidate.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../widgets/reject_reservation_dialog.dart';
 
 /// Actions réservation (accepter, refuser, terminer) partagées dashboard / agenda.
@@ -37,7 +38,7 @@ class PrestataireReservationActions {
     try {
       await booking.confirm(reservationId);
       invalidatePrestataireBookings(ref);
-      _snack(DiscPrestaDash.actionOk);
+      _snack(DiscPrestaDash.actionOk, kind: AppSnackKind.success);
       return true;
     } on AppFailure catch (e) {
       _snack(e.message);
@@ -75,7 +76,7 @@ class PrestataireReservationActions {
     try {
       await booking.rejectByPrestataire(reservationId, reason: reason);
       invalidatePrestataireBookings(ref);
-      _snack(DiscPrestaDash.actionOk);
+      _snack(DiscPrestaDash.actionOk, kind: AppSnackKind.success);
       return true;
     } on AppFailure catch (e) {
       _snack(e.message);
@@ -106,7 +107,7 @@ class PrestataireReservationActions {
     try {
       await booking.markAsDone(reservationId);
       invalidatePrestataireBookings(ref);
-      _snack(DiscPrestaDash.actionOk);
+      _snack(DiscPrestaDash.actionOk, kind: AppSnackKind.success);
       return true;
     } on AppFailure catch (e) {
       _snack(e.message);
@@ -116,10 +117,8 @@ class PrestataireReservationActions {
     return false;
   }
 
-  void _snack(String message) {
+  void _snack(String message, {AppSnackKind kind = AppSnackKind.error}) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    AppSnackBar.show(context, message: message, kind: kind);
   }
 }

@@ -6,6 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
@@ -68,9 +69,7 @@ class _ClientReservationsScreenState
     final bookingService = ref.read(bookingServiceProvider);
     if (bookingService == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DiscBk.revokeFail)),
-      );
+      AppSnackBar.error(context, DiscBk.revokeFail);
       return;
     }
 
@@ -100,9 +99,7 @@ class _ClientReservationsScreenState
       await ref.read(clientReservationsProvider.future);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DiscBk.revokeFail)),
-      );
+      AppSnackBar.error(context, DiscBk.revokeFail);
     } finally {
       if (mounted) setState(() => _cancellingId = null);
     }
@@ -110,6 +107,17 @@ class _ClientReservationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Quand une réservation est créée/annulée depuis un autre écran (ex: après
+    // confirmation de booking), le signal s'incrémente. On diffère l'invalidation
+    // au prochain frame pour éviter un setState/invalidate pendant le layout.
+    ref.listen(reservationsRefreshSignalProvider, (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.invalidate(clientReservationsProvider);
+        ref.invalidate(clientPendingReservationsCountProvider);
+      });
+    });
+
     if (ref.watch(isGuestBrowsingProvider)) {
       return DiscoveryBrandScaffold(
         body: Column(
@@ -220,9 +228,17 @@ class _ClientReservationsScreenState
     final now = DateTime.now();
     return all
         .where((r) {
-          if (r.dateHeure.isBefore(now)) return false;
           final ui = clientReservationUiStatusFromStatut(r.statut);
-          return ui != ClientReservationUiStatus.cancelled;
+          if (ui == ClientReservationUiStatus.cancelled) return false;
+          if (ui == ClientReservationUiStatus.done) return false;
+          // Une réservation en attente ou confirmée est toujours « à venir »
+          // même si la date est légèrement passée (tolérance 2h).
+          if (ui == ClientReservationUiStatus.pending ||
+              ui == ClientReservationUiStatus.syncPending ||
+              ui == ClientReservationUiStatus.confirmed) {
+            return true;
+          }
+          return !r.dateHeure.isBefore(now);
         })
         .toList()
       ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
@@ -234,6 +250,13 @@ class _ClientReservationsScreenState
         .where((r) {
           final ui = clientReservationUiStatusFromStatut(r.statut);
           if (ui == ClientReservationUiStatus.cancelled) return true;
+          if (ui == ClientReservationUiStatus.done) return true;
+          // Pas en attente ni confirmée, et date passée
+          if (ui == ClientReservationUiStatus.pending ||
+              ui == ClientReservationUiStatus.syncPending ||
+              ui == ClientReservationUiStatus.confirmed) {
+            return false;
+          }
           return r.dateHeure.isBefore(now);
         })
         .toList()

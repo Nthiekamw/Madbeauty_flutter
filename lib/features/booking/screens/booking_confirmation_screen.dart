@@ -10,6 +10,7 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
         bookingServiceProvider,
         invalidateBookingDetail,
         invalidateClientReservations;
+import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../prestataire/providers/prestataire_detail_provider.dart';
@@ -78,6 +79,7 @@ class _BookingConfirmationScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text(DiscBk.recapTitle),
+        centerTitle: true,
       ),
       body: prestataireAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -100,27 +102,61 @@ class _BookingConfirmationScreenState
           final prestataireName =
               salon != null && salon.isNotEmpty ? salon : 'Salon';
           final theme = Theme.of(context);
-          final timeLabel = _formatTime(widget.dateTime);
+          final isDark = theme.brightness == Brightness.dark;
+          final primary = theme.colorScheme.primary;
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
-              Card(
-                elevation: 0,
-                color: theme.colorScheme.primaryContainer.withValues(
-                  alpha: 0.45,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+              // ── Carte prestataire hero ─────────────────────────────
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    stops: const [0.0, 0.6, 1.0],
+                    colors: [
+                      primary.withValues(alpha: isDark ? 0.45 : 0.7),
+                      theme.colorScheme.primaryContainer.withValues(
+                        alpha: isDark ? 0.6 : 0.88,
+                      ),
+                      theme.colorScheme.tertiary.withValues(
+                        alpha: isDark ? 0.25 : 0.35,
+                      ),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: primary.withValues(alpha: isDark ? 0.3 : 0.18),
+                    width: 1.5,
+                  ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: primary.withValues(alpha: 0.12),
+                            blurRadius: 16,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      AppAvatar(
-                        imageUrl: detail.avatarUrl,
-                        displayName: prestataireName,
-                        radius: 36,
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 2.5,
+                          ),
+                        ),
+                        child: AppAvatar(
+                          imageUrl: detail.avatarUrl,
+                          displayName: prestataireName,
+                          radius: 34,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -129,24 +165,45 @@ class _BookingConfirmationScreenState
                           children: [
                             Text(
                               DiscBk.recapPresta,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                              style: TextStyle(
+                                fontFamily: AppFonts.body,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.7),
+                                letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               prestataireName,
-                              style: theme.textTheme.titleLarge?.copyWith(
+                              style: const TextStyle(
+                                fontFamily: AppFonts.display,
                                 fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                color: Colors.white,
+                                height: 1.1,
                               ),
                             ),
                             if (profile.ville?.trim().isNotEmpty == true) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                profile.ville!.trim(),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on_rounded,
+                                      size: 13, color: Colors.white70),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      profile.ville!.trim(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ],
@@ -156,69 +213,117 @@ class _BookingConfirmationScreenState
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              _RecapRow(
-                label: DiscBk.recapSvc,
-                value: widget.serviceName,
+
+              const SizedBox(height: 20),
+
+              // ── Récap détails ──────────────────────────────────────
+              Text(
+                'Détails de la réservation',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              _RecapRow(
-                label: DiscBk.recapDate,
-                value: formatBookingDate(widget.dateTime),
+              const SizedBox(height: 10),
+
+              _RecapCard(
+                rows: [
+                  _RecapItem(
+                    icon: Icons.content_cut_rounded,
+                    label: DiscBk.recapSvc,
+                    value: widget.serviceName,
+                  ),
+                  _RecapItem(
+                    icon: Icons.calendar_today_rounded,
+                    label: DiscBk.recapDate,
+                    value: formatBookingDate(widget.dateTime),
+                  ),
+                  _RecapItem(
+                    icon: Icons.schedule_rounded,
+                    label: DiscBk.recapTime,
+                    value: _formatTime(widget.dateTime),
+                  ),
+                ],
               ),
-              _RecapRow(
-                label: DiscBk.recapTime,
-                value: timeLabel,
-              ),
-              _RecapRow(
+
+              const SizedBox(height: 10),
+
+              // Prix mis en avant
+              _PriceHighlight(
                 label: DiscBk.recapPrice,
                 value: '${widget.price.toStringAsFixed(2)} €',
-                highlight: true,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                formatBookingServiceMeta(
+                meta: formatBookingServiceMeta(
                   durationMinutes: widget.durationMinutes,
                   price: widget.price,
                 ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                theme: theme,
+                primary: primary,
+                isDark: isDark,
               ),
-              const SizedBox(height: 12),
-              Text(
-                DiscBk.recapTrust,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Material(
-                  color: theme.colorScheme.errorContainer,
+
+              const SizedBox(height: 14),
+
+              // Mention de confiance
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: theme.colorScheme.onErrorContainer,
+                  border: Border.all(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined,
+                        size: 18, color: Color(0xFF10B981)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        DiscBk.recapTrust,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: const Color(0xFF10B981),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onErrorContainer,
-                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Erreur
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_rounded,
+                          color: theme.colorScheme.onErrorContainer, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                            height: 1.4,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
+
+              // Propre profil
               if (isOwnProfile) ...[
                 const SizedBox(height: 12),
                 BookingMessage(
@@ -227,13 +332,30 @@ class _BookingConfirmationScreenState
                   message: DiscBk.cannotBookOwnBody,
                 ),
               ],
-              const SizedBox(height: 20),
-              AppButton(
-                isLoading: _isSubmitting,
-                enabled: !_isSubmitting && !isOwnProfile,
-                onPressed:
-                    _isSubmitting || isOwnProfile ? null : _confirm,
-                child: const Text(DiscBk.recapCta),
+
+              const SizedBox(height: 24),
+
+              // CTA confirmer
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: !_isSubmitting && !isOwnProfile && !isDark
+                      ? [
+                          BoxShadow(
+                            color: primary.withValues(alpha: 0.3),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: AppButton(
+                  isLoading: _isSubmitting,
+                  enabled: !_isSubmitting && !isOwnProfile,
+                  onPressed: _isSubmitting || isOwnProfile ? null : _confirm,
+                  child: const Text(DiscBk.recapCta),
+                ),
               ),
             ],
           );
@@ -245,13 +367,12 @@ class _BookingConfirmationScreenState
   Future<void> _confirm() async {
     final bookingService = ref.read(bookingServiceProvider);
     if (bookingService == null) {
-      setState(() {
-        _errorMessage = DiscBk.errGenericSave;
-      });
+      setState(() => _errorMessage = DiscBk.errGenericSave);
       return;
     }
 
-    final detail = ref.read(prestataireDetailProvider(widget.prestataireId)).value;
+    final detail =
+        ref.read(prestataireDetailProvider(widget.prestataireId)).value;
     final profile = detail?.profile;
     final salon = profile?.nomSalon?.trim();
     final prestataireName =
@@ -320,49 +441,186 @@ class _BookingConfirmationScreenState
   }
 }
 
-class _RecapRow extends StatelessWidget {
-  const _RecapRow({
-    required this.label,
-    required this.value,
-    this.highlight = false,
-  });
+// ─── Carte récap groupée ──────────────────────────────────────────────────────
 
-  final String label;
-  final String value;
-  final bool highlight;
+class _RecapCard extends StatelessWidget {
+  const _RecapCard({required this.rows});
+  final List<_RecapItem> rows;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: (highlight
-                            ? theme.textTheme.headlineSmall
-                            : theme.textTheme.titleMedium)
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.14 : 0.1),
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            rows[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecapItem extends StatelessWidget {
+  const _RecapItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Prix mis en avant ────────────────────────────────────────────────────────
+
+class _PriceHighlight extends StatelessWidget {
+  const _PriceHighlight({
+    required this.label,
+    required this.value,
+    required this.meta,
+    required this.theme,
+    required this.primary,
+    required this.isDark,
+  });
+
+  final String label;
+  final String value;
+  final String meta;
+  final ThemeData theme;
+  final Color primary;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: isDark ? 0.12 : 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.payments_rounded, size: 22, color: primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    color: primary.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  meta,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w900,
+              fontSize: 24,
+              color: primary,
+            ),
+          ),
+        ],
       ),
     );
   }

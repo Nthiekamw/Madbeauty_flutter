@@ -6,6 +6,7 @@ import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../providers/current_prestataire_provider.dart';
 import '../providers/disponibilite_provider.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
   const PrestataireHorairesScreen({super.key});
@@ -123,9 +124,7 @@ class _PrestataireHorairesScreenState
       await service.setHoraires(presta.id, plages);
       invalidateDisponibiliteProviders(ref);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DiscPrestaHoraires.saveOk)),
-        );
+        AppSnackBar.success(context, DiscPrestaHoraires.saveOk);
       }
     } catch (_) {
       if (mounted) setState(() => _error = DiscPrestaHoraires.saveErr);

@@ -35,6 +35,11 @@ class ClientShellBottomNav extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 360;
+    final hPad = isCompact ? 4.0 : 8.0;
+    final vPad = isCompact ? 6.0 : 8.0;
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
@@ -56,7 +61,7 @@ class ClientShellBottomNav extends StatelessWidget {
               ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
         child: Row(
           children: List.generate(_kNavLabels.length, (index) {
             final selected = selectedIndex == index;
@@ -103,19 +108,23 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 360;
+    final iconSz = isCompact ? 22.0 : 24.0;
+    final labelSzSelected = isCompact ? 9.5 : 11.0;
+    final labelSzUnselected = isCompact ? 9.0 : 10.5;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: isCompact ? 2 : 4),
+        padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
         decoration: BoxDecoration(
-          color: selected
-              ? primary.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? primary.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -125,7 +134,7 @@ class _NavItem extends StatelessWidget {
                 color: selected
                     ? primary
                     : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                size: 24,
+                size: iconSz,
               ),
               child: icon,
             ),
@@ -134,13 +143,11 @@ class _NavItem extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 fontFamily: AppFonts.body,
-                fontSize: selected ? 11 : 10.5,
-                fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: selected ? labelSzSelected : labelSzUnselected,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: selected
                     ? primary
-                    : theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.6),
+                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
               ),
               child: Text(
                 label,

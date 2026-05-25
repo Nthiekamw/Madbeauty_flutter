@@ -17,6 +17,7 @@ import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
+import '../../../../shared/widgets/app_snack_bar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../guest/guest_mode_provider.dart';
@@ -221,9 +222,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     try {
       await ref.read(authNotifierProvider.notifier).signInWithGoogle();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AuthStrings.loginGoogleStarted)),
-      );
+      AppSnackBar.info(context, AuthStrings.loginGoogleStarted);
     } on AppFailure catch (e) {
       if (mounted) {
         setState(() {
