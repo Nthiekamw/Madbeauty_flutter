@@ -38,6 +38,12 @@ extension AppNavigationX on BuildContext {
       goNamed(AppRouteNames.prestataireDashboard);
   void goPrestataireAgenda() => goNamed(AppRouteNames.prestataireAgenda);
   void goPrestataireProfile() => goNamed(AppRouteNames.prestataireProfile);
+  void goPrestataireClients() => goNamed(AppRouteNames.prestataireClients);
+  void pushPrestataireReservationDetail(String reservationId) =>
+      pushNamed(
+        AppRouteNames.prestataireReservationDetail,
+        pathParameters: {'id': reservationId},
+      );
   void pushPrestataireProfileEdit() =>
       pushNamed(AppRouteNames.prestataireProfileEdit);
 

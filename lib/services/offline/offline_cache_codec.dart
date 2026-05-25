@@ -92,6 +92,7 @@ abstract final class OfflineCacheCodec {
         statut: map['statut'] as String? ?? '',
         serviceName: map['serviceName'] as String? ?? '',
         clientName: map['clientName'] as String? ?? '',
+        clientId: map['clientId'] as String?,
         notesClient: map['notesClient'] as String?,
         notesPrestataire: map['notesPrestataire'] as String?,
       );
@@ -117,6 +118,7 @@ abstract final class OfflineCacheCodec {
               'statut': e.statut,
               'serviceName': e.serviceName,
               'clientName': e.clientName,
+              'clientId': e.clientId,
               'notesClient': e.notesClient,
               'notesPrestataire': e.notesPrestataire,
             },

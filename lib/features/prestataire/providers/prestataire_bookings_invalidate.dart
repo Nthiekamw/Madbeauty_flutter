@@ -8,6 +8,8 @@ void invalidatePrestataireBookings(WidgetRef ref) {
   ref.invalidate(prestataireAgendaProvider);
   ref.invalidate(prestataireDashboardProvider);
   ref.invalidate(bookingsPrestataireProvider);
+  // Mise à jour « Mes réservations » (client) après acceptation / refus / terminé.
+  invalidateClientReservations(ref);
 }
 
 void invalidatePrestataireDashboard(WidgetRef ref) {

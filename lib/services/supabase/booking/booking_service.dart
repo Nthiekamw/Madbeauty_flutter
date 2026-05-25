@@ -315,6 +315,7 @@ class BookingService {
                   ? (service['nom'] as String?)?.trim() ?? ''
                   : '',
               clientName: '',
+              clientId: map['client_id'] as String?,
               notesClient: map['notes_client'] as String?,
               notesPrestataire: map['notes_prestataire'] as String?,
             ),
@@ -333,6 +334,7 @@ class BookingService {
                       ? DiscPrestaDash.unknownService
                       : e.serviceName,
                   clientName: DiscPrestaDash.unknownClient,
+                  clientId: e.clientId,
                   notesClient: e.notesClient,
                   notesPrestataire: e.notesPrestataire,
                 ),
@@ -363,6 +365,7 @@ class BookingService {
                 ? DiscPrestaDash.unknownService
                 : item.serviceName,
             clientName: clientName,
+            clientId: item.clientId,
             notesClient: item.notesClient,
             notesPrestataire: item.notesPrestataire,
           );

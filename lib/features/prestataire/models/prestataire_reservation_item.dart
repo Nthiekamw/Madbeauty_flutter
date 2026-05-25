@@ -6,6 +6,7 @@ class PrestataireReservationItem {
     required this.statut,
     required this.serviceName,
     required this.clientName,
+    this.clientId,
     this.notesClient,
     this.notesPrestataire,
   });
@@ -15,6 +16,7 @@ class PrestataireReservationItem {
   final String statut;
   final String serviceName;
   final String clientName;
+  final String? clientId;
   final String? notesClient;
   final String? notesPrestataire;
 }

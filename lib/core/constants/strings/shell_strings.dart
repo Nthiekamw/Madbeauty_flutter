@@ -72,4 +72,5 @@ abstract final class ShellStrings {
   static const String navPrestataireDashboard = 'Dashboard';
   static const String navPrestataireAgenda = 'Agenda';
   static const String navPrestataireProfile = 'Profil';
+  static const String navPrestataireClients = 'Clients';
 }
