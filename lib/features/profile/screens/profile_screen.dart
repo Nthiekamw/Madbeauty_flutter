@@ -7,28 +7,29 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/user/user_profile.dart';
-import '../../../core/models/user_role.dart';
-import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/offline/offline_actions.dart';
+import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery_constrained_body.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
-import '../../auth/providers/my_roles_provider.dart';
-import '../../auth/widgets/role_switch_section.dart';
+import '../widgets/profile_role_space_section.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';
 import '../providers/app_version_provider.dart';
 import '../providers/current_user_profile_provider.dart';
 import '../widgets/edit_profile_name_dialog.dart';
 import '../widgets/profile_account_header.dart';
+import '../widgets/profile_account_section.dart';
+import '../widgets/profile_footer_actions.dart';
+import '../widgets/profile_my_info_section.dart';
+import '../widgets/profile_preferences_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -42,31 +43,86 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _savingPhoto = false;
   bool _savingName = false;
 
-  Future<void> _confirmSignOut() async {
+  Future<bool> _confirmSignOut() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text(ShellStrings.accountSignOutConfirmTitle),
+            content: const Text(ShellStrings.accountSignOutConfirmBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text(CoreStrings.actionCancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text(ShellStrings.accountActionSignOut),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _signOut() async {
+    if (!await _confirmSignOut() || !mounted) return;
+    await ref.read(authNotifierProvider.notifier).signOut();
+  }
+
+  Future<void> _confirmDeleteAccount() async {
     final go = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(ShellStrings.accountSignOutConfirmTitle),
-        content: const Text(ShellStrings.accountSignOutConfirmBody),
+        title: const Text(DiscProfile.deleteAccountTitle),
+        content: const Text(DiscProfile.deleteAccountBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text(CoreStrings.actionCancel),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(ShellStrings.accountActionSignOut),
+            child: const Text(DiscProfile.deleteAccountConfirm),
           ),
         ],
       ),
     );
     if (go != true || !mounted) return;
-    await ref.read(authNotifierProvider.notifier).signOut();
+
+    try {
+      await LocalCacheService.instance.setProfilePushNotificationsEnabled(
+        false,
+      );
+      await LocalCacheService.instance.setProfileGeolocationEnabled(false);
+      await ref.read(authNotifierProvider.notifier).signOut();
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: DiscProfile.deleteAccountDone,
+          kind: AppSnackKind.success,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: DiscProfile.deleteAccountErr,
+          kind: AppSnackKind.error,
+        );
+      }
+    }
   }
 
   void _invalidateProfile() {
     ref.invalidate(currentUserProfileProvider);
     ref.invalidate(homeProfileSnapshotProvider);
+  }
+
+  void _showSnack(String message, {AppSnackKind kind = AppSnackKind.info}) {
+    AppSnackBar.show(context, message: message, kind: kind);
   }
 
   Future<void> _editName(UserProfile? profile) async {
@@ -96,7 +152,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         nom: result.nom,
       );
       _invalidateProfile();
-      if (mounted) _showSnack(ShellStrings.profileSaveOk, kind: AppSnackKind.success);
+      if (mounted) {
+        _showSnack(ShellStrings.profileSaveOk, kind: AppSnackKind.success);
+      }
     } catch (_) {
       if (mounted) _showSnack(ShellStrings.profileSaveErr, kind: AppSnackKind.error);
     } finally {
@@ -177,10 +235,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void _showSnack(String message, {AppSnackKind kind = AppSnackKind.info}) {
-    AppSnackBar.show(context, message: message, kind: kind);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -188,13 +242,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (ref.watch(isGuestBrowsingProvider)) {
       return DiscoveryBrandScaffold(
         body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DiscoveryScreenHeader(
-              title: DiscNav.profileTitle,
-              subtitle: DiscNav.profileSubtitle,
-              icon: Icons.person_rounded,
-            ),
             Expanded(
               child: GuestAccountPrompt(
                 icon: Icons.person_outline,
@@ -207,38 +255,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
 
-    final authSnapshot = ref.watch(authNotifierProvider);
-    final user = switch (authSnapshot) {
+    final user = switch (ref.watch(authNotifierProvider)) {
       AsyncData(:final value) => value,
       _ => null,
     };
     final profileAsync = ref.watch(currentUserProfileProvider);
-    final rolesAsync = ref.watch(myRolesProvider);
     final versionAsync = ref.watch(appVersionProvider);
 
     final profile = switch (profileAsync) {
       AsyncData(:final value) => value,
       _ => null,
     };
-    final roles = switch (rolesAsync) {
-      AsyncData(:final value) => value,
-      _ => const <UserRole>[],
-    };
 
     final email = user?.email?.trim() ?? '';
+    final phone = profile?.telephone?.trim() ?? '';
     final displayName = profileDisplayName(profile: profile, email: email);
-    final rolesLabel = profileRolesLabel(roles);
     final loadingProfile = profileAsync.isLoading && profile == null;
+
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
     return DiscoveryBrandScaffold(
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
-          const DiscoveryScreenHeader(
-            title: DiscNav.profileTitle,
-            subtitle: DiscNav.profileSubtitle,
-            icon: Icons.person_rounded,
-          ),
+          DiscoveryConstrainedBody(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
           if (loadingProfile)
             const Padding(
               padding: EdgeInsets.all(40),
@@ -249,54 +292,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               profile: profile,
               displayName: displayName,
               email: email,
-              rolesLabel: rolesLabel,
               avatarBytes: _avatarPreviewBytes,
               photoLoading: _savingPhoto,
               onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
               onEditName: _savingName ? null : () => _editName(profile),
             ),
           if (_savingName)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: LinearProgressIndicator(minHeight: 2),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPad),
+              child: const LinearProgressIndicator(minHeight: 2),
             ),
           const SizedBox(height: 20),
-          DiscoverySurfaceCard(
-            child: RoleSwitchSection(
-              sectionTitle: DiscNav.profileSpace,
-              padding: EdgeInsets.zero,
-            ),
-          ),
+          ProfileMyInfoSection(email: email, phone: phone),
           const SizedBox(height: 16),
-          DiscoverySurfaceCard(
-            child: Column(
-              children: [
-                DiscoveryMenuTile(
-                  icon: Icons.event_available_rounded,
-                  title: DiscNav.myReservationsTitle,
-                  subtitle: DiscNav.profileResHint,
-                  onTap: () => context.goMyReservations(),
-                ),
-                Divider(
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                  color: theme.colorScheme.outline.withValues(alpha: 0.12),
-                ),
-                DiscoveryMenuTile(
-                  icon: Icons.logout_rounded,
-                  title: ShellStrings.accountActionSignOut,
-                  onTap: _confirmSignOut,
-                  destructive: true,
-                  showChevron: false,
-                ),
-              ],
-            ),
+          const ProfilePreferencesSection(),
+          const SizedBox(height: 16),
+          const ProfileRoleSpaceSection(),
+          const SizedBox(height: 16),
+          const ProfileAccountSection(),
+          const SizedBox(height: 20),
+          ProfileFooterActions(
+            onSignOut: _signOut,
+            onDeleteAccount: _confirmDeleteAccount,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           versionAsync.when(
             data: (version) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: hPad),
               child: Text(
                 '${ShellStrings.profileVersionLabel} $version',
                 textAlign: TextAlign.center,
@@ -305,8 +327,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ),
-            loading: () => const SizedBox(height: 24),
-            error: (_, __) => const SizedBox(height: 24),
+            loading: () => const SizedBox(height: 8),
+            error: (_, __) => const SizedBox(height: 8),
+          ),
+              ],
+            ),
           ),
         ],
       ),

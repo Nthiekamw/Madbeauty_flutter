@@ -61,6 +61,8 @@ extension AppNavigationX on BuildContext {
   void pushPrestataireHoraires() => pushNamed(AppRouteNames.prestataireHoraires);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
+  void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
+  void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
   void goMyReservations() => goNamed(AppRouteNames.clientReservations);
 
   void goBooking({String? prestataireId, String? serviceId}) {

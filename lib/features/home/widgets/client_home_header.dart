@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../theme/home_styles.dart';
@@ -15,6 +16,7 @@ class ClientHomeHeader extends StatelessWidget {
     this.avatarUrl,
     this.trailing,
     this.onAvatarTap,
+    this.onNotificationsTap,
   });
 
   final String greetingLine;
@@ -24,6 +26,7 @@ class ClientHomeHeader extends StatelessWidget {
   final String? avatarUrl;
   final Widget? trailing;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onNotificationsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +102,8 @@ class ClientHomeHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
+                if (onNotificationsTap != null)
+                  _NotificationButton(onTap: onNotificationsTap!),
                 if (trailing != null)
                   trailing!
                 else
@@ -247,6 +252,40 @@ class _StatBadge extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationButton extends StatelessWidget {
+  const _NotificationButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: theme.colorScheme.surface.withValues(
+        alpha: isDark ? 0.35 : 0.65,
+      ),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Tooltip(
+          message: DiscHome.notificationsTooltip,
+          child: Padding(
+          padding: const EdgeInsets.all(10),
+            child: Icon(
+              Icons.notifications_outlined,
+              size: 22,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
         ),
       ),
     );

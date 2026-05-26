@@ -28,6 +28,7 @@ class AppTextField extends StatelessWidget {
     this.inputFormatters,
     this.borderRadius = AuthFormStyles.fieldRadius,
     this.filled = true,
+    this.dense = false,
   });
 
   /// Rayon des coins (défaut auth : 16).
@@ -35,6 +36,9 @@ class AppTextField extends StatelessWidget {
 
   /// Fond léger dans le champ (recommandé sur écrans auth).
   final bool filled;
+
+  /// Hauteur réduite (wizard inscription).
+  final bool dense;
 
   final TextEditingController? controller;
   final FocusNode? focusNode;
@@ -70,9 +74,18 @@ class AppTextField extends StatelessWidget {
       );
     }
 
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final scrollPadding = EdgeInsets.fromLTRB(
+      24,
+      24,
+      24,
+      viewInsets.bottom + 120,
+    );
+
     return TextField(
       controller: controller,
       focusNode: focusNode,
+      scrollPadding: scrollPadding,
       onChanged: onChanged,
       enabled: enabled,
       obscureText: obscureText,
@@ -102,8 +115,11 @@ class AppTextField extends StatelessWidget {
         focusedBorder: border(focused, width: 1.6),
         errorBorder: border(theme.colorScheme.error),
         focusedErrorBorder: border(theme.colorScheme.error, width: 1.6),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        isDense: dense,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: dense ? 12 : 16,
+        ),
       ),
     );
   }

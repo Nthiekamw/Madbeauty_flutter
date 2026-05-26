@@ -21,7 +21,10 @@ class PrestataireProfileIncompleteBanner extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => context.goPrestataireProfile(),
+            onTap: () {
+              context.goPrestataireProfile();
+              context.pushPrestataireProfileEdit();
+            },
             borderRadius: DiscoveryStyles.cardBorderRadius,
             child: Padding(
               padding: const EdgeInsets.all(16),

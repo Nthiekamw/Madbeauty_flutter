@@ -8,7 +8,7 @@ abstract final class DiscPrestaProfile {
   static const editTitle = 'Profil professionnel';
   static const incompleteTitle = 'Profil incomplet';
   static const incompleteBody =
-      'Complète ton salon : photo, bio, adresse, spécialités, services et au moins une photo de réalisation pour apparaître dans le catalogue.';
+      'Complète ton salon : photo, bio, adresse, spécialités et services pour apparaître dans le catalogue.';
   static const incompleteCta = 'Compléter mon profil';
   static const sectionPro = 'Gérer mon activité';
   static const sectionProHint =
@@ -21,7 +21,7 @@ abstract final class DiscPrestaProfile {
   static const menuServices = 'Services & tarifs';
   static const menuServicesHint = 'Ajouter, modifier ou supprimer des services';
   static const menuGallery = 'Photos de réalisations';
-  static const menuGalleryHint = 'Portfolio visible par les clientes';
+  static const menuGalleryHint = 'Portfolio visible par les clientes (optionnel)';
   static const editVitrine = 'Modifier la vitrine';
   static const editLocation = 'Modifier l’adresse';
   static const editServices = 'Modifier les services';

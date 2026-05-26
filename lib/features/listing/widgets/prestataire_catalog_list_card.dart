@@ -4,18 +4,20 @@ import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../prestataire/widgets/prestataire_card_photo_header.dart';
 
 const int _kMaxChips = 3;
 
-/// Carte catalogue (liste verticale) : photo, nom, spécialités, note, ville.
+/// Carte catalogue (liste verticale) : réalisations, nom, spécialités, note, ville.
 class PrestataireCatalogListCard extends StatelessWidget {
   const PrestataireCatalogListCard({
     super.key,
     required this.entry,
+    this.compact = false,
   });
 
   final PrestataireCatalogEntry entry;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +30,20 @@ class PrestataireCatalogListCard extends StatelessWidget {
     final display = entry.displayName;
     final rating = profile.noteMoyenne;
     final screenW = MediaQuery.sizeOf(context).width;
-    final isCompact = screenW < 360;
+    final isNarrow = screenW < 360;
+    final dense = compact || isNarrow;
+    final cardRadius = DiscoveryStyles.catalogListCardBorderRadius;
+    final photoH = compact ? 92.0 : DiscoveryStyles.catalogCardPhotoHeight;
 
     return Material(
       color: Colors.transparent,
-      borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+      borderRadius: cardRadius,
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
-        borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+        borderRadius: cardRadius,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: DiscoveryStyles.catalogListCardBorderRadius,
+            borderRadius: cardRadius,
             color: theme.colorScheme.surface.withValues(
               alpha: isDark ? 0.92 : 0.98,
             ),
@@ -58,109 +63,118 @@ class PrestataireCatalogListCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              PrestataireCardPhotoHeader(
+                prestataireId: profile.id,
+                height: photoH,
+                borderRadius: BorderRadius.only(
+                  topLeft: cardRadius.topLeft,
+                  topRight: cardRadius.topRight,
+                ),
+                fallbackDisplayName: display,
+                fallbackAvatarUrl: url,
+                compactBadge: compact,
+              ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  isCompact ? 10 : 14,
-                  isCompact ? 10 : 14,
-                  isCompact ? 10 : 14,
-                  12,
+                  dense ? 8 : 14,
+                  dense ? 8 : 12,
+                  dense ? 8 : 14,
+                  dense ? 6 : 10,
                 ),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _LeadingPhoto(imageUrl: url, displayName: display),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  display,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontFamily: AppFonts.display,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ),
-                              if (profile.isVerified)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 6, top: 2),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: primary.withValues(alpha: 0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.verified_rounded,
-                                      color: primary,
-                                      size: 14,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            display,
+                            maxLines: compact ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: (compact
+                                    ? theme.textTheme.titleSmall
+                                    : theme.textTheme.titleMedium)
+                                ?.copyWith(
+                              fontFamily: AppFonts.display,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                            ),
                           ),
-                          if (ville != null && ville.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_rounded,
-                                  size: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 3),
-                                Expanded(
-                                  child: Text(
-                                    ville,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        ),
+                        if (profile.isVerified)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6, top: 2),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.verified_rounded,
+                                color: primary,
+                                size: 14,
+                              ),
                             ),
-                          ],
-                          if (entry.specialtyNames.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 5,
-                              runSpacing: 5,
-                              children: [
-                                ...entry.specialtyNames.take(_kMaxChips).map(
-                                      (n) => _SpecialtyChip(label: n),
-                                    ),
-                                if (entry.specialtyNames.length > _kMaxChips)
-                                  _SpecialtyChip(
-                                    label:
-                                        '+${entry.specialtyNames.length - _kMaxChips}',
-                                    muted: true,
-                                  ),
-                              ],
+                          ),
+                      ],
+                    ),
+                    if (ville != null && ville.isNotEmpty) ...[
+                      SizedBox(height: compact ? 4 : 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: compact ? 12 : 14,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              ville,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontSize: compact ? 11 : null,
+                              ),
                             ),
-                          ],
+                          ),
                         ],
                       ),
-                    ),
+                    ],
+                    if (!compact && entry.specialtyNames.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: [
+                          ...entry.specialtyNames.take(_kMaxChips).map(
+                                (n) => _SpecialtyChip(label: n),
+                              ),
+                          if (entry.specialtyNames.length > _kMaxChips)
+                            _SpecialtyChip(
+                              label:
+                                  '+${entry.specialtyNames.length - _kMaxChips}',
+                              muted: true,
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 8 : 14,
+                  vertical: compact ? 6 : 10,
+                ),
                 decoration: BoxDecoration(
                   color: primary.withValues(alpha: isDark ? 0.07 : 0.04),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(14),
-                    bottomRight: Radius.circular(14),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: cardRadius.bottomLeft,
+                    bottomRight: cardRadius.bottomRight,
                   ),
                   border: Border(
                     top: BorderSide(
@@ -171,61 +185,27 @@ class PrestataireCatalogListCard extends StatelessWidget {
                 child: Row(
                   children: [
                     if (rating != null) ...[
-                      Icon(Icons.star_rounded, size: 16, color: const Color(0xFFF59E0B)),
-                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.star_rounded,
+                        size: compact ? 14 : 16,
+                        color: const Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(width: 3),
                       Text(
                         rating.toStringAsFixed(1),
-                        style: theme.textTheme.labelMedium?.copyWith(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           fontFamily: AppFonts.body,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFFF59E0B),
+                          fontSize: compact ? 11 : null,
                         ),
                       ),
-                      const SizedBox(width: 12),
                     ],
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Disponible',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontFamily: AppFonts.body,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Voir',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 13,
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: compact ? 16 : 18,
+                      color: primary,
                     ),
                   ],
                 ),
@@ -266,57 +246,6 @@ class _SpecialtyChip extends StatelessWidget {
               : theme.colorScheme.onPrimaryContainer,
         ),
       ),
-    );
-  }
-}
-
-class _LeadingPhoto extends StatelessWidget {
-  const _LeadingPhoto({
-    required this.imageUrl,
-    required this.displayName,
-  });
-
-  final String? imageUrl;
-  final String displayName;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final url = imageUrl?.trim();
-
-    if (url != null && url.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          width: 76,
-          height: 76,
-          child: Image.network(
-            url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => AppAvatar(
-              displayName: displayName,
-              radius: 38,
-            ),
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return ColoredBox(
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-    }
-    return AppAvatar(
-      displayName: displayName,
-      radius: 38,
     );
   }
 }

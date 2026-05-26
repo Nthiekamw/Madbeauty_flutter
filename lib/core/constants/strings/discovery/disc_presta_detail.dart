@@ -9,7 +9,16 @@ abstract final class DiscPrestaDetail {
       'Impossible de charger cette fiche. Réessaie.';
   static const badgeVerified = 'Profil vérifié';
   static const badgeNewTalent = 'Nouvelle pépite';
+  static const salonNameTitle = 'Salon / activité';
+  static const descriptionTitle = 'Présentation';
   static const bioTitle = 'À propos';
+  static const experienceTitle = 'Expérience';
+  static const experienceYearsLabel = 'Durée d’activité';
+  static const workLocationTitle = 'Lieu de prestation';
+  static const horairesTitle = 'Horaires d’ouverture';
+  static const horairesEmptyTitle = 'Horaires non renseignés';
+  static const horairesEmptyBody =
+      'Les créneaux habituels apparaîtront ici. Tu peux quand même proposer une réservation.';
   static const comfortTitle = 'Confort client';
   static const conditionsTitle = 'Conditions de service';
   static const specialtiesTitle = 'Spécialités';
@@ -22,7 +31,25 @@ abstract final class DiscPrestaDetail {
       'C’est ton profil professionnel : tu peux le consulter, mais pas réserver tes propres services.';
   static const contact = 'Contacter';
   static const contactSoon =
-      'Messagerie disponible en semaine 3';
+      'La messagerie arrive bientôt. En attendant, réserve un créneau ou contacte le salon par téléphone si indiqué.';
+  static String reviewDate(DateTime date) {
+    final d = date;
+    final months = [
+      'janv.',
+      'févr.',
+      'mars',
+      'avr.',
+      'mai',
+      'juin',
+      'juil.',
+      'août',
+      'sept.',
+      'oct.',
+      'nov.',
+      'déc.',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
   static const bookingSoon =
       'La réservation arrive bientôt pour ce prestataire.';
   static const trustId = 'Identité professionnelle vérifiée';

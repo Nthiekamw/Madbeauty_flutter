@@ -26,6 +26,11 @@ abstract final class AuthStrings {
   static const String loginFieldEmail = 'E-mail';
   static const String loginFieldPassword = 'Mot de passe';
   static const String loginActionSubmit = 'Se connecter';
+  static const String loginSectionQuick = 'Connexion rapide';
+  static const String loginSectionQuickHint =
+      'Utilise ton compte Google pour te connecter en un clic.';
+  static const String loginSectionCredentials = 'Identifiants';
+  static const String loginNoAccountPrompt = 'Pas encore de compte ? ';
   static const String loginValidationEmailEmpty = 'Saisis ton adresse e-mail.';
   static const String loginValidationEmailInvalid = 'Adresse e-mail invalide.';
   static const String loginValidationPasswordEmpty =
@@ -152,6 +157,31 @@ abstract final class AuthStrings {
   static const String registerStepLabelIdentity = 'Compte';
   static const String registerStepLabelRole = 'Profil';
   static const String registerStepLabelExtras = 'Détails';
+
+  static String registerStepCounter(int current, int total) =>
+      'Étape $current sur $total';
+
+  static const String registerSectionQuick = 'Inscription rapide';
+  static const String registerSectionQuickHint =
+      'Quelques secondes avec ton compte Google.';
+  static const String registerSectionIdentity = 'Identité';
+  static const String registerSectionContact = 'Contact';
+  static const String registerSectionSecurity = 'Sécurité';
+  static const String registerSectionActivity = 'Ton activité';
+  static const String registerSectionActivityHint =
+      'Visible sur ta fiche prestataire.';
+  static const String registerSectionLocation = 'Localisation';
+  static const String registerSectionPresentation = 'Présentation';
+  static const String registerSectionOptional = 'Facultatif';
+  static const String registerSectionOptionalExpand =
+      'Compléter plus tard (optionnel)';
+  static const String registerValidationRoleEmpty =
+      'Choisis comment tu veux utiliser MadBeauty.';
+  static const String registerValidationPrestaRequired =
+      'Indique au minimum le nom de ton salon et ta ville.';
+  static const String registerWizardBack = 'Retour';
+  static const String registerFieldPhoneHint = 'Ex. 06 12 34 56 78';
+  static const String registerFieldPasswordHint = '8 caractères minimum';
   static const String registerFieldPrenom = 'Prénom';
   static const String registerFieldNom = 'Nom';
   static const String registerFieldPhone = 'Téléphone';
@@ -185,6 +215,19 @@ abstract final class AuthStrings {
   static const String registerActionGoogle = 'Continuer avec Google';
   static const String registerGooglePhoneHint =
       'Google ne fournit pas ton numéro : renseigne-le pour finaliser ton compte.';
+  static const String registerGoogleConnected =
+      'Compte Google connecté. Vérifie tes informations puis appuie sur Continuer.';
+  static const String registerGoogleConnectedBanner =
+      'Connecté avec Google';
+  static const String registerSuccessTitle = 'Inscription réussie';
+  static const String registerSuccessBody =
+      'Ton compte MadBeauty est prêt. Tu peux commencer à utiliser l’application.';
+  static const String registerSuccessCta = 'C’est parti';
+
+  static const String loginSuccessTitle = 'Bon retour !';
+  static const String loginSuccessBody =
+      'Tu es connecté(e). Retrouve tes prestataires et tes réservations sur MadBeauty.';
+  static const String loginSuccessCta = 'Continuer';
 
   static const String loginPasswordTabEmail = 'E-mail';
   static const String loginPasswordTabPhone = 'Téléphone';

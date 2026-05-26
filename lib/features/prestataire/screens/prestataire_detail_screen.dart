@@ -4,13 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
+import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
+import '../logic/lieu_travail_display.dart';
 import '../providers/prestataire_detail_provider.dart';
 import '../widgets/prestataire_client_experience_section.dart';
+import '../widgets/prestataire_public_horaires_section.dart';
+import '../widgets/prestataire_public_reviews_section.dart';
 
 class PrestataireDetailScreen extends ConsumerWidget {
   const PrestataireDetailScreen({super.key, required this.prestataireId});
@@ -47,6 +52,10 @@ class PrestataireDetailScreen extends ConsumerWidget {
                 avatarUrl: data.avatarUrl,
                 isOwnProfile: isOwnProfile,
                 onBook: () => context.pushBooking(prestataireId: data.profile.id),
+                onContact: () => AppSnackBar.show(
+                  context,
+                  message: DiscPrestaDetail.contactSoon,
+                ),
               ),
               SliverToBoxAdapter(
                 child: Column(
@@ -62,7 +71,15 @@ class PrestataireDetailScreen extends ConsumerWidget {
                     // Bannière profil propre
                     if (isOwnProfile)
                       _OwnProfileBanner(),
-                    // Bio
+                    if (data.profile.description?.trim().isNotEmpty == true)
+                      _Section(
+                        icon: Icons.short_text_rounded,
+                        title: DiscPrestaDetail.descriptionTitle,
+                        child: Text(
+                          data.profile.description!.trim(),
+                          style: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
+                        ),
+                      ),
                     if (data.profile.bio?.trim().isNotEmpty == true)
                       _Section(
                         icon: Icons.person_outline_rounded,
@@ -70,6 +87,20 @@ class PrestataireDetailScreen extends ConsumerWidget {
                         child: Text(
                           data.profile.bio!.trim(),
                           style: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
+                        ),
+                      ),
+                    if (_hasExperience(data.profile))
+                      _Section(
+                        icon: Icons.workspace_premium_outlined,
+                        title: DiscPrestaDetail.experienceTitle,
+                        child: _ExperienceBlock(profile: data.profile),
+                      ),
+                    if (data.profile.lieuTravail != null)
+                      _Section(
+                        icon: LieuTravailDisplay.icon(data.profile.lieuTravail!),
+                        title: DiscPrestaDetail.workLocationTitle,
+                        child: _WorkLocationChip(
+                          lieu: data.profile.lieuTravail!,
                         ),
                       ),
                     // Confort & conditions
@@ -95,6 +126,13 @@ class PrestataireDetailScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                    _Section(
+                      icon: Icons.schedule_outlined,
+                      title: DiscPrestaDetail.horairesTitle,
+                      child: PrestatairePublicHorairesSection(
+                        horaires: data.horaires,
+                      ),
+                    ),
                     // Galerie
                     _Section(
                       icon: Icons.photo_library_outlined,
@@ -131,14 +169,11 @@ class PrestataireDetailScreen extends ConsumerWidget {
                               ],
                             ),
                     ),
-                    // Avis
                     _Section(
                       icon: Icons.star_outline_rounded,
                       title: DiscPrestaDetail.reviewsTitle,
-                      child: _EmptyCard(
-                        icon: Icons.rate_review_outlined,
-                        title: DiscPrestaDetail.noReviewsTitle,
-                        body: DiscPrestaDetail.noReviewsBody,
+                      child: PrestatairePublicReviewsSection(
+                        reviews: data.reviews,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -166,6 +201,11 @@ class PrestataireDetailScreen extends ConsumerWidget {
   }
 }
 
+bool _hasExperience(PrestataireProfile profile) {
+  return profile.experienceProfessionnelle?.trim().isNotEmpty == true ||
+      profile.anneesExperience?.trim().isNotEmpty == true;
+}
+
 // ─── SliverAppBar hero ────────────────────────────────────────────────────────
 
 class _DetailSliverAppBar extends StatelessWidget {
@@ -174,12 +214,14 @@ class _DetailSliverAppBar extends StatelessWidget {
     required this.avatarUrl,
     required this.isOwnProfile,
     required this.onBook,
+    required this.onContact,
   });
 
   final PrestataireProfile profile;
   final String? avatarUrl;
   final bool isOwnProfile;
   final VoidCallback onBook;
+  final VoidCallback onContact;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +237,9 @@ class _DetailSliverAppBar extends StatelessWidget {
         : (salon?.isNotEmpty == true)
             ? salon!
             : 'Salon';
+    final showSalonLine = display?.isNotEmpty == true &&
+        salon?.isNotEmpty == true &&
+        salon != display;
     final ville = profile.ville?.trim() ?? '';
     final cp = profile.codePostal?.trim() ?? '';
     final adresse = profile.adresse?.trim() ?? '';
@@ -319,6 +364,31 @@ class _DetailSliverAppBar extends StatelessWidget {
                                   ],
                                 ),
                               ),
+                              if (showSalonLine) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.storefront_outlined,
+                                      size: 14,
+                                      color: Colors.white70,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        salon!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               if (locationLine.isNotEmpty) ...[
                                 const SizedBox(height: 6),
                                 Row(
@@ -366,7 +436,7 @@ class _DetailSliverAppBar extends StatelessWidget {
                             label: DiscPrestaDetail.contact,
                             icon: Icons.chat_bubble_outline_rounded,
                             filled: false,
-                            onPressed: null,
+                            onPressed: onContact,
                           ),
                         ),
                       ],
@@ -655,6 +725,86 @@ class _OwnProfileBanner extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Expérience & lieu ───────────────────────────────────────────────────────
+
+class _ExperienceBlock extends StatelessWidget {
+  const _ExperienceBlock({required this.profile});
+
+  final PrestataireProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final years = profile.anneesExperience?.trim() ?? '';
+    final exp = profile.experienceProfessionnelle?.trim() ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (years.isNotEmpty) ...[
+          Text(
+            DiscPrestaDetail.experienceYearsLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            years,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (exp.isNotEmpty) const SizedBox(height: 14),
+        ],
+        if (exp.isNotEmpty)
+          Text(
+            exp,
+            style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+          ),
+      ],
+    );
+  }
+}
+
+class _WorkLocationChip extends StatelessWidget {
+  const _WorkLocationChip({required this.lieu});
+
+  final LieuTravail lieu;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(LieuTravailDisplay.icon(lieu), color: primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              LieuTravailDisplay.label(lieu),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

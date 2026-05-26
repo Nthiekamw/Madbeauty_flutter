@@ -21,6 +21,7 @@ abstract final class GuestRoutePolicy {
 
   static bool requiresAccount(String location) {
     if (location == AppRoutes.bookingConfirmation) return true;
+    if (location == AppRoutes.editClientAccount) return true;
     if (isPrestataireSpacePath(location)) return true;
     return false;
   }

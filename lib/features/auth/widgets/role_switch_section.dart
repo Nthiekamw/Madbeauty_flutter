@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_area.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/user_role.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery_menu_tile.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../navigation/client_navigation.dart';
 import '../providers/my_roles_provider.dart';
+import 'become_prestataire_cta_card.dart';
+import 'role_space_card.dart';
 
-/// Bascule client ↔ prestataire (profil client, dashboard pro, etc.).
+/// Bascule client ↔ prestataire avec cartes visuelles.
 class RoleSwitchSection extends ConsumerWidget {
   const RoleSwitchSection({
     super.key,
     this.sectionTitle,
     this.padding = const EdgeInsets.symmetric(horizontal: 0),
+    this.showHeader = true,
   });
 
   final String? sectionTitle;
   final EdgeInsetsGeometry padding;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final rolesAsync = ref.watch(myRolesProvider);
-    final cachedRole = LocalCacheService.instance.selectedRole;
+    final activeRole = _activeRoleFromContext(context);
 
     return Padding(
       padding: padding,
@@ -39,79 +44,53 @@ class RoleSwitchSection extends ConsumerWidget {
             return const SizedBox.shrink();
           }
 
-          final children = <Widget>[];
+          final title = sectionTitle ?? DiscProfile.roleSpaceTitle;
 
-          if (sectionTitle != null && sectionTitle!.isNotEmpty) {
-            children.add(
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text(
-                  sectionTitle!,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showHeader) ...[
+                Text(
+                  title,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-            );
-          }
-
-          if (hasClient && hasPresta) {
-            children.add(
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(
-                  AuthStrings.profileDualRoleHint,
+                const SizedBox(height: 6),
+              ],
+              if (hasClient && hasPresta) ...[
+                Text(
+                  DiscProfile.roleSpaceDualHint,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.35,
                   ),
                 ),
-              ),
-            );
-            children.add(
-              _RoleSwitchTile(
-                icon: Icons.person_outline,
-                title: AuthStrings.profileSwitchToClient,
-                isCurrent: cachedRole == 'client',
-                onTap: cachedRole == 'client'
-                    ? null
-                    : () => ClientNavigation.switchToClientSpace(context, ref),
-              ),
-            );
-            children.add(
-              _RoleSwitchTile(
-                icon: Icons.storefront_outlined,
-                title: AuthStrings.profileSwitchToPresta,
-                isCurrent: cachedRole == 'prestataire',
-                onTap: cachedRole == 'prestataire'
-                    ? null
-                    : () =>
-                        PrestataireNavigation.switchToPrestataireSpace(
+                const SizedBox(height: 12),
+                _RoleSpaceCards(
+                  stackVertically:
+                      DiscoveryResponsive.of(context).stackRoleSpaceCards,
+                  activeRole: activeRole,
+                  onClientTap: activeRole == 'client'
+                      ? null
+                      : () => ClientNavigation.switchToClientSpace(
                           context,
                           ref,
                         ),
-              ),
-            );
-          } else if (hasClient && !hasPresta) {
-            children.add(
-              _RoleSwitchTile(
-                icon: Icons.storefront_outlined,
-                title: AuthStrings.profileBecomePresta,
-                subtitle: 'Ajoute ton activité et passe en espace pro',
-                showChevron: true,
-                onTap: () => context.goBecomePrestataire(),
-              ),
-            );
-          }
-
-          if (children.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
+                  onPrestaTap: activeRole == 'prestataire'
+                      ? null
+                      : () => PrestataireNavigation.switchToPrestataireSpace(
+                          context,
+                          ref,
+                        ),
+                ),
+              ] else if (hasClient && !hasPresta) ...[
+                BecomePrestataireCtaCard(
+                  onTap: () => context.pushBecomePrestataire(),
+                ),
+              ],
+            ],
           );
         },
         loading: () => const Padding(
@@ -119,7 +98,7 @@ class RoleSwitchSection extends ConsumerWidget {
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (e, _) => Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: Text(
             e.toString(),
             style: TextStyle(color: theme.colorScheme.error),
@@ -128,33 +107,63 @@ class RoleSwitchSection extends ConsumerWidget {
       ),
     );
   }
+
+  /// Espace affiché (route), pas seulement le cache — évite un switch inversé.
+  static String _activeRoleFromContext(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    return switch (appAreaFromPath(path)) {
+      AppArea.prestataire => 'prestataire',
+      AppArea.client => 'client',
+    };
+  }
 }
 
-class _RoleSwitchTile extends StatelessWidget {
-  const _RoleSwitchTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.isCurrent = false,
-    this.showChevron = false,
-    this.onTap,
+class _RoleSpaceCards extends StatelessWidget {
+  const _RoleSpaceCards({
+    required this.stackVertically,
+    required this.activeRole,
+    required this.onClientTap,
+    required this.onPrestaTap,
   });
 
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final bool isCurrent;
-  final bool showChevron;
-  final VoidCallback? onTap;
+  final bool stackVertically;
+  final String activeRole;
+  final VoidCallback? onClientTap;
+  final VoidCallback? onPrestaTap;
 
   @override
   Widget build(BuildContext context) {
-    return DiscoveryMenuTile(
-      icon: icon,
-      title: title,
-      subtitle: isCurrent ? 'Actuel' : subtitle,
-      onTap: onTap,
-      showChevron: showChevron || (!isCurrent && onTap != null),
+    final clientCard = RoleSpaceCard(
+      icon: Icons.person_rounded,
+      title: DiscProfile.roleClientTitle,
+      subtitle: DiscProfile.roleClientSub,
+      isActive: activeRole == 'client',
+      onTap: onClientTap,
+    );
+    final prestaCard = RoleSpaceCard(
+      icon: Icons.storefront_rounded,
+      title: DiscProfile.rolePrestaTitle,
+      subtitle: DiscProfile.rolePrestaSub,
+      isActive: activeRole == 'prestataire',
+      onTap: onPrestaTap,
+    );
+
+    if (stackVertically) {
+      return Column(
+        children: [
+          clientCard,
+          const SizedBox(height: 10),
+          prestaCard,
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: clientCard),
+        const SizedBox(width: 10),
+        Expanded(child: prestaCard),
+      ],
     );
   }
 }

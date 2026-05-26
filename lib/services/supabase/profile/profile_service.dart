@@ -68,6 +68,31 @@ class ProfileService {
         },
       );
 
+  Future<void> upsertClientDetails({
+    required String userId,
+    required String prenom,
+    required String nom,
+    String? telephone,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'profile.upsertClientDetails',
+        action: () async {
+          final p = prenom.trim();
+          final n = nom.trim();
+          await _client.from('user_profiles').upsert(
+            {
+              'user_id': userId,
+              if (p.isNotEmpty) 'prenom': p,
+              if (n.isNotEmpty) 'nom': n,
+              if (telephone != null && telephone.trim().isNotEmpty)
+                'telephone': telephone.trim(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            },
+            onConflict: 'user_id',
+          );
+        },
+      );
+
   Future<void> upsertIdentity({
     required String userId,
     String? prenom,

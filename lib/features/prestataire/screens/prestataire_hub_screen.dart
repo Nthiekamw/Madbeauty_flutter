@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../router/navigation_extensions.dart';
@@ -15,12 +18,22 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../models/prestataire_service_field_set.dart';
 import '../providers/prestataire_profile_form_provider.dart';
+import '../widgets/prestataire_form_scroll_view.dart';
 import '../widgets/prestataire_profile_basics_step.dart';
 import '../widgets/prestataire_profile_client_experience_step.dart';
+import '../logic/prestataire_profile_completeness.dart';
+import '../models/weekly_jour_horaire.dart';
+import '../providers/disponibilite_provider.dart';
+import '../widgets/prestataire_onboarding_finish_dialog.dart';
 import '../widgets/prestataire_profile_gallery_step.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_services_step.dart';
+import '../widgets/prestataire_weekly_horaires_editor.dart';
+import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
+import '../providers/current_prestataire_provider.dart';
+import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
+import '../../../shared/widgets/keyboard_dismiss_area.dart';
 
 /// Formulaire de profil professionnel prestataire.
 class PrestataireHubScreen extends ConsumerStatefulWidget {
@@ -35,6 +48,7 @@ class PrestataireHubScreen extends ConsumerStatefulWidget {
 
 class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   static const _galleryMaxPhotos = 10;
+  static const wizardStepCount = 6;
 
   final _nomController = TextEditingController();
   final _nomAfficheController = TextEditingController();
@@ -75,6 +89,12 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   List<PhotoRealisation> _galleryPhotos = [];
   final _pendingGallery = <StorageUploadFile>[];
   PrestataireProfileFormData? _loadedData;
+  final _hubDraftDebouncer = HubOnboardingDraftDebouncer();
+  var _hubDraftApplied = false;
+  List<WeeklyJourHoraire>? _horaireWeek;
+  var _horairesHydrated = false;
+  var _horairesFromDraft = false;
+  String? _horairesError;
 
   @override
   void initState() {
@@ -83,10 +103,158 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     if (section != null) {
       _currentStep = section.hubStepIndex;
     }
+    if (PrestataireHubOnboardingDraft.isActive) {
+      unawaited(PrestataireHubOnboardingDraft.markStep2Started());
+      _attachOnboardingDraftListeners();
+    }
+  }
+
+  void _onOnboardingFieldChanged() => _schedulePersistHubDraft();
+
+  void _attachOnboardingDraftListeners() {
+    for (final c in [
+      _nomController,
+      _nomAfficheController,
+      _descriptionController,
+      _experienceProController,
+      _anneesExperienceController,
+      _bioController,
+      _villeController,
+      _codePostalController,
+      _adresseController,
+      _suggestionNomController,
+      _suggestionDescController,
+    ]) {
+      c.addListener(_onOnboardingFieldChanged);
+    }
+  }
+
+  void _detachOnboardingDraftListeners() {
+    for (final c in [
+      _nomController,
+      _nomAfficheController,
+      _descriptionController,
+      _experienceProController,
+      _anneesExperienceController,
+      _bioController,
+      _villeController,
+      _codePostalController,
+      _adresseController,
+      _suggestionNomController,
+      _suggestionDescController,
+    ]) {
+      c.removeListener(_onOnboardingFieldChanged);
+    }
+  }
+
+  void _schedulePersistHubDraft() {
+    if (!PrestataireHubOnboardingDraft.isActive) return;
+    _hubDraftDebouncer.schedule(_persistOnboardingHubDraft);
+  }
+
+  Future<void> _persistOnboardingHubDraft() async {
+    if (!PrestataireHubOnboardingDraft.isActive) return;
+    try {
+      await _persistOnboardingHubDraftUnchecked();
+    } catch (_) {
+      // Brouillon local : ne pas bloquer la navigation.
+    }
+  }
+
+  Future<void> _persistOnboardingHubDraftUnchecked() async {
+    if (!PrestataireHubOnboardingDraft.isActive) return;
+    final step = widget.focusedSection?.hubStepIndex ?? _currentStep;
+    await PrestataireHubOnboardingDraft.persist(
+      currentStep: step,
+      nomSalon: _nomController.text,
+      nomAffiche: _nomAfficheController.text,
+      bio: _bioController.text,
+      description: _descriptionController.text,
+      experienceProfessionnelle: _experienceProController.text,
+      anneesExperience: _anneesExperienceController.text,
+      ville: _villeController.text,
+      codePostal: _codePostalController.text,
+      adresse: _adresseController.text,
+      lieuTravail: _lieuTravail,
+      avatarUrl: _avatarUrl,
+      suggestionCategorieNom: _suggestionNomController.text,
+      suggestionCategorieDescription: _suggestionDescController.text,
+      confortClient: _selectedComfortIds,
+      conditionsService: _selectedConditionIds,
+      services: _services,
+      horaireWeek: _horaireWeek,
+    );
+  }
+
+  void _maybeApplyOnboardingHubDraft() {
+    if (_hubDraftApplied || !PrestataireHubOnboardingDraft.isActive) return;
+    final hub = PrestataireHubOnboardingDraft.readHub();
+    if (hub == null) return;
+
+    PrestataireHubOnboardingDraft.applyHubDraft(
+      hub: hub,
+      setCurrentStep: (step) {
+        if (widget.focusedSection == null) {
+          _currentStep = step.clamp(0, wizardStepCount - 1);
+        }
+      },
+      nomController: _nomController,
+      nomAfficheController: _nomAfficheController,
+      bioController: _bioController,
+      descriptionController: _descriptionController,
+      experienceProController: _experienceProController,
+      anneesExperienceController: _anneesExperienceController,
+      villeController: _villeController,
+      codePostalController: _codePostalController,
+      adresseController: _adresseController,
+      setLieuTravail: (value) => _lieuTravail = value,
+      setAvatarUrl: (url) => _avatarUrl = url,
+      suggestionNomController: _suggestionNomController,
+      suggestionDescController: _suggestionDescController,
+      setComfortIds: (ids) {
+        _selectedComfortIds
+          ..clear()
+          ..addAll(ids);
+      },
+      setConditionIds: (ids) {
+        _selectedConditionIds
+          ..clear()
+          ..addAll(ids);
+      },
+      replaceServices: (list) {
+        _disposeServices();
+        _services.addAll(list);
+      },
+      setHoraireWeek: (week) {
+        _horaireWeek = week;
+        _horairesHydrated = true;
+        _horairesFromDraft = true;
+      },
+    );
+    _hubDraftApplied = true;
+  }
+
+  void _prepareOnboardingDraftRestore() {
+    if (!PrestataireHubOnboardingDraft.isActive) return;
+    PrestataireHubOnboardingDraft.seedBasicsFromBecomeDraft(
+      nomController: _nomController,
+      villeController: _villeController,
+      bioController: _bioController,
+      nomAfficheController: _nomAfficheController,
+    );
+    _maybeApplyOnboardingHubDraft();
+    if (!_hubDraftApplied) {
+      unawaited(_persistOnboardingHubDraft());
+    }
   }
 
   @override
   void dispose() {
+    if (PrestataireHubOnboardingDraft.isActive) {
+      _detachOnboardingDraftListeners();
+      unawaited(_persistOnboardingHubDraft());
+    }
+    _hubDraftDebouncer.dispose();
     _nomController.dispose();
     _nomAfficheController.dispose();
     _descriptionController.dispose();
@@ -140,6 +308,9 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       _services.add(PrestataireServiceFieldSet.fromData(service));
     }
     _hydrated = true;
+    if (!force) {
+      _prepareOnboardingDraftRestore();
+    }
   }
 
   void _addService() {
@@ -147,6 +318,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       _services.add(PrestataireServiceFieldSet());
       _servicesError = null;
     });
+    _schedulePersistHubDraft();
   }
 
   Future<void> _pickAvatar() async {
@@ -173,6 +345,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       _avatarMimeType = uploadFile.mimeType;
       _avatarError = null;
     });
+    _schedulePersistHubDraft();
   }
 
   void _removeService(int index) {
@@ -181,6 +354,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       removed.dispose();
       _servicesError = null;
     });
+    _schedulePersistHubDraft();
   }
 
   Future<void> _pickGallery() async {
@@ -275,25 +449,94 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         PrestataireProfileEditSection.vitrine => _validateVitrine(),
         PrestataireProfileEditSection.location => _validateLocation(),
         PrestataireProfileEditSection.services => _validateServices(),
-        PrestataireProfileEditSection.gallery => _validateGallery(),
+        PrestataireProfileEditSection.gallery => true,
         PrestataireProfileEditSection.clientExperience => true,
+        PrestataireProfileEditSection.horaires => true,
       };
     }
     return switch (_currentStep) {
       0 => _validateVitrine(),
       1 => _validateLocation(),
       2 => _validateServices(),
-      3 => _validateGallery(),
       _ => true,
     };
   }
 
-  bool _validateGallery() {
-    final ok = _galleryPhotos.isNotEmpty || _pendingGallery.isNotEmpty;
+  void _ensureHoraireWeek(List<HorairePlage> plages) {
+    if (_horairesHydrated) return;
+    _horaireWeek = WeeklyJourHoraire.fromPlages(plages);
+    _horairesHydrated = true;
+  }
+
+  Future<void> _pickHoraireTime(int index, bool isStart) async {
+    final jours = _horaireWeek;
+    if (jours == null) return;
+    final jour = jours[index];
+    final initial = isStart ? jour.debut : jour.fin;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (picked == null || !mounted) return;
     setState(() {
-      _galleryError = ok ? null : DiscPrestaCompletion.reqGallery;
+      if (isStart) {
+        jour.debut = picked;
+      } else {
+        jour.fin = picked;
+      }
+      _horairesError = null;
     });
-    return ok;
+    _schedulePersistHubDraft();
+  }
+
+  Future<bool> _saveHorairesIfNeeded() async {
+    final jours = _horaireWeek;
+    if (jours == null || !jours.hasAnyOpenDay) return true;
+    if (!jours.validatePlages()) {
+      setState(() => _horairesError = DiscPrestaHoraires.invalidPlage);
+      return false;
+    }
+    final service = ref.read(disponibiliteServiceProvider);
+    final presta = await ref.read(currentPrestataireProvider.future);
+    if (service == null || presta == null) {
+      setState(() => _horairesError = DiscPrestaHoraires.saveErr);
+      return false;
+    }
+    await service.setHoraires(presta.id, jours.toPlages());
+    invalidateDisponibiliteProviders(ref);
+    return true;
+  }
+
+  Future<void> _maybeShowFinishSummary(PrestataireProfileFormData data) async {
+    if (widget.focusedSection != null) return;
+
+    final horaires = await ref.read(prestataireHorairesProvider.future);
+    final hasHoraires = horaires.isNotEmpty;
+    final requiredMissing =
+        data.missingChecklistItems.map((item) => item.label).toList();
+    final optionalMissing = data
+        .missingEnhancements(hasHoraires: hasHoraires)
+        .map((item) => item.label)
+        .toList();
+
+    if (data.isProfileFullyEnriched(hasHoraires: hasHoraires) &&
+        requiredMissing.isEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+    await showPrestataireOnboardingFinishDialog(
+      context: context,
+      professionallyComplete: data.isProfessionallyComplete,
+      requiredMissing: requiredMissing,
+      optionalMissing: optionalMissing,
+      onCompleteProfile: () {
+        if (context.canPop()) {
+          context.pop();
+        }
+        context.goPrestataireProfile();
+      },
+    );
   }
 
   bool _validateServices() {
@@ -378,6 +621,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _selectedComfortIds.add(id);
       }
     });
+    _schedulePersistHubDraft();
   }
 
   void _toggleCondition(String id) {
@@ -388,6 +632,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _selectedConditionIds.add(id);
       }
     });
+    _schedulePersistHubDraft();
   }
 
   void _addCustomComfort(String encodedId) {
@@ -396,6 +641,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _selectedComfortIds.add(encodedId);
       }
     });
+    _schedulePersistHubDraft();
   }
 
   void _addCustomCondition(String encodedId) {
@@ -404,6 +650,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _selectedConditionIds.add(encodedId);
       }
     });
+    _schedulePersistHubDraft();
   }
 
   void _continue() {
@@ -411,24 +658,81 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       _save();
       return;
     }
-    switch (_currentStep) {
-      case 0:
-        if (!_validateVitrine()) return;
-        setState(() => _currentStep = 1);
-      case 1:
-        if (!_validateLocation()) return;
-        setState(() => _currentStep = 2);
-      case 2:
-        if (!_validateServices()) return;
-        setState(() => _currentStep = 3);
-      case 3:
-        _save();
+    final step = _currentStep;
+    if (step == 0) {
+      if (!_validateVitrine()) return;
+      setState(() => _currentStep = 1);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 1) {
+      if (!_validateLocation()) return;
+      setState(() => _currentStep = 2);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 2) {
+      if (!_validateServices()) return;
+      setState(() => _currentStep = 3);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 3) {
+      setState(() => _currentStep = 4);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 4) {
+      setState(() => _currentStep = 5);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 5) {
+      _save();
     }
   }
 
   void _cancel() {
     if (_currentStep == 0) return;
     setState(() => _currentStep -= 1);
+    unawaited(_persistOnboardingHubDraft());
+  }
+
+  Future<void> _completeLater() async {
+    FocusScope.of(context).unfocus();
+    await _persistOnboardingHubDraft();
+
+    final canSaveCore = _validateVitrine() &&
+        _validateLocation() &&
+        _validateServices();
+    final service = ref.read(prestataireProfileFormServiceProvider);
+
+    if (canSaveCore && service != null) {
+      setState(() => _saving = true);
+      try {
+        await service.save(_buildSavePayload());
+        if (_horaireWeek != null && _horaireWeek!.hasAnyOpenDay) {
+          await _saveHorairesIfNeeded();
+        }
+      } on AppFailure catch (e) {
+        if (mounted) {
+          _showSnack(e.message, kind: AppSnackKind.error);
+        }
+      } catch (_) {
+        if (mounted) {
+          _showSnack(DiscPrestaForm.saveErr, kind: AppSnackKind.error);
+        }
+      } finally {
+        if (mounted) setState(() => _saving = false);
+      }
+    }
+
+    if (!mounted) return;
+    _showSnack(
+      DiscPrestaForm.completeLaterSaved,
+      kind: AppSnackKind.info,
+    );
+    context.goPrestataireDashboard();
   }
 
   Future<void> _save() async {
@@ -438,7 +742,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       final vitrineOk = _validateVitrine();
       final locationOk = _validateLocation();
       final servicesOk = _validateServices();
-      final galleryOk = _validateGallery();
       if (!vitrineOk) {
         setState(() => _currentStep = 0);
         return;
@@ -451,16 +754,20 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         setState(() => _currentStep = 2);
         return;
       }
-      if (!galleryOk) {
-        setState(() => _currentStep = 3);
-        return;
-      }
     }
 
     final service = ref.read(prestataireProfileFormServiceProvider);
     if (service == null) {
       _showSnack(DiscPrestaForm.missingSupabase, kind: AppSnackKind.warning);
       return;
+    }
+
+    if (widget.focusedSection == null) {
+      final horairesOk = await _saveHorairesIfNeeded();
+      if (!horairesOk) {
+        setState(() => _currentStep = 5);
+        return;
+      }
     }
 
     setState(() {
@@ -498,6 +805,11 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _hydrate(updated, force: true);
       });
       _showSnack(DiscPrestaForm.savedToast, kind: AppSnackKind.success);
+      if (PrestataireHubOnboardingDraft.isActive &&
+          updated.isProfessionallyComplete) {
+        await PrestataireHubOnboardingDraft.clearAfterProfileComplete();
+      }
+      await _maybeShowFinishSummary(updated);
       if (mounted) {
         if (context.canPop()) {
           context.pop();
@@ -530,20 +842,55 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(prestataireProfileFormProvider);
+    final horairesAsync = ref.watch(prestataireHorairesProvider);
+    horairesAsync.whenData((plages) {
+      if (!_horairesHydrated && !_horairesFromDraft && mounted) {
+        setState(() => _ensureHoraireWeek(plages));
+      }
+    });
 
     final focused = widget.focusedSection;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          focused?.screenTitle ?? DiscPrestaProfile.editTitle,
+    final onboarding = PrestataireHubOnboardingDraft.isActive;
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && onboarding) {
+          unawaited(_persistOnboardingHubDraft());
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(focused?.screenTitle ?? DiscPrestaProfile.editTitle),
+              if (onboarding && focused == null)
+                Text(
+                  DiscPrestaForm.hubWizardProgressLabel(
+                    _currentStep + 1,
+                    wizardStepCount,
+                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            if (onboarding && focused == null)
+              TextButton(
+                onPressed: _saving ? null : _completeLater,
+                child: const Text(DiscPrestaForm.completeLater),
+              ),
+          ],
         ),
-      ),
-      body: async.when(
-        data: (data) {
-          _hydrate(data);
-          return _PrestataireProfileForm(
-            data: data,
+        body: KeyboardDismissArea(
+          child: async.when(
+            data: (data) {
+              _hydrate(data);
+              return _PrestataireProfileForm(
+                data: data,
             focusedSection: focused,
             currentStep: _currentStep,
             saving: _saving,
@@ -603,6 +950,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 _lieuTravail = value;
                 _lieuTravailError = null;
               });
+              _schedulePersistHubDraft();
             },
             onPickAvatar: _pickAvatar,
             onPickGallery: _pickGallery,
@@ -614,12 +962,29 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             onAddService: _addService,
             onRemoveService: _removeService,
             onServicesChanged: () => setState(() => _servicesError = null),
-          );
-        },
-        error: (_, __) => PrestataireProfileLoadError(
-          onRetry: () => ref.invalidate(prestataireProfileFormProvider),
+            horaireWeek: _horaireWeek,
+            horairesError: _horairesError,
+            onToggleHoraireDay: (index, enabled) {
+              final jours = _horaireWeek;
+              if (jours == null) return;
+              setState(() {
+                jours[index].enabled = enabled;
+                _horairesError = null;
+              });
+              _schedulePersistHubDraft();
+            },
+            onPickHoraireStart: (index) => _pickHoraireTime(index, true),
+            onPickHoraireEnd: (index) => _pickHoraireTime(index, false),
+            onboardingWizard: onboarding && focused == null,
+            onCompleteLater: _completeLater,
+              );
+            },
+            error: (_, __) => PrestataireProfileLoadError(
+              onRetry: () => ref.invalidate(prestataireProfileFormProvider),
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+          ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -678,7 +1043,17 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.onAddService,
     required this.onRemoveService,
     required this.onServicesChanged,
+    required this.horaireWeek,
+    required this.horairesError,
+    required this.onToggleHoraireDay,
+    required this.onPickHoraireStart,
+    required this.onPickHoraireEnd,
+    required this.onboardingWizard,
+    required this.onCompleteLater,
   });
+
+  static const wizardStepCount = _PrestataireHubScreenState.wizardStepCount;
+  static const optionalFromStep = 3;
 
   final PrestataireProfileFormData data;
   final PrestataireProfileEditSection? focusedSection;
@@ -731,6 +1106,13 @@ class _PrestataireProfileForm extends StatelessWidget {
   final VoidCallback onAddService;
   final ValueChanged<int> onRemoveService;
   final VoidCallback onServicesChanged;
+  final List<WeeklyJourHoraire>? horaireWeek;
+  final String? horairesError;
+  final void Function(int index, bool enabled) onToggleHoraireDay;
+  final Future<void> Function(int index) onPickHoraireStart;
+  final Future<void> Function(int index) onPickHoraireEnd;
+  final bool onboardingWizard;
+  final VoidCallback onCompleteLater;
 
   Widget _stepContent(PrestataireProfileEditSection section) {
     return switch (section) {
@@ -820,6 +1202,15 @@ class _PrestataireProfileForm extends StatelessWidget {
           onAddCustomCondition: onAddCustomCondition,
           onChanged: onBasicsChanged,
         ),
+      PrestataireProfileEditSection.horaires => horaireWeek == null
+          ? const Center(child: CircularProgressIndicator())
+          : PrestataireWeeklyHorairesEditor(
+              jours: horaireWeek!,
+              errorText: horairesError,
+              onToggleDay: onToggleHoraireDay,
+              onPickStart: onPickHoraireStart,
+              onPickEnd: onPickHoraireEnd,
+            ),
     };
   }
 
@@ -829,8 +1220,7 @@ class _PrestataireProfileForm extends StatelessWidget {
     final focused = focusedSection;
 
     if (focused != null) {
-      return ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      return PrestataireFormScrollView(
         children: [
           _stepContent(focused),
           const SizedBox(height: 20),
@@ -844,8 +1234,7 @@ class _PrestataireProfileForm extends StatelessWidget {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+    return PrestataireFormScrollView(
       children: [
         Text(
           DiscPrestaForm.intro,
@@ -861,30 +1250,71 @@ class _PrestataireProfileForm extends StatelessWidget {
           onStepContinue: saving ? null : onContinue,
           onStepCancel: saving ? null : onCancel,
           controlsBuilder: (context, details) {
-            final isLast = currentStep == 3;
+            final isLast = currentStep == wizardStepCount - 1;
+            final isOptional =
+                currentStep >= optionalFromStep && !isLast;
+            final layout = DiscoveryResponsive.of(context);
+            final continueBtn = FilledButton(
+              onPressed: details.onStepContinue,
+              child: Text(
+                saving
+                    ? DiscPrestaForm.saving
+                    : isLast
+                    ? DiscPrestaForm.save
+                    : DiscPrestaForm.onward,
+              ),
+            );
+            final skipBtn = isOptional
+                ? TextButton(
+                    onPressed: details.onStepContinue,
+                    child: const Text(DiscPrestaForm.skipStep),
+                  )
+                : null;
+            final laterBtn = onboardingWizard && isOptional
+                ? TextButton(
+                    onPressed: saving ? null : onCompleteLater,
+                    child: const Text(DiscPrestaForm.completeLater),
+                  )
+                : null;
+            final backBtn = currentStep > 0
+                ? TextButton(
+                    onPressed: details.onStepCancel,
+                    child: const Text(DiscPrestaForm.back),
+                  )
+                : null;
+
             return Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                children: [
-                  FilledButton(
-                    onPressed: details.onStepContinue,
-                    child: Text(
-                      saving
-                          ? DiscPrestaForm.saving
-                          : isLast
-                          ? DiscPrestaForm.save
-                          : DiscPrestaForm.onward,
+              child: layout.stackStepperActions
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        continueBtn,
+                        if (skipBtn != null) ...[
+                          const SizedBox(height: 8),
+                          skipBtn,
+                        ],
+                        if (laterBtn != null) ...[
+                          const SizedBox(height: 8),
+                          laterBtn,
+                        ],
+                        if (backBtn != null) ...[
+                          const SizedBox(height: 8),
+                          backBtn,
+                        ],
+                      ],
+                    )
+                  : Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        continueBtn,
+                        if (skipBtn != null) skipBtn,
+                        if (laterBtn != null) laterBtn,
+                        if (backBtn != null) backBtn,
+                      ],
                     ),
-                  ),
-                  if (currentStep > 0) ...[
-                    const SizedBox(width: 12),
-                    TextButton(
-                      onPressed: details.onStepCancel,
-                      child: const Text(DiscPrestaForm.back),
-                    ),
-                  ],
-                ],
-              ),
             );
           },
           steps: [
@@ -917,8 +1347,32 @@ class _PrestataireProfileForm extends StatelessWidget {
             Step(
               title: const Text(DiscPrestaForm.stepGallery),
               isActive: currentStep == 3,
-              state: currentStep == 3 ? StepState.editing : StepState.indexed,
+              state: currentStep > 3
+                  ? StepState.complete
+                  : currentStep == 3
+                  ? StepState.editing
+                  : StepState.indexed,
               content: _stepContent(PrestataireProfileEditSection.gallery),
+            ),
+            Step(
+              title: const Text(DiscPrestaForm.stepComfort),
+              isActive: currentStep == 4,
+              state: currentStep > 4
+                  ? StepState.complete
+                  : currentStep == 4
+                  ? StepState.editing
+                  : StepState.indexed,
+              content: _stepContent(
+                PrestataireProfileEditSection.clientExperience,
+              ),
+            ),
+            Step(
+              title: const Text(DiscPrestaForm.stepHoraires),
+              isActive: currentStep == 5,
+              state: currentStep == 5
+                  ? StepState.editing
+                  : StepState.indexed,
+              content: _stepContent(PrestataireProfileEditSection.horaires),
             ),
           ],
         ),

@@ -11,10 +11,12 @@ class DiscoveryScreenHeader extends StatelessWidget {
     this.icon,
     this.iconColor,
     this.action,
+    this.compact = false,
   });
 
   final String title;
   final String? subtitle;
+  final bool compact;
   final IconData? icon;
   final Color? iconColor;
   final Widget? action;
@@ -29,8 +31,15 @@ class DiscoveryScreenHeader extends StatelessWidget {
     final iconBoxSize = isCompact ? 40.0 : 48.0;
     final iconSize = isCompact ? 20.0 : 24.0;
 
+    final dense = compact || isCompact;
+
     return Padding(
-      padding: EdgeInsets.fromLTRB(isCompact ? 16 : 20, 16, isCompact ? 16 : 20, 0),
+      padding: EdgeInsets.fromLTRB(
+        dense ? 16 : 20,
+        dense ? 10 : 16,
+        dense ? 16 : 20,
+        0,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,7 +73,7 @@ class DiscoveryScreenHeader extends StatelessWidget {
                     fontSize: isCompact ? 20 : null,
                   ),
                 ),
-                if (subtitle != null) ...[
+                if (subtitle != null && !compact) ...[
                   const SizedBox(height: 4),
                   Text(
                     subtitle!,

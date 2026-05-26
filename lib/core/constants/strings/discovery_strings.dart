@@ -5,6 +5,7 @@ export 'discovery/disc_booking.dart';
 export 'discovery/disc_home.dart';
 export 'discovery/disc_list.dart';
 export 'discovery/disc_nav.dart';
+export 'discovery/disc_profile.dart';
 export 'discovery/disc_presta_agenda.dart';
 export 'discovery/disc_presta_clients.dart';
 export 'discovery/disc_presta_reservation.dart';

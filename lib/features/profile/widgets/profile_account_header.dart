@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app_avatar.dart';
 
-/// En-tête profil : carte hero, photo, nom, e-mail, rôle.
+/// En-tête profil : photo, nom, actions de modification.
 class ProfileAccountHeader extends StatelessWidget {
   const ProfileAccountHeader({
     super.key,
     required this.displayName,
     required this.email,
-    required this.rolesLabel,
     this.profile,
     this.avatarBytes,
     this.onEditPhoto,
@@ -22,10 +22,9 @@ class ProfileAccountHeader extends StatelessWidget {
     this.photoLoading = false,
   });
 
-  final UserProfile? profile;
   final String displayName;
   final String email;
-  final String rolesLabel;
+  final UserProfile? profile;
   final Uint8List? avatarBytes;
   final VoidCallback? onEditPhoto;
   final VoidCallback? onEditName;
@@ -37,9 +36,10 @@ class ProfileAccountHeader extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
     final tertiary = theme.colorScheme.tertiary;
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: DiscoveryStyles.heroBorderRadius,
@@ -68,7 +68,7 @@ class ProfileAccountHeader extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
           child: Column(
             children: [
               Stack(
@@ -81,13 +81,6 @@ class ProfileAccountHeader extends StatelessWidget {
                         color: primary.withValues(alpha: 0.3),
                         width: 3,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.2),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
                     ),
                     child: _AvatarPreview(
                       radius: 52,
@@ -119,8 +112,6 @@ class ProfileAccountHeader extends StatelessWidget {
                     Material(
                       color: primary,
                       shape: const CircleBorder(),
-                      elevation: 4,
-                      shadowColor: primary.withValues(alpha: 0.4),
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: onEditPhoto,
@@ -136,7 +127,7 @@ class ProfileAccountHeader extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
                 displayName,
                 textAlign: TextAlign.center,
@@ -146,38 +137,75 @@ class ProfileAccountHeader extends StatelessWidget {
                   letterSpacing: -0.4,
                 ),
               ),
-              if (onEditName != null) ...[
-                const SizedBox(height: 4),
-                TextButton.icon(
-                  onPressed: onEditName,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: primary.withValues(alpha: 0.25),
+              if (onEditName != null || onEditPhoto != null) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (onEditName != null)
+                      _EditChip(
+                        icon: Icons.edit_rounded,
+                        label: ShellStrings.profileEditName,
+                        onTap: onEditName!,
                       ),
-                    ),
-                    backgroundColor: primary.withValues(alpha: 0.08),
-                  ),
-                  icon: const Icon(Icons.edit_rounded, size: 15),
-                  label: const Text(ShellStrings.profileEditName),
+                    if (onEditPhoto != null)
+                      _EditChip(
+                        icon: Icons.photo_camera_outlined,
+                        label: ShellStrings.profileEditPhoto,
+                        onTap: onEditPhoto!,
+                      ),
+                  ],
                 ),
               ],
-              const SizedBox(height: 16),
-              _InfoChip(
-                icon: Icons.mail_outline_rounded,
-                label: ShellStrings.profileLabelEmail,
-                value: email.isNotEmpty ? email : '—',
-              ),
-              const SizedBox(height: 8),
-              _InfoChip(
-                icon: Icons.badge_outlined,
-                label: 'Rôle',
-                value: rolesLabel,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditChip extends StatelessWidget {
+  const _EditChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Material(
+      color: primary.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: primary.withValues(alpha: 0.22)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w600,
+                  color: primary,
+                ),
               ),
             ],
           ),
@@ -215,59 +243,7 @@ class _AvatarPreview extends StatelessWidget {
       radius: radius,
       imageUrl: imageUrl,
       displayName: displayName,
-      email: email,
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.4 : 0.65,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontFamily: AppFonts.body,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.35,
-                ),
-                children: [
-                  TextSpan(
-                    text: '$label ',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  TextSpan(text: value),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      email: email.isNotEmpty ? email : null,
     );
   }
 }

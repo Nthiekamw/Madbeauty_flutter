@@ -15,6 +15,7 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/keyboard_dismiss_area.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/prestataire_service_field_set.dart';
 import '../providers/prestataire_profile_form_provider.dart';
@@ -262,14 +263,6 @@ class _PrestataireProfileCompletionScreenState
     return valid;
   }
 
-  bool _validateGallery() {
-    final ok = _galleryPhotos.isNotEmpty || _pendingGallery.isNotEmpty;
-    setState(() {
-      _galleryError = ok ? null : DiscPrestaCompletion.reqGallery;
-    });
-    return ok;
-  }
-
   double? _parsePrice(String raw) {
     final t = raw.trim();
     if (t.isEmpty) return 0;
@@ -283,10 +276,7 @@ class _PrestataireProfileCompletionScreenState
   }
 
   PrestataireProfileSavePayload _buildSavePayload() {
-    final lieu = _lieuTravail;
-    if (lieu == null) {
-      throw StateError('lieuTravail requis');
-    }
+    final lieu = _lieuTravail ?? _loadedData?.lieuTravail ?? LieuTravail.both;
     return PrestataireProfileSavePayload(
       nomSalon: _nomController.text,
       nomAffiche: _nomAfficheController.text,
@@ -450,29 +440,37 @@ class _PrestataireProfileCompletionScreenState
 
   Future<void> _onPrimaryAction(PrestataireProfileFormData data) async {
     if (_busy) return;
-    switch (_phase) {
-      case 0:
-        setState(() => _phase = 1);
-      case 1:
-        if (!_validateBasics()) return;
-        if (!await _saveProfile()) return;
-        if (!mounted) return;
-        setState(() => _phase = 2);
-      case 2:
-        if (!_validateServices()) return;
-        if (!await _saveProfile()) return;
-        if (!mounted) return;
-        setState(() => _phase = 3);
-      case 3:
-        if (!_validateGallery()) return;
-        if (_pendingGallery.isNotEmpty) {
-          if (!await _uploadPendingGallery()) return;
-        }
-        if (!await _saveProfile()) return;
-        if (!mounted) return;
-        setState(() => _phase = 4);
-      case 4:
-        context.goPrestataireDashboard();
+    final phase = _phase;
+    if (phase == 0) {
+      setState(() => _phase = 1);
+      return;
+    }
+    if (phase == 1) {
+      if (!_validateBasics()) return;
+      if (!await _saveProfile()) return;
+      if (!mounted) return;
+      setState(() => _phase = 2);
+      return;
+    }
+    if (phase == 2) {
+      if (!_validateServices()) return;
+      if (!await _saveProfile()) return;
+      if (!mounted) return;
+      setState(() => _phase = 3);
+      return;
+    }
+    if (phase == 3) {
+      setState(() => _galleryError = null);
+      if (_pendingGallery.isNotEmpty) {
+        if (!await _uploadPendingGallery()) return;
+      }
+      if (!await _saveProfile()) return;
+      if (!mounted) return;
+      setState(() => _phase = 4);
+      return;
+    }
+    if (phase == 4) {
+      context.goPrestataireDashboard();
     }
   }
 
@@ -535,14 +533,18 @@ class _PrestataireProfileCompletionScreenState
                   stepLabel: _stepLabel(_phase),
                 ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
-                  children: [
-                    DiscoverySurfaceCard(
-                      padding: const EdgeInsets.all(20),
-                      child: _buildStepBody(context, data),
-                    ),
-                  ],
+                child: KeyboardDismissArea(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    children: [
+                      DiscoverySurfaceCard(
+                        padding: const EdgeInsets.all(20),
+                        child: _buildStepBody(context, data),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Padding(

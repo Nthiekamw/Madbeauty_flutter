@@ -9,11 +9,13 @@ import '../../../router/navigation_extensions.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
+import '../providers/home_feed_provider.dart';
 import '../providers/home_profile_provider.dart';
 import '../widgets/client_home_header.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -54,10 +56,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         false;
   }
 
-  void _openListing({String? query}) {
+  void _submitHomeSearch() {
     FocusScope.of(context).unfocus();
-    final q = query ?? _searchController.text.trim();
-    context.goClientSearch(query: q.isEmpty ? null : q);
+    ref.read(homeFeedSelectionProvider.notifier).setSearch(
+      _searchController.text,
+    );
+  }
+
+  void _pickInspiration(String topic) {
+    FocusScope.of(context).unfocus();
+    ref.read(homeFeedSelectionProvider.notifier).setInspiration(topic);
+  }
+
+  void _openNotifications() {
+    AppSnackBar.info(context, DiscHome.notificationsComingSoon);
   }
 
   String? _avatarUrlFromUser(User? user) {
@@ -83,8 +95,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (currentUser != null) {
       body = _ConnectedClientHome(
         searchController: _searchController,
-        onSubmitSearch: () => _openListing(),
-        onExplorePick: (topic) => _openListing(query: topic),
+        onSubmitSearch: _submitHomeSearch,
+        onExplorePick: _pickInspiration,
+        onNotificationsTap: _openNotifications,
         profileSnapshotAsync: profileSnapshotAsync,
         currentUser: currentUser,
         avatarUrl: _avatarUrlFromUser(currentUser),
@@ -92,8 +105,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } else if (isGuestBrowsing) {
       body = _GuestBrowseHome(
         searchController: _searchController,
-        onSubmitSearch: () => _openListing(),
-        onExplorePick: (topic) => _openListing(query: topic),
+        onSubmitSearch: _submitHomeSearch,
+        onExplorePick: _pickInspiration,
+        onNotificationsTap: _openNotifications,
       );
     } else {
       body = _GuestFallback(
@@ -124,6 +138,7 @@ class _ConnectedClientHome extends StatelessWidget {
     required this.searchController,
     required this.onSubmitSearch,
     required this.onExplorePick,
+    required this.onNotificationsTap,
     required this.profileSnapshotAsync,
     required this.currentUser,
     required this.avatarUrl,
@@ -132,6 +147,7 @@ class _ConnectedClientHome extends StatelessWidget {
   final TextEditingController searchController;
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
+  final VoidCallback onNotificationsTap;
   final AsyncValue<HomeProfileSnapshot?> profileSnapshotAsync;
   final User currentUser;
   final String? avatarUrl;
@@ -165,6 +181,7 @@ class _ConnectedClientHome extends StatelessWidget {
         email: email,
         avatarUrl: avatarUrl,
         onAvatarTap: () => context.goClientProfile(),
+        onNotificationsTap: onNotificationsTap,
       ),
       footer: clientHomeProfileCacheFooter(theme, fromCache),
     );
@@ -177,11 +194,13 @@ class _GuestBrowseHome extends StatelessWidget {
     required this.searchController,
     required this.onSubmitSearch,
     required this.onExplorePick,
+    required this.onNotificationsTap,
   });
 
   final TextEditingController searchController;
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
+  final VoidCallback onNotificationsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +215,7 @@ class _GuestBrowseHome extends StatelessWidget {
         subtitle: AuthStrings.guestHomeSubtitle,
         displayName: '',
         email: '',
+        onNotificationsTap: onNotificationsTap,
         trailing: IconButton.filledTonal(
           tooltip: AuthStrings.guestHomeSignIn,
           onPressed: () => context.pushLogin(),

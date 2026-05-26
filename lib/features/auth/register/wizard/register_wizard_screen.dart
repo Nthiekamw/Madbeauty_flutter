@@ -12,24 +12,30 @@ import '../../../../core/models/user_role.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
+import '../../../profile/logic/become_prestataire_draft.dart';
+import '../../../profile/storage/become_prestataire_draft_store.dart';
 import '../../../../services/auth/post_signup_profile_service.dart';
 import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
 import '../../../../shared/widgets/app_snack_bar.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';
 import '../../widgets/auth_error_banner.dart';
+import '../../widgets/auth_success_dialog.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';
 import '../../widgets/auth_google_button.dart';
 import '../../widgets/auth_or_divider.dart';
 import '../../widgets/auth_role_card.dart';
-import '../../widgets/auth_step_header.dart';
+import '../../widgets/auth_step_section.dart';
+import '../widgets/register_field_row.dart';
+import '../widgets/register_optional_panel.dart';
+import '../widgets/register_wizard_bottom_bar.dart';
+import '../widgets/register_wizard_progress_bar.dart';
 import '../logic/register_validators.dart';
 import '../logic/register_wizard_draft.dart';
 import '../storage/register_wizard_draft_store.dart';
@@ -44,7 +50,10 @@ class RegisterWizardScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
-  late final PageController _pageController;
+  static const _totalSteps = 3;
+  static const _fieldGap = 10.0;
+  static const _sectionGap = 12.0;
+
   int _step = 0;
   Timer? _saveDebounce;
   bool _restoredDraft = false;
@@ -66,6 +75,12 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
   UserRole? _roleChoice;
   String? _error;
+  String? _prenomError;
+  String? _nomError;
+  String? _phoneError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmError;
   bool _loading = false;
   bool _signedUpViaOAuth = false;
   bool _googleLaunched = false;
@@ -79,7 +94,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       _applyDraft(draft);
       _restoredDraft = true;
     }
-    _pageController = PageController(initialPage: _step);
     _attachAutosave();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       exitGuestMode(ref);
@@ -152,7 +166,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   void dispose() {
     _saveDebounce?.cancel();
     unawaited(_persistDraft());
-    _pageController.dispose();
     _prenom.dispose();
     _nom.dispose();
     _phone.dispose();
@@ -240,78 +253,111 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     }
   }
 
-  void _advanceAfterOAuth(User user) {
+  /// Google ne remplace que l’étape Compte : préremplissage, pas de saut d’étape.
+  Future<void> _onOAuthConnected(User user) async {
     _hydrateFromOAuthUser(user);
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    await _persistDraft();
+    if (!mounted) return;
     setState(() {
-      _step = 1;
       _googleLaunched = false;
+      _error = null;
+      _clearFieldErrors();
+    });
+    AppSnackBar.success(context, AuthStrings.registerGoogleConnected);
+  }
+
+  Future<void> _showRegistrationSuccessDialog() => AuthSuccessDialog.show(
+        context,
+        title: AuthStrings.registerSuccessTitle,
+        body: AuthStrings.registerSuccessBody,
+        actionLabel: AuthStrings.registerSuccessCta,
+      );
+
+  void _clearFieldErrors() {
+    _prenomError = null;
+    _nomError = null;
+    _phoneError = null;
+    _emailError = null;
+    _passwordError = null;
+    _confirmError = null;
+  }
+
+  void _goToPreviousStep() {
+    if (_step == 0) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _step -= 1;
+      _error = null;
+      _clearFieldErrors();
     });
     unawaited(_persistDraft());
   }
 
+  bool _validateStep0() {
+    final pErr = _prenom.text.trim().isEmpty
+        ? AuthStrings.registerValidationPrenomEmpty
+        : null;
+    final nErr =
+        _nom.text.trim().isEmpty ? AuthStrings.registerValidationNomEmpty : null;
+    String? phErr;
+    if (!_signedUpViaOAuth) {
+      phErr = _phone.text.trim().isEmpty
+          ? AuthStrings.registerValidationPhoneEmpty
+          : null;
+    }
+    String? emailErr;
+    String? pwErr;
+    String? confirmErr;
+    if (!_signedUpViaOAuth) {
+      emailErr = RegisterValidators.email(_email.text.trim());
+      pwErr = RegisterValidators.password(_password.text);
+      confirmErr = _password.text != _confirm.text
+          ? AuthStrings.registerValidationPasswordMismatch
+          : null;
+    }
+
+    setState(() {
+      _prenomError = pErr;
+      _nomError = nErr;
+      _phoneError = phErr;
+      _emailError = emailErr;
+      _passwordError = pwErr;
+      _confirmError = confirmErr;
+      _error = null;
+    });
+
+    return pErr == null &&
+        nErr == null &&
+        phErr == null &&
+        emailErr == null &&
+        pwErr == null &&
+        confirmErr == null;
+  }
+
   void _next() {
     FocusScope.of(context).unfocus();
-    setState(() => _error = null);
 
     if (_step == 0) {
-      final pErr = _prenom.text.trim().isEmpty
-          ? AuthStrings.registerValidationPrenomEmpty
-          : null;
-      final nErr =
-          _nom.text.trim().isEmpty ? AuthStrings.registerValidationNomEmpty : null;
-      String? phErr;
-      if (!_signedUpViaOAuth) {
-        phErr = _phone.text.trim().isEmpty
-            ? AuthStrings.registerValidationPhoneEmpty
-            : null;
-      }
-      String? emailErr;
-      String? pwErr;
-      String? confirmErr;
-      if (!_signedUpViaOAuth) {
-        emailErr = RegisterValidators.email(_email.text.trim());
-        pwErr = RegisterValidators.password(_password.text);
-        confirmErr = _password.text != _confirm.text
-            ? AuthStrings.registerValidationPasswordMismatch
-            : null;
-      }
-
-      if (pErr != null ||
-          nErr != null ||
-          phErr != null ||
-          emailErr != null ||
-          pwErr != null ||
-          confirmErr != null) {
-        setState(
-          () => _error = emailErr ?? pErr ?? nErr ?? phErr ?? pwErr ?? confirmErr,
-        );
-        return;
-      }
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-      setState(() => _step = 1);
+      if (!_validateStep0()) return;
+      setState(() {
+        _step = 1;
+        _error = null;
+        _clearFieldErrors();
+      });
       unawaited(_persistDraft());
       return;
     }
 
     if (_step == 1) {
       if (_roleChoice == null) {
-        setState(() => _error = 'Choisis un profil.');
+        setState(() => _error = AuthStrings.registerValidationRoleEmpty);
         return;
       }
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-      setState(() => _step = 2);
+      setState(() {
+        _step = 2;
+        _error = null;
+      });
       unawaited(_persistDraft());
-      return;
     }
   }
 
@@ -333,8 +379,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     if (_isPresta) {
       if (_salon.text.trim().isEmpty || _ville.text.trim().isEmpty) {
-        setState(() =>
-            _error = 'Renseigne au moins le nom du salon et la ville.');
+        setState(() => _error = AuthStrings.registerValidationPrestaRequired);
         return;
       }
     }
@@ -402,6 +447,14 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       final uid = session.id;
       final roles = ref.read(roleServiceProvider);
       final post = PostSignupProfileService.fromEnv();
+      final shellRole = _roleChoice == UserRole.prestataire
+          ? 'prestataire'
+          : 'client';
+
+      // Avant sync serveur : évite que persistServerRoles ne force « client »
+      // (rôle créé par le trigger auth) pendant ensureRole(prestataire).
+      await LocalCacheService.instance.setSelectedRole(shellRole);
+      await LocalCacheService.instance.setSignupShellRole(shellRole);
 
       await post.updateUserIdentity(
         userId: uid,
@@ -442,15 +495,25 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         await AuthRoleCache.persistServerRoles(serverRoles);
       }
 
-      final shellRole = _roleChoice == UserRole.prestataire
-          ? 'prestataire'
-          : 'client';
       await LocalCacheService.instance.setSelectedRole(shellRole);
       await _clearDraft();
 
       if (!mounted) return;
       setState(() => _loading = false);
+
+      await _showRegistrationSuccessDialog();
+      if (!mounted) return;
+
       if (_roleChoice == UserRole.prestataire) {
+        await BecomePrestataireDraftStore.instance.save(
+          BecomePrestataireDraft(
+            salon: _salon.text.trim(),
+            ville: _ville.text.trim(),
+            bio: _bio.text.trim(),
+            step1Submitted: true,
+            step2Started: true,
+          ),
+        );
         await PrestataireNavigation.afterPrestaRegistration(context, ref);
       } else {
         context.goHome();
@@ -483,7 +546,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       if (user == null) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_googleLaunched || _step != 0) return;
-        _advanceAfterOAuth(user);
+        unawaited(_onOAuthConnected(user));
       });
     });
 
@@ -503,11 +566,28 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       _ => AuthStrings.registerStepExtrasClientSubtitle,
     };
 
+    final stepLabel = switch (_step) {
+      0 => AuthStrings.registerStepLabelIdentity,
+      1 => AuthStrings.registerStepLabelRole,
+      _ => AuthStrings.registerStepLabelExtras,
+    };
+
     return AuthFormScaffold(
       title: stepTitle,
-      subtitle: stepSubtitle,
-      showLogo: _step == 0,
-      scrollable: false,
+      subtitle: switch (_step) {
+        0 => stepSubtitle,
+        2 when !_isPresta => stepSubtitle,
+        _ => null,
+      },
+      showLogo: false,
+      compact: true,
+      scrollable: true,
+      headerAccessory: RegisterWizardProgressBar(
+        currentStep: _step,
+        totalSteps: _totalSteps,
+        stepLabel: stepLabel,
+        compact: true,
+      ),
       onBack: _loading
           ? () {}
           : () {
@@ -515,19 +595,19 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                 unawaited(_clearDraft());
                 context.pop();
               } else {
-                _pageController.previousPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-                setState(() => _step -= 1);
-                unawaited(_persistDraft());
+                _goToPreviousStep();
               }
             },
       isBackEnabled: !_loading,
-      bottomBar: AppButton(
+      bottomBar: RegisterWizardBottomBar(
+        showBack: _step > 0,
         isLoading: _loading,
         enabled: formEnabled,
-        onPressed: _loading
+        primaryLabel: _step < 2
+            ? AuthStrings.registerWizardNext
+            : AuthStrings.registerWizardSubmit,
+        onBack: _goToPreviousStep,
+        onPrimary: _loading
             ? null
             : () {
                 if (_step < 2) {
@@ -536,337 +616,472 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                   _submit();
                 }
               },
-        child: Text(
-          _step < 2
-              ? AuthStrings.registerWizardNext
-              : AuthStrings.registerWizardSubmit,
-          style: const TextStyle(
-            fontFamily: AppFonts.body,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Flexible(
-            fit: FlexFit.loose,
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_restoredDraft) ...[
-                    _DraftRestoredBanner(
-                      onRestart: () async {
-                        await _clearDraft();
-                        if (!mounted) return;
-                        setState(() {
-                          _restoredDraft = false;
-                          _step = 0;
-                          _roleChoice = null;
-                          _signedUpViaOAuth = false;
-                          _phoneRequiredOnExtras = false;
-                          _prenom.clear();
-                          _nom.clear();
-                          _phone.clear();
-                          _email.clear();
-                          _password.clear();
-                          _confirm.clear();
-                          _adresse.clear();
-                          _salon.clear();
-                          _ville.clear();
-                          _bio.clear();
-                        });
-                        _pageController.jumpToPage(0);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  AuthStepHeader(
-                    currentStep: _step,
-                    labels: const [
-                      AuthStrings.registerStepLabelIdentity,
-                      AuthStrings.registerStepLabelRole,
-                      AuthStrings.registerStepLabelExtras,
-                    ],
+          if (_restoredDraft) ...[
+            _DraftRestoredBanner(
+              onRestart: () async {
+                await _clearDraft();
+                if (!mounted) return;
+                setState(() {
+                  _restoredDraft = false;
+                  _step = 0;
+                  _roleChoice = null;
+                  _signedUpViaOAuth = false;
+                  _phoneRequiredOnExtras = false;
+                  _error = null;
+                  _clearFieldErrors();
+                  _prenom.clear();
+                  _nom.clear();
+                  _phone.clear();
+                  _email.clear();
+                  _password.clear();
+                  _confirm.clear();
+                  _adresse.clear();
+                  _salon.clear();
+                  _ville.clear();
+                  _bio.clear();
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final offset = Tween<Offset>(
+                begin: const Offset(0.03, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ));
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: offset, child: child),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey<int>(_step),
+              child: switch (_step) {
+                0 => _buildIdentityStep(
+                    theme: theme,
+                    formEnabled: formEnabled,
+                    onSurfaceVariant: onSurfaceVariant,
                   ),
-                ],
+                1 => _buildRoleStep(
+                    theme: theme,
+                    formEnabled: formEnabled,
+                    onSurfaceVariant: onSurfaceVariant,
+                  ),
+                _ => _buildExtrasStep(
+                    theme: theme,
+                    formEnabled: formEnabled,
+                    onSurfaceVariant: onSurfaceVariant,
+                  ),
+              },
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            AuthErrorBanner(message: _error!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIdentityStep({
+    required ThemeData theme,
+    required bool formEnabled,
+    required Color onSurfaceVariant,
+  }) {
+    return AuthFormCard(
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AuthStepSection(
+            compact: true,
+            title: AuthStrings.registerSectionIdentity,
+            icon: Icons.person_outline_rounded,
+            child: RegisterFieldRow(
+              left: AppTextField(
+                dense: true,
+                controller: _prenom,
+                onChanged: (_) => setState(() => _prenomError = null),
+                enabled: formEnabled,
+                label: AuthStrings.registerFieldPrenom,
+                errorText: _prenomError,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.givenName],
+              ),
+              right: AppTextField(
+                dense: true,
+                controller: _nom,
+                onChanged: (_) => setState(() => _nomError = null),
+                enabled: formEnabled,
+                label: AuthStrings.registerFieldNom,
+                errorText: _nomError,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.familyName],
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+          const SizedBox(height: _sectionGap),
+          AuthStepSection(
+            compact: true,
+            title: AuthStrings.registerSectionContact,
+            icon: Icons.contact_phone_outlined,
+            child: Column(
               children: [
-                ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    AuthFormCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppTextField(
-                            controller: _prenom,
-                            enabled: formEnabled,
-                            label: AuthStrings.registerFieldPrenom,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: Icon(
-                              Icons.badge_outlined,
-                              color: onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          AppTextField(
-                            controller: _nom,
-                            enabled: formEnabled,
-                            label: AuthStrings.registerFieldNom,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: Icon(
-                              Icons.person_outline,
-                              color: onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          AppTextField(
-                            controller: _phone,
-                            enabled: formEnabled,
-                            label: AuthStrings.registerFieldPhone,
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: Icon(
-                              Icons.phone_outlined,
-                              color: onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          AppTextField(
-                            controller: _email,
-                            enabled: formEnabled && !_signedUpViaOAuth,
-                            label: AuthStrings.loginFieldEmail,
-                            keyboardType: TextInputType.emailAddress,
-                            autocorrect: false,
-                            textInputAction: TextInputAction.next,
-                            prefixIcon: Icon(
-                              Icons.mail_outline,
-                              color: onSurfaceVariant,
-                            ),
-                          ),
-                          if (!_signedUpViaOAuth) ...[
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _password,
-                              enabled: formEnabled,
-                              label: AuthStrings.loginFieldPassword,
-                              obscureText: true,
-                              textInputAction: TextInputAction.next,
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _confirm,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldConfirmPassword,
-                              obscureText: true,
-                              textInputAction: TextInputAction.done,
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (!_signedUpViaOAuth) ...[
-                      const AuthOrDivider(),
-                      AuthGoogleButton(
-                        label: AuthStrings.registerActionGoogle,
-                        enabled: formEnabled,
-                        onPressed: _googleSignIn,
-                      ),
-                    ],
-                  ],
+                AppTextField(
+                  dense: true,
+                  controller: _phone,
+                  onChanged: (_) => setState(() => _phoneError = null),
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldPhone,
+                  hint: AuthStrings.registerFieldPhoneHint,
+                  errorText: _phoneError,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: onSurfaceVariant,
+                  ),
                 ),
-                ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    AuthFormCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            AuthStrings.roleChoiceDescription,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontFamily: AppFonts.body,
-                              color: onSurfaceVariant,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          AuthRoleCard(
-                            selected: _roleChoice == UserRole.client,
-                            title: AuthStrings.registerChooseClient,
-                            subtitle: AuthStrings.registerChooseClientHint,
-                            icon: Icons.spa_outlined,
-                            onTap: () {
-                              setState(() => _roleChoice = UserRole.client);
-                              unawaited(_persistDraft());
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          AuthRoleCard(
-                            selected: _roleChoice == UserRole.prestataire,
-                            title: AuthStrings.registerChoosePresta,
-                            subtitle: AuthStrings.registerChoosePrestaHint,
-                            icon: Icons.storefront_outlined,
-                            onTap: () {
-                              setState(
-                                () => _roleChoice = UserRole.prestataire,
-                              );
-                              unawaited(_persistDraft());
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                const SizedBox(height: _fieldGap),
+                AppTextField(
+                  dense: true,
+                  controller: _email,
+                  onChanged: (_) => setState(() => _emailError = null),
+                  enabled: formEnabled && !_signedUpViaOAuth,
+                  label: AuthStrings.loginFieldEmail,
+                  errorText: _emailError,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [
+                    AutofillHints.email,
+                    AutofillHints.username,
                   ],
-                ),
-                ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    AuthFormCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_phoneRequiredOnExtras) ...[
-                            Text(
-                              AuthStrings.registerGooglePhoneHint,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontFamily: AppFonts.body,
-                                color: onSurfaceVariant,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            AppTextField(
-                              controller: _phone,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldPhone,
-                              keyboardType: TextInputType.phone,
-                              onChanged: (_) => setState(() => _error = null),
-                              prefixIcon: Icon(
-                                Icons.phone_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          if (!_isPresta) ...[
-                            AppTextField(
-                              controller: _adresse,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldAdresse,
-                              maxLines: 2,
-                              prefixIcon: Icon(
-                                Icons.location_on_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                          ] else ...[
-                            AppTextField(
-                              controller: _salon,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldSalon,
-                              prefixIcon: Icon(
-                                Icons.storefront_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _nomAffiche,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldDisplayName,
-                              prefixIcon: Icon(
-                                Icons.badge_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _description,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldDescriptionPresta,
-                              maxLines: 2,
-                              prefixIcon: Icon(
-                                Icons.short_text_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _ville,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldVille,
-                              prefixIcon: Icon(
-                                Icons.location_city_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _codePostal,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldPostalCode,
-                              keyboardType: TextInputType.number,
-                              prefixIcon: Icon(
-                                Icons.markunread_mailbox_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _adresse,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldSalonAdresse,
-                              maxLines: 2,
-                              prefixIcon: Icon(
-                                Icons.location_on_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            AppTextField(
-                              controller: _bio,
-                              enabled: formEnabled,
-                              label: AuthStrings.registerFieldBioPresta,
-                              maxLines: 3,
-                              prefixIcon: Icon(
-                                Icons.notes_outlined,
-                                color: onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                  prefixIcon: Icon(
+                    Icons.mail_outline,
+                    color: onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            AuthErrorBanner(message: _error!),
+          if (_signedUpViaOAuth) ...[
+            const SizedBox(height: _sectionGap),
+            const _GoogleConnectedBanner(),
           ],
+          if (!_signedUpViaOAuth) ...[
+            const SizedBox(height: _sectionGap),
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.registerSectionSecurity,
+              icon: Icons.lock_outline_rounded,
+              child: Column(
+                children: [
+                  AppTextField(
+                    dense: true,
+                    controller: _password,
+                    onChanged: (_) => setState(() => _passwordError = null),
+                    enabled: formEnabled,
+                    label: AuthStrings.loginFieldPassword,
+                    hint: AuthStrings.registerFieldPasswordHint,
+                    errorText: _passwordError,
+                    obscureText: true,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.newPassword],
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: _fieldGap),
+                  AppTextField(
+                    dense: true,
+                    controller: _confirm,
+                    onChanged: (_) => setState(() => _confirmError = null),
+                    enabled: formEnabled,
+                    label: AuthStrings.registerFieldConfirmPassword,
+                    errorText: _confirmError,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: _sectionGap),
+            const AuthOrDivider(compact: true),
+            AuthGoogleButton(
+              label: AuthStrings.registerActionGoogle,
+              enabled: formEnabled,
+              onPressed: _googleSignIn,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleStep({
+    required ThemeData theme,
+    required bool formEnabled,
+    required Color onSurfaceVariant,
+  }) {
+    return AuthFormCard(
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            AuthStrings.roleChoiceDescription,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: AppFonts.body,
+              color: onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: _sectionGap),
+          AuthRoleCard(
+            compact: true,
+            selected: _roleChoice == UserRole.client,
+            title: AuthStrings.registerChooseClient,
+            subtitle: AuthStrings.registerChooseClientHint,
+            icon: Icons.spa_outlined,
+            onTap: formEnabled
+                ? () {
+                    setState(() {
+                      _roleChoice = UserRole.client;
+                      _error = null;
+                    });
+                    unawaited(_persistDraft());
+                  }
+                : null,
+          ),
+          const SizedBox(height: _fieldGap),
+          AuthRoleCard(
+            compact: true,
+            selected: _roleChoice == UserRole.prestataire,
+            title: AuthStrings.registerChoosePresta,
+            subtitle: AuthStrings.registerChoosePrestaHint,
+            icon: Icons.storefront_outlined,
+            onTap: formEnabled
+                ? () {
+                    setState(() {
+                      _roleChoice = UserRole.prestataire;
+                      _error = null;
+                    });
+                    unawaited(_persistDraft());
+                  }
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExtrasStep({
+    required ThemeData theme,
+    required bool formEnabled,
+    required Color onSurfaceVariant,
+  }) {
+    return AuthFormCard(
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_phoneRequiredOnExtras) ...[
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.registerSectionContact,
+              subtitle: AuthStrings.registerGooglePhoneHint,
+              icon: Icons.phone_outlined,
+              child: AppTextField(
+                dense: true,
+                controller: _phone,
+                onChanged: (_) => setState(() {
+                  _phoneError = null;
+                  _error = null;
+                }),
+                enabled: formEnabled,
+                label: AuthStrings.registerFieldPhone,
+                hint: AuthStrings.registerFieldPhoneHint,
+                errorText: _phoneError,
+                keyboardType: TextInputType.phone,
+                autofillHints: const [AutofillHints.telephoneNumber],
+                prefixIcon: Icon(
+                  Icons.phone_outlined,
+                  color: onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: _sectionGap),
+          ],
+          if (!_isPresta)
+            AppTextField(
+              dense: true,
+              controller: _adresse,
+              enabled: formEnabled,
+              label: AuthStrings.registerFieldAdresse,
+              maxLines: 2,
+              prefixIcon: Icon(
+                Icons.location_on_outlined,
+                color: onSurfaceVariant,
+              ),
+            )
+          else ...[
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.registerSectionActivity,
+              icon: Icons.storefront_outlined,
+              child: AppTextField(
+                dense: true,
+                controller: _salon,
+                onChanged: (_) => setState(() => _error = null),
+                enabled: formEnabled,
+                label: AuthStrings.registerFieldSalon,
+                prefixIcon: Icon(
+                  Icons.storefront_outlined,
+                  color: onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: _sectionGap),
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.registerSectionLocation,
+              icon: Icons.location_city_outlined,
+              child: RegisterFieldRow(
+                left: AppTextField(
+                  dense: true,
+                  controller: _ville,
+                  onChanged: (_) => setState(() => _error = null),
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldVille,
+                  prefixIcon: Icon(
+                    Icons.location_city_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+                right: AppTextField(
+                  dense: true,
+                  controller: _codePostal,
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldPostalCode,
+                  keyboardType: TextInputType.number,
+                  prefixIcon: Icon(
+                    Icons.markunread_mailbox_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: _sectionGap),
+            RegisterOptionalPanel(
+              children: [
+                AppTextField(
+                  dense: true,
+                  controller: _nomAffiche,
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldDisplayName,
+                  prefixIcon: Icon(
+                    Icons.badge_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: _fieldGap),
+                AppTextField(
+                  dense: true,
+                  controller: _description,
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldDescriptionPresta,
+                  maxLines: 2,
+                  prefixIcon: Icon(
+                    Icons.short_text_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: _fieldGap),
+                AppTextField(
+                  dense: true,
+                  controller: _adresse,
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldSalonAdresse,
+                  maxLines: 2,
+                  prefixIcon: Icon(
+                    Icons.location_on_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: _fieldGap),
+                AppTextField(
+                  dense: true,
+                  controller: _bio,
+                  enabled: formEnabled,
+                  label: AuthStrings.registerFieldBioPresta,
+                  maxLines: 2,
+                  prefixIcon: Icon(
+                    Icons.notes_outlined,
+                    color: onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _GoogleConnectedBanner extends StatelessWidget {
+  const _GoogleConnectedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            size: 20,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              AuthStrings.registerGoogleConnectedBanner,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -882,16 +1097,24 @@ class _DraftRestoredBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.85),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              Icons.restore_outlined,
-              color: theme.colorScheme.onPrimaryContainer,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.restore_rounded,
+                size: 20,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -900,7 +1123,8 @@ class _DraftRestoredBanner extends StatelessWidget {
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontFamily: AppFonts.body,
                   color: theme.colorScheme.onPrimaryContainer,
-                  height: 1.35,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

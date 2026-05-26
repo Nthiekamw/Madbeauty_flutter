@@ -6,10 +6,8 @@ import '../../listing/providers/discovery_origin_provider.dart';
 import '../providers/nearby_prestataires_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import 'client_home_section_header.dart';
-import '../theme/home_styles.dart';
 import 'prestataire_catalog_section_empty.dart';
-import 'prestataire_home_list_card.dart';
-import 'prestataire_horizontal_list_skeleton.dart';
+import 'prestataire_home_horizontal_list.dart';
 
 /// Liste horizontale « Prestataires proches » (données Supabase).
 class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
@@ -40,19 +38,9 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
                   title: DiscHome.nearbyEmptyTitle,
                   body: DiscHome.nearbyEmptyBody,
                 )
-              : SizedBox(
-                  height: HomeStyles.horizontalSectionHeight,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: value.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return PrestataireHomeListCard(
-                        profile: value[index],
-                        distanceOrigin: origin,
-                      );
-                    },
-                  ),
+              : PrestataireHomeHorizontalList(
+                  profiles: value,
+                  distanceOrigin: origin,
                 ),
           error: (_, __) => Text(
             DiscHome.nearbyLoadFail,
@@ -60,10 +48,7 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
               color: theme.colorScheme.error,
             ),
           ),
-          loading: () => const PrestataireHorizontalListSkeleton(
-            height: HomeStyles.horizontalSectionHeight,
-            cardWidth: HomeStyles.listCardWidth,
-          ),
+          loading: () => const PrestataireHomeHorizontalListSkeleton(),
         ),
       ],
     );

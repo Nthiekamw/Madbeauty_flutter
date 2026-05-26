@@ -4,6 +4,11 @@ abstract final class DiscList {
 
   static const searchSubtitle =
       'Filtre par salon, ville ou type de prestation.';
+  static const quickFiltersTitle = 'Explorer par style';
+  static const quickFiltersSub =
+      'Les mêmes univers que sur l’accueil : tresses, locks, coupe…';
+  static const quickFiltersReset = 'Effacer';
+  static const advancedFiltersTitle = 'Affichage & filtres';
   static const filtersTitle = 'Filtres';
   static const hintSearch =
       'Filtrer par salon, ville, type de service (coiffure, manucure, maquillage…)…';

@@ -7,7 +7,27 @@ abstract final class DiscPrestaForm {
   static const stepBasics = 'Vitrine & salon';
   static const stepLocation = 'Adresse & lieu';
   static const stepServices = 'Services & tarifs';
-  static const stepGallery = 'Réalisations';
+  static const stepGallery = 'Réalisations (optionnel)';
+  static const stepComfort = 'Confort & conditions (optionnel)';
+  static const stepHoraires = 'Horaires (optionnel)';
+  static const skipStep = 'Passer cette étape';
+  static const completeLater = 'Compléter plus tard';
+  static const completeLaterSaved =
+      'Brouillon enregistré. Tu pourras reprendre la complétion de ton profil à tout moment.';
+  static String hubWizardProgressLabel(int current, int total) =>
+      'Étape $current sur $total';
+  static const onboardingFinishCompleteTitle = 'Profil enregistré';
+  static const onboardingFinishIncompleteTitle =
+      'Profil enregistré — encore à compléter';
+  static const onboardingFinishIncompleteBodyOk =
+      'Tu peux apparaître dans le catalogue. Pour un profil plus attractif, pense à compléter :';
+  static const onboardingFinishIncompleteBodyRequired =
+      'Certaines informations obligatoires manquent encore pour être visible dans le catalogue :';
+  static const onboardingFinishRequiredHeading = 'À compléter en priorité';
+  static const onboardingFinishOptionalHeading = 'Recommandé (optionnel)';
+  static const onboardingFinishLater = 'Plus tard';
+  static const onboardingFinishCompleteCta = 'Compléter mon profil';
+  static const onboardingFinishEnrichCta = 'Enrichir mon profil';
   static const avatarLabel = 'Photo de profil';
   static const avatarPick = 'Choisir une photo';
   static const avatarChange = 'Changer la photo';
@@ -21,6 +41,27 @@ abstract final class DiscPrestaForm {
   static const experienceYears = 'Années d’expérience (optionnel)';
   static const experiencePro = 'Expérience professionnelle (optionnel)';
   static const experienceProHint = '150 caractères max';
+  static const experienceProSuggestionsLabel = 'Suggestions';
+  static const experienceYearsSuggestionsLabel = 'Durée d’activité';
+
+  static const experienceProSuggestions = <String>[
+    'Coiffeuse / coiffeur indépendant·e',
+    'Salon de coiffure',
+    'Spécialiste tresses & locks',
+    'Maquilleuse professionnelle',
+    'Esthéticienne',
+    'Prothésiste ongles',
+    'Mise en beauté & soins',
+  ];
+
+  static const experienceYearsSuggestions = <String>[
+    'Débutante',
+    'Moins de 1 an',
+    '1 à 2 ans',
+    '3 à 5 ans',
+    '5 à 10 ans',
+    'Plus de 10 ans',
+  ];
   static const city = 'Ville';
   static const postalCode = 'Code postal';
   static const postalCodeHint = 'ex. 75000';

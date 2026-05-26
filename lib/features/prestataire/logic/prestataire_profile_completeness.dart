@@ -33,8 +33,7 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
         hasWorkLocation &&
         description.trim().isNotEmpty &&
         hasAvatar &&
-        servicesAreValid &&
-        hasRealisationGallery;
+        servicesAreValid;
   }
 
   List<PrestaCompletionChecklistItem> get missingChecklistItems {
@@ -50,15 +49,59 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
     if (!servicesAreValid) {
       items.add(PrestaCompletionChecklistItem.services);
     }
+    return items;
+  }
+
+  bool get hasClientExperienceConfigured =>
+      confortClient.isNotEmpty || conditionsService.isNotEmpty;
+
+  /// Enrichissements optionnels (hors catalogue minimal).
+  List<PrestaProfileEnhancementItem> missingEnhancements({
+    required bool hasHoraires,
+  }) {
+    final items = <PrestaProfileEnhancementItem>[];
+    if (!hasClientExperienceConfigured) {
+      items.add(PrestaProfileEnhancementItem.clientExperience);
+    }
     if (!hasRealisationGallery) {
-      items.add(PrestaCompletionChecklistItem.gallery);
+      items.add(PrestaProfileEnhancementItem.gallery);
+    }
+    if (!hasHoraires) {
+      items.add(PrestaProfileEnhancementItem.horaires);
     }
     return items;
   }
+
+  bool isProfileFullyEnriched({required bool hasHoraires}) =>
+      isProfessionallyComplete &&
+      missingEnhancements(hasHoraires: hasHoraires).isEmpty;
 }
 
 enum PrestaCompletionChecklistItem {
   basics,
   services,
   gallery,
+}
+
+enum PrestaProfileEnhancementItem {
+  clientExperience,
+  gallery,
+  horaires,
+}
+
+extension PrestaCompletionChecklistLabels on PrestaCompletionChecklistItem {
+  String get label => switch (this) {
+    PrestaCompletionChecklistItem.basics => 'Vitrine, adresse & lieu',
+    PrestaCompletionChecklistItem.services => 'Services & tarifs',
+    PrestaCompletionChecklistItem.gallery => 'Réalisations',
+  };
+}
+
+extension PrestaProfileEnhancementLabels on PrestaProfileEnhancementItem {
+  String get label => switch (this) {
+    PrestaProfileEnhancementItem.clientExperience =>
+      'Confort client & conditions',
+    PrestaProfileEnhancementItem.gallery => 'Photos de réalisations',
+    PrestaProfileEnhancementItem.horaires => 'Horaires de disponibilité',
+  };
 }

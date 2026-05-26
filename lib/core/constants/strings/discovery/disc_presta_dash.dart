@@ -12,7 +12,10 @@ abstract final class DiscPrestaDash {
   static const badgeIncomplete = 'À compléter';
   static const profileIncompleteTitle = 'Profil incomplet';
   static const profileIncompleteBanner =
-      'Complète ta vitrine dans l’onglet Profil';
+      'Reprends la complétion de ton profil professionnel';
+  static const profileEnrichmentTitle = 'Profil à enrichir';
+  static const profileEnrichmentBanner =
+      'Confort, horaires ou réalisations : complète ton profil dans l’onglet Profil';
   static const statPending = 'En attente';
   static const statToday = 'Aujourd’hui';
   static const statWeek = 'Cette semaine';

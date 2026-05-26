@@ -12,7 +12,7 @@ class PrestataireProfileManageMenu extends StatelessWidget {
   const PrestataireProfileManageMenu({
     super.key,
     this.showHeader = true,
-    this.padding = const EdgeInsets.symmetric(horizontal: 20),
+    this.padding = EdgeInsets.zero,
   });
 
   final bool showHeader;
@@ -21,11 +21,11 @@ class PrestataireProfileManageMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sections = PrestataireProfileEditSection.values;
+    final sections = PrestataireProfileEditSection.values
+        .where((s) => s != PrestataireProfileEditSection.horaires)
+        .toList();
 
-    return Padding(
-      padding: padding,
-      child: DiscoverySurfaceCard(
+    final card = DiscoverySurfaceCard(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,7 +69,9 @@ class PrestataireProfileManageMenu extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
+
+    if (padding == EdgeInsets.zero) return card;
+    return Padding(padding: padding, child: card);
   }
 }

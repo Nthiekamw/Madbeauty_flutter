@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../layout/discovery_responsive.dart';
 import '../theme/discovery_styles.dart';
 
 /// Carte surface semi-opaque sur fond brand.
@@ -18,32 +19,48 @@ class DiscoverySurfaceCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final surfaceColor = theme.colorScheme.surface.withValues(
+      alpha: isDark ? 0.92 : 0.98,
+    );
+    final borderRadius = DiscoveryStyles.cardBorderRadius;
+    final borderSide = BorderSide(
+      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+    );
+
+    final card = Material(
+      color: surfaceColor,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: borderRadius,
+        side: borderSide,
+      ),
+      child: Padding(
+        padding: padding,
+        child: child,
+      ),
+    );
+
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(
-            alpha: isDark ? 0.92 : 0.98,
-          ),
-          borderRadius: DiscoveryStyles.cardBorderRadius,
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          boxShadow: isDark
-              ? null
-              : [
+      padding: EdgeInsets.symmetric(horizontal: hPad),
+      child: isDark
+          ? card
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+                boxShadow: [
                   BoxShadow(
                     color: theme.colorScheme.primary.withValues(alpha: 0.05),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
                 ],
-        ),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
-      ),
+              ),
+              child: card,
+            ),
     );
   }
 }

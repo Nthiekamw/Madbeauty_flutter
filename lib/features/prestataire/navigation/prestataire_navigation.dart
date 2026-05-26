@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,8 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/my_roles_provider.dart';
+import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
+import '../../profile/storage/become_prestataire_draft_store.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 
@@ -24,19 +28,27 @@ abstract final class PrestataireNavigation {
 
     await AuthRoleCache.persistServerRoles(roles);
     await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
     if (!context.mounted) return;
     await _goDashboardOrCompleteProfile(context, ref);
   }
 
-  /// Après inscription prestataire : parcours guidé de complétion du profil.
+  /// Après inscription prestataire : hub profil (choix déjà fait à l’étape 2).
   static Future<void> afterPrestaRegistration(
     BuildContext context,
     WidgetRef ref,
   ) async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
+    ref.invalidate(myRolesProvider);
+    final roles = await ref.read(myRolesProvider.future);
+    await AuthRoleCache.persistServerRoles(roles);
+    await PrestataireHubOnboardingDraft.markStep2Started();
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
-    context.goPrestataireProfileComplete();
+    context.goPrestataireProfile();
+    if (!context.mounted) return;
+    context.pushPrestataireProfileEdit();
   }
 
   /// Après [BecomePrestataireScreen] : hub pour photo, spécialités, services.
@@ -44,6 +56,7 @@ abstract final class PrestataireNavigation {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    await PrestataireHubOnboardingDraft.markStep2Started();
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
     context.goPrestataireProfile();
@@ -57,6 +70,7 @@ abstract final class PrestataireNavigation {
     WidgetRef ref,
   ) async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
     if (!context.mounted) return;
     await _goDashboardOrCompleteProfile(context, ref);
   }
@@ -66,6 +80,7 @@ abstract final class PrestataireNavigation {
     ProviderContainer container,
   ) async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
     if (!context.mounted) return;
     await _goDashboardOrCompleteProfileWithContainer(context, container);
   }
@@ -103,9 +118,11 @@ abstract final class PrestataireNavigation {
     PrestataireProfileFormData data,
   ) {
     if (data.isProfessionallyComplete) {
+      unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
       context.goPrestataireDashboard();
-    } else {
-      context.goPrestataireProfileComplete();
+      return;
     }
+    context.goPrestataireProfile();
+    context.pushPrestataireProfileEdit();
   }
 }

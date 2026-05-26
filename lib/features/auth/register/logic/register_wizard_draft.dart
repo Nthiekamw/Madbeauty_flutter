@@ -34,7 +34,9 @@ class RegisterWizardDraft {
   final bool phoneRequiredOnExtras;
   final UserRole? role;
 
+  /// Brouillon actif tant que le wizard n’est pas terminé (y compris après Google).
   bool get isActive =>
+      signedUpViaOAuth ||
       step > 0 ||
       prenom.isNotEmpty ||
       nom.isNotEmpty ||

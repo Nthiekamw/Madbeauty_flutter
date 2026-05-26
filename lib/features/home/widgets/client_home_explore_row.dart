@@ -14,41 +14,31 @@ class ClientHomeExploreRow extends StatelessWidget {
 
   final ValueChanged<String> onPick;
 
-  static const List<({String label, IconData icon, Color color})> _topics = [
-    (
-      label: 'Tresses',
-      icon: Icons.waves_rounded,
-      color: Color(0xFF7C3AED),
-    ),
-    (
-      label: 'Locks',
-      icon: Icons.all_inclusive_rounded,
-      color: Color(0xFF0EA5E9),
-    ),
-    (
-      label: 'Coiffure afro',
-      icon: Icons.face_retouching_natural_outlined,
-      color: Color(0xFFEC4899),
-    ),
-    (
-      label: 'Coupe',
-      icon: Icons.content_cut_rounded,
-      color: Color(0xFF10B981),
-    ),
-    (
-      label: 'Entretien',
-      icon: Icons.spa_outlined,
-      color: Color(0xFFF59E0B),
-    ),
-    (
-      label: 'Coloration',
-      icon: Icons.palette_outlined,
-      color: Color(0xFFEF4444),
-    ),
+  static const List<({String label, IconData icon})> _topics = [
+    (label: 'Tresses', icon: Icons.waves_rounded),
+    (label: 'Locks', icon: Icons.all_inclusive_rounded),
+    (label: 'Coiffure afro', icon: Icons.face_retouching_natural_outlined),
+    (label: 'Coupe', icon: Icons.content_cut_rounded),
+    (label: 'Entretien', icon: Icons.spa_outlined),
+    (label: 'Coloration', icon: Icons.palette_outlined),
   ];
+
+  /// Accents dérivés du [ColorScheme] client (marron / tons chauds).
+  static List<Color> _accentPalette(ColorScheme scheme) {
+    return [
+      scheme.primary,
+      scheme.secondary,
+      scheme.tertiary,
+      Color.lerp(scheme.primary, scheme.secondary, 0.5)!,
+      Color.lerp(scheme.secondary, scheme.tertiary, 0.5)!,
+      scheme.outline,
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final accents = _accentPalette(Theme.of(context).colorScheme);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -66,14 +56,16 @@ class ClientHomeExploreRow extends StatelessWidget {
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
-              children: _topics.map((topic) {
+              children: _topics.asMap().entries.map((entry) {
+                final topic = entry.value;
+                final accent = accents[entry.key % accents.length];
                 return SizedBox(
                   width: tileW,
                   height: tileH,
                   child: _ExploreTile(
                     label: topic.label,
                     icon: topic.icon,
-                    accentColor: topic.color,
+                    accentColor: accent,
                     onTap: () => onPick(topic.label),
                   ),
                 );

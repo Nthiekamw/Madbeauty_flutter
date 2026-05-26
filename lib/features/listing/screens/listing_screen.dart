@@ -16,9 +16,11 @@ import '../../prestataire/providers/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
 import '../widgets/listing_filters_panel.dart';
+import '../widgets/listing_quick_filters_strip.dart';
 import '../widgets/listing_map_view.dart';
 import '../widgets/listing_vertical_skeleton.dart';
-import '../widgets/prestataire_catalog_list_card.dart';
+import '../widgets/listing_prestataires_scroll_view.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 
 /// Exploration / recherche : catalogue paginé, filtres, tri, pull-to-refresh.
 class ListingScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,7 @@ class ListingScreen extends ConsumerStatefulWidget {
 
 class _ListingScreenState extends ConsumerState<ListingScreen> {
   final _searchController = TextEditingController();
+  final _listScrollController = ScrollController();
   bool _seededFromRoute = false;
   ListingViewMode _viewMode = ListingViewMode.list;
 
@@ -37,10 +40,22 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchTextChanged);
+    _listScrollController.addListener(_onListScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(listingCatalogNotifierProvider.notifier).loadInitialIfNeeded();
     });
+  }
+
+  void _onListScroll() {
+    if (!_listScrollController.hasClients) return;
+    final position = _listScrollController.position;
+    if (position.pixels < position.maxScrollExtent - 420) return;
+
+    final state = ref.read(listingCatalogNotifierProvider);
+    if (!state.hasMore || state.loadingMore || state.loadingInitial) return;
+
+    ref.read(listingCatalogNotifierProvider.notifier).loadMore();
   }
 
   void _onSearchTextChanged() {
@@ -50,7 +65,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   @override
   void dispose() {
     _searchController.removeListener(_onSearchTextChanged);
+    _listScrollController.removeListener(_onListScroll);
     _searchController.dispose();
+    _listScrollController.dispose();
     super.dispose();
   }
 
@@ -73,13 +90,19 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _searchBar(ThemeData theme) {
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
       child: DiscoverySearchCard(
         controller: _searchController,
         hint: DiscList.hintSearch,
         onChanged: (value) {
           ref.read(prestatairesFilterProvider.notifier).setQuery(value);
+          if (value.trim().isEmpty &&
+              ref.read(prestatairesFilterProvider).activeQuickFilterId !=
+                  null) {
+            ref.read(prestatairesFilterProvider.notifier).resetQuickFilters();
+          }
         },
         suffixIcon: _searchController.text.isEmpty
             ? null
@@ -102,7 +125,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
 
   Widget _resultsCountBar(ThemeData theme, int count) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Text(
         DiscList.resultsCount(count),
         style: theme.textTheme.labelLarge?.copyWith(
@@ -206,6 +229,63 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     );
   }
 
+  Widget _listingTopSection(ThemeData theme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const DiscoveryScreenHeader(
+          title: DiscNav.searchTitle,
+          icon: Icons.search_rounded,
+          compact: true,
+        ),
+        _searchBar(theme),
+        ListingQuickFiltersStrip(
+          onStyleQuerySelected: (query) {
+            if (_searchController.text != query) {
+              _searchController.text = query;
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _filtersPanel(ListingCatalogViewState state) {
+    return ListingFiltersPanel(
+      categories: state.categories,
+      viewMode: _viewMode,
+      onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+    );
+  }
+
+  /// Panneau filtres compact + catalogue (priorité à la zone résultats).
+  Widget _catalogColumn({
+    required ListingCatalogViewState state,
+    required Widget child,
+  }) {
+    final layout = DiscoveryResponsive.of(context);
+    final screenH = MediaQuery.sizeOf(context).height;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: layout.listingFiltersMaxHeight(
+              screenH,
+              expanded: true,
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: _filtersPanel(state),
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,12 +295,25 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const DiscoveryScreenHeader(
-            title: DiscNav.searchTitle,
-            subtitle: DiscList.searchSubtitle,
-            icon: Icons.search_rounded,
-          ),
-          _searchBar(theme),
+          if (AppConfig.hasSupabase)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: DiscoveryResponsive.of(context).listingTopMaxHeight(
+                  MediaQuery.sizeOf(context).height,
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: _listingTopSection(theme),
+              ),
+            )
+          else ...[
+            const DiscoveryScreenHeader(
+              title: DiscNav.searchTitle,
+              subtitle: DiscList.searchSubtitle,
+              icon: Icons.search_rounded,
+            ),
+            _searchBar(theme),
+          ],
           if (!AppConfig.hasSupabase)
             Expanded(
               child: DiscoveryEmptyState(
@@ -238,53 +331,35 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _buildMainBody(ThemeData theme, ListingCatalogViewState state) {
-    final filtersPanel = ListingFiltersPanel(
-      categories: state.categories,
-      viewMode: _viewMode,
-      onViewModeChanged: (mode) => setState(() => _viewMode = mode),
-    );
-
     if (state.loadingInitial &&
         state.entries.isEmpty &&
         state.errorMessage == null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          filtersPanel,
-          const Expanded(child: ListingVerticalSkeleton()),
-        ],
+      return _catalogColumn(
+        state: state,
+        child: const ListingVerticalSkeleton(),
       );
     }
 
     if (state.errorMessage != null && state.entries.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          filtersPanel,
-          Expanded(
-            child: _refreshableScrollable(
-              child: DiscoveryEmptyState(
-                icon: Icons.cloud_off_outlined,
-                title: DiscList.catalogLoadErr,
-                body: DiscList.pullDownHint,
-                iconColor: theme.colorScheme.error,
-                actionLabel: DiscList.retry,
-                onAction: () => ref
-                    .read(listingCatalogNotifierProvider.notifier)
-                    .refresh(),
-              ),
-            ),
+      return _catalogColumn(
+        state: state,
+        child: _refreshableScrollable(
+          child: DiscoveryEmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: DiscList.catalogLoadErr,
+            body: DiscList.pullDownHint,
+            iconColor: theme.colorScheme.error,
+            actionLabel: DiscList.retry,
+            onAction: () =>
+                ref.read(listingCatalogNotifierProvider.notifier).refresh(),
           ),
-        ],
+        ),
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        filtersPanel,
-        Expanded(child: _buildCatalogBody(theme, state)),
-      ],
+    return _catalogColumn(
+      state: state,
+      child: _buildCatalogBody(theme, state),
     );
   }
 
@@ -321,20 +396,12 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         state.loadMoreError != null ||
         state.refreshError != null;
 
-    return RefreshIndicator(
+    return ListingPrestatairesScrollView(
+      controller: _listScrollController,
+      entries: filtered,
       onRefresh: _onRefresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-        children: [
-          _resultsCountBar(theme, filtered.length),
-          for (var i = 0; i < filtered.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            PrestataireCatalogListCard(entry: filtered[i]),
-          ],
-          if (showFooter) _loadMoreFooter(theme, state),
-        ],
-      ),
+      header: _resultsCountBar(theme, filtered.length),
+      footer: showFooter ? _loadMoreFooter(theme, state) : null,
     );
   }
 
@@ -353,13 +420,18 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         state.loadMoreError != null ||
         state.refreshError != null;
 
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _resultsCountBar(theme, filtered.length),
+        Padding(
+          padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 4),
+          child: _resultsCountBar(theme, filtered.length),
+        ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: DiscoveryStyles.cardBorderRadius,
@@ -391,7 +463,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         ),
         if (showFooter)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: EdgeInsets.symmetric(horizontal: hPad),
             child: _loadMoreFooter(theme, state),
           ),
       ],

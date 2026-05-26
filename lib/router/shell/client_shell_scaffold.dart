@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import '../../shared/widgets/offline_shell.dart';
 import 'client_shell_bottom_nav.dart';
 
-class ClientShellScaffold extends ConsumerWidget {
+class ClientShellScaffold extends ConsumerStatefulWidget {
   const ClientShellScaffold({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
@@ -14,9 +17,23 @@ class ClientShellScaffold extends ConsumerWidget {
   static const int reservationsTabIndex = 2;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientShellScaffold> createState() => _ClientShellScaffoldState();
+}
+
+class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(LocalCacheService.instance.setSelectedRole('client'));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     final pendingCount = ref.watch(clientPendingReservationsCountProvider).value ?? 0;
-    final selectedIndex = navigationShell.currentIndex;
+    final selectedIndex = widget.navigationShell.currentIndex;
 
     return Scaffold(
       body: OfflineShell(child: navigationShell),
@@ -26,7 +43,7 @@ class ClientShellScaffold extends ConsumerWidget {
           selectedIndex: selectedIndex,
           reservationsBadgeCount: pendingCount,
           onTap: (index) {
-            if (index == reservationsTabIndex) {
+            if (index == ClientShellScaffold.reservationsTabIndex) {
               invalidateClientReservations(ref);
             }
             navigationShell.goBranch(

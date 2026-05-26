@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/lieu_travail.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import 'prestataire_suggestion_chips.dart';
 import 'prestataire_work_location_selector.dart';
 
 class PrestataireProfileBasicsStep extends StatelessWidget {
@@ -71,12 +73,27 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = DiscoveryResponsive.of(context);
     final hasAvatar =
         avatarBytes != null ||
         (avatarUrl != null && avatarUrl!.trim().isNotEmpty);
 
     final showVitrine = !locationOnly;
     final showLocation = !vitrineOnly;
+    final avatarPreview = _AvatarPreview(
+      avatarBytes: avatarBytes,
+      avatarUrl: avatarUrl,
+      displayName: nomAfficheController.text.isNotEmpty
+          ? nomAfficheController.text
+          : nomController.text,
+    );
+    final pickPhotoButton = OutlinedButton.icon(
+      onPressed: onPickAvatar,
+      icon: const Icon(Icons.photo_camera_outlined),
+      label: Text(
+        hasAvatar ? DiscPrestaForm.avatarChange : DiscPrestaForm.avatarPick,
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,29 +101,19 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
         if (showVitrine) ...[
         Text(DiscPrestaForm.avatarLabel, style: theme.textTheme.labelLarge),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _AvatarPreview(
-              avatarBytes: avatarBytes,
-              avatarUrl: avatarUrl,
-              displayName: nomAfficheController.text.isNotEmpty
-                  ? nomAfficheController.text
-                  : nomController.text,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onPickAvatar,
-                icon: const Icon(Icons.photo_camera_outlined),
-                label: Text(
-                  hasAvatar
-                      ? DiscPrestaForm.avatarChange
-                      : DiscPrestaForm.avatarPick,
-                ),
-              ),
-            ),
-          ],
-        ),
+        if (layout.useSideBySideFormRows)
+          Row(
+            children: [
+              avatarPreview,
+              const SizedBox(width: 16),
+              Expanded(child: pickPhotoButton),
+            ],
+          )
+        else ...[
+          Center(child: avatarPreview),
+          const SizedBox(height: 12),
+          SizedBox(width: double.infinity, child: pickPhotoButton),
+        ],
         if (avatarError != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -167,8 +174,19 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           errorText: experienceProError,
           minLines: 2,
           maxLines: 3,
+          textInputAction: TextInputAction.next,
           inputFormatters: [LengthLimitingTextInputFormatter(150)],
           onChanged: (_) => onChanged(),
+        ),
+        const SizedBox(height: 10),
+        PrestataireSuggestionChips(
+          label: DiscPrestaForm.experienceProSuggestionsLabel,
+          options: DiscPrestaForm.experienceProSuggestions,
+          selectedValue: experienceProController.text,
+          onSelected: (value) {
+            experienceProController.text = value;
+            onChanged();
+          },
         ),
         const SizedBox(height: 12),
         AppTextField(
@@ -176,6 +194,16 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           label: DiscPrestaForm.experienceYears,
           textInputAction: TextInputAction.next,
           onChanged: (_) => onChanged(),
+        ),
+        const SizedBox(height: 10),
+        PrestataireSuggestionChips(
+          label: DiscPrestaForm.experienceYearsSuggestionsLabel,
+          options: DiscPrestaForm.experienceYearsSuggestions,
+          selectedValue: anneesExperienceController.text,
+          onSelected: (value) {
+            anneesExperienceController.text = value;
+            onChanged();
+          },
         ),
         const SizedBox(height: 12),
         AppTextField(
@@ -205,33 +233,53 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           onChanged: (_) => onChanged(),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: AppTextField(
-                controller: codePostalController,
-                label: DiscPrestaForm.postalCode,
-                hint: DiscPrestaForm.postalCodeHint,
-                errorText: codePostalError,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (_) => onChanged(),
+        if (layout.useSideBySideFormRows)
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: AppTextField(
+                  controller: codePostalController,
+                  label: DiscPrestaForm.postalCode,
+                  hint: DiscPrestaForm.postalCodeHint,
+                  errorText: codePostalError,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => onChanged(),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: AppTextField(
-                controller: villeController,
-                label: DiscPrestaForm.city,
-                errorText: villeError,
-                textInputAction: TextInputAction.done,
-                onChanged: (_) => onChanged(),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: AppTextField(
+                  controller: villeController,
+                  label: DiscPrestaForm.city,
+                  errorText: villeError,
+                  textInputAction: TextInputAction.done,
+                  onChanged: (_) => onChanged(),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else ...[
+          AppTextField(
+            controller: codePostalController,
+            label: DiscPrestaForm.postalCode,
+            hint: DiscPrestaForm.postalCodeHint,
+            errorText: codePostalError,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => onChanged(),
+          ),
+          const SizedBox(height: 12),
+          AppTextField(
+            controller: villeController,
+            label: DiscPrestaForm.city,
+            errorText: villeError,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => onChanged(),
+          ),
+        ],
         ],
       ],
     );

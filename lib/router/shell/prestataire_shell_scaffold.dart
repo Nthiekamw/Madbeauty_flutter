@@ -1,10 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_strings.dart';
+import '../../services/storage/local_cache_service.dart';
 import '../../shared/widgets/offline_shell.dart';
 
-class PrestataireShellScaffold extends StatelessWidget {
+class PrestataireShellScaffold extends StatefulWidget {
   const PrestataireShellScaffold({
     super.key,
     required this.navigationShell,
@@ -13,7 +16,22 @@ class PrestataireShellScaffold extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
+  State<PrestataireShellScaffold> createState() =>
+      _PrestataireShellScaffoldState();
+}
+
+class _PrestataireShellScaffoldState extends State<PrestataireShellScaffold> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(LocalCacheService.instance.setSelectedRole('prestataire'));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     return Scaffold(
       body: OfflineShell(child: navigationShell),
       bottomNavigationBar: NavigationBar(

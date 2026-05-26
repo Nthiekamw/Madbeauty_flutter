@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
+import '../../profile/logic/become_prestataire_flow_resume.dart';
 import '../logic/auth_role_cache.dart';
 import '../providers/my_roles_provider.dart';
 
@@ -40,6 +42,15 @@ abstract final class PostAuthNavigation {
     if (!context.mounted) return;
 
     if (roles.isEmpty) {
+      final pending = LocalCacheService.instance.selectedRole;
+      if (pending == 'prestataire') {
+        await PrestataireNavigation.switchToPrestataireSpace(context, ref);
+        return;
+      }
+      if (pending == 'client') {
+        context.goHome();
+        return;
+      }
       context.goRoleChoice();
       return;
     }
@@ -72,11 +83,33 @@ abstract final class PostAuthNavigation {
   ) async {
     if (!context.mounted) return;
 
+    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+    if (becomeResume != null) {
+      if (BecomePrestataireFlowResume.needsPrestataireRole) {
+        await LocalCacheService.instance.setSelectedRole('prestataire');
+      }
+      if (!context.mounted) return;
+      context.go(becomeResume);
+      return;
+    }
+
     final roles = await container.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
     if (!context.mounted) return;
 
     if (roles.isEmpty) {
+      final pending = LocalCacheService.instance.selectedRole;
+      if (pending == 'prestataire') {
+        await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
+          context,
+          container,
+        );
+        return;
+      }
+      if (pending == 'client') {
+        context.goHome();
+        return;
+      }
       context.goRoleChoice();
       return;
     }

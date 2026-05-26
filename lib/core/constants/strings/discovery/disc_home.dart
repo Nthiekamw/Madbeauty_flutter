@@ -9,7 +9,27 @@ abstract final class DiscHome {
       'Découvre des pros près de chez toi et réserve en quelques gestes.';
   static const inspireTitle = 'Inspirations';
   static const inspireSub =
-      'Un tap pour ouvrir le listing avec ce thème.';
+      'Choisis un thème pour afficher des prestataires.';
+
+  static const feedSearchSub =
+      'Prestataires correspondant à votre recherche.';
+  static const feedInspirationSub =
+      'Prestataires pour ce thème.';
+  static const feedEmptyTitle = 'Aucun résultat';
+  static const feedEmptyBody =
+      'Essayez un autre mot-clé ou parcourez le catalogue.';
+  static const feedLoadFail =
+      'Impossible de charger les résultats. Réessaie.';
+
+  static const notificationsTooltip = 'Notifications';
+  static const notificationsComingSoon =
+      'Les notifications arrivent bientôt.';
+
+  static String feedSearchTitle(String query) =>
+      'Résultats pour « $query »';
+
+  static String feedInspirationTitle(String topic) =>
+      'Inspiration · $topic';
 
   static const nearbyTitle = 'Prestataires proches';
   static const nearbySubWithLocation =
@@ -31,6 +51,8 @@ abstract final class DiscHome {
       'Aucune note moyenne enregistrée pour l’instant. Ouvre le catalogue pour découvrir les salons.';
   static const ctaBrowseCatalog = 'Voir le catalogue';
   static const ctaSeeAll = 'Tout voir';
+  static const badgeDispo = 'Dispo';
+  static const badgeNonDispo = 'Non dispo';
 
   /// Distance affichée (Haversine, [km]).
   static String nearbyKm(double km) {

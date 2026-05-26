@@ -8,7 +8,8 @@ enum PrestataireProfileEditSection {
   location,
   services,
   gallery,
-  clientExperience;
+  clientExperience,
+  horaires;
 
   static PrestataireProfileEditSection? fromQuery(String? raw) {
     if (raw == null || raw.trim().isEmpty) return null;
@@ -19,6 +20,7 @@ enum PrestataireProfileEditSection {
       'gallery' => gallery,
       'client-experience' => clientExperience,
       'clientExperience' => clientExperience,
+      'horaires' => horaires,
       _ => null,
     };
   }
@@ -34,6 +36,7 @@ enum PrestataireProfileEditSection {
     services => 2,
     gallery => 3,
     clientExperience => 4,
+    horaires => 5,
   };
 
   String get screenTitle => switch (this) {
@@ -42,6 +45,7 @@ enum PrestataireProfileEditSection {
     services => DiscPrestaProfile.editServices,
     gallery => DiscPrestaProfile.editGallery,
     clientExperience => DiscPrestaComfort.editTitle,
+    horaires => DiscPrestaHoraires.title,
   };
 
   String get menuTitle => switch (this) {
@@ -50,6 +54,7 @@ enum PrestataireProfileEditSection {
     services => DiscPrestaProfile.menuServices,
     gallery => DiscPrestaProfile.menuGallery,
     clientExperience => DiscPrestaComfort.menuTitle,
+    horaires => DiscPrestaHoraires.title,
   };
 
   String get menuSubtitle => switch (this) {
@@ -58,6 +63,7 @@ enum PrestataireProfileEditSection {
     services => DiscPrestaProfile.menuServicesHint,
     gallery => DiscPrestaProfile.menuGalleryHint,
     clientExperience => DiscPrestaComfort.menuHint,
+    horaires => DiscPrestaHoraires.intro,
   };
 
   IconData get icon => switch (this) {
@@ -66,5 +72,6 @@ enum PrestataireProfileEditSection {
     services => Icons.design_services_outlined,
     gallery => Icons.photo_library_outlined,
     clientExperience => Icons.favorite_outline_rounded,
+    horaires => Icons.schedule_outlined,
   };
 }

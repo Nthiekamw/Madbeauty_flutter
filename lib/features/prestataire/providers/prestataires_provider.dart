@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/geo/geo_point.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
+import '../../listing/providers/catalog_availability_index_provider.dart';
 import '../../listing/providers/discovery_origin_provider.dart';
 import '../../listing/providers/listing_catalog_provider.dart';
 import '../models/prestataires_filter_state.dart';
@@ -31,9 +32,17 @@ final prestatairesFilteredProvider =
       final asyncList = ref.watch(prestatairesListProvider);
       final filters = ref.watch(prestatairesFilterProvider);
       final origin = ref.watch(discoveryOriginProvider);
-      return asyncList.whenData(
-        (entries) => filterPrestataireEntries(entries, filters, origin: origin),
-      );
+      final availability = ref.watch(catalogAvailabilityIndexProvider);
+      return asyncList.whenData((entries) {
+        var list = filterPrestataireEntries(entries, filters, origin: origin);
+        if (filters.availableOnly) {
+          final map = availability.value;
+          if (map != null) {
+            list = list.where((e) => map[e.profile.id] == true).toList();
+          }
+        }
+        return list;
+      });
     });
 
 List<PrestataireCatalogEntry> filterPrestataireEntries(

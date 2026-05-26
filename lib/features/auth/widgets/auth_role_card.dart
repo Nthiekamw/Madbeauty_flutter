@@ -14,6 +14,7 @@ class AuthRoleCard extends StatelessWidget {
     this.selected = false,
     this.enabled = true,
     this.isLoading = false,
+    this.compact = false,
   });
 
   final String title;
@@ -23,6 +24,7 @@ class AuthRoleCard extends StatelessWidget {
   final bool selected;
   final bool enabled;
   final bool isLoading;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -62,20 +64,23 @@ class AuthRoleCard extends StatelessWidget {
           onTap: interactive ? onTap : null,
           borderRadius: BorderRadius.circular(AuthFormStyles.chipRadius),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 14 : 18,
+              vertical: compact ? 14 : 20,
+            ),
             child: Row(
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: compact ? 44 : 52,
+                  height: compact ? 44 : 52,
                   decoration: BoxDecoration(
                     color: primary.withValues(alpha: selected ? 0.18 : 0.1),
                     borderRadius:
                         BorderRadius.circular(AuthFormStyles.fieldRadius),
                   ),
-                  child: Icon(icon, color: primary, size: 28),
+                  child: Icon(icon, color: primary, size: compact ? 24 : 28),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: compact ? 10 : 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,13 +93,15 @@ class AuthRoleCard extends StatelessWidget {
                           letterSpacing: -0.2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: compact ? 2 : 4),
                       Text(
                         subtitle,
+                        maxLines: compact ? 2 : 3,
+                        overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontFamily: AppFonts.body,
                           color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
+                          height: 1.3,
                         ),
                       ),
                     ],

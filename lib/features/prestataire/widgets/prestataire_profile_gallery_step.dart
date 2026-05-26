@@ -43,6 +43,14 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
             height: 1.4,
           ),
         ),
+        const SizedBox(height: 6),
+        Text(
+          DiscPrestaCompletion.gallerySkipHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.35,
+          ),
+        ),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: uploading ? null : onPick,

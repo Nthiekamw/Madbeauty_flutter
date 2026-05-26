@@ -6,9 +6,14 @@ class LocalCacheService {
   static const String lastSignedInEmailKey = 'auth.last_signed_in_email';
   static const String profileSnapshotKey = 'profile.snapshot';
   static const String selectedRoleKey = 'auth.selected_role';
+  /// Espace choisi à l’inscription (conservé tant que la session est active).
+  static const String signupShellRoleKey = 'auth.signup_shell_role';
   static const String cachedServerRolesKey = 'auth.cached_server_roles';
   static const String onboardingCompletedKey = 'app.onboarding_completed';
   static const String guestModeActiveKey = 'auth.guest_mode_active';
+  static const String profilePushNotificationsKey =
+      'profile.push_notifications_enabled';
+  static const String profileGeolocationKey = 'profile.geolocation_enabled';
 
   static LocalCacheService? _instance;
 
@@ -41,6 +46,13 @@ class LocalCacheService {
 
   Future<bool> clearSelectedRole() => remove(selectedRoleKey);
 
+  String? get signupShellRole => getString(signupShellRoleKey);
+
+  Future<bool> setSignupShellRole(String role) =>
+      setString(signupShellRoleKey, role);
+
+  Future<bool> clearSignupShellRole() => remove(signupShellRoleKey);
+
   List<String> get cachedServerRoles {
     final raw = getString(cachedServerRolesKey);
     if (raw == null || raw.isEmpty) return const [];
@@ -62,5 +74,17 @@ class LocalCacheService {
 
   Future<bool> setGuestModeActive(bool value) =>
       _prefs.setBool(guestModeActiveKey, value);
+
+  bool get profilePushNotificationsEnabled =>
+      _prefs.getBool(profilePushNotificationsKey) ?? false;
+
+  Future<bool> setProfilePushNotificationsEnabled(bool value) =>
+      _prefs.setBool(profilePushNotificationsKey, value);
+
+  bool get profileGeolocationEnabled =>
+      _prefs.getBool(profileGeolocationKey) ?? true;
+
+  Future<bool> setProfileGeolocationEnabled(bool value) =>
+      _prefs.setBool(profileGeolocationKey, value);
 }
 

@@ -4,11 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../providers/top_rated_prestataires_provider.dart';
-import '../theme/home_styles.dart';
 import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
-import 'prestataire_home_list_card.dart';
-import 'prestataire_horizontal_list_skeleton.dart';
+import 'prestataire_home_horizontal_list.dart';
 
 /// Liste horizontale « Mieux notés » (tri [note_moyenne], données Supabase).
 class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
@@ -35,29 +33,14 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
                   title: DiscHome.topRatedEmptyTitle,
                   body: DiscHome.topRatedEmptyBody,
                 )
-              : SizedBox(
-                  height: HomeStyles.horizontalSectionHeight,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: value.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return PrestataireHomeListCard(
-                        profile: value[index],
-                      );
-                    },
-                  ),
-                ),
+              : PrestataireHomeHorizontalList(profiles: value),
           error: (_, __) => Text(
             DiscHome.nearbyLoadFail,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
             ),
           ),
-          loading: () => const PrestataireHorizontalListSkeleton(
-            height: HomeStyles.horizontalSectionHeight,
-            cardWidth: HomeStyles.listCardWidth,
-          ),
+          loading: () => const PrestataireHomeHorizontalListSkeleton(),
         ),
       ],
     );

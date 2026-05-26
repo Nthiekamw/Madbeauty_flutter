@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
+import '../../widgets/auth_success_dialog.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
 import '../../../../shared/widgets/app_snack_bar.dart';
@@ -25,6 +28,8 @@ class LoginRoute extends ConsumerStatefulWidget {
 class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _googleSignInPending = false;
+  bool _welcomeHandled = false;
 
   @override
   void initState() {
@@ -55,8 +60,24 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         await ref.read(loginControllerProvider.notifier).startGoogleSignIn();
     if (!mounted) return;
     if (opened) {
+      _googleSignInPending = true;
       AppSnackBar.info(context, AuthStrings.loginGoogleStarted);
     }
+  }
+
+  Future<void> _completeLoginWithWelcome() async {
+    if (_welcomeHandled || !mounted) return;
+    _welcomeHandled = true;
+    _googleSignInPending = false;
+
+    await AuthSuccessDialog.show(
+      context,
+      title: AuthStrings.loginSuccessTitle,
+      body: AuthStrings.loginSuccessBody,
+      actionLabel: AuthStrings.loginSuccessCta,
+    );
+    if (!mounted) return;
+    await PostAuthNavigation.navigate(context, ref);
   }
 
   @override
@@ -67,11 +88,24 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }
       if (next.shouldPopRoute) {
-        if (context.mounted) {
-          PostAuthNavigation.navigate(context, ref);
-        }
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
+        unawaited(_completeLoginWithWelcome());
       }
+    });
+
+    ref.listen(authNotifierProvider, (previous, next) {
+      if (!_googleSignInPending || _welcomeHandled) return;
+      final user = switch (next) {
+        AsyncData(:final value) => value,
+        _ => null,
+      };
+      if (user == null) return;
+      final hadUser = switch (previous) {
+        AsyncData(:final value) => value != null,
+        _ => false,
+      };
+      if (hadUser) return;
+      unawaited(_completeLoginWithWelcome());
     });
 
     final loginUi = ref.watch(loginControllerProvider);

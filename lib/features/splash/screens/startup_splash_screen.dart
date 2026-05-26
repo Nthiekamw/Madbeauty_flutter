@@ -4,9 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../features/auth/logic/auth_role_cache.dart';
 import '../../../features/auth/navigation/post_auth_navigation.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
+import '../../../features/auth/providers/my_roles_provider.dart';
+import '../../../features/prestataire/providers/current_prestataire_provider.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
+import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
+import '../../../features/prestataire/providers/prestataire_profile_form_provider.dart';
+import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
@@ -67,7 +73,44 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       return;
     }
 
+    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+    if (user != null && becomeResume != null) {
+      if (BecomePrestataireFlowResume.needsPrestataireRole) {
+        await LocalCacheService.instance.setSelectedRole('prestataire');
+      }
+      if (!mounted) return;
+      context.go(becomeResume);
+      return;
+    }
+
     if (user != null) {
+      try {
+        final roles = await container.read(myRolesProvider.future);
+        await AuthRoleCache.persistServerRoles(roles);
+
+        final prestaProfile =
+            await container.read(currentPrestataireProvider.future);
+        if (prestaProfile != null) {
+          await LocalCacheService.instance.setSelectedRole('prestataire');
+          await LocalCacheService.instance.setSignupShellRole('prestataire');
+        }
+      } catch (_) {
+        // PostAuthNavigation reprendra avec le cache local.
+      }
+
+      if (LocalCacheService.instance.selectedRole == 'prestataire') {
+        try {
+          final profile =
+              await container.read(prestataireProfileFormProvider.future);
+          if (!profile.isProfessionallyComplete) {
+            if (!mounted) return;
+            context.go(AppRoutes.prestataireProfileEdit);
+            return;
+          }
+        } catch (_) {
+          // PostAuthNavigation reprendra.
+        }
+      }
       if (!mounted) return;
       await PostAuthNavigation.navigateWithContainer(context, container);
       return;

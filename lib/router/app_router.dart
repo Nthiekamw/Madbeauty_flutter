@@ -31,6 +31,7 @@ import '../features/prestataire/screens/prestataire_hub_screen.dart';
 import '../features/prestataire/screens/prestataire_profile_completion_screen.dart';
 import '../features/prestataire/screens/prestataire_profile_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
+import '../features/profile/screens/edit_client_account_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/splash/screens/startup_splash_screen.dart';
@@ -57,6 +58,7 @@ abstract final class AppRoutes {
   static const String clientSearch = '/client/search';
   static const String clientReservations = '/client/reservations';
   static const String clientProfile = '/client/profile';
+  static const String editClientAccount = '/client/profile/edit';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -94,6 +96,7 @@ abstract final class AppRouteNames {
   static const String clientSearch = 'client-search';
   static const String clientReservations = 'client-reservations';
   static const String clientProfile = 'client-profile';
+  static const String editClientAccount = 'edit-client-account';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -106,19 +109,35 @@ abstract final class AppRouteNames {
   static const String prestataireHoraires = 'prestataire-horaires';
 }
 
+/// Recalcule les [redirect] sans recréer [GoRouter] (évite le double clic invité).
+final routerRefreshListenableProvider = Provider<Listenable>((ref) {
+  final notifier = ValueNotifier<int>(0);
+  void bump() => notifier.value++;
+
+  ref.listen(authNotifierProvider, (_, __) => bump());
+  ref.listen(guestModeProvider, (_, __) => bump());
+  ref.listen(isPasswordRecoveryActiveProvider, (_, __) => bump());
+
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
+
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authNotifierProvider);
-  final recoveryActive = ref.watch(isPasswordRecoveryActiveProvider);
+  final refreshListenable = ref.watch(routerRefreshListenableProvider);
 
-  final user = switch (auth) {
-    AsyncData(:final value) => value,
-    _ => null,
-  };
-  final guestMode = ref.watch(guestModeProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
+      final auth = ref.read(authNotifierProvider);
+      final recoveryActive = ref.read(isPasswordRecoveryActiveProvider);
+      final guestMode = ref.read(guestModeProvider);
+
+      final user = switch (auth) {
+        AsyncData(:final value) => value,
+        _ => null,
+      };
+
       final location = state.matchedLocation;
       final publicRoutes = <String>{
         AppRoutes.splash,
@@ -156,6 +175,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (legacy != null) return legacy;
 
       if (auth.isLoading) {
+        // Ne pas interrompre l’inscription : signUp met auth en loading et
+        // sinon le splash relance PostAuthNavigation avant ensureRole(prestataire).
+        if (location == AppRoutes.register) return null;
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
 
@@ -187,12 +209,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.welcome;
       }
 
-      if (location == AppRoutes.register && registerDraftPending) {
+      final registerWizardOngoing = registerDraftPending ||
+          (RegisterWizardDraftStore.instance.read()?.signedUpViaOAuth ?? false);
+
+      if (location == AppRoutes.register && registerWizardOngoing) {
         return null;
       }
 
-      if (location == AppRoutes.splash ||
-          location == AppRoutes.onboarding ||
+      // Le splash exécute PostAuthNavigation après sync des rôles serveur.
+      if (location == AppRoutes.splash) {
+        return null;
+      }
+
+      if (location == AppRoutes.onboarding ||
           location == AppRoutes.welcome ||
           guestOnlyRoutes.contains(location)) {
         return preferredPath;
@@ -245,6 +274,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.becomePrestataire,
         path: AppRoutes.becomePrestataire,
         builder: (context, state) => const BecomePrestataireScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.editClientAccount,
+        path: AppRoutes.editClientAccount,
+        builder: (context, state) => const EditClientAccountScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',
@@ -427,4 +461,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  ref.onDispose(router.dispose);
+  return router;
 });

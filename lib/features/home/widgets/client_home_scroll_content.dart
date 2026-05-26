@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import 'client_home_explore_row.dart';
+import 'client_home_feed_prestataires_section.dart';
 import 'client_home_header.dart';
 import 'client_home_nearby_prestataires_section.dart';
 import 'client_home_search_card.dart';
@@ -12,7 +15,7 @@ import 'client_home_top_rated_prestataires_section.dart';
 import '../theme/home_styles.dart';
 
 /// Contenu scrollable partagé (connecté + invité).
-class ClientHomeScrollContent extends StatelessWidget {
+class ClientHomeScrollContent extends ConsumerWidget {
   const ClientHomeScrollContent({
     super.key,
     required this.searchController,
@@ -31,11 +34,13 @@ class ClientHomeScrollContent extends StatelessWidget {
   final bool showCatalogCta;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
+    final pad = DiscoveryResponsive.of(context).horizontalPadding;
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      padding: EdgeInsets.fromLTRB(pad, 8, pad, 32),
       children: [
         header,
         const SizedBox(height: 20),
@@ -52,6 +57,8 @@ class ClientHomeScrollContent extends StatelessWidget {
         const SizedBox(height: 28),
         ClientHomeExploreRow(onPick: onExplorePick),
         if (AppConfig.hasSupabase) ...[
+          const SizedBox(height: 32),
+          const ClientHomeFeedPrestatairesSection(),
           const SizedBox(height: 32),
           const ClientHomeNearbyPrestatairesSection(),
           const SizedBox(height: 32),

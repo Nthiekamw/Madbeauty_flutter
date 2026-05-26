@@ -4,9 +4,10 @@ import '../../../shared/theme/auth_form_styles.dart';
 
 /// Carte formulaire sur fond brand (connexion / inscription).
 class AuthFormCard extends StatelessWidget {
-  const AuthFormCard({super.key, required this.child});
+  const AuthFormCard({super.key, required this.child, this.compact = false});
 
   final Widget child;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,9 @@ class AuthFormCard extends StatelessWidget {
               ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+        padding: compact
+            ? const EdgeInsets.fromLTRB(14, 14, 14, 14)
+            : const EdgeInsets.fromLTRB(20, 22, 20, 22),
         child: child,
       ),
     );

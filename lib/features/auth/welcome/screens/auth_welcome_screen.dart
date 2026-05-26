@@ -219,13 +219,9 @@ class AuthWelcomeScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
 
                   TextButton(
-
                     onPressed: () {
-
                       ref.read(guestModeProvider.notifier).enable();
-
-                      context.go(AppRoutes.clientHome);
-
+                      context.goNamed(AppRouteNames.clientHome);
                     },
 
                     child: Text(

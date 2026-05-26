@@ -44,6 +44,7 @@ class _RoleChoiceScreenState extends ConsumerState<RoleChoiceScreen> {
       final roles = await ref.read(myRolesProvider.future);
       await AuthRoleCache.persistServerRoles(roles);
       await LocalCacheService.instance.setSelectedRole(role.value);
+      await LocalCacheService.instance.setSignupShellRole(role.value);
       if (!mounted) return;
 
       if (role == UserRole.prestataire) {

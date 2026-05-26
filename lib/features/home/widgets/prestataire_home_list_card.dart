@@ -6,7 +6,7 @@ import '../../../core/geo/geo_utils.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../prestataire/widgets/prestataire_card_photo_header.dart';
 import '../theme/home_styles.dart';
 
 /// Carte compacte pour listes horizontales d’accueil (proches, mieux notés).
@@ -15,12 +15,18 @@ class PrestataireHomeListCard extends StatelessWidget {
     super.key,
     required this.profile,
     this.distanceOrigin,
+    this.cardWidth,
+    this.cardHeight,
+    this.photoHeight,
   });
 
   final PrestataireProfile profile;
 
   /// Si fourni et que le profil a des coordonnées, affiche la distance.
   final GeoPoint? distanceOrigin;
+  final double? cardWidth;
+  final double? cardHeight;
+  final double? photoHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +47,10 @@ class PrestataireHomeListCard extends StatelessWidget {
           )
         : double.infinity;
     final rating = profile.noteMoyenne;
+    final radius = HomeStyles.cardBorderRadius;
+    final w = cardWidth ?? HomeStyles.listCardWidth;
+    final h = cardHeight ?? HomeStyles.listCardHeight;
+    final photoH = photoHeight ?? HomeStyles.listCardPhotoHeight;
 
     return Material(
       color: theme.colorScheme.surface.withValues(
@@ -48,94 +58,109 @@ class PrestataireHomeListCard extends StatelessWidget {
       ),
       elevation: isDark ? 0 : 1,
       shadowColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-      borderRadius: HomeStyles.cardBorderRadius,
+      borderRadius: radius,
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
-        borderRadius: HomeStyles.cardBorderRadius,
+        borderRadius: radius,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: HomeStyles.cardBorderRadius,
+            borderRadius: radius,
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.16),
             ),
           ),
           child: SizedBox(
-            width: HomeStyles.listCardWidth,
-            height: HomeStyles.listCardHeight,
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      AppAvatar(
-                        displayName: title,
-                        radius: 24,
-                      ),
-                      const Spacer(),
-                      if (profile.isVerified)
-                        Icon(
-                          Icons.verified_rounded,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                    ],
+            width: w,
+            height: h,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PrestataireCardPhotoHeader(
+                  prestataireId: profile.id,
+                  height: photoH,
+                  width: w,
+                  borderRadius: BorderRadius.only(
+                    topLeft: radius.topLeft,
+                    topRight: radius.topRight,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                  if (ville != null && ville.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
+                  fallbackDisplayName: title,
+                  compactBadge: true,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            ville,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontFamily: AppFonts.display,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.2,
+                                ),
+                              ),
                             ),
+                            if (profile.isVerified)
+                              Icon(
+                                Icons.verified_rounded,
+                                size: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                          ],
+                        ),
+                        if (ville != null && ville.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  ville,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                        ],
+                        const Spacer(),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (rating != null)
+                              _InfoChip(
+                                icon: Icons.star_rounded,
+                                label: rating.toStringAsFixed(1),
+                                emphasized: true,
+                              ),
+                            if (!km.isInfinite && !km.isNaN)
+                              _InfoChip(
+                                icon: Icons.near_me_outlined,
+                                label: DiscHome.nearbyKm(km),
+                              ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                  const Spacer(),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      if (rating != null)
-                        _InfoChip(
-                          icon: Icons.star_rounded,
-                          label: rating.toStringAsFixed(1),
-                          emphasized: true,
-                        ),
-                      if (!km.isInfinite && !km.isNaN)
-                        _InfoChip(
-                          icon: Icons.near_me_outlined,
-                          label: DiscHome.nearbyKm(km),
-                        ),
-                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

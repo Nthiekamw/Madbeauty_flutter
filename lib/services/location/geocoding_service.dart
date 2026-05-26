@@ -18,6 +18,29 @@ class GeocodingService {
     }
   }
 
+  /// Ville ou localité à partir de coordonnées GPS.
+  Future<String?> reverseGeocodeCity(GeoPoint point) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        point.latitude,
+        point.longitude,
+      );
+      if (placemarks.isEmpty) return null;
+      final place = placemarks.first;
+      for (final candidate in [
+        place.locality,
+        place.subAdministrativeArea,
+        place.administrativeArea,
+      ]) {
+        final value = candidate?.trim();
+        if (value != null && value.isNotEmpty) return value;
+      }
+      return null;
+    } on Exception {
+      return null;
+    }
+  }
+
   String _normalizeQuery(String query) {
     final lower = query.toLowerCase();
     if (lower.contains('france') ||

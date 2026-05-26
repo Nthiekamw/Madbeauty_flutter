@@ -8,6 +8,7 @@ import '../../../services/auth/auth_service.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../profile/storage/become_prestataire_draft_store.dart';
 
 /// Accès à [AuthService] (nécessite Supabase configuré au lancement).
 final authSupabaseEnabledProvider = Provider<bool>((ref) {
@@ -80,8 +81,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await LocalCacheService.instance.remove(LocalCacheService.lastSignedInEmailKey);
     await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
     await LocalCacheService.instance.clearSelectedRole();
+    await LocalCacheService.instance.clearSignupShellRole();
     await LocalCacheService.instance.clearCachedServerRoles();
     await LocalCacheService.instance.setGuestModeActive(false);
+    await BecomePrestataireDraftStore.instance.clear();
   }
 
   Future<User?> _readInitialUser() async {

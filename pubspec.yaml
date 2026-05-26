@@ -53,6 +53,7 @@ dependencies:
     sdk: flutter
   geocoding: ^4.0.0
   package_info_plus: ^9.0.1
+  permission_handler: ^11.4.0
 
 dev_dependencies:
   flutter_test:
@@ -103,6 +104,7 @@ flutter:
 
   assets:
     - assets/images/logo.png
+    - assets/images/google_logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

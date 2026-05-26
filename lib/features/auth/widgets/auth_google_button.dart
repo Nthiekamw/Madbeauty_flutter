@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
+import '../../../shared/widgets/google_logo.dart';
 
 /// Bouton OAuth Google cohérent avec la charte MadBeauty.
 class AuthGoogleButton extends StatelessWidget {
@@ -38,7 +39,10 @@ class AuthGoogleButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _GoogleMark(color: theme.colorScheme.onSurface),
+          Opacity(
+            opacity: enabled ? 1 : 0.45,
+            child: const GoogleLogo(size: 22),
+          ),
           const SizedBox(width: 12),
           Text(
             label,
@@ -46,59 +50,13 @@ class AuthGoogleButton extends StatelessWidget {
               fontFamily: AppFonts.body,
               fontWeight: FontWeight.w600,
               fontSize: 15,
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.onSurface.withValues(
+                alpha: enabled ? 1 : 0.45,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _GoogleMark extends StatelessWidget {
-  const _GoogleMark({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 22,
-      height: 22,
-      child: CustomPaint(painter: _GoogleGlyphPainter(color: color)),
-    );
-  }
-}
-
-class _GoogleGlyphPainter extends CustomPainter {
-  _GoogleGlyphPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final r = size.width * 0.38;
-    final c = Offset(size.width / 2, size.height / 2);
-    canvas.drawArc(
-      Rect.fromCircle(center: c, radius: r),
-      0.4,
-      4.8,
-      false,
-      paint,
-    );
-    canvas.drawLine(
-      Offset(c.dx + r * 0.55, c.dy + r * 0.55),
-      Offset(size.width - 1, size.height - 1),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

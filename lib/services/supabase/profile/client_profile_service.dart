@@ -23,4 +23,18 @@ class ClientProfileService {
           );
         },
       );
+
+  Future<void> updateAdresse({
+    required String userId,
+    String? adresse,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'clientProfile.updateAdresse',
+        action: () async {
+          final value = adresse?.trim();
+          await _client.from('client_profiles').update({
+            'adresse': value == null || value.isEmpty ? null : value,
+          }).eq('user_id', userId);
+        },
+      );
 }

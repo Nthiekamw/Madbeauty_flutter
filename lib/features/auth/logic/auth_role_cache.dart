@@ -1,4 +1,6 @@
 import '../../../core/models/user_role.dart';
+import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
+import '../../../features/profile/storage/become_prestataire_draft_store.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 
@@ -18,16 +20,28 @@ abstract final class AuthRoleCache {
 
     if (effective != null) {
       await LocalCacheService.instance.setSelectedRole(effective);
-    } else if (LocalCacheService.instance.selectedRole != null) {
+    } else if (!_keepCachedRoleOnAmbiguousRoles()) {
       await LocalCacheService.instance.clearSelectedRole();
     }
+  }
+
+  static bool _keepCachedRoleOnAmbiguousRoles() {
+    final cache = LocalCacheService.instance;
+    if (cache.selectedRole == 'prestataire') return true;
+    if (cache.signupShellRole == 'prestataire') return true;
+    if (BecomePrestataireDraftStore.instance.hasDraft) return true;
+    return false;
   }
 
   static String? resolveEffectiveRole({
     required List<String> serverRoleValues,
     String? cachedRole,
   }) {
-    if (serverRoleValues.isEmpty) return null;
+    final signupIntent = LocalCacheService.instance.signupShellRole;
+
+    if (serverRoleValues.isEmpty) {
+      return cachedRole ?? signupIntent;
+    }
 
     if (cachedRole == 'prestataire' &&
         serverRoleValues.contains('prestataire')) {
@@ -36,14 +50,42 @@ abstract final class AuthRoleCache {
     if (cachedRole == 'client' && serverRoleValues.contains('client')) {
       return 'client';
     }
+
+    // Choix explicite (inscription) pas encore visible côté serveur.
+    if (cachedRole != null && !serverRoleValues.contains(cachedRole)) {
+      return cachedRole;
+    }
+
+    if (signupIntent == 'prestataire' &&
+        !serverRoleValues.contains('prestataire')) {
+      return 'prestataire';
+    }
+
+    if (serverRoleValues.length > 1) {
+      if (signupIntent != null && serverRoleValues.contains(signupIntent)) {
+        return signupIntent;
+      }
+      if (BecomePrestataireDraftStore.instance.hasDraft) {
+        return 'prestataire';
+      }
+      return cachedRole ?? signupIntent;
+    }
+
     if (serverRoleValues.length == 1) {
-      return serverRoleValues.first;
+      final only = serverRoleValues.first;
+      if (only == 'client' && signupIntent == 'prestataire') {
+        return 'prestataire';
+      }
+      return only;
     }
     return null;
   }
 
   /// Chemin shell pour un utilisateur connecté (sync, pour [GoRouter.redirect]).
   static String preferredAuthenticatedPath() {
+    final resume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+    if (resume != null) return resume;
+
     final effective = resolveEffectiveRole(
       serverRoleValues: LocalCacheService.instance.cachedServerRoles,
       cachedRole: LocalCacheService.instance.selectedRole,

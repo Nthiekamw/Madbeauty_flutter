@@ -11,7 +11,9 @@ import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/current_prestataire_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
+import '../providers/disponibilite_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
+import '../widgets/prestataire_profile_enrichment_banner.dart';
 import '../widgets/prestataire_agenda_reservation_card.dart';
 import '../widgets/prestataire_completeness_badge.dart';
 import '../widgets/prestataire_dashboard_section.dart';
@@ -57,7 +59,12 @@ class _PrestataireDashboardScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
+    final horairesAsync = ref.watch(prestataireHorairesProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
+    final hasHoraires = horairesAsync.maybeWhen(
+      data: (h) => h.isNotEmpty,
+      orElse: () => false,
+    );
     final currentPrestataire = switch (ref.watch(currentPrestataireProvider)) {
       AsyncData(:final value) => value,
       _ => null,
@@ -95,6 +102,9 @@ class _PrestataireDashboardScreenState
                 ),
                 if (!data.isProfessionallyComplete)
                   const PrestataireProfileIncompleteBanner(),
+                if (data.isProfessionallyComplete &&
+                    !data.isProfileFullyEnriched(hasHoraires: hasHoraires))
+                  const PrestataireProfileEnrichmentBanner(),
                 dashboardAsync.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.all(32),
