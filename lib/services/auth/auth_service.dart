@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/failure_mapper.dart';
+import 'auth_session_sanitizer.dart';
 import '../supabase/supabase_service.dart';
 
 /// Accès à [GoTrueClient] (`supabase.auth`) : email/mot de passe, OAuth, session.
@@ -23,7 +24,8 @@ class AuthService {
 
   Session? get currentSession => _auth.currentSession;
 
-  Stream<AuthState> get onAuthStateChange => _auth.onAuthStateChange;
+  Stream<AuthState> get onAuthStateChange =>
+      AuthSessionSanitizer.streamWithRecovery(_auth);
 
   Future<T> _runAuth<T>(Future<T> Function() action) async {
     try {

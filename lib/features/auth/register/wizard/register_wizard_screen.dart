@@ -550,42 +550,54 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_restoredDraft) ...[
-            _DraftRestoredBanner(
-              onRestart: () async {
-                await _clearDraft();
-                if (!mounted) return;
-                setState(() {
-                  _restoredDraft = false;
-                  _step = 0;
-                  _roleChoice = null;
-                  _signedUpViaOAuth = false;
-                  _phoneRequiredOnExtras = false;
-                  _prenom.clear();
-                  _nom.clear();
-                  _phone.clear();
-                  _email.clear();
-                  _password.clear();
-                  _confirm.clear();
-                  _adresse.clear();
-                  _salon.clear();
-                  _ville.clear();
-                  _bio.clear();
-                });
-                _pageController.jumpToPage(0);
-              },
+          Flexible(
+            fit: FlexFit.loose,
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_restoredDraft) ...[
+                    _DraftRestoredBanner(
+                      onRestart: () async {
+                        await _clearDraft();
+                        if (!mounted) return;
+                        setState(() {
+                          _restoredDraft = false;
+                          _step = 0;
+                          _roleChoice = null;
+                          _signedUpViaOAuth = false;
+                          _phoneRequiredOnExtras = false;
+                          _prenom.clear();
+                          _nom.clear();
+                          _phone.clear();
+                          _email.clear();
+                          _password.clear();
+                          _confirm.clear();
+                          _adresse.clear();
+                          _salon.clear();
+                          _ville.clear();
+                          _bio.clear();
+                        });
+                        _pageController.jumpToPage(0);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  AuthStepHeader(
+                    currentStep: _step,
+                    labels: const [
+                      AuthStrings.registerStepLabelIdentity,
+                      AuthStrings.registerStepLabelRole,
+                      AuthStrings.registerStepLabelExtras,
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-          ],
-          AuthStepHeader(
-            currentStep: _step,
-            labels: const [
-              AuthStrings.registerStepLabelIdentity,
-              AuthStrings.registerStepLabelRole,
-              AuthStrings.registerStepLabelExtras,
-            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Expanded(
             child: PageView(
               controller: _pageController,
@@ -873,7 +885,7 @@ class _DraftRestoredBanner extends StatelessWidget {
       color: theme.colorScheme.primaryContainer.withValues(alpha: 0.85),
       borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

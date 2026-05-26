@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../services/auth/auth_service.dart';
+import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 
@@ -112,6 +115,11 @@ class AuthNotifier extends AsyncNotifier<User?> {
             state = AsyncData(streamUser);
           },
           error: (error, stackTrace) {
+            if (AuthSessionSanitizer.isStaleSessionError(error)) {
+              unawaited(_clearAuthCache());
+              state = const AsyncData(null);
+              return;
+            }
             state = AsyncError(error, stackTrace);
           },
           loading: () {},
