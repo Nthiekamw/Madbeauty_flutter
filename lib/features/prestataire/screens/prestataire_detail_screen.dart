@@ -6,6 +6,7 @@ import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../features/messaging/messaging_navigation.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
@@ -53,7 +54,8 @@ class PrestataireDetailScreen extends ConsumerWidget {
                 avatarUrl: data.avatarUrl,
                 isOwnProfile: isOwnProfile,
                 onBook: () => context.pushBooking(prestataireId: data.profile.id),
-                onContact: () => context.goClientMessages(),
+                onContact: () =>
+                    openChatWithPrestataire(context, ref, data.profile.id),
               ),
               SliverToBoxAdapter(
                 child: Column(

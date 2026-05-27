@@ -16,6 +16,7 @@ import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../profile/logic/become_prestataire_draft.dart';
 import '../../../profile/storage/become_prestataire_draft_store.dart';
 import '../../../../services/auth/post_signup_profile_service.dart';
+import '../../../../services/auth/role_service.dart';
 import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
@@ -377,13 +378,22 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     return false;
   }
 
-  Future<void> _syncRoleBestEffort(UserRole role) async {
-    final rolesService = ref.read(roleServiceProvider);
+  /// [container] : pour [ProviderContainer.invalidate] uniquement après la sync.
+  ///
+  /// Aucun `ref.read` ni `container.read(provider)` qui déclenche le graphe des
+  /// providers d’auth ici : l’écran peut être démonté pendant les `await` et
+  /// Riverpod ferait alors lever « ref while unmounted ».
+  Future<void> _syncRoleBestEffort(
+    UserRole role,
+    ProviderContainer container,
+  ) async {
+    if (!AppConfig.hasSupabase) return;
+    final rolesService = RoleService.fromEnv();
     try {
       await rolesService.ensureRole(role);
-      ref.invalidate(myRolesProvider);
-      final serverRoles = await ref.read(myRolesProvider.future);
+      final serverRoles = await rolesService.getMyRoles();
       await AuthRoleCache.persistServerRoles(serverRoles);
+      container.invalidate(myRolesProvider);
     } catch (e) {
       if (!_isRoleSyncForbidden(e)) rethrow;
       // RLS/permission transitoire: on poursuit avec le rôle local choisi.
@@ -442,6 +452,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     setState(() => _loading = true);
 
+    if (!mounted) return;
+    final providerContainer = ProviderScope.containerOf(context);
+
     try {
       final prenom = _prenom.text.trim();
       final nom = _nom.text.trim();
@@ -450,13 +463,16 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       final phone =
           phoneNumber.isEmpty ? '' : '$_phoneDialCode $phoneNumber';
 
-      User? session = switch (ref.read(authNotifierProvider)) {
+      User? session = switch (
+          providerContainer.read(authNotifierProvider)) {
         AsyncData(:final value) => value,
         _ => null,
       };
 
       if (!_signedUpViaOAuth) {
-        await ref.read(authNotifierProvider.notifier).signUpWithPassword(
+        await providerContainer
+            .read(authNotifierProvider.notifier)
+            .signUpWithPassword(
               email: email,
               password: _password.text,
               displayName: '$prenom $nom'.trim(),
@@ -467,7 +483,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
         if (!mounted) return;
 
-        final authState = ref.read(authNotifierProvider);
+        final authState = providerContainer.read(authNotifierProvider);
 
         if (authState.hasError) {
           final err = authState.error;
@@ -485,8 +501,11 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           _ => null,
         };
 
-        session =
-            ref.read(authServiceProvider).currentSession?.user ?? session;
+        session = providerContainer
+                .read(authServiceProvider)
+                .currentSession
+                ?.user ??
+            session;
         if (session == null) {
           setState(() {
             _loading = false;
@@ -520,8 +539,10 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         phone: phone,
       );
 
+      if (!mounted) return;
+
       if (_roleChoice == UserRole.prestataire) {
-        await _syncRoleBestEffort(UserRole.prestataire);
+        await _syncRoleBestEffort(UserRole.prestataire, providerContainer);
         await post.updatePrestataireExtras(
           userId: uid,
           nomSalon: _salon.text.trim(),
@@ -539,7 +560,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
         );
       } else {
-        await _syncRoleBestEffort(UserRole.client);
+        await _syncRoleBestEffort(UserRole.client, providerContainer);
         await post.updateClientExtras(
           userId: uid,
           adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
@@ -567,7 +588,11 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
             step2Started: true,
           ),
         );
-        await PrestataireNavigation.afterPrestaRegistration(context, ref);
+        if (!mounted) return;
+        await PrestataireNavigation.afterPrestaRegistration(
+          context,
+          providerContainer,
+        );
       } else {
         context.goHome();
       }

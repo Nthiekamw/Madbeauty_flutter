@@ -6,8 +6,10 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../../profile/logic/become_prestataire_flow_resume.dart';
+import '../../prestataire/providers/current_prestataire_provider.dart';
 import '../logic/auth_role_cache.dart';
 import '../providers/my_roles_provider.dart';
+import '../../../services/supabase/profile/client_profile_providers.dart';
 
 /// Destination après connexion, inscription ou splash (rôles serveur + cache).
 abstract final class PostAuthNavigation {
@@ -42,6 +44,17 @@ abstract final class PostAuthNavigation {
     if (!context.mounted) return;
 
     if (roles.isEmpty) {
+      final inferredRole = await _inferRoleFromProfiles(ref);
+      if (inferredRole != null) {
+        await LocalCacheService.instance.setSelectedRole(inferredRole);
+        if (!context.mounted) return;
+        if (inferredRole == 'prestataire') {
+          await PrestataireNavigation.switchToPrestataireSpace(context, ref);
+        } else {
+          context.goHome();
+        }
+        return;
+      }
       final pending = LocalCacheService.instance.selectedRole;
       if (pending == 'prestataire') {
         await PrestataireNavigation.switchToPrestataireSpace(context, ref);
@@ -62,6 +75,17 @@ abstract final class PostAuthNavigation {
     if (!context.mounted) return;
 
     if (effective == null) {
+      final inferredRole = await _inferRoleFromProfiles(ref);
+      if (inferredRole != null) {
+        await LocalCacheService.instance.setSelectedRole(inferredRole);
+        if (!context.mounted) return;
+        if (inferredRole == 'prestataire') {
+          await PrestataireNavigation.switchToPrestataireSpace(context, ref);
+        } else {
+          context.goHome();
+        }
+        return;
+      }
       context.goRoleChoice();
       return;
     }
@@ -98,6 +122,20 @@ abstract final class PostAuthNavigation {
     if (!context.mounted) return;
 
     if (roles.isEmpty) {
+      final inferredRole = await _inferRoleFromProfilesWithContainer(container);
+      if (inferredRole != null) {
+        await LocalCacheService.instance.setSelectedRole(inferredRole);
+        if (!context.mounted) return;
+        if (inferredRole == 'prestataire') {
+          await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
+            context,
+            container,
+          );
+        } else {
+          context.goHome();
+        }
+        return;
+      }
       final pending = LocalCacheService.instance.selectedRole;
       if (pending == 'prestataire') {
         await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
@@ -121,6 +159,20 @@ abstract final class PostAuthNavigation {
     if (!context.mounted) return;
 
     if (effective == null) {
+      final inferredRole = await _inferRoleFromProfilesWithContainer(container);
+      if (inferredRole != null) {
+        await LocalCacheService.instance.setSelectedRole(inferredRole);
+        if (!context.mounted) return;
+        if (inferredRole == 'prestataire') {
+          await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
+            context,
+            container,
+          );
+        } else {
+          context.goHome();
+        }
+        return;
+      }
       context.goRoleChoice();
       return;
     }
@@ -136,5 +188,23 @@ abstract final class PostAuthNavigation {
     } else {
       context.goHome();
     }
+  }
+
+  static Future<String?> _inferRoleFromProfiles(WidgetRef ref) async {
+    final client = await ref.read(currentClientProfileProvider.future);
+    final presta = await ref.read(currentPrestataireProvider.future);
+    if (client != null && presta == null) return 'client';
+    if (presta != null && client == null) return 'prestataire';
+    return null;
+  }
+
+  static Future<String?> _inferRoleFromProfilesWithContainer(
+    ProviderContainer container,
+  ) async {
+    final client = await container.read(currentClientProfileProvider.future);
+    final presta = await container.read(currentPrestataireProvider.future);
+    if (client != null && presta == null) return 'client';
+    if (presta != null && client == null) return 'prestataire';
+    return null;
   }
 }

@@ -7,8 +7,10 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/user_role.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
+import '../../prestataire/providers/current_prestataire_provider.dart';
 import '../navigation/client_navigation.dart';
 import '../providers/my_roles_provider.dart';
 import 'become_prestataire_cta_card.dart';
@@ -31,14 +33,40 @@ class RoleSwitchSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final rolesAsync = ref.watch(myRolesProvider);
+    final prestaProfileAsync = ref.watch(currentPrestataireProvider);
+    final clientProfileAsync = ref.watch(currentClientProfileProvider);
     final activeRole = _activeRoleFromContext(context);
 
     return Padding(
       padding: padding,
       child: rolesAsync.when(
         data: (roles) {
-          final hasClient = roles.contains(UserRole.client);
-          final hasPresta = roles.contains(UserRole.prestataire);
+          final hasClientByRole = roles.contains(UserRole.client);
+          final hasPrestaByRole = roles.contains(UserRole.prestataire);
+          final hasPrestaByProfile = switch (prestaProfileAsync) {
+            AsyncData(:final value) => value != null,
+            _ => false,
+          };
+          final hasPresta =
+              hasPrestaByRole || hasPrestaByProfile || activeRole == 'prestataire';
+
+          final hasClientByProfile = switch (clientProfileAsync) {
+            AsyncData(:final value) => value != null,
+            _ => false,
+          };
+          final hasClient = hasClientByRole || hasClientByProfile;
+
+          /// Même logique que le profil prestataire : évite une zone vide si
+          /// `user_roles` n’a pas encore (ou pas) la ligne « client ».
+          final awaitingClientProfile = !hasClientByRole &&
+              !hasPresta &&
+              clientProfileAsync.isLoading;
+          if (awaitingClientProfile) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
 
           if (!hasClient && !hasPresta) {
             return const SizedBox.shrink();

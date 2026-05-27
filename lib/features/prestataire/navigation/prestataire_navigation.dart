@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/user_role.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/my_roles_provider.dart';
@@ -33,21 +34,25 @@ abstract final class PrestataireNavigation {
   }
 
   /// Après inscription prestataire : hub profil (choix déjà fait à l’étape 2).
+  ///
+  /// [container] : le widget d’inscription peut être démonté avant cette suite ;
+  /// ne pas utiliser le [WidgetRef] du formulaire après des `await`.
   static Future<void> afterPrestaRegistration(
     BuildContext context,
-    WidgetRef ref,
+    ProviderContainer container,
   ) async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
     await LocalCacheService.instance.setSignupShellRole('prestataire');
     try {
-      ref.invalidate(myRolesProvider);
-      final roles = await ref.read(myRolesProvider.future);
+      final rolesService = RoleService.fromEnv();
+      final roles = await rolesService.getMyRoles();
       await AuthRoleCache.persistServerRoles(roles);
+      container.invalidate(myRolesProvider);
     } catch (_) {
       // On continue avec le rôle local pour ne pas bloquer le parcours.
     }
     await PrestataireHubOnboardingDraft.markStep2Started();
-    ref.invalidate(prestataireProfileFormProvider);
+    container.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
     context.goPrestataireProfile();
     if (!context.mounted) return;

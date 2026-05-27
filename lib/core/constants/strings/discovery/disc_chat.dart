@@ -10,9 +10,6 @@ abstract final class DiscChat {
       'Réserve un prestataire puis utilise le bouton Chat sur ta réservation pour démarrer un échange.';
   static const emptyBodyPresta =
       'Quand une cliente réserve chez toi, la conversation apparaîtra ici automatiquement.';
-  static const emptyActionBrowse = 'Découvrir les prestataires';
-  static const emptyActionReservations = 'Voir mes réservations';
-  static const emptyActionAgenda = 'Voir mon agenda';
   static const readLabel = 'Lu';
   static const unreadLabel = 'Non lu';
   static String unreadCountLabel(int count) =>
@@ -28,6 +25,9 @@ abstract final class DiscChat {
   static const reservationPrefix = 'Réservation';
   static const you = 'Vous';
   static const openChat = 'Chat';
+  /// Message quand « Contacter » est utilisé sans aucune réservation avec ce pro.
+  static const contactRequiresBooking =
+      'Réserve d\'abord chez ce prestataire pour pouvoir lui écrire.';
   static const today = 'Aujourd\'hui';
   static const yesterday = 'Hier';
 }

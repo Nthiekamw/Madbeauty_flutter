@@ -235,6 +235,53 @@ class MessagingService {
     return labelByPresta;
   }
 
+  /// Fils existants en priorité ; sinon dernière réservation (hors annulée si possible).
+  Future<String?> findLatestBookingIdForClientPrestaPair({
+    required String clientProfileId,
+    required String prestataireId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'messaging.findLatestBookingIdForClientPrestaPair',
+        action: () async {
+          final convRows = await _client
+              .from('conversations')
+              .select('reservation_id')
+              .eq('client_id', clientProfileId)
+              .eq('prestataire_id', prestataireId)
+              .order('last_message_at', ascending: false);
+
+          for (final raw in convRows as List<dynamic>) {
+            final id = Map<String, dynamic>.from(raw as Map)['reservation_id']
+                as String?;
+            if (id != null && id.isNotEmpty) return id;
+          }
+
+          final resRows = await _client
+              .from('reservations')
+              .select('id, statut')
+              .eq('client_id', clientProfileId)
+              .eq('prestataire_id', prestataireId)
+              .order('date_heure', ascending: false);
+
+          String? latestAny;
+          for (final raw in resRows as List<dynamic>) {
+            final m = Map<String, dynamic>.from(raw as Map);
+            final id = m['id'] as String?;
+            if (id == null || id.isEmpty) continue;
+            latestAny ??= id;
+            final rawStatut = m['statut'];
+            final statut =
+                rawStatut is String
+                    ? rawStatut.trim().toLowerCase().replaceAll('é', 'e')
+                    : '';
+            if (!const {'annulee', 'cancelled', 'canceled'}.contains(statut)) {
+              return id;
+            }
+          }
+          return latestAny;
+        },
+      );
+
   Future<Map<String, String>> _clientDisplayNames(
     List<String> clientIds,
   ) async {
