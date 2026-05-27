@@ -14,16 +14,12 @@ import '../../../features/prestataire/providers/current_prestataire_provider.dar
 import '../profile/client_profile_providers.dart';
 import '../profile/profile_providers.dart';
 import '../supabase_service.dart';
-import 'booking_reservation_providers.dart';
 import 'booking_service.dart';
 
 final bookingServiceProvider = Provider<BookingService?>((ref) {
   if (!AppConfig.hasSupabase) return null;
-  final slots = ref.watch(bookingReservationServiceProvider);
-  if (slots == null) return null;
   return BookingService(
     SupabaseService.client,
-    slots,
     ref.watch(profileServiceProvider),
   );
 });

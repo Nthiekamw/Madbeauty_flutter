@@ -13,24 +13,34 @@ abstract final class DiscPrestaCompletion {
   static const stepIntro = 'Bienvenue';
   static const stepBasics = 'Salon & vitrine';
   static const stepServices = 'Services & tarifs';
-  static const stepGallery = 'Réalisations (optionnel)';
+  static const stepGallery = 'Réalisations';
   static const stepDone = 'C’est prêt';
   static const doneHeadline = 'Profil prêt pour le catalogue';
   static const doneBody =
       'Tu peux ajuster ta vitrine à tout moment depuis l’onglet Profil. '
       'Pense à tenir ton agenda à jour.';
+  static const doneTip1 =
+      'Affiner photo, bio et services depuis l’onglet Profil prestataire.';
+  static const doneTip2 =
+      'Réponds vite aux demandes : la réactivité rassure les clientes.';
   static const doneCta = 'Accéder au tableau de bord';
+  static const railTitle = 'Vue d’ensemble';
+  /// Sous-section intro (parcours avant la checklist dynamique).
+  static const checklistLead =
+      'Voici les étapes pour apparaître au mieux dans le catalogue.';
   static const checklistTitle = 'À compléter';
+  static const introTimeHint =
+      'En quelques minutes, ta vitrine est prête.';
   static const checklistBasics =
       'Salon, nom affiché, lieu de travail, adresse, code postal, description & photo';
   static const checklistServices =
       'Au moins un service avec catégorie';
-  static const checklistGallery = 'Photos de réalisations (optionnel)';
+  static const checklistGallery = 'Photos de réalisations';
   static const galleryHint =
-      'Optionnel — ajoute jusqu’à 10 photos de tes meilleures prestations '
-      '(JPEG, PNG ou WebP), ou passe cette étape.';
+      'Ajoute jusqu’à 10 photos de tes meilleures prestations '
+      '(JPEG, PNG ou WebP) pour valoriser ton savoir-faire et rassurer les clientes.';
   static const gallerySkipHint =
-      'Tu pourras en ajouter plus tard depuis ton profil.';
+      'Une belle galerie améliore ta crédibilité et peut augmenter les réservations.';
   static const galleryPick = 'Ajouter des photos';
   static const galleryEmpty = 'Aucune photo pour l’instant.';
   static const galleryUploading = 'Envoi des photos…';

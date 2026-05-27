@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
 import 'profile_section_title.dart';
@@ -40,7 +39,7 @@ class ProfileAccountSection extends StatelessWidget {
               DiscoveryMenuTile(
                 icon: Icons.rate_review_outlined,
                 title: DiscProfile.actionReviews,
-                onTap: () => _comingSoon(context),
+                onTap: () => context.pushClientReviews(),
               ),
               _divider(context),
               DiscoveryMenuTile(
@@ -64,7 +63,4 @@ class ProfileAccountSection extends StatelessWidget {
     );
   }
 
-  void _comingSoon(BuildContext context) {
-    AppSnackBar.show(context, message: DiscProfile.comingSoon);
-  }
 }

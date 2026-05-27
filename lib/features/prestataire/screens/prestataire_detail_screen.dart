@@ -9,7 +9,6 @@ import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/prestataire_favorite_button.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../logic/lieu_travail_display.dart';
@@ -54,10 +53,7 @@ class PrestataireDetailScreen extends ConsumerWidget {
                 avatarUrl: data.avatarUrl,
                 isOwnProfile: isOwnProfile,
                 onBook: () => context.pushBooking(prestataireId: data.profile.id),
-                onContact: () => AppSnackBar.show(
-                  context,
-                  message: DiscPrestaDetail.contactSoon,
-                ),
+                onContact: () => context.goClientMessages(),
               ),
               SliverToBoxAdapter(
                 child: Column(
@@ -449,7 +445,7 @@ class _DetailSliverAppBar extends StatelessWidget {
                             label: DiscPrestaDetail.contact,
                             icon: Icons.chat_bubble_outline_rounded,
                             filled: false,
-                            onPressed: onContact,
+                            onPressed: isOwnProfile ? null : onContact,
                           ),
                         ),
                       ],

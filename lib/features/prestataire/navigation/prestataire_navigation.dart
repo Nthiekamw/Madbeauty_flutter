@@ -9,7 +9,6 @@ import '../../../services/storage/local_cache_service.dart';
 import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
-import '../../profile/storage/become_prestataire_draft_store.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 
@@ -40,9 +39,13 @@ abstract final class PrestataireNavigation {
   ) async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
     await LocalCacheService.instance.setSignupShellRole('prestataire');
-    ref.invalidate(myRolesProvider);
-    final roles = await ref.read(myRolesProvider.future);
-    await AuthRoleCache.persistServerRoles(roles);
+    try {
+      ref.invalidate(myRolesProvider);
+      final roles = await ref.read(myRolesProvider.future);
+      await AuthRoleCache.persistServerRoles(roles);
+    } catch (_) {
+      // On continue avec le rôle local pour ne pas bloquer le parcours.
+    }
     await PrestataireHubOnboardingDraft.markStep2Started();
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;

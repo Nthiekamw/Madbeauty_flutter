@@ -67,12 +67,12 @@ abstract final class ShellStrings {
   static const String navClientHome = 'Accueil';
   static const String navClientSearch = 'Recherche';
   static const String navClientReservations = 'Réservations';
-  static const String navClientMessages = 'Messages';
+  static const String navClientMessages = 'Chat';
   static const String navClientProfile = 'Profil';
 
   static const String navPrestataireDashboard = 'Dashboard';
   static const String navPrestataireAgenda = 'Agenda';
   static const String navPrestataireProfile = 'Profil';
   static const String navPrestataireClients = 'Clients';
-  static const String navPrestataireMessages = 'Messages';
+  static const String navPrestataireMessages = 'Chat';
 }

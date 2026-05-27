@@ -10,12 +10,14 @@ class WeeklyJourHoraire {
     required this.enabled,
     required this.debut,
     required this.fin,
+    required this.capaciteSimultanee,
   });
 
   final int jourSemaine;
   bool enabled;
   TimeOfDay debut;
   TimeOfDay fin;
+  int capaciteSimultanee;
 
   static List<WeeklyJourHoraire> defaultWeek() {
     return [
@@ -25,6 +27,7 @@ class WeeklyJourHoraire {
           enabled: pg >= DateTime.monday && pg <= DateTime.friday,
           debut: const TimeOfDay(hour: 9, minute: 0),
           fin: const TimeOfDay(hour: 18, minute: 0),
+          capaciteSimultanee: 1,
         ),
     ];
   }
@@ -39,6 +42,7 @@ class WeeklyJourHoraire {
           enabled: false,
           debut: template.debut,
           fin: template.fin,
+          capaciteSimultanee: template.capaciteSimultanee,
         );
       }
       return WeeklyJourHoraire(
@@ -46,6 +50,7 @@ class WeeklyJourHoraire {
         enabled: true,
         debut: existing.heureDebut,
         fin: existing.heureFin,
+        capaciteSimultanee: existing.capaciteSimultanee,
       );
     }).toList();
   }
@@ -61,6 +66,7 @@ extension WeeklyJourHoraireListX on List<WeeklyJourHoraire> {
           jourSemaine: jour.jourSemaine,
           heureDebut: jour.debut,
           heureFin: jour.fin,
+          capaciteSimultanee: jour.capaciteSimultanee,
         ),
       );
     }

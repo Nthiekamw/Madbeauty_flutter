@@ -399,7 +399,6 @@ class _ConditionsEditCard extends StatelessWidget {
             controller: customController,
             hint: DiscPrestaComfort.addCustomConditionHint,
             onAdd: onAddCustom,
-            multiline: true,
           ),
         ],
       ),

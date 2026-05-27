@@ -6,7 +6,6 @@ import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import 'prestataire_suggestion_chips.dart';
 import 'prestataire_work_location_selector.dart';
 
 class PrestataireProfileBasicsStep extends StatelessWidget {
@@ -35,6 +34,9 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     required this.avatarError,
     required this.uploadProgress,
     required this.onPickAvatar,
+    this.defaultAvatarUrls = const [],
+    this.selectedDefaultAvatarUrl,
+    this.onSelectDefaultAvatar,
     required this.onLieuTravailChanged,
     required this.onChanged,
     this.vitrineOnly = false,
@@ -67,8 +69,20 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final String? avatarError;
   final double? uploadProgress;
   final VoidCallback onPickAvatar;
+  final List<String> defaultAvatarUrls;
+  final String? selectedDefaultAvatarUrl;
+  final ValueChanged<String>? onSelectDefaultAvatar;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
   final VoidCallback onChanged;
+
+  String? _dropdownValueFor(
+    TextEditingController controller,
+    List<String> options,
+  ) {
+    final value = controller.text.trim();
+    if (value.isEmpty) return null;
+    return options.contains(value) ? value : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +149,32 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 16),
+        if (defaultAvatarUrls.isNotEmpty && onSelectDefaultAvatar != null) ...[
+          Text(
+            'Photos par defaut',
+            style: theme.textTheme.labelLarge,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: defaultAvatarUrls.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final url = defaultAvatarUrls[index];
+                final selected =
+                    selectedDefaultAvatarUrl != null && selectedDefaultAvatarUrl == url;
+                return _DefaultAvatarChip(
+                  imageUrl: url,
+                  selected: selected,
+                  onTap: () => onSelectDefaultAvatar?.call(url),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         AppTextField(
           controller: nomController,
           label: DiscPrestaForm.salonName,
@@ -167,41 +207,80 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           child: Text('${descriptionController.text.characters.length}/200'),
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          controller: experienceProController,
-          label: DiscPrestaForm.experiencePro,
-          hint: DiscPrestaForm.experienceProHint,
-          errorText: experienceProError,
-          minLines: 2,
-          maxLines: 3,
-          textInputAction: TextInputAction.next,
-          inputFormatters: [LengthLimitingTextInputFormatter(150)],
-          onChanged: (_) => onChanged(),
-        ),
-        const SizedBox(height: 10),
-        PrestataireSuggestionChips(
-          label: DiscPrestaForm.experienceProSuggestionsLabel,
-          options: DiscPrestaForm.experienceProSuggestions,
-          selectedValue: experienceProController.text,
-          onSelected: (value) {
-            experienceProController.text = value;
+        DropdownButtonFormField<String>(
+          value: _dropdownValueFor(
+            experienceProController,
+            DiscPrestaForm.experienceProSuggestions,
+          ),
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: DiscPrestaForm.experiencePro,
+            hintText: DiscPrestaForm.experienceProHint,
+            errorText: experienceProError,
+            border: const OutlineInputBorder(),
+          ),
+          selectedItemBuilder: (context) => [
+            for (final option in DiscPrestaForm.experienceProSuggestions)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  option,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          items: [
+            for (final option in DiscPrestaForm.experienceProSuggestions)
+              DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: (value) {
+            experienceProController.text = value ?? '';
             onChanged();
           },
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          controller: anneesExperienceController,
-          label: DiscPrestaForm.experienceYears,
-          textInputAction: TextInputAction.next,
-          onChanged: (_) => onChanged(),
-        ),
-        const SizedBox(height: 10),
-        PrestataireSuggestionChips(
-          label: DiscPrestaForm.experienceYearsSuggestionsLabel,
-          options: DiscPrestaForm.experienceYearsSuggestions,
-          selectedValue: anneesExperienceController.text,
-          onSelected: (value) {
-            anneesExperienceController.text = value;
+        DropdownButtonFormField<String>(
+          value: _dropdownValueFor(
+            anneesExperienceController,
+            DiscPrestaForm.experienceYearsSuggestions,
+          ),
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: DiscPrestaForm.experienceYears,
+            border: const OutlineInputBorder(),
+          ),
+          selectedItemBuilder: (context) => [
+            for (final option in DiscPrestaForm.experienceYearsSuggestions)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  option,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          items: [
+            for (final option in DiscPrestaForm.experienceYearsSuggestions)
+              DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          onChanged: (value) {
+            anneesExperienceController.text = value ?? '';
             onChanged();
           },
         ),
@@ -310,6 +389,68 @@ class _AvatarPreview extends StatelessWidget {
 
     return ClipOval(
       child: Image.memory(bytes, width: 72, height: 72, fit: BoxFit.cover),
+    );
+  }
+}
+
+class _DefaultAvatarChip extends StatelessWidget {
+  const _DefaultAvatarChip({
+    required this.imageUrl,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String imageUrl;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 56,
+          height: 56,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected
+                  ? primary
+                  : theme.colorScheme.outline.withValues(alpha: 0.25),
+              width: selected ? 2.5 : 1.2,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: ClipOval(
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => ColoredBox(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  Icons.person_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

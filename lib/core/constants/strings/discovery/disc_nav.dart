@@ -12,7 +12,7 @@ abstract final class DiscNav {
   static const listingTitle = 'Prestataires';
   static const searchTitle = 'Recherche';
   static const bookingFlowTitle = 'Réservations';
-  static const messagingTitle = 'Messages';
+  static const messagingTitle = 'Chat';
   static const statsTitle = 'Statistiques';
   static const profileTitle = 'Profil';
   static const profileSubtitle =

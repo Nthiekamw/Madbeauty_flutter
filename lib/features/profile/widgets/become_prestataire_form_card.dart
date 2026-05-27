@@ -29,58 +29,91 @@ class BecomePrestataireFormCard extends StatelessWidget {
         title: AuthStrings.becomePrestaStep1Title,
         subtitle: AuthStrings.becomePrestaStep1Body,
         icon: Icons.edit_location_alt_outlined,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: salonController,
-              decoration: const InputDecoration(
-                labelText: AuthStrings.registerFieldSalon,
-                prefixIcon: Icon(Icons.storefront_outlined),
-              ),
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: villeController,
-              decoration: const InputDecoration(
-                labelText: AuthStrings.registerFieldVille,
-                prefixIcon: Icon(Icons.location_city_outlined),
-              ),
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: bioController,
-              decoration: const InputDecoration(
-                labelText: AuthStrings.registerFieldBioPresta,
-                prefixIcon: Icon(Icons.notes_outlined),
-                alignLabelWithHint: true,
-              ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            if (errorText != null) ...[
-              const SizedBox(height: 12),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer.withValues(
-                    alpha: 0.35,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final sideBySide = constraints.maxWidth >= 560;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (sideBySide)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: salonController,
+                          decoration: const InputDecoration(
+                            labelText: AuthStrings.registerFieldSalon,
+                            prefixIcon: Icon(Icons.storefront_outlined),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: villeController,
+                          decoration: const InputDecoration(
+                            labelText: AuthStrings.registerFieldVille,
+                            prefixIcon: Icon(Icons.location_city_outlined),
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  TextField(
+                    controller: salonController,
+                    decoration: const InputDecoration(
+                      labelText: AuthStrings.registerFieldSalon,
+                      prefixIcon: Icon(Icons.storefront_outlined),
+                    ),
+                    textCapitalization: TextCapitalization.words,
                   ),
-                  borderRadius: DiscoveryStyles.chipBorderRadius,
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: villeController,
+                    decoration: const InputDecoration(
+                      labelText: AuthStrings.registerFieldVille,
+                      prefixIcon: Icon(Icons.location_city_outlined),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: bioController,
+                  decoration: const InputDecoration(
+                    labelText: AuthStrings.registerFieldBioPresta,
+                    prefixIcon: Icon(Icons.notes_outlined),
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    errorText!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onErrorContainer,
+                if (errorText != null) ...[
+                  const SizedBox(height: 12),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withValues(
+                        alpha: 0.35,
+                      ),
+                      borderRadius: DiscoveryStyles.chipBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        errorText!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ],
+                ],
+              ],
+            );
+          },
         ),
       ),
     );

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../services/storage/local_cache_service.dart';
-import '../../listing/providers/client_location_provider.dart';
 
 class ProfilePreferencesState {
   const ProfilePreferencesState({
@@ -67,7 +66,6 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
 
     await LocalCacheService.instance.setProfileGeolocationEnabled(enabled);
     state = state.copyWith(geolocationEnabled: enabled);
-    ref.invalidate(clientLocationProvider);
     return true;
   }
 }

@@ -42,10 +42,16 @@ class RoleService {
     await SupabaseErrorHandler.run(
       operation: 'role.ensureRole',
       action: () async {
-        await _client.from('user_roles').upsert({
-          'user_id': user.id,
-          'role': role.value,
-        });
+        try {
+          await _client.from('user_roles').insert({
+            'user_id': user.id,
+            'role': role.value,
+          });
+        } on PostgrestException catch (e) {
+          // Idempotence: rôle déjà présent (PK user_id, role).
+          if (e.code == '23505') return;
+          rethrow;
+        }
       },
     );
   }

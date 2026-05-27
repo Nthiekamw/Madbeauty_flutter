@@ -4,20 +4,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../favorites/providers/client_favorite_prestataire_ids_provider.dart';
+import '../../prestataire/providers/current_prestataire_provider.dart';
+import '../../reviews/providers/prestataire_note_moyenne_provider.dart';
 
 /// Statistiques profil (favoris synchronisés avec Supabase).
 class ProfileStatsRow extends ConsumerWidget {
   const ProfileStatsRow({super.key});
 
-  static const int appointmentsCount = 12;
-  static const double averageRating = 4.8;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final favoritesCount = ref.watch(clientFavoritesCountProvider);
+    final appointmentsValue = switch (ref.watch(clientReservationsProvider)) {
+      AsyncData(:final value) => '${value.length}',
+      _ => '…',
+    };
+    final favoritesValue = switch (ref.watch(clientFavoritePrestataireIdsProvider)) {
+      AsyncData(:final value) => '${value.length}',
+      _ => '…',
+    };
+    final prestaId = switch (ref.watch(currentPrestataireProvider)) {
+      AsyncData(:final value) => value?.id,
+      _ => null,
+    };
+    final ratingValue = prestaId == null
+        ? '—'
+        : switch (ref.watch(prestataireNoteMoyenneProvider(prestaId))) {
+            AsyncData(:final value) => value?.toStringAsFixed(1) ?? '—',
+            _ => '…',
+          };
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -26,7 +43,7 @@ class ProfileStatsRow extends ConsumerWidget {
           Expanded(
             child: _StatTile(
               label: DiscProfile.statAppointments,
-              value: '$appointmentsCount',
+              value: appointmentsValue,
               icon: Icons.event_available_rounded,
               color: primary,
             ),
@@ -35,7 +52,7 @@ class ProfileStatsRow extends ConsumerWidget {
           Expanded(
             child: _StatTile(
               label: DiscProfile.statFavorites,
-              value: '$favoritesCount',
+              value: favoritesValue,
               icon: Icons.favorite_rounded,
               color: primary,
               onTap: () => context.pushClientFavorites(),
@@ -45,7 +62,7 @@ class ProfileStatsRow extends ConsumerWidget {
           Expanded(
             child: _StatTile(
               label: DiscProfile.statRating,
-              value: averageRating.toStringAsFixed(1),
+              value: ratingValue,
               icon: Icons.star_rounded,
               color: const Color(0xFFF59E0B),
             ),

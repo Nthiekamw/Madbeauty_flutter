@@ -139,15 +139,18 @@ class ProfileService {
       SupabaseErrorHandler.run(
         operation: 'profile.upsertFcmToken',
         action: () async {
-          await _client.from('user_profiles').upsert(
-            {
-              'user_id': userId,
-              'fcm_token': token,
-              'fcm_token_updated_at':
-                  DateTime.now().toUtc().toIso8601String(),
-            },
-            onConflict: 'user_id',
-          );
+          final currentUserId = _client.auth.currentUser?.id;
+          if (currentUserId == null || currentUserId != userId) {
+            return;
+          }
+          await _client
+              .from('user_profiles')
+              .update({
+                'fcm_token': token,
+                'fcm_token_updated_at':
+                    DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('user_id', userId);
         },
       );
 
@@ -155,6 +158,10 @@ class ProfileService {
       SupabaseErrorHandler.run(
         operation: 'profile.clearFcmToken',
         action: () async {
+          final currentUserId = _client.auth.currentUser?.id;
+          if (currentUserId == null || currentUserId != userId) {
+            return;
+          }
           await _client.from('user_profiles').update({
             'fcm_token': null,
             'fcm_token_updated_at': DateTime.now().toUtc().toIso8601String(),

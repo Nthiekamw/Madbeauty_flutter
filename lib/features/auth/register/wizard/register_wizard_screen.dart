@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
+import '../../../../core/errors/supabase_service_exception.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
@@ -49,14 +50,29 @@ class RegisterWizardScreen extends ConsumerStatefulWidget {
       _RegisterWizardScreenState();
 }
 
+class _DialCodeOption {
+  const _DialCodeOption({required this.flag, required this.dialCode});
+
+  final String flag;
+  final String dialCode;
+}
+
 class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   static const _totalSteps = 3;
   static const _fieldGap = 10.0;
   static const _sectionGap = 12.0;
+  static const _phoneDialOptions = <_DialCodeOption>[
+    _DialCodeOption(flag: '🇫🇷', dialCode: '+33'),
+    _DialCodeOption(flag: '🇧🇪', dialCode: '+32'),
+    _DialCodeOption(flag: '🇨🇭', dialCode: '+41'),
+    _DialCodeOption(flag: '🇩🇪', dialCode: '+49'),
+    _DialCodeOption(flag: '🇬🇧', dialCode: '+44'),
+  ];
 
   int _step = 0;
   Timer? _saveDebounce;
   bool _restoredDraft = false;
+  bool _persistDraftOnDispose = true;
 
   final _prenom = TextEditingController();
   final _nom = TextEditingController();
@@ -74,6 +90,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   final _bio = TextEditingController();
 
   UserRole? _roleChoice;
+  String _phoneDialCode = '+33';
   String? _error;
   String? _prenomError;
   String? _nomError;
@@ -157,6 +174,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       );
 
   Future<void> _persistDraft() async {
+    if (!_persistDraftOnDispose) return;
     await RegisterWizardDraftStore.instance.save(_currentDraft());
   }
 
@@ -165,7 +183,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   @override
   void dispose() {
     _saveDebounce?.cancel();
-    unawaited(_persistDraft());
+    if (_persistDraftOnDispose) {
+      unawaited(_persistDraft());
+    }
     _prenom.dispose();
     _nom.dispose();
     _phone.dispose();
@@ -207,7 +227,19 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     final phone = meta?['phone'] as String?;
     if (phone != null && phone.trim().isNotEmpty) {
-      _phone.text = phone.trim();
+      final raw = phone.trim();
+      final dial = _phoneDialOptions
+          .map((o) => o.dialCode)
+          .firstWhere(
+            (code) => raw.startsWith(code),
+            orElse: () => '',
+          );
+      if (dial.isNotEmpty) {
+        _phoneDialCode = dial;
+        _phone.text = raw.substring(dial.length).trim();
+      } else {
+        _phone.text = raw;
+      }
     } else {
       _phoneRequiredOnExtras = true;
     }
@@ -334,6 +366,30 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         confirmErr == null;
   }
 
+  bool _isRoleSyncForbidden(Object error) {
+    if (error is SupabaseServiceException) {
+      return error.code == '42501' ||
+          error.message == AuthStrings.roleChoiceSyncForbidden;
+    }
+    if (error is AppFailure) {
+      return error.message == AuthStrings.roleChoiceSyncForbidden;
+    }
+    return false;
+  }
+
+  Future<void> _syncRoleBestEffort(UserRole role) async {
+    final rolesService = ref.read(roleServiceProvider);
+    try {
+      await rolesService.ensureRole(role);
+      ref.invalidate(myRolesProvider);
+      final serverRoles = await ref.read(myRolesProvider.future);
+      await AuthRoleCache.persistServerRoles(serverRoles);
+    } catch (e) {
+      if (!_isRoleSyncForbidden(e)) rethrow;
+      // RLS/permission transitoire: on poursuit avec le rôle local choisi.
+    }
+  }
+
   void _next() {
     FocusScope.of(context).unfocus();
 
@@ -390,7 +446,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       final prenom = _prenom.text.trim();
       final nom = _nom.text.trim();
       final email = _email.text.trim();
-      final phone = _phone.text.trim();
+      final phoneNumber = _phone.text.trim();
+      final phone =
+          phoneNumber.isEmpty ? '' : '$_phoneDialCode $phoneNumber';
 
       User? session = switch (ref.read(authNotifierProvider)) {
         AsyncData(:final value) => value,
@@ -445,7 +503,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       }
 
       final uid = session.id;
-      final roles = ref.read(roleServiceProvider);
       final post = PostSignupProfileService.fromEnv();
       final shellRole = _roleChoice == UserRole.prestataire
           ? 'prestataire'
@@ -464,10 +521,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       );
 
       if (_roleChoice == UserRole.prestataire) {
-        await roles.ensureRole(UserRole.prestataire);
-        ref.invalidate(myRolesProvider);
-        final serverRoles = await ref.read(myRolesProvider.future);
-        await AuthRoleCache.persistServerRoles(serverRoles);
+        await _syncRoleBestEffort(UserRole.prestataire);
         await post.updatePrestataireExtras(
           userId: uid,
           nomSalon: _salon.text.trim(),
@@ -485,17 +539,16 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
         );
       } else {
-        await roles.ensureRole(UserRole.client);
+        await _syncRoleBestEffort(UserRole.client);
         await post.updateClientExtras(
           userId: uid,
           adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
         );
-        ref.invalidate(myRolesProvider);
-        final serverRoles = await ref.read(myRolesProvider.future);
-        await AuthRoleCache.persistServerRoles(serverRoles);
       }
 
       await LocalCacheService.instance.setSelectedRole(shellRole);
+      _persistDraftOnDispose = false;
+      _saveDebounce?.cancel();
       await _clearDraft();
 
       if (!mounted) return;
@@ -519,13 +572,18 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         context.goHome();
       }
     } on AppFailure catch (e) {
+      debugPrint(
+        '[RegisterWizard] submit AppFailure: ${e.message} cause=${e.cause}',
+      );
       if (mounted) {
         setState(() {
           _loading = false;
           _error = e.message;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[RegisterWizard] submit unexpected: $e');
+      debugPrintStack(stackTrace: st);
       if (mounted) {
         setState(() {
           _loading = false;
@@ -592,8 +650,14 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           ? () {}
           : () {
               if (_step == 0) {
+                _persistDraftOnDispose = false;
+                _saveDebounce?.cancel();
                 unawaited(_clearDraft());
-                context.pop();
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.goWelcome();
+                }
               } else {
                 _goToPreviousStep();
               }
@@ -623,6 +687,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           if (_restoredDraft) ...[
             _DraftRestoredBanner(
               onRestart: () async {
+                _persistDraftOnDispose = true;
+                _saveDebounce?.cancel();
                 await _clearDraft();
                 if (!mounted) return;
                 setState(() {
@@ -739,21 +805,74 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
             icon: Icons.contact_phone_outlined,
             child: Column(
               children: [
-                AppTextField(
-                  dense: true,
-                  controller: _phone,
-                  onChanged: (_) => setState(() => _phoneError = null),
-                  enabled: formEnabled,
-                  label: AuthStrings.registerFieldPhone,
-                  hint: AuthStrings.registerFieldPhoneHint,
-                  errorText: _phoneError,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.telephoneNumber],
-                  prefixIcon: Icon(
-                    Icons.phone_outlined,
-                    color: onSurfaceVariant,
-                  ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 132,
+                      child: DropdownButtonFormField<String>(
+                        value: _phoneDialCode,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: '+',
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AuthFormStyles.fieldRadius),
+                          ),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 14,
+                          ),
+                        ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontFamily: AppFonts.body,
+                              fontWeight: FontWeight.w600,
+                            ),
+                        selectedItemBuilder: (context) =>
+                            _phoneDialOptions
+                                .map(
+                                  (o) => Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: Text(
+                                      '${o.flag} ${o.dialCode}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                        items: _phoneDialOptions
+                            .map(
+                              (o) => DropdownMenuItem<String>(
+                                value: o.dialCode,
+                                child: Text('${o.flag} ${o.dialCode}'),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: formEnabled
+                            ? (value) {
+                                if (value == null) return;
+                                setState(() => _phoneDialCode = value);
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AppTextField(
+                        dense: true,
+                        controller: _phone,
+                        onChanged: (_) => setState(() => _phoneError = null),
+                        enabled: formEnabled,
+                        label: AuthStrings.registerFieldPhone,
+                        hint: AuthStrings.registerFieldPhoneHint,
+                        errorText: _phoneError,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.telephoneNumber],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: _fieldGap),
                 AppTextField(

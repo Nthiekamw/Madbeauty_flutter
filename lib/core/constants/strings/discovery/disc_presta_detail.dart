@@ -31,7 +31,7 @@ abstract final class DiscPrestaDetail {
       'C’est ton profil professionnel : tu peux le consulter, mais pas réserver tes propres services.';
   static const contact = 'Contacter';
   static const contactSoon =
-      'La messagerie arrive bientôt. En attendant, réserve un créneau ou contacte le salon par téléphone si indiqué.';
+      'Ouvre le chat pour échanger directement avec ce prestataire.';
   static String reviewDate(DateTime date) {
     final d = date;
     final months = [

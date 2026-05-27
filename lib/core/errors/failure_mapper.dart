@@ -17,13 +17,16 @@ abstract final class FailureMapper {
     if (isEmailNotConfirmed) {
       return AppFailure(AuthStrings.authEmailNotConfirmed, cause: e);
     }
+    final isInvalidCredentials = msg.contains('invalid login credentials') ||
+        msg.contains('invalid_credentials') ||
+        msg.contains('email or password is incorrect');
+    if (isInvalidCredentials) {
+      return AppFailure(AuthStrings.loginInvalidCredentials, cause: e);
+    }
     return AppFailure(e.message, cause: e);
   }
 
   static AppFailure fromPostgrestException(PostgrestException e) {
-    if (e.code == '42501') {
-      return AppFailure(AuthStrings.roleChoiceSyncForbidden, cause: e);
-    }
     final msg = e.message.trim();
     if (msg.isNotEmpty) {
       return AppFailure(msg, cause: e);

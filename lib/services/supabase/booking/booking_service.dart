@@ -10,13 +10,11 @@ import '../../../features/booking/logic/booking_create_failure.dart';
 import '../../../features/booking/models/client_reservation_summary.dart';
 import '../../../features/prestataire/models/prestataire_reservation_item.dart';
 import '../profile/profile_service.dart';
-import 'booking_reservation_service.dart';
 
 class BookingService {
-  BookingService(this._client, this._reservationSlots, this._profileService);
+  BookingService(this._client, this._profileService);
 
   final SupabaseClient _client;
-  final BookingReservationService _reservationSlots;
   final ProfileService? _profileService;
 
   /// Alias demandé dans le domaine fonctionnel (« booking » vs table `reservations`).
@@ -43,12 +41,12 @@ class BookingService {
         await _rejectIfBookingOwnPrestataire(prestataireId);
 
         final localSlot = _startOfMinuteLocal(dateHeure);
-        final booked = await _reservationSlots.getBookedSlots(
+        final capacity = await _slotCapacityFor(prestataireId, localSlot);
+        final bookedCount = await _activeReservationsCountAtSlot(
           prestataireId: prestataireId,
-          serviceId: serviceId,
-          day: DateTime(localSlot.year, localSlot.month, localSlot.day),
+          at: localSlot,
         );
-        if (booked.any((slot) => _sameMinute(slot, localSlot))) {
+        if (bookedCount >= capacity) {
           throw const BookingSlotTakenFailure();
         }
 
@@ -480,6 +478,67 @@ class BookingService {
     }
   }
 
+  Future<int> _slotCapacityFor(String prestataireId, DateTime at) async {
+    final local = at.toLocal();
+    final pgDow = local.weekday % 7;
+    final hh = local.hour.toString().padLeft(2, '0');
+    final mm = local.minute.toString().padLeft(2, '0');
+    final timeText = '$hh:$mm:00';
+
+    final override = await _client
+        .from('disponibilite_capacity_overrides')
+        .select('capacite_simultanee')
+        .eq('prestataire_id', prestataireId)
+        .eq('jour_semaine', pgDow)
+        .lte('heure_debut', timeText)
+        .gt('heure_fin', timeText)
+        .limit(1)
+        .maybeSingle();
+    final overrideCapacity = (override?['capacite_simultanee'] as num?)
+        ?.toInt();
+    if (overrideCapacity != null && overrideCapacity > 0) {
+      return overrideCapacity;
+    }
+
+    final response = await _client
+        .from('disponibilites')
+        .select('capacite_simultanee')
+        .eq('prestataire_id', prestataireId)
+        .eq('jour_semaine', pgDow)
+        .lte('heure_debut', timeText)
+        .gt('heure_fin', timeText)
+        .limit(1)
+        .maybeSingle();
+
+    return (response?['capacite_simultanee'] as num?)?.toInt() ?? 1;
+  }
+
+  Future<int> _activeReservationsCountAtSlot({
+    required String prestataireId,
+    required DateTime at,
+  }) async {
+    final start = _startOfMinuteLocal(at);
+    final end = start.add(const Duration(minutes: 1));
+    final response = await _client
+        .from('reservations')
+        .select('id, statut')
+        .eq('prestataire_id', prestataireId)
+        .gte('date_heure', start.toUtc().toIso8601String())
+        .lt('date_heure', end.toUtc().toIso8601String());
+
+    var count = 0;
+    for (final raw in response as List<dynamic>) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      final statut = (row['statut'] as String?)?.trim().toLowerCase() ?? '';
+      final normalized = statut.replaceAll('é', 'e');
+      if (const {'en_attente', 'pending', 'confirmee', 'confirmed'}
+          .contains(normalized)) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
   Future<String> _requireClientId() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw const BookingNotAuthenticatedFailure();
@@ -522,13 +581,4 @@ class BookingService {
     return DateTime(l.year, l.month, l.day, l.hour, l.minute);
   }
 
-  bool _sameMinute(DateTime a, DateTime b) {
-    final al = a.toLocal();
-    final bl = b.toLocal();
-    return al.year == bl.year &&
-        al.month == bl.month &&
-        al.day == bl.day &&
-        al.hour == bl.hour &&
-        al.minute == bl.minute;
-  }
 }

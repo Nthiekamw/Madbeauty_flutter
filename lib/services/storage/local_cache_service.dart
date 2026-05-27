@@ -14,6 +14,8 @@ class LocalCacheService {
   static const String profilePushNotificationsKey =
       'profile.push_notifications_enabled';
   static const String profileGeolocationKey = 'profile.geolocation_enabled';
+  static const String prestataireCompletionPhaseKey =
+      'prestataire.profile_completion_phase';
 
   /// `true` une fois que la demande de permission système (push) a été faite au moins une fois.
   static const String pushPermissionPromptedKey =
@@ -96,5 +98,14 @@ class LocalCacheService {
 
   Future<bool> setProfileGeolocationEnabled(bool value) =>
       _prefs.setBool(profileGeolocationKey, value);
+
+  int? get prestataireProfileCompletionPhase =>
+      _prefs.getInt(prestataireCompletionPhaseKey);
+
+  Future<bool> setPrestataireProfileCompletionPhase(int phase) =>
+      _prefs.setInt(prestataireCompletionPhaseKey, phase);
+
+  Future<bool> clearPrestataireProfileCompletionPhase() =>
+      remove(prestataireCompletionPhaseKey);
 }
 

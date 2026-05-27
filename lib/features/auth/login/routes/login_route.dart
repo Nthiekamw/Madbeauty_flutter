@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/errors/app_failure.dart';
 import '../../../../router/app_router.dart';
 import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
@@ -48,10 +49,18 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
 
   Future<void> _submitPassword() async {
     FocusScope.of(context).unfocus();
-    await ref.read(loginControllerProvider.notifier).submit(
-          rawEmail: _emailController.text,
-          rawPassword: _passwordController.text,
-        );
+    try {
+      await ref.read(loginControllerProvider.notifier).submit(
+            rawEmail: _emailController.text,
+            rawPassword: _passwordController.text,
+          );
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      AppSnackBar.error(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.error(context, CoreStrings.errorUnexpected);
+    }
   }
 
   Future<void> _google() async {
@@ -87,6 +96,10 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }
+      if (next.submitError != null && previous?.submitError != next.submitError) {
+        AppSnackBar.error(context, next.submitError!);
+        ref.read(loginControllerProvider.notifier).acknowledgeSubmitError();
+      }
       if (next.shouldPopRoute) {
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
         unawaited(_completeLoginWithWelcome());
@@ -120,7 +133,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       passwordController: _passwordController,
       emailError: loginUi.emailError,
       passwordError: loginUi.passwordError,
-      submitError: loginUi.submitError,
+      submitError: null,
       isLoading: isLoading,
       formEnabled: formEnabled,
       onBack: () =>

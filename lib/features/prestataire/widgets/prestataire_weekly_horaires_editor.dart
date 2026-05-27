@@ -127,6 +127,24 @@ class _JourHoraireCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<int>(
+                value: jour.capaciteSimultanee,
+                decoration: const InputDecoration(
+                  labelText: DiscPrestaHoraires.capacite,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('1 personne')),
+                  DropdownMenuItem(value: 2, child: Text('2 personnes')),
+                  DropdownMenuItem(value: 3, child: Text('3 personnes')),
+                  DropdownMenuItem(value: 4, child: Text('4 personnes')),
+                  DropdownMenuItem(value: 5, child: Text('5 personnes')),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  jour.capaciteSimultanee = value;
+                },
+              ),
             ] else
               Text(
                 DiscPrestaHoraires.dayOff,

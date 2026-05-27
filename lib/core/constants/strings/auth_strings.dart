@@ -35,6 +35,10 @@ abstract final class AuthStrings {
   static const String loginValidationEmailInvalid = 'Adresse e-mail invalide.';
   static const String loginValidationPasswordEmpty =
       'Saisis ton mot de passe.';
+  static const String loginInvalidCredentials =
+      'E-mail ou mot de passe incorrect.';
+  static const String loginRetryCooldown =
+      'Nouvelle tentative dans quelques secondes.';
   static const String loginValidationPhoneEmpty =
       'Saisis ton numéro avec l’indicatif (+…).';
   static const String loginValidationPhoneInvalid =

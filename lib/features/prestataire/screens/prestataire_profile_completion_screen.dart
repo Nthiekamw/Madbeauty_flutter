@@ -9,11 +9,13 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery_constrained_body.dart';
 import '../../../shared/widgets/discovery_surface_card.dart';
 import '../../../shared/widgets/keyboard_dismiss_area.dart';
 import '../logic/prestataire_profile_completeness.dart';
@@ -80,7 +82,19 @@ class _PrestataireProfileCompletionScreenState
   PrestataireProfileFormData? _loadedData;
 
   @override
+  void initState() {
+    super.initState();
+    final restored = LocalCacheService.instance.prestataireProfileCompletionPhase;
+    if (restored != null) {
+      _phase = restored.clamp(0, 4);
+    }
+  }
+
+  @override
   void dispose() {
+    if (_phase >= 0 && _phase < 4) {
+      LocalCacheService.instance.setPrestataireProfileCompletionPhase(_phase);
+    }
     _nomController.dispose();
     _nomAfficheController.dispose();
     _descriptionController.dispose();
@@ -123,8 +137,14 @@ class _PrestataireProfileCompletionScreenState
   }
 
   void _jumpToFirstIncomplete(PrestataireProfileFormData data) {
+    final restored = LocalCacheService.instance.prestataireProfileCompletionPhase;
+    if (restored != null) {
+      _phase = restored.clamp(0, 4);
+      return;
+    }
     if (data.isProfessionallyComplete) {
       _phase = 4;
+      LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
       return;
     }
     final missing = data.missingChecklistItems;
@@ -443,6 +463,7 @@ class _PrestataireProfileCompletionScreenState
     final phase = _phase;
     if (phase == 0) {
       setState(() => _phase = 1);
+      await LocalCacheService.instance.setPrestataireProfileCompletionPhase(1);
       return;
     }
     if (phase == 1) {
@@ -450,6 +471,7 @@ class _PrestataireProfileCompletionScreenState
       if (!await _saveProfile()) return;
       if (!mounted) return;
       setState(() => _phase = 2);
+      await LocalCacheService.instance.setPrestataireProfileCompletionPhase(2);
       return;
     }
     if (phase == 2) {
@@ -457,6 +479,7 @@ class _PrestataireProfileCompletionScreenState
       if (!await _saveProfile()) return;
       if (!mounted) return;
       setState(() => _phase = 3);
+      await LocalCacheService.instance.setPrestataireProfileCompletionPhase(3);
       return;
     }
     if (phase == 3) {
@@ -467,9 +490,11 @@ class _PrestataireProfileCompletionScreenState
       if (!await _saveProfile()) return;
       if (!mounted) return;
       setState(() => _phase = 4);
+      await LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
       return;
     }
     if (phase == 4) {
+      await LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
       context.goPrestataireDashboard();
     }
   }
@@ -478,19 +503,30 @@ class _PrestataireProfileCompletionScreenState
     if (_busy) return;
     if (_phase <= 1) {
       if (_phase == 0) {
+        LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
         context.goPrestataireDashboard();
       } else {
         setState(() => _phase = 0);
+        LocalCacheService.instance.setPrestataireProfileCompletionPhase(0);
       }
       return;
     }
     setState(() => _phase -= 1);
+    LocalCacheService.instance.setPrestataireProfileCompletionPhase(_phase);
   }
+
+  String _heroSubtitle(int phase) => switch (phase) {
+        0 => DiscPrestaCompletion.introTimeHint,
+        1 => DiscPrestaCompletion.stepBasics,
+        2 => DiscPrestaCompletion.stepServices,
+        3 => DiscPrestaCompletion.stepGallery,
+        4 => DiscPrestaCompletion.stepDone,
+        _ => '',
+      };
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(prestataireProfileFormProvider);
-    final theme = Theme.of(context);
 
     return DiscoveryBrandScaffold(
       body: async.when(
@@ -503,28 +539,16 @@ class _PrestataireProfileCompletionScreenState
           final contentStep = _phase.clamp(1, _contentSteps);
           final showProgress = _phase >= 1 && _phase <= _contentSteps;
 
+          final subtitle = _heroSubtitle(_phase);
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _onBack,
-                      icon: const Icon(Icons.arrow_back_rounded),
-                    ),
-                    Expanded(
-                      child: Text(
-                        DiscPrestaCompletion.title,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _CompletionHeroBar(
+                title: DiscPrestaCompletion.title,
+                subtitle: subtitle,
+                onBack: _onBack,
+                busy: _busy,
               ),
               if (showProgress)
                 PrestataireCompletionProgress(
@@ -534,39 +558,58 @@ class _PrestataireProfileCompletionScreenState
                 ),
               Expanded(
                 child: KeyboardDismissArea(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(0, 16, 0, 24),
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    children: [
-                      DiscoverySurfaceCard(
-                        padding: const EdgeInsets.all(20),
-                        child: _buildStepBody(context, data),
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return ListView(
+                        padding: EdgeInsets.fromLTRB(
+                          0,
+                          showProgress ? 12 : 8,
+                          0,
+                          16,
+                        ),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        children: [
+                          DiscoveryConstrainedBody(
+                            child: LayoutBuilder(
+                              builder: (context, cardConstraints) {
+                                final useWide =
+                                    cardConstraints.maxWidth >= 920;
+                                final stepBodyCard = _StepSurfaceCard(
+                                  child: _buildStepBody(context, data),
+                                );
+                                if (!useWide) return stepBodyCard;
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(flex: 58, child: stepBodyCard),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      flex: 34,
+                                      child: _StepRail(
+                                        phase: _phase,
+                                        busy: _busy,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_phase == 0) ...[
-                      TextButton(
-                        onPressed: _busy
-                            ? null
-                            : () => context.goPrestataireDashboard(),
-                        child: const Text(DiscPrestaCompletion.introLater),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    FilledButton(
-                      onPressed: _busy ? null : () => _onPrimaryAction(data),
-                      child: Text(_primaryLabel()),
-                    ),
-                  ],
-                ),
+              _CompletionBottomActions(
+                phase: _phase,
+                busy: _busy,
+                primaryLabel: _primaryLabel(),
+                onPrimary: () => _onPrimaryAction(data),
+                onSkipIntro: _busy
+                    ? null
+                    : () => context.goPrestataireDashboard(),
               ),
             ],
           );
@@ -593,7 +636,6 @@ class _PrestataireProfileCompletionScreenState
   }
 
   Widget _buildStepBody(BuildContext context, PrestataireProfileFormData data) {
-    final theme = Theme.of(context);
     return switch (_phase) {
       0 => _IntroStep(data: data),
       1 => PrestataireProfileBasicsStep(
@@ -664,33 +706,198 @@ class _PrestataireProfileCompletionScreenState
           _pendingGallery.removeAt(index);
         }),
       ),
-      _ => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 56,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            DiscPrestaCompletion.doneHeadline,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            DiscPrestaCompletion.doneBody,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-        ],
-      ),
+      _ => const _DoneStep(),
     };
+  }
+}
+
+/// En-tête visuel (dégradé + retour) pour le parcours de complétion.
+class _CompletionHeroBar extends StatelessWidget {
+  const _CompletionHeroBar({
+    required this.title,
+    required this.subtitle,
+    required this.onBack,
+    required this.busy,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onBack;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = theme.colorScheme.primary;
+    final tertiary = theme.colorScheme.tertiary;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              primary.withValues(alpha: isDark ? 0.55 : 0.85),
+              theme.colorScheme.primaryContainer.withValues(
+                alpha: isDark ? 0.5 : 0.95,
+              ),
+              tertiary.withValues(alpha: isDark ? 0.28 : 0.45),
+            ],
+            stops: const [0.0, 0.55, 1.0],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(6, 10, 20, 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton(
+                onPressed: busy ? null : onBack,
+                icon: const Icon(Icons.arrow_back_rounded),
+                color: Colors.white,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -0.4,
+                        height: 1.15,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFamily: AppFonts.body,
+                        color: Colors.white.withValues(alpha: 0.92),
+                        height: 1.35,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Carte de contenu d’étape (même style que le reste de l’app).
+class _StepSurfaceCard extends StatelessWidget {
+  const _StepSurfaceCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DiscoverySurfaceCard(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+      child: child,
+    );
+  }
+}
+
+/// Boutons fixes en bas, séparateur visuel.
+class _CompletionBottomActions extends StatelessWidget {
+  const _CompletionBottomActions({
+    required this.phase,
+    required this.busy,
+    required this.primaryLabel,
+    required this.onPrimary,
+    required this.onSkipIntro,
+  });
+
+  final int phase;
+  final bool busy;
+  final String primaryLabel;
+  final VoidCallback onPrimary;
+  final VoidCallback? onSkipIntro;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return Material(
+      elevation: theme.brightness == Brightness.dark ? 0 : 8,
+      shadowColor: primary.withValues(alpha: 0.12),
+      color: theme.colorScheme.surface.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.92 : 1,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (phase == 0)
+                TextButton(
+                  onPressed: onSkipIntro,
+                  child: Text(
+                    DiscPrestaCompletion.introLater,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              if (phase == 0) const SizedBox(height: 4),
+              FilledButton(
+                onPressed: busy ? null : onPrimary,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: busy
+                    ? SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : Text(
+                        primaryLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -702,50 +909,131 @@ class _IntroStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
     final items = data.missingChecklistItems;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primary.withValues(alpha: 0.22)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.storefront_outlined, size: 16, color: primary),
+                const SizedBox(width: 8),
+                Text(
+                  DiscPrestaCompletion.stepIntro,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w800,
+                    color: primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
         Text(
           DiscPrestaCompletion.introHeadline,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+            height: 1.15,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
           DiscPrestaCompletion.introBody,
-          style: theme.textTheme.bodyMedium?.copyWith(
+          style: theme.textTheme.bodyLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
-            height: 1.45,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.35),
+            border: Border.all(
+              color: theme.colorScheme.secondary.withValues(alpha: 0.22),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.schedule_rounded,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  DiscPrestaCompletion.introTimeHint,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (items.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text(
-            DiscPrestaCompletion.checklistTitle,
+            DiscPrestaCompletion.checklistLead,
             style: theme.textTheme.titleSmall?.copyWith(
               fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 10),
-          for (final item in items) _ChecklistRow(item: item),
+          const SizedBox(height: 6),
+          Text(
+            DiscPrestaCompletion.checklistTitle,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (var i = 0; i < items.length; i++) ...[
+            _ChecklistHighlightCard(item: items[i], index: i + 1),
+            if (i < items.length - 1) const SizedBox(height: 10),
+          ],
         ],
       ],
     );
   }
 }
 
-class _ChecklistRow extends StatelessWidget {
-  const _ChecklistRow({required this.item});
+class _ChecklistHighlightCard extends StatelessWidget {
+  const _ChecklistHighlightCard({
+    required this.item,
+    required this.index,
+  });
 
   final PrestaCompletionChecklistItem item;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final icon = switch (item) {
+      PrestaCompletionChecklistItem.basics => Icons.badge_outlined,
+      PrestaCompletionChecklistItem.services => Icons.content_cut_rounded,
+      PrestaCompletionChecklistItem.gallery => Icons.photo_library_outlined,
+    };
     final label = switch (item) {
       PrestaCompletionChecklistItem.basics =>
         DiscPrestaCompletion.checklistBasics,
@@ -755,17 +1043,364 @@ class _ChecklistRow extends StatelessWidget {
         DiscPrestaCompletion.checklistGallery,
     };
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surfaceContainerLowest.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.85 : 1,
+        ),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        ),
+        boxShadow: theme.brightness == Brightness.dark
+            ? null
+            : [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 5,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(15),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    primary,
+                    primary.withValues(alpha: 0.55),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$index',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w900,
+                            color: primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(icon, size: 20, color: primary),
+                          const SizedBox(height: 8),
+                          Text(
+                            label,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DoneStep extends StatelessWidget {
+  const _DoneStep();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  primary.withValues(alpha: 0.95),
+                  theme.colorScheme.tertiary.withValues(alpha: 0.85),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.35),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          DiscPrestaCompletion.doneHeadline,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontFamily: AppFonts.display,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          DiscPrestaCompletion.doneBody,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 22),
+        _DoneTipRow(
+          icon: Icons.tune_rounded,
+          text: DiscPrestaCompletion.doneTip1,
+        ),
+        const SizedBox(height: 10),
+        _DoneTipRow(
+          icon: Icons.event_available_rounded,
+          text: DiscPrestaCompletion.doneTip2,
+        ),
+      ],
+    );
+  }
+}
+
+class _DoneTipRow extends StatelessWidget {
+  const _DoneTipRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.45,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepRail extends StatelessWidget {
+  const _StepRail({required this.phase, required this.busy});
+
+  final int phase;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final entries = [
+      DiscPrestaCompletion.stepBasics,
+      DiscPrestaCompletion.stepServices,
+      DiscPrestaCompletion.stepGallery,
+      DiscPrestaCompletion.stepDone,
+    ];
+
+    return Material(
+      color: theme.colorScheme.surface.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.55 : 0.98,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.12),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.map_outlined, size: 20, color: primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    DiscPrestaCompletion.railTitle,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            for (var i = 0; i < entries.length; i++)
+              _StepRailItem(
+                stepNumber: i + 1,
+                label: entries[i],
+                isLast: i == entries.length - 1,
+                active: phase == i + 1 || (phase == 0 && i == 0),
+                done: phase > i + 1 || (phase == 4 && i == 3),
+              ),
+            if (busy) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  minHeight: 4,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StepRailItem extends StatelessWidget {
+  const _StepRailItem({
+    required this.stepNumber,
+    required this.label,
+    required this.isLast,
+    required this.active,
+    required this.done,
+  });
+
+  final int stepNumber;
+  final String label;
+  final bool isLast;
+  final bool active;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    final circleColor = done
+        ? primary
+        : active
+            ? primary
+            : theme.colorScheme.surfaceContainerHighest;
+    final fg = done || active ? Colors.white : muted;
+    final borderColor = active ? theme.colorScheme.tertiary : Colors.transparent;
+
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            Icons.radio_button_unchecked,
-            size: 20,
-            color: Theme.of(context).colorScheme.primary,
+          SizedBox(
+            width: 34,
+            child: Column(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleColor,
+                    border: Border.all(
+                      width: active ? 2.2 : 1,
+                      color: active ? borderColor : circleColor,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: done
+                      ? const Icon(Icons.check, size: 15, color: Colors.white)
+                      : Text(
+                          '$stepNumber',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w900,
+                            color: fg,
+                            height: 1,
+                          ),
+                        ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.only(top: 4, bottom: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        color: done
+                            ? primary.withValues(alpha: 0.55)
+                            : muted.withValues(alpha: 0.22),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(width: 10),
-          Expanded(child: Text(label)),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 12, top: 2),
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                  color: done || active ? theme.colorScheme.onSurface : muted,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

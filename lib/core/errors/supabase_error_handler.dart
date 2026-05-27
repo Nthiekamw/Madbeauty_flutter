@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_strings.dart';
@@ -15,9 +16,25 @@ abstract final class SupabaseErrorHandler {
       return await action();
     } on SupabaseServiceException {
       rethrow;
-    } on PostgrestException catch (e) {
+    } on PostgrestException catch (e, st) {
+      _logRawError(
+        operation: operation,
+        kind: 'postgrest',
+        code: e.code,
+        message: e.message,
+        error: e,
+        stackTrace: st,
+      );
       throw _fromPostgrest(operation, e);
-    } on StorageException catch (e) {
+    } on StorageException catch (e, st) {
+      _logRawError(
+        operation: operation,
+        kind: 'storage',
+        code: e.statusCode,
+        message: e.message,
+        error: e,
+        stackTrace: st,
+      );
       throw _fromStorage(operation, e);
     } on AuthException catch (e) {
       throw SupabaseServiceException(
@@ -28,7 +45,14 @@ abstract final class SupabaseErrorHandler {
       );
     } on AppFailure {
       rethrow;
-    } catch (e) {
+    } catch (e, st) {
+      _logRawError(
+        operation: operation,
+        kind: 'unknown',
+        message: e.toString(),
+        error: e,
+        stackTrace: st,
+      );
       throw SupabaseServiceException(
         operation: operation,
         message: CoreStrings.errorUnexpected,
@@ -41,10 +65,11 @@ abstract final class SupabaseErrorHandler {
     String operation,
     PostgrestException e,
   ) {
+    final isRoleSyncOperation = operation.startsWith('role.');
     return SupabaseServiceException(
       operation: operation,
       code: e.code,
-      message: e.code == '42501'
+      message: (e.code == '42501' && isRoleSyncOperation)
           ? AuthStrings.roleChoiceSyncForbidden
           : _messageOrFallback(e.message),
       cause: e,
@@ -69,5 +94,26 @@ abstract final class SupabaseErrorHandler {
       return CoreStrings.errorUnexpected;
     }
     return trimmed;
+  }
+
+  static void _logRawError({
+    required String operation,
+    required String kind,
+    String? code,
+    String? message,
+    required Object error,
+    StackTrace? stackTrace,
+  }) {
+    if (!kDebugMode) return;
+    final codePart = (code == null || code.isEmpty) ? '-' : code;
+    final msgPart = (message == null || message.trim().isEmpty)
+        ? '(no-message)'
+        : message.trim();
+    debugPrint(
+      '[SupabaseErrorHandler] op=$operation kind=$kind code=$codePart msg=$msgPart',
+    );
+    if (stackTrace != null) {
+      debugPrintStack(stackTrace: stackTrace, label: error.toString());
+    }
   }
 }

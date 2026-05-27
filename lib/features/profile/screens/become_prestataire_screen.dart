@@ -14,6 +14,7 @@ import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_form_scroll_view.dart';
+import '../../../shared/widgets/discovery_surface_card.dart';
 import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/providers/my_roles_provider.dart';
@@ -316,11 +317,50 @@ class _BecomePrestataireScreenState
               ),
             ),
             const SizedBox(height: 24),
-            BecomePrestataireFormCard(
-              salonController: _salon,
-              villeController: _ville,
-              bioController: _bio,
-              errorText: _error,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontal = constraints.maxWidth >= 920;
+                final form = BecomePrestataireFormCard(
+                  salonController: _salon,
+                  villeController: _ville,
+                  bioController: _bio,
+                  errorText: _error,
+                );
+                if (!horizontal) return form;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 3, child: form),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: DiscoverySurfaceCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              DiscProfile.becomePrestaScreenStep,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              DiscProfile.becomePrestaScreenBody,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
             AppButton(

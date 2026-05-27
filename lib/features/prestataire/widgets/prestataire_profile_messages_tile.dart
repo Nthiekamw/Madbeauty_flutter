@@ -21,7 +21,7 @@ class PrestataireProfileMessagesTile extends ConsumerWidget {
             .value ??
         0;
     final subtitle = unread > 0
-        ? '$unread message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}'
+        ? '$unread chat${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}'
         : DiscChat.profileShortcutHint;
 
     return DiscoverySurfaceCard(

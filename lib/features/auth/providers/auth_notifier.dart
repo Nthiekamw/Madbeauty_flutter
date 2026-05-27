@@ -138,21 +138,30 @@ class AuthNotifier extends AsyncNotifier<User?> {
     return initialUser;
   }
 
-  Future<void> signInWithPassword({
+  Future<User?> signInWithPassword({
     required String email,
     required String password,
   }) async {
-    if (!ref.read(authSupabaseEnabledProvider)) return;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    if (!ref.read(authSupabaseEnabledProvider)) return null;
+    final previousUser = switch (state) {
+      AsyncData(:final value) => value,
+      _ => _auth.currentSession?.user ?? _auth.currentUser,
+    };
+    try {
       final response = await _auth.signInWithPassword(
         email: email,
         password: password,
       );
       final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
       await _cacheCurrentEmail(user);
+      state = AsyncData(user);
       return user;
-    });
+    } catch (_) {
+      // Ne pas passer en loading/error global auth pour un échec de login,
+      // afin d'éviter la redirection splash "Vérification de la session".
+      state = AsyncData(previousUser);
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {

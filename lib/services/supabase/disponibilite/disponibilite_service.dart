@@ -23,13 +23,15 @@ class DisponibiliteService {
     'confirmed',
   };
 
+  static const _maxOverrideCapacity = 10;
+
   Future<List<HorairePlage>> getHoraires(String prestataireId) =>
       SupabaseErrorHandler.run(
         operation: 'disponibilite.getHoraires',
         action: () async {
           final response = await _client
               .from('disponibilites')
-              .select('jour_semaine, heure_debut, heure_fin')
+              .select('jour_semaine, heure_debut, heure_fin, capacite_simultanee')
               .eq('prestataire_id', prestataireId)
               .order('jour_semaine')
               .order('heure_debut');
@@ -40,6 +42,8 @@ class DisponibiliteService {
               jourSemaine: row['jour_semaine'] as int,
               heureDebut: _parseTime(row['heure_debut']),
               heureFin: _parseTime(row['heure_fin']),
+              capaciteSimultanee:
+                  (row['capacite_simultanee'] as num?)?.toInt() ?? 1,
             );
           }).toList();
         },
@@ -66,6 +70,7 @@ class DisponibiliteService {
                   'jour_semaine': h.jourSemaine,
                   'heure_debut': _formatTime(h.heureDebut),
                   'heure_fin': _formatTime(h.heureFin),
+                  'capacite_simultanee': h.capaciteSimultanee,
                 },
               )
               .toList();
@@ -109,14 +114,30 @@ class DisponibiliteService {
               plages.where((p) => p.jourSemaine == pgDow).toList();
           if (dayPlages.isEmpty) return const [];
 
-          final reserved = await _reservedSlots(prestataireId, day);
+          final overrides = await _capacityOverridesForDay(
+            prestataireId: prestataireId,
+            pgDow: pgDow,
+          );
+          final reservedCounts = await _reservedSlotCounts(prestataireId, day);
           final indispos = await _indisponibilitesForDay(prestataireId, day);
 
           final slots = <TimeSlot>[];
           for (final plage in dayPlages) {
             for (final slot in _generateSlots(plage)) {
               final at = slot.onDay(day);
-              if (_isBlocked(at, indispos, reserved)) continue;
+              final capacity = _capacityFor(
+                at: at,
+                fallback: plage.capaciteSimultanee,
+                overrides: overrides,
+              );
+              if (_isBlocked(
+                at: at,
+                indispos: indispos,
+                reservedCount: reservedCounts[slot] ?? 0,
+                capacity: capacity,
+              )) {
+                continue;
+              }
               slots.add(slot);
             }
           }
@@ -195,7 +216,10 @@ class DisponibiliteService {
     }).toList();
   }
 
-  Future<Set<TimeSlot>> _reservedSlots(String prestataireId, DateTime day) async {
+  Future<Map<TimeSlot, int>> _reservedSlotCounts(
+    String prestataireId,
+    DateTime day,
+  ) async {
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
     final response = await _client
@@ -205,14 +229,17 @@ class DisponibiliteService {
         .gte('date_heure', start.toUtc().toIso8601String())
         .lt('date_heure', end.toUtc().toIso8601String());
 
-    final out = <TimeSlot>{};
+    final out = <TimeSlot, int>{};
     for (final raw in response as List<dynamic>) {
       final row = Map<String, dynamic>.from(raw as Map);
       final statut = (row['statut'] as String?)?.trim().toLowerCase() ?? '';
       final normalized = statut.replaceAll('é', 'e');
       if (!_activeReservationStatuses.contains(normalized)) continue;
       final dt = DateTime.tryParse(row['date_heure'] as String)?.toLocal();
-      if (dt != null) out.add(TimeSlot.fromDateTime(dt));
+      if (dt != null) {
+        final slot = TimeSlot.fromDateTime(dt);
+        out[slot] = (out[slot] ?? 0) + 1;
+      }
     }
     return out;
   }
@@ -228,17 +255,60 @@ class DisponibiliteService {
     return slots;
   }
 
-  bool _isBlocked(
-    DateTime at,
-    List<DateTimeRange> indispos,
-    Set<TimeSlot> reserved,
-  ) {
-    final slot = TimeSlot.fromDateTime(at);
-    if (reserved.contains(slot)) return true;
+  bool _isBlocked({
+    required DateTime at,
+    required List<DateTimeRange> indispos,
+    required int reservedCount,
+    required int capacity,
+  }) {
+    if (reservedCount >= capacity) return true;
     for (final range in indispos) {
       if (!at.isBefore(range.start) && at.isBefore(range.end)) return true;
     }
     return false;
+  }
+
+  Future<List<_CapacityOverrideRange>> _capacityOverridesForDay({
+    required String prestataireId,
+    required int pgDow,
+  }) async {
+    final response = await _client
+        .from('disponibilite_capacity_overrides')
+        .select('heure_debut, heure_fin, capacite_simultanee')
+        .eq('prestataire_id', prestataireId)
+        .eq('jour_semaine', pgDow)
+        .order('heure_debut');
+
+    return (response as List<dynamic>).map((raw) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      return _CapacityOverrideRange(
+        startMinutes: _timeToMinutes(row['heure_debut']),
+        endMinutes: _timeToMinutes(row['heure_fin']),
+        capacity: ((row['capacite_simultanee'] as num?)?.toInt() ?? 1).clamp(
+          1,
+          _maxOverrideCapacity,
+        ),
+      );
+    }).toList();
+  }
+
+  int _capacityFor({
+    required DateTime at,
+    required int fallback,
+    required List<_CapacityOverrideRange> overrides,
+  }) {
+    final minute = at.hour * 60 + at.minute;
+    for (final o in overrides) {
+      if (minute >= o.startMinutes && minute < o.endMinutes) {
+        return o.capacity;
+      }
+    }
+    return fallback;
+  }
+
+  int _timeToMinutes(Object? value) {
+    final t = _parseTime(value);
+    return t.hour * 60 + t.minute;
   }
 
   TimeOfDay _parseTime(Object? value) {
@@ -254,4 +324,16 @@ class DisponibiliteService {
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m:00';
   }
+}
+
+class _CapacityOverrideRange {
+  const _CapacityOverrideRange({
+    required this.startMinutes,
+    required this.endMinutes,
+    required this.capacity,
+  });
+
+  final int startMinutes;
+  final int endMinutes;
+  final int capacity;
 }

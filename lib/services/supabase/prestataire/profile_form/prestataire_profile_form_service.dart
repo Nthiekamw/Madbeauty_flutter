@@ -116,6 +116,7 @@ class PrestataireProfileSavePayload {
     this.avatarBytes,
     this.avatarFileName,
     this.avatarMimeType,
+    this.avatarUrl,
     required this.services,
     this.suggestionCategorieNom = '',
     this.suggestionCategorieDescription = '',
@@ -136,6 +137,7 @@ class PrestataireProfileSavePayload {
   final Uint8List? avatarBytes;
   final String? avatarFileName;
   final String? avatarMimeType;
+  final String? avatarUrl;
   final List<PrestataireServiceFormData> services;
   final String suggestionCategorieNom;
   final String suggestionCategorieDescription;
@@ -281,6 +283,14 @@ class PrestataireProfileFormService {
           userId: user.id,
           avatarUrl: avatarUrl,
         );
+      } else {
+        final avatarUrl = payload.avatarUrl?.trim();
+        if (avatarUrl != null && avatarUrl.isNotEmpty) {
+          await _profileService.upsertAvatar(
+            userId: user.id,
+            avatarUrl: avatarUrl,
+          );
+        }
       }
 
       final coords = await _geocodingService.geocodeAddress(

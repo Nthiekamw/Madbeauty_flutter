@@ -34,6 +34,7 @@ import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/favorites/screens/client_favorites_screen.dart';
 import '../features/messaging/screens/chat_screen.dart';
 import '../features/messaging/screens/conversations_inbox_screen.dart';
+import '../features/reviews/screens/reviews_screen.dart';
 import '../services/supabase/messaging/messaging_providers.dart';
 import '../features/profile/screens/edit_client_account_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -66,6 +67,7 @@ abstract final class AppRoutes {
   static const String chat = '/chat';
   static const String editClientAccount = '/client/profile/edit';
   static const String clientFavorites = '/client/favorites';
+  static const String clientReviews = '/client/reviews';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -108,6 +110,7 @@ abstract final class AppRouteNames {
   static const String chat = 'chat';
   static const String editClientAccount = 'edit-client-account';
   static const String clientFavorites = 'client-favorites';
+  static const String clientReviews = 'client-reviews';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -296,6 +299,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.clientFavorites,
         path: AppRoutes.clientFavorites,
         builder: (context, state) => const ClientFavoritesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientReviews,
+        path: AppRoutes.clientReviews,
+        builder: (context, state) => const ReviewsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',

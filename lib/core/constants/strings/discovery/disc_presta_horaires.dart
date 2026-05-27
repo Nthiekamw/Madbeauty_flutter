@@ -12,6 +12,7 @@ abstract final class DiscPrestaHoraires {
   static const dayOff = 'Fermé';
   static const heureDebut = 'Début';
   static const heureFin = 'Fin';
+  static const capacite = 'Capacité simultanée';
   static const invalidPlage = 'L’heure de fin doit être après l’heure de début.';
 
   static const jours = [

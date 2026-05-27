@@ -7,11 +7,11 @@ abstract final class DiscPrestaForm {
   static const stepBasics = 'Vitrine & salon';
   static const stepLocation = 'Adresse & lieu';
   static const stepServices = 'Services & tarifs';
-  static const stepGallery = 'Réalisations (optionnel)';
-  static const stepComfort = 'Confort & conditions (optionnel)';
-  static const stepHoraires = 'Horaires (optionnel)';
-  static const skipStep = 'Passer cette étape';
-  static const completeLater = 'Compléter plus tard';
+  static const stepGallery = 'Réalisations';
+  static const stepComfort = 'Confort & conditions';
+  static const stepHoraires = 'Horaires';
+  static const skipStep = 'Passer';
+  static const completeLater = 'Configurer plus tard';
   static const completeLaterSaved =
       'Brouillon enregistré. Tu pourras reprendre la complétion de ton profil à tout moment.';
   static String hubWizardProgressLabel(int current, int total) =>
@@ -24,7 +24,7 @@ abstract final class DiscPrestaForm {
   static const onboardingFinishIncompleteBodyRequired =
       'Certaines informations obligatoires manquent encore pour être visible dans le catalogue :';
   static const onboardingFinishRequiredHeading = 'À compléter en priorité';
-  static const onboardingFinishOptionalHeading = 'Recommandé (optionnel)';
+  static const onboardingFinishOptionalHeading = 'Recommandé';
   static const onboardingFinishLater = 'Plus tard';
   static const onboardingFinishCompleteCta = 'Compléter mon profil';
   static const onboardingFinishEnrichCta = 'Enrichir mon profil';
@@ -34,12 +34,12 @@ abstract final class DiscPrestaForm {
   static const salonName = 'Nom du salon / activité';
   static const displayName = 'Nom affiché';
   static const displayNameHint = 'Visible par les clientes';
-  static const bio = 'Présentation (optionnel)';
+  static const bio = 'Présentation';
   static const bioHint = 'Texte libre complémentaire';
   static const description = 'Description';
   static const descriptionHint = '200 caractères max — accroche pour le catalogue';
-  static const experienceYears = 'Années d’expérience (optionnel)';
-  static const experiencePro = 'Expérience professionnelle (optionnel)';
+  static const experienceYears = 'Années d’expérience';
+  static const experiencePro = 'Expérience professionnelle';
   static const experienceProHint = '150 caractères max';
   static const experienceProSuggestionsLabel = 'Suggestions';
   static const experienceYearsSuggestionsLabel = 'Durée d’activité';
@@ -75,7 +75,7 @@ abstract final class DiscPrestaForm {
       'Choisis un ou plusieurs types de services proposés.';
   static const svcAdd = 'Ajouter un service';
   static const svcName = 'Nom du service';
-  static const svcDescription = 'Description (optionnel)';
+  static const svcDescription = 'Description';
   static const svcCategory = 'Catégorie';
   static const svcCategoryPick = 'Choisir une catégorie';
   static const svcPrice = 'Prix (€)';
@@ -83,7 +83,7 @@ abstract final class DiscPrestaForm {
   static const svcDelete = 'Supprimer ce service';
   static const suggestionTitle = 'Suggérer une catégorie';
   static const suggestionNom = 'Nom de la catégorie suggérée';
-  static const suggestionDesc = 'Description (optionnel)';
+  static const suggestionDesc = 'Description';
   static const back = 'Retour';
   static const onward = 'Continuer';
   static const save = 'Enregistrer';

@@ -11,6 +11,7 @@ class HoraireDayDraft {
     required this.debutMinute,
     required this.finHour,
     required this.finMinute,
+    required this.capaciteSimultanee,
   });
 
   final int jourSemaine;
@@ -19,6 +20,7 @@ class HoraireDayDraft {
   final int debutMinute;
   final int finHour;
   final int finMinute;
+  final int capaciteSimultanee;
 
   Map<String, dynamic> toJson() => {
         'jourSemaine': jourSemaine,
@@ -27,6 +29,7 @@ class HoraireDayDraft {
         'debutMinute': debutMinute,
         'finHour': finHour,
         'finMinute': finMinute,
+        'capaciteSimultanee': capaciteSimultanee,
       };
 
   static HoraireDayDraft? fromJson(Object? raw) {
@@ -41,6 +44,7 @@ class HoraireDayDraft {
       debutMinute: json['debutMinute'] as int? ?? 0,
       finHour: json['finHour'] as int? ?? 18,
       finMinute: json['finMinute'] as int? ?? 0,
+      capaciteSimultanee: json['capaciteSimultanee'] as int? ?? 1,
     );
   }
 
@@ -51,6 +55,7 @@ class HoraireDayDraft {
         debutMinute: jour.debut.minute,
         finHour: jour.fin.hour,
         finMinute: jour.fin.minute,
+        capaciteSimultanee: jour.capaciteSimultanee,
       );
 
   WeeklyJourHoraire toWeekly() => WeeklyJourHoraire(
@@ -58,6 +63,7 @@ class HoraireDayDraft {
         enabled: enabled,
         debut: TimeOfDay(hour: debutHour, minute: debutMinute),
         fin: TimeOfDay(hour: finHour, minute: finMinute),
+        capaciteSimultanee: capaciteSimultanee,
       );
 }
 

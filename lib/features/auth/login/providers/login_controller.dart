@@ -14,6 +14,9 @@ final loginControllerProvider =
 );
 
 class LoginController extends Notifier<LoginViewState> {
+  static const _retryCooldown = Duration(seconds: 2);
+  DateTime? _nextAllowedSubmitAt;
+
   @override
   LoginViewState build() => const LoginViewState();
 
@@ -43,10 +46,21 @@ class LoginController extends Notifier<LoginViewState> {
     state = state.copyWith(shouldPopRoute: false);
   }
 
+  void acknowledgeSubmitError() {
+    state = state.copyWith(clearSubmitError: true);
+  }
+
   Future<void> submit({
     required String rawEmail,
     required String rawPassword,
   }) async {
+    final now = DateTime.now();
+    final nextAllowed = _nextAllowedSubmitAt;
+    if (nextAllowed != null && now.isBefore(nextAllowed)) {
+      state = state.copyWith(submitError: AuthStrings.loginRetryCooldown);
+      return;
+    }
+
     final email = rawEmail.trim();
     final eErr = LoginValidators.email(email);
     final pErr = LoginValidators.password(rawPassword);
@@ -64,30 +78,52 @@ class LoginController extends Notifier<LoginViewState> {
       return;
     }
 
-    state = const LoginViewState();
+    state = const LoginViewState(isBusy: true);
 
-    await ref.read(authNotifierProvider.notifier).signInWithPassword(
-          email: email,
-          password: rawPassword,
-        );
+    User? signedInUser;
+    try {
+      signedInUser = await ref.read(authNotifierProvider.notifier).signInWithPassword(
+            email: email,
+            password: rawPassword,
+          );
+    } on AppFailure catch (e) {
+      if (!ref.mounted) return;
+      _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
+      state = LoginViewState(
+        submitError: e.message,
+        isBusy: false,
+      );
+      return;
+    } catch (_) {
+      if (!ref.mounted) return;
+      _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
+      state = const LoginViewState(
+        submitError: CoreStrings.errorUnexpected,
+        isBusy: false,
+      );
+      return;
+    }
     if (!ref.mounted) return;
 
     final auth = ref.read(authNotifierProvider);
-    final User? user = switch (auth) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
+    final user = signedInUser ??
+        switch (auth) {
+          AsyncData(:final value) => value,
+          _ => null,
+        };
 
     String? submitErr;
     if (auth.hasError) {
       final err = auth.error;
       submitErr =
           err is AppFailure ? err.message : CoreStrings.errorUnexpected;
+      _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
     }
 
     state = LoginViewState(
       submitError: submitErr,
       shouldPopRoute: user != null,
+      isBusy: false,
     );
   }
 
