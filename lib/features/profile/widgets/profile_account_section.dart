@@ -28,7 +28,13 @@ class ProfileAccountSection extends StatelessWidget {
               DiscoveryMenuTile(
                 icon: Icons.favorite_border_rounded,
                 title: DiscProfile.actionFavorites,
-                onTap: () => _comingSoon(context),
+                onTap: () => context.pushClientFavorites(),
+              ),
+              _divider(context),
+              DiscoveryMenuTile(
+                icon: Icons.chat_bubble_outline_rounded,
+                title: DiscChat.profileShortcut,
+                onTap: () => context.goClientMessages(),
               ),
               _divider(context),
               DiscoveryMenuTile(

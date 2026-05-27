@@ -37,6 +37,7 @@ abstract final class OfflineCacheCodec {
         dateHeure: DateTime.parse(map['dateHeure'] as String),
         statut: map['statut'] as String? ?? '',
         serviceName: map['serviceName'] as String?,
+        prestataireId: map['prestataireId'] as String?,
         prestataireName: map['prestataireName'] as String?,
         prestataireAvatarUrl: map['prestataireAvatarUrl'] as String?,
       );
@@ -53,6 +54,7 @@ abstract final class OfflineCacheCodec {
               'dateHeure': e.dateHeure.toIso8601String(),
               'statut': e.statut,
               'serviceName': e.serviceName,
+              'prestataireId': e.prestataireId,
               'prestataireName': e.prestataireName,
               'prestataireAvatarUrl': e.prestataireAvatarUrl,
             },

@@ -31,6 +31,10 @@ import '../features/prestataire/screens/prestataire_hub_screen.dart';
 import '../features/prestataire/screens/prestataire_profile_completion_screen.dart';
 import '../features/prestataire/screens/prestataire_profile_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
+import '../features/favorites/screens/client_favorites_screen.dart';
+import '../features/messaging/screens/chat_screen.dart';
+import '../features/messaging/screens/conversations_inbox_screen.dart';
+import '../services/supabase/messaging/messaging_providers.dart';
 import '../features/profile/screens/edit_client_account_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
@@ -57,13 +61,17 @@ abstract final class AppRoutes {
   static const String clientHome = '/client/home';
   static const String clientSearch = '/client/search';
   static const String clientReservations = '/client/reservations';
+  static const String clientMessages = '/client/messages';
   static const String clientProfile = '/client/profile';
+  static const String chat = '/chat';
   static const String editClientAccount = '/client/profile/edit';
+  static const String clientFavorites = '/client/favorites';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
   static const String prestataireProfile = '/prestataire/profile';
   static const String prestataireClients = '/prestataire/clients';
+  static const String prestataireMessages = '/prestataire/messages';
   static const String prestataireReservationDetail =
       '/prestataire/reservations/:id';
   static const String prestataireProfileEdit = '/prestataire/profile/edit';
@@ -95,13 +103,17 @@ abstract final class AppRouteNames {
   static const String clientHome = 'client-home';
   static const String clientSearch = 'client-search';
   static const String clientReservations = 'client-reservations';
+  static const String clientMessages = 'client-messages';
   static const String clientProfile = 'client-profile';
+  static const String chat = 'chat';
   static const String editClientAccount = 'edit-client-account';
+  static const String clientFavorites = 'client-favorites';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
   static const String prestataireProfile = 'prestataire-profile';
   static const String prestataireClients = 'prestataire-clients';
+  static const String prestataireMessages = 'prestataire-messages';
   static const String prestataireReservationDetail =
       'prestataire-reservation-detail';
   static const String prestataireProfileEdit = 'prestataire-profile-edit';
@@ -280,6 +292,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.editClientAccount,
         builder: (context, state) => const EditClientAccountScreen(),
       ),
+      GoRoute(
+        name: AppRouteNames.clientFavorites,
+        path: AppRoutes.clientFavorites,
+        builder: (context, state) => const ClientFavoritesScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',
         builder: (context, state, navigationShell) => ClientShellScaffold(
@@ -318,6 +335,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) => shellTabPage(
                   key: state.pageKey,
                   child: const ClientReservationsScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.clientMessages,
+                path: AppRoutes.clientMessages,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const ConversationsInboxScreen(
+                    role: MessagingInboxRole.client,
+                  ),
                 ),
               ),
             ],
@@ -381,6 +412,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                name: AppRouteNames.prestataireMessages,
+                path: AppRoutes.prestataireMessages,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const ConversationsInboxScreen(
+                    role: MessagingInboxRole.prestataire,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 name: AppRouteNames.prestataireProfile,
                 path: AppRoutes.prestataireProfile,
                 pageBuilder: (context, state) => shellTabPage(
@@ -391,6 +436,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        name: AppRouteNames.chat,
+        path: '${AppRoutes.chat}/:bookingId',
+        builder: (context, state) {
+          final id = state.pathParameters['bookingId']!;
+          return ChatScreen(bookingId: id);
+        },
       ),
       GoRoute(
         name: AppRouteNames.prestataireReservationDetail,

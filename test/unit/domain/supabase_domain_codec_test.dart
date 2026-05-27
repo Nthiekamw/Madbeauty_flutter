@@ -158,6 +158,7 @@ void main() {
         'id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'client_id': '33333333-3333-3333-3333-333333333333',
         'prestataire_id': '44444444-4444-4444-4444-444444444444',
+        'reservation_id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'last_message_at': null,
       };
       final m = SupabaseDomainCodec.conversation(row);
@@ -171,6 +172,7 @@ void main() {
         'id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'client_id': '33333333-3333-3333-3333-333333333333',
         'prestataire_id': '44444444-4444-4444-4444-444444444444',
+        'reservation_id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'last_message_at': '2026-05-10T16:00:00.000Z',
       };
       final m = SupabaseDomainCodec.conversation(row);
@@ -180,9 +182,9 @@ void main() {
     test('Message', () {
       final row = <String, dynamic>{
         'id': 'cccccccc-cccc-cccc-cccc-cccccccccccc',
-        'conversation_id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        'booking_id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'sender_id': '33333333-3333-3333-3333-333333333333',
-        'contenu': 'Bonjour, je suis disponible samedi.',
+        'content': 'Bonjour, je suis disponible samedi.',
         'is_read': false,
         'created_at': '2026-05-10T16:05:00.000Z',
       };

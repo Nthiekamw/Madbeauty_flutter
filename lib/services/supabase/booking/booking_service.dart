@@ -397,8 +397,8 @@ class BookingService {
         final response = await _client
             .from('reservations')
             .select(
-              'id, date_heure, statut, services_beaute(nom), '
-              'prestataire_profiles(nom_salon, user_id)',
+              'id, date_heure, statut, prestataire_id, services_beaute(nom), '
+              'prestataire_profiles(id, nom_salon, user_id)',
             )
             .eq('client_id', clientId)
             .order('date_heure', ascending: false);
@@ -424,6 +424,7 @@ class BookingService {
               serviceName: service is Map
                   ? service['nom'] as String?
                   : null,
+              prestataireId: map['prestataire_id'] as String?,
               prestataireName: prestataire is Map
                   ? prestataire['nom_salon'] as String?
                   : null,
@@ -451,6 +452,7 @@ class BookingService {
             dateHeure: summary.dateHeure,
             statut: summary.statut,
             serviceName: summary.serviceName,
+            prestataireId: summary.prestataireId,
             prestataireName: summary.prestataireName,
             prestataireAvatarUrl: avatarUrl?.trim().isNotEmpty == true
                 ? avatarUrl!.trim()

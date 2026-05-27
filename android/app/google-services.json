@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "138830696039",
+    "project_id": "fluxetudiant",
+    "storage_bucket": "fluxetudiant.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:138830696039:android:7eca3bfb90d65a1010cec2",
+        "android_client_info": {
+          "package_name": "com.madbeauty.madbeauty"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "138830696039-v93u9uvt39ugt7vu5ern1mohgf1078dg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPmxRBUQcDzXqGaTudx--1N6xLjp1n5WQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "138830696039-v93u9uvt39ugt7vu5ern1mohgf1078dg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

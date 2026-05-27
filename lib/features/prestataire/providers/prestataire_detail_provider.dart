@@ -8,7 +8,6 @@ import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
-import '../../../services/supabase/reviews/avis_service_providers.dart';
 import 'prestataire_photos_provider.dart';
 import 'prestataire_services_provider.dart';
 
@@ -57,11 +56,6 @@ final prestataireDetailProvider = FutureProvider.autoDispose
           ? await disponibiliteService.getHoraires(prestataireId)
           : <HorairePlage>[];
 
-      final avisService = ref.watch(avisServiceProvider);
-      final reviews = avisService != null
-          ? await avisService.getByPrestataireId(prestataireId)
-          : <Avis>[];
-
       return PrestataireDetailData(
         profile: profile,
         avatarUrl: userProfile?.avatarUrl,
@@ -69,6 +63,6 @@ final prestataireDetailProvider = FutureProvider.autoDispose
         services: services,
         photos: photos,
         horaires: horaires,
-        reviews: reviews,
+        reviews: const [],
       );
     });

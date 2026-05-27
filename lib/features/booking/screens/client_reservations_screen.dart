@@ -15,6 +15,7 @@ import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
+import '../../messaging/messaging_navigation.dart';
 import '../widgets/client_reservation_card.dart';
 
 class ClientReservationsScreen extends ConsumerStatefulWidget {
@@ -301,6 +302,7 @@ class _ClientReservationsScreenState
             item: item,
             cancelLoading: _cancellingId == item.id,
             onCancel: canCancel ? () => _confirmCancel(item) : null,
+            onMessage: () => openChatForReservation(context, ref, item.id),
           );
         },
       ),

@@ -21,6 +21,7 @@ import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/prestataire_completeness_badge.dart';
 import '../widgets/prestataire_profile_load_error.dart';
 import '../widgets/prestataire_profile_manage_menu.dart';
+import '../widgets/prestataire_profile_messages_tile.dart';
 import '../widgets/prestataire_profile_stats_strip.dart';
 import '../widgets/prestataire_section_header.dart';
 import '../widgets/prestataire_salon_hero.dart';
@@ -193,6 +194,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
                 ],
               ],
               const SizedBox(height: 20),
+              const PrestataireProfileMessagesTile(),
+              const SizedBox(height: 16),
               const PrestataireProfileManageMenu(),
               if (data.prestataireId != null) ...[
                 const SizedBox(height: 16),

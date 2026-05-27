@@ -1,31 +1,27 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/reviews/avis.dart';
-import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
+import 'review_service.dart';
 
+/// @deprecated Préférer [ReviewService] et [reviewsByPrestataireProvider].
 class AvisService {
-  AvisService(this._client);
+  AvisService(SupabaseClient client) : _reviews = ReviewService(client);
 
-  final SupabaseClient _client;
+  final ReviewService _reviews;
 
-  Future<List<Avis>> getByPrestataireId(String prestataireId) =>
-      SupabaseErrorHandler.run(
-        operation: 'avis.getByPrestataireId',
-        action: () async {
-          final response = await _client
-              .from('avis')
-              .select()
-              .eq('prestataire_id', prestataireId)
-              .order('created_at', ascending: false);
-
-          return (response as List<dynamic>)
-              .map(
-                (raw) => SupabaseDomainCodec.avis(
-                  Map<String, dynamic>.from(raw as Map),
-                ),
-              )
-              .toList();
-        },
-      );
+  Future<List<Avis>> getByPrestataireId(String prestataireId) async {
+    final list = await _reviews.getByPrestataire(prestataireId);
+    return [
+      for (final r in list)
+        Avis(
+          id: r.id,
+          clientId: r.clientId,
+          prestataireId: r.prestataireId,
+          reservationId: r.bookingId,
+          note: r.note,
+          commentaire: r.commentaire,
+          createdAt: r.createdAt,
+        ),
+    ];
+  }
 }

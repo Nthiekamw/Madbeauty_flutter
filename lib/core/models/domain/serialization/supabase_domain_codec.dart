@@ -7,6 +7,7 @@ import 'package:madbeauty/core/models/domain/catalog/service_beaute.dart';
 import 'package:madbeauty/core/models/domain/messaging/conversation.dart';
 import 'package:madbeauty/core/models/domain/messaging/message.dart';
 import 'package:madbeauty/core/models/domain/reviews/avis.dart';
+import 'package:madbeauty/core/models/domain/reviews/review.dart';
 import 'package:madbeauty/core/models/domain/user/app_user.dart';
 import 'package:madbeauty/core/models/domain/user/client_profile.dart';
 import 'package:madbeauty/core/models/domain/user/prestataire_profile.dart';
@@ -61,6 +62,8 @@ abstract final class SupabaseDomainCodec {
 
   static Avis avis(Map<String, dynamic> r) => Avis.fromJson(row(r));
 
+  static Review review(Map<String, dynamic> r) => Review.fromJson(row(r));
+
   static PhotoRealisation photoRealisation(Map<String, dynamic> r) =>
       PhotoRealisation.fromJson(row(r));
 
@@ -69,7 +72,13 @@ abstract final class SupabaseDomainCodec {
   static Conversation conversation(Map<String, dynamic> r) =>
       Conversation.fromJson(row(r));
 
-  static Message message(Map<String, dynamic> r) => Message.fromJson(row(r));
+  static Message message(Map<String, dynamic> r) {
+    final m = row(r);
+    if (m['content'] == null && m['contenu'] != null) {
+      m['content'] = m['contenu'];
+    }
+    return Message.fromJson(m);
+  }
 }
 
 extension AppUserSupabaseMap on AppUser {
@@ -113,6 +122,11 @@ extension ReservationSupabaseMap on Reservation {
 }
 
 extension AvisSupabaseMap on Avis {
+  Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
+      SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
+}
+
+extension ReviewSupabaseMap on Review {
   Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
       SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
 }

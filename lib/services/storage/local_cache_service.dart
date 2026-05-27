@@ -15,6 +15,10 @@ class LocalCacheService {
       'profile.push_notifications_enabled';
   static const String profileGeolocationKey = 'profile.geolocation_enabled';
 
+  /// `true` une fois que la demande de permission système (push) a été faite au moins une fois.
+  static const String pushPermissionPromptedKey =
+      'push.permission_prompted_v1';
+
   static LocalCacheService? _instance;
 
   final SharedPreferences _prefs;
@@ -80,6 +84,12 @@ class LocalCacheService {
 
   Future<bool> setProfilePushNotificationsEnabled(bool value) =>
       _prefs.setBool(profilePushNotificationsKey, value);
+
+  bool get pushPermissionPrompted =>
+      _prefs.getBool(pushPermissionPromptedKey) ?? false;
+
+  Future<bool> setPushPermissionPrompted({bool value = true}) =>
+      _prefs.setBool(pushPermissionPromptedKey, value);
 
   bool get profileGeolocationEnabled =>
       _prefs.getBool(profileGeolocationKey) ?? true;

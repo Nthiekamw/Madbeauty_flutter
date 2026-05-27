@@ -10,12 +10,14 @@ import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/app_snack_bar.dart';
+import '../../../shared/widgets/prestataire_favorite_button.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../logic/lieu_travail_display.dart';
 import '../providers/prestataire_detail_provider.dart';
 import '../widgets/prestataire_client_experience_section.dart';
 import '../widgets/prestataire_public_horaires_section.dart';
-import '../widgets/prestataire_public_reviews_section.dart';
+import '../widgets/prestataire_public_reviews_live_section.dart';
+import '../../reviews/providers/prestataire_note_moyenne_provider.dart';
 
 class PrestataireDetailScreen extends ConsumerWidget {
   const PrestataireDetailScreen({super.key, required this.prestataireId});
@@ -63,6 +65,7 @@ class PrestataireDetailScreen extends ConsumerWidget {
                   children: [
                     // Stats rapides
                     _QuickStatsRow(
+                      prestataireId: data.profile.id,
                       profile: data.profile,
                       servicesCount: data.services.length,
                     ),
@@ -172,8 +175,8 @@ class PrestataireDetailScreen extends ConsumerWidget {
                     _Section(
                       icon: Icons.star_outline_rounded,
                       title: DiscPrestaDetail.reviewsTitle,
-                      child: PrestatairePublicReviewsSection(
-                        reviews: data.reviews,
+                      child: PrestatairePublicReviewsLiveSection(
+                        prestataireId: data.profile.id,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -255,6 +258,16 @@ class _DetailSliverAppBar extends StatelessWidget {
       pinned: true,
       stretch: true,
       backgroundColor: theme.colorScheme.surface,
+      actions: [
+        if (!isOwnProfile)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: PrestataireFavoriteButton(
+              prestataireId: profile.id,
+              style: PrestataireFavoriteButtonStyle.hero,
+            ),
+          ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground, StretchMode.fadeTitle],
         background: Stack(
@@ -509,16 +522,25 @@ class _HeroCta extends StatelessWidget {
 
 // ─── Stats rapides ────────────────────────────────────────────────────────────
 
-class _QuickStatsRow extends StatelessWidget {
-  const _QuickStatsRow({required this.profile, required this.servicesCount});
+class _QuickStatsRow extends ConsumerWidget {
+  const _QuickStatsRow({
+    required this.prestataireId,
+    required this.profile,
+    required this.servicesCount,
+  });
 
+  final String prestataireId;
   final PrestataireProfile profile;
   final int servicesCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final rating = profile.noteMoyenne;
+    final liveNote = switch (ref.watch(prestataireNoteMoyenneProvider(prestataireId))) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    final rating = liveNote ?? profile.noteMoyenne;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),

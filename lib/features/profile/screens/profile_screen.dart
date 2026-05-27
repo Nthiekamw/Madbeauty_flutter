@@ -27,6 +27,8 @@ import '../providers/current_user_profile_provider.dart';
 import '../widgets/edit_profile_name_dialog.dart';
 import '../widgets/profile_account_header.dart';
 import '../widgets/profile_account_section.dart';
+import '../widgets/profile_favorites_section.dart';
+import '../widgets/profile_messages_section.dart';
 import '../widgets/profile_footer_actions.dart';
 import '../widgets/profile_my_info_section.dart';
 import '../widgets/profile_preferences_section.dart';
@@ -308,6 +310,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const ProfilePreferencesSection(),
           const SizedBox(height: 16),
           const ProfileRoleSpaceSection(),
+          const SizedBox(height: 16),
+          const ProfileFavoritesSection(),
+          const SizedBox(height: 16),
+          const ProfileMessagesSection(),
           const SizedBox(height: 16),
           const ProfileAccountSection(),
           const SizedBox(height: 20),

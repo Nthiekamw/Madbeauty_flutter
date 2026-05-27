@@ -63,6 +63,13 @@ extension AppNavigationX on BuildContext {
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
   void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
+  void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
+  void goClientMessages() => goNamed(AppRouteNames.clientMessages);
+  void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
+  Future<T?> pushChat<T extends Object?>(String bookingId) => pushNamed<T>(
+        AppRouteNames.chat,
+        pathParameters: {'bookingId': bookingId},
+      );
   void goMyReservations() => goNamed(AppRouteNames.clientReservations);
 
   void goBooking({String? prestataireId, String? serviceId}) {

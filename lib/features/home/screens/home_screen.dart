@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +8,8 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/notifications/in_app_notifications_provider.dart';
+import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
@@ -15,7 +19,6 @@ import '../widgets/client_home_header.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
 import '../../../shared/widgets/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -69,7 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openNotifications() {
-    AppSnackBar.info(context, DiscHome.notificationsComingSoon);
+    unawaited(showInAppNotificationsSheet(context, ref));
   }
 
   String? _avatarUrlFromUser(User? user) {
@@ -90,6 +93,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
     final isGuestBrowsing = ref.watch(isGuestBrowsingProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final notificationUnread =
+        ref.watch(unreadInAppNotificationsCountProvider);
 
     Widget body;
     if (currentUser != null) {
@@ -98,6 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onSubmitSearch: _submitHomeSearch,
         onExplorePick: _pickInspiration,
         onNotificationsTap: _openNotifications,
+        notificationsUnreadCount: notificationUnread,
         profileSnapshotAsync: profileSnapshotAsync,
         currentUser: currentUser,
         avatarUrl: _avatarUrlFromUser(currentUser),
@@ -108,6 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onSubmitSearch: _submitHomeSearch,
         onExplorePick: _pickInspiration,
         onNotificationsTap: _openNotifications,
+        notificationsUnreadCount: notificationUnread,
       );
     } else {
       body = _GuestFallback(
@@ -139,6 +146,7 @@ class _ConnectedClientHome extends StatelessWidget {
     required this.onSubmitSearch,
     required this.onExplorePick,
     required this.onNotificationsTap,
+    required this.notificationsUnreadCount,
     required this.profileSnapshotAsync,
     required this.currentUser,
     required this.avatarUrl,
@@ -148,6 +156,7 @@ class _ConnectedClientHome extends StatelessWidget {
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
   final VoidCallback onNotificationsTap;
+  final int notificationsUnreadCount;
   final AsyncValue<HomeProfileSnapshot?> profileSnapshotAsync;
   final User currentUser;
   final String? avatarUrl;
@@ -182,6 +191,7 @@ class _ConnectedClientHome extends StatelessWidget {
         avatarUrl: avatarUrl,
         onAvatarTap: () => context.goClientProfile(),
         onNotificationsTap: onNotificationsTap,
+        notificationsUnreadCount: notificationsUnreadCount,
       ),
       footer: clientHomeProfileCacheFooter(theme, fromCache),
     );
@@ -195,12 +205,14 @@ class _GuestBrowseHome extends StatelessWidget {
     required this.onSubmitSearch,
     required this.onExplorePick,
     required this.onNotificationsTap,
+    required this.notificationsUnreadCount,
   });
 
   final TextEditingController searchController;
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
   final VoidCallback onNotificationsTap;
+  final int notificationsUnreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -215,6 +227,7 @@ class _GuestBrowseHome extends StatelessWidget {
         subtitle: AuthStrings.guestHomeSubtitle,
         displayName: '',
         email: '',
+        notificationsUnreadCount: notificationsUnreadCount,
         onNotificationsTap: onNotificationsTap,
         trailing: IconButton.filledTonal(
           tooltip: AuthStrings.guestHomeSignIn,

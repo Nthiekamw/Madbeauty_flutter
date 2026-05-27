@@ -65,6 +65,59 @@ class PrestataireService {
     },
   );
 
+  /// Entrées catalogue pour une liste d’ids (ex. favoris), en conservant [prestataireIds].
+  Future<List<PrestataireCatalogEntry>> getCatalogEntriesByIds(
+    List<String> prestataireIds,
+  ) =>
+      SupabaseErrorHandler.run(
+        operation: 'prestataire.getCatalogEntriesByIds',
+        action: () async {
+          if (prestataireIds.isEmpty) return [];
+
+          final profilesRes = await _client
+              .from('prestataire_profiles')
+              .select()
+              .inFilter('id', prestataireIds);
+
+          final profilesById = <String, PrestataireProfile>{};
+          for (final raw in profilesRes as List<dynamic>) {
+            final p = PrestataireProfile.fromJson(
+              Map<String, dynamic>.from(raw as Map),
+            );
+            profilesById[p.id] = p;
+          }
+
+          final ordered = <PrestataireProfile>[
+            for (final id in prestataireIds)
+              if (profilesById.containsKey(id)) profilesById[id]!,
+          ];
+          if (ordered.isEmpty) return [];
+
+          final specialtyData = await getSpecialtyDataForPrestataires(
+            ordered.map((p) => p.id).toList(),
+          );
+          final userProfiles = await _profileService.getByUserIds(
+            ordered.map((p) => p.userId).toList(),
+          );
+
+          return ordered.map((p) {
+            final userProfile = userProfiles[p.userId];
+            return PrestataireCatalogEntry(
+              profile: p,
+              avatarUrl: userProfile?.avatarUrl,
+              userNom: userProfile?.nom,
+              userPrenom: userProfile?.prenom,
+              specialtyNames: List<String>.from(
+                specialtyData.namesByPrestataire[p.id] ?? const [],
+              ),
+              specialtyCategoryIds: List<String>.from(
+                specialtyData.categoryIdsByPrestataire[p.id] ?? const <String>{},
+              ),
+            );
+          }).toList();
+        },
+      );
+
   Future<PrestataireProfile?> getById(String id) => SupabaseErrorHandler.run(
     operation: 'prestataire.getById',
     action: () async {

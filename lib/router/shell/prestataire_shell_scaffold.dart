@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../services/storage/local_cache_service.dart';
+import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../shared/widgets/offline_shell.dart';
 
-class PrestataireShellScaffold extends StatefulWidget {
+class PrestataireShellScaffold extends ConsumerStatefulWidget {
   const PrestataireShellScaffold({
     super.key,
     required this.navigationShell,
@@ -16,11 +18,13 @@ class PrestataireShellScaffold extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  State<PrestataireShellScaffold> createState() =>
+  ConsumerState<PrestataireShellScaffold> createState() =>
       _PrestataireShellScaffoldState();
 }
 
-class _PrestataireShellScaffoldState extends State<PrestataireShellScaffold> {
+class _PrestataireShellScaffoldState
+    extends ConsumerState<PrestataireShellScaffold> {
+  static const int messagesTabIndex = 3;
   @override
   void initState() {
     super.initState();
@@ -32,33 +36,67 @@ class _PrestataireShellScaffoldState extends State<PrestataireShellScaffold> {
   @override
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
+    final messagesUnread = ref
+            .watch(
+              messagingUnreadCountProvider(MessagingInboxRole.prestataire),
+            )
+            .value ??
+        0;
+
     return Scaffold(
       body: OfflineShell(child: navigationShell),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
+          if (index == messagesTabIndex) {
+            ref.invalidate(
+              conversationsInboxProvider(MessagingInboxRole.prestataire),
+            );
+            ref.invalidate(
+              messagingUnreadCountProvider(MessagingInboxRole.prestataire),
+            );
+          }
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,
           );
         },
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
             label: ShellStrings.navPrestataireDashboard,
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month),
             label: ShellStrings.navPrestataireAgenda,
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.groups_outlined),
             selectedIcon: Icon(Icons.groups),
             label: ShellStrings.navPrestataireClients,
           ),
           NavigationDestination(
+            icon: Badge(
+              isLabelVisible: messagesUnread > 0,
+              label: Text(
+                messagesUnread > 99 ? '99+' : '$messagesUnread',
+                style: const TextStyle(fontSize: 10),
+              ),
+              child: const Icon(Icons.chat_bubble_outline_rounded),
+            ),
+            selectedIcon: Badge(
+              isLabelVisible: messagesUnread > 0,
+              label: Text(
+                messagesUnread > 99 ? '99+' : '$messagesUnread',
+                style: const TextStyle(fontSize: 10),
+              ),
+              child: const Icon(Icons.chat_bubble_rounded),
+            ),
+            label: ShellStrings.navPrestataireMessages,
+          ),
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: ShellStrings.navPrestataireProfile,

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Message {
 
- String get id; String get conversationId; String get senderId; String get contenu; bool get isRead;@IsoDateTimeConverter() DateTime get createdAt;
+ String get id;@JsonKey(name: 'booking_id') String get bookingId;@JsonKey(name: 'sender_id') String get senderId; String get content;@JsonKey(name: 'is_read') bool get isRead;@JsonKey(name: 'created_at')@IsoDateTimeConverter() DateTime get createdAt;
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $MessageCopyWith<Message> get copyWith => _$MessageCopyWithImpl<Message>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, id) || other.id == id)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.contenu, contenu) || other.contenu == contenu)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, id) || other.id == id)&&(identical(other.bookingId, bookingId) || other.bookingId == bookingId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,conversationId,senderId,contenu,isRead,createdAt);
+int get hashCode => Object.hash(runtimeType,id,bookingId,senderId,content,isRead,createdAt);
 
 @override
 String toString() {
-  return 'Message(id: $id, conversationId: $conversationId, senderId: $senderId, contenu: $contenu, isRead: $isRead, createdAt: $createdAt)';
+  return 'Message(id: $id, bookingId: $bookingId, senderId: $senderId, content: $content, isRead: $isRead, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $MessageCopyWith<$Res>  {
   factory $MessageCopyWith(Message value, $Res Function(Message) _then) = _$MessageCopyWithImpl;
 @useResult
 $Res call({
- String id, String conversationId, String senderId, String contenu, bool isRead,@IsoDateTimeConverter() DateTime createdAt
+ String id,@JsonKey(name: 'booking_id') String bookingId,@JsonKey(name: 'sender_id') String senderId, String content,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'created_at')@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -65,12 +65,12 @@ class _$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? conversationId = null,Object? senderId = null,Object? contenu = null,Object? isRead = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? bookingId = null,Object? senderId = null,Object? content = null,Object? isRead = null,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
+as String,bookingId: null == bookingId ? _self.bookingId : bookingId // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
-as String,contenu: null == contenu ? _self.contenu : contenu // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,isRead: null == isRead ? _self.isRead : isRead // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
@@ -158,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String conversationId,  String senderId,  String contenu,  bool isRead, @IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'booking_id')  String bookingId, @JsonKey(name: 'sender_id')  String senderId,  String content, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'created_at')@IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that.isRead,_that.createdAt);case _:
+return $default(_that.id,_that.bookingId,_that.senderId,_that.content,_that.isRead,_that.createdAt);case _:
   return orElse();
 
 }
@@ -179,10 +179,10 @@ return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String conversationId,  String senderId,  String contenu,  bool isRead, @IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'booking_id')  String bookingId, @JsonKey(name: 'sender_id')  String senderId,  String content, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'created_at')@IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Message():
-return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that.isRead,_that.createdAt);case _:
+return $default(_that.id,_that.bookingId,_that.senderId,_that.content,_that.isRead,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +199,10 @@ return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String conversationId,  String senderId,  String contenu,  bool isRead, @IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'booking_id')  String bookingId, @JsonKey(name: 'sender_id')  String senderId,  String content, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'created_at')@IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that.isRead,_that.createdAt);case _:
+return $default(_that.id,_that.bookingId,_that.senderId,_that.content,_that.isRead,_that.createdAt);case _:
   return null;
 
 }
@@ -214,15 +214,15 @@ return $default(_that.id,_that.conversationId,_that.senderId,_that.contenu,_that
 @JsonSerializable()
 
 class _Message implements Message {
-  const _Message({required this.id, required this.conversationId, required this.senderId, required this.contenu, this.isRead = false, @IsoDateTimeConverter() required this.createdAt});
+  const _Message({required this.id, @JsonKey(name: 'booking_id') required this.bookingId, @JsonKey(name: 'sender_id') required this.senderId, required this.content, @JsonKey(name: 'is_read') this.isRead = false, @JsonKey(name: 'created_at')@IsoDateTimeConverter() required this.createdAt});
   factory _Message.fromJson(Map<String, dynamic> json) => _$MessageFromJson(json);
 
 @override final  String id;
-@override final  String conversationId;
-@override final  String senderId;
-@override final  String contenu;
-@override@JsonKey() final  bool isRead;
-@override@IsoDateTimeConverter() final  DateTime createdAt;
+@override@JsonKey(name: 'booking_id') final  String bookingId;
+@override@JsonKey(name: 'sender_id') final  String senderId;
+@override final  String content;
+@override@JsonKey(name: 'is_read') final  bool isRead;
+@override@JsonKey(name: 'created_at')@IsoDateTimeConverter() final  DateTime createdAt;
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.contenu, contenu) || other.contenu == contenu)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.bookingId, bookingId) || other.bookingId == bookingId)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.content, content) || other.content == content)&&(identical(other.isRead, isRead) || other.isRead == isRead)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,conversationId,senderId,contenu,isRead,createdAt);
+int get hashCode => Object.hash(runtimeType,id,bookingId,senderId,content,isRead,createdAt);
 
 @override
 String toString() {
-  return 'Message(id: $id, conversationId: $conversationId, senderId: $senderId, contenu: $contenu, isRead: $isRead, createdAt: $createdAt)';
+  return 'Message(id: $id, bookingId: $bookingId, senderId: $senderId, content: $content, isRead: $isRead, createdAt: $createdAt)';
 }
 
 
@@ -257,7 +257,7 @@ abstract mixin class _$MessageCopyWith<$Res> implements $MessageCopyWith<$Res> {
   factory _$MessageCopyWith(_Message value, $Res Function(_Message) _then) = __$MessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String conversationId, String senderId, String contenu, bool isRead,@IsoDateTimeConverter() DateTime createdAt
+ String id,@JsonKey(name: 'booking_id') String bookingId,@JsonKey(name: 'sender_id') String senderId, String content,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'created_at')@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -274,12 +274,12 @@ class __$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? conversationId = null,Object? senderId = null,Object? contenu = null,Object? isRead = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? bookingId = null,Object? senderId = null,Object? content = null,Object? isRead = null,Object? createdAt = null,}) {
   return _then(_Message(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
+as String,bookingId: null == bookingId ? _self.bookingId : bookingId // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
-as String,contenu: null == contenu ? _self.contenu : contenu // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,isRead: null == isRead ? _self.isRead : isRead // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,

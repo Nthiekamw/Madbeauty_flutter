@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/prestataire_favorite_button.dart';
 import 'prestataire_availability_badge.dart';
 import 'prestataire_realisation_carousel_scope.dart';
 
-/// Bandeau photo (réalisations) + pastille disponibilité.
+/// Bandeau photo (réalisations) + pastille disponibilité + favori.
 class PrestataireCardPhotoHeader extends StatelessWidget {
   const PrestataireCardPhotoHeader({
     super.key,
@@ -14,6 +15,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
     this.fallbackDisplayName,
     this.fallbackAvatarUrl,
     this.compactBadge = false,
+    this.showFavoriteButton = true,
   });
 
   final String prestataireId;
@@ -23,6 +25,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
   final String? fallbackDisplayName;
   final String? fallbackAvatarUrl;
   final bool compactBadge;
+  final bool showFavoriteButton;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +47,15 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
             compact: compactBadge,
           ),
         ),
+        if (showFavoriteButton)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: PrestataireFavoriteButton(
+              prestataireId: prestataireId,
+              compact: compactBadge,
+            ),
+          ),
       ],
     );
   }

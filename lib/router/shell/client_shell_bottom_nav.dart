@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
 import 'shell_nav_badge_icon.dart';
 
-const _kNavLabels = ['Accueil', 'Recherche', 'Réservations', 'Profil'];
+const _kNavLabels = [
+  ShellStrings.navClientHome,
+  ShellStrings.navClientSearch,
+  ShellStrings.navClientReservations,
+  ShellStrings.navClientMessages,
+  ShellStrings.navClientProfile,
+];
 const _kNavOutlined = [
   Icons.home_outlined,
   Icons.search_outlined,
   Icons.event_outlined,
+  Icons.chat_bubble_outline_rounded,
   Icons.person_outline_rounded,
 ];
 const _kNavFilled = [
   Icons.home_rounded,
   Icons.search_rounded,
   Icons.event_rounded,
+  Icons.chat_bubble_rounded,
   Icons.person_rounded,
 ];
 
@@ -23,11 +32,13 @@ class ClientShellBottomNav extends StatelessWidget {
     required this.selectedIndex,
     required this.onTap,
     this.reservationsBadgeCount = 0,
+    this.messagesBadgeCount = 0,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onTap;
   final int reservationsBadgeCount;
+  final int messagesBadgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +48,7 @@ class ClientShellBottomNav extends StatelessWidget {
 
     final screenW = MediaQuery.sizeOf(context).width;
     final isCompact = screenW < 360;
-    final hPad = isCompact ? 4.0 : 8.0;
+    final hPad = isCompact ? 2.0 : 6.0;
     final vPad = isCompact ? 6.0 : 8.0;
 
     return Container(
@@ -65,7 +76,11 @@ class ClientShellBottomNav extends StatelessWidget {
         child: Row(
           children: List.generate(_kNavLabels.length, (index) {
             final selected = selectedIndex == index;
-            final isReservations = index == 2;
+            final badgeCount = switch (index) {
+              2 => reservationsBadgeCount,
+              3 => messagesBadgeCount,
+              _ => 0,
+            };
 
             return Expanded(
               child: _NavItem(
@@ -74,7 +89,7 @@ class ClientShellBottomNav extends StatelessWidget {
                   outlined: _kNavOutlined[index],
                   filled: _kNavFilled[index],
                   selected: selected,
-                  badgeCount: isReservations ? reservationsBadgeCount : 0,
+                  badgeCount: badgeCount,
                 ),
                 selected: selected,
                 onTap: () => onTap(index),
@@ -110,9 +125,9 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenW = MediaQuery.sizeOf(context).width;
     final isCompact = screenW < 360;
-    final iconSz = isCompact ? 22.0 : 24.0;
-    final labelSzSelected = isCompact ? 9.5 : 11.0;
-    final labelSzUnselected = isCompact ? 9.0 : 10.5;
+    final iconSz = isCompact ? 20.0 : 22.0;
+    final labelSzSelected = isCompact ? 8.5 : 10.0;
+    final labelSzUnselected = isCompact ? 8.0 : 9.5;
 
     return GestureDetector(
       onTap: onTap,
@@ -120,7 +135,7 @@ class _NavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        margin: EdgeInsets.symmetric(horizontal: isCompact ? 2 : 4),
+        margin: EdgeInsets.symmetric(horizontal: isCompact ? 1 : 2),
         padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
         decoration: BoxDecoration(
           color: selected ? primary.withValues(alpha: 0.1) : Colors.transparent,
@@ -138,7 +153,7 @@ class _NavItem extends StatelessWidget {
               ),
               child: icon,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
@@ -153,6 +168,7 @@ class _NavItem extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
           ],

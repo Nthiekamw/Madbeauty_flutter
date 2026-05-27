@@ -280,6 +280,7 @@ Tables principales prevues : `profiles`, `prestataires`, `services`, `disponibil
 
 | Document | Contenu |
 | --- | --- |
+| `docs/BOOKING_PUSH_NOTIFICATIONS.md` | Push FCM, Edge Functions réservation, webhooks, boîte locale in-app |
 | `docs/ARCHITECTURE.md` | Choix techniques, structure du code, patterns utilises |
 | `docs/DB_SCHEMA.md` | Schema complet Supabase avec relations et politiques RLS |
 | `docs/FEATURES.md` | Liste des features MVP vs V2 |

@@ -18,6 +18,7 @@ export 'catalog/service_beaute.dart';
 export 'messaging/conversation.dart';
 export 'messaging/message.dart';
 export 'reviews/avis.dart';
+export 'reviews/review.dart';
 export 'serialization/json_converters.dart';
 export 'serialization/supabase_domain_codec.dart';
 export 'user/app_user.dart';

@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../services/supabase/messaging/messaging_providers.dart';
+import '../../features/reviews/widgets/client_review_prompt_coordinator.dart';
 import '../../shared/widgets/offline_shell.dart';
 import 'client_shell_bottom_nav.dart';
 
@@ -15,6 +17,8 @@ class ClientShellScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   static const int reservationsTabIndex = 2;
+  static const int messagesTabIndex = 3;
+  static const int profileTabIndex = 4;
 
   @override
   ConsumerState<ClientShellScaffold> createState() => _ClientShellScaffoldState();
@@ -33,18 +37,30 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
     final pendingCount = ref.watch(clientPendingReservationsCountProvider).value ?? 0;
+    final messagesUnread =
+        ref.watch(messagingUnreadCountProvider(MessagingInboxRole.client)).value ??
+            0;
     final selectedIndex = widget.navigationShell.currentIndex;
 
     return Scaffold(
-      body: OfflineShell(child: navigationShell),
+      body: ClientReviewPromptCoordinator(
+        child: OfflineShell(child: navigationShell),
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: ClientShellBottomNav(
           selectedIndex: selectedIndex,
           reservationsBadgeCount: pendingCount,
+          messagesBadgeCount: messagesUnread,
           onTap: (index) {
             if (index == ClientShellScaffold.reservationsTabIndex) {
               invalidateClientReservations(ref);
+            }
+            if (index == ClientShellScaffold.messagesTabIndex) {
+              ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
+              ref.invalidate(
+                messagingUnreadCountProvider(MessagingInboxRole.client),
+              );
             }
             navigationShell.goBranch(
               index,

@@ -7,17 +7,22 @@ import '../../../shared/widgets/app_avatar.dart';
 import '../logic/booking_formatters.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
+import 'client_reservation_review_action.dart';
 
 class ClientReservationCard extends StatelessWidget {
   const ClientReservationCard({
     super.key,
     required this.item,
     this.onCancel,
+    this.onMessage,
+    this.onReviewSubmitted,
     this.cancelLoading = false,
   });
 
   final ClientReservationSummary item;
   final VoidCallback? onCancel;
+  final VoidCallback? onMessage;
+  final VoidCallback? onReviewSubmitted;
   final bool cancelLoading;
 
   @override
@@ -40,6 +45,9 @@ class ClientReservationCard extends StatelessWidget {
     final chipStyle = chipColorsForReservationStatus(cs, uiStatus);
     final showCancel =
         onCancel != null && clientReservationCanCancel(uiStatus);
+    final showMessage = onMessage != null &&
+        uiStatus != ClientReservationUiStatus.cancelled &&
+        uiStatus != ClientReservationUiStatus.unknown;
 
     return Material(
       color: Colors.transparent,
@@ -188,6 +196,22 @@ class ClientReservationCard extends StatelessWidget {
                     icon: Icons.schedule_rounded,
                     text: formatBookingTime(item.dateHeure),
                     theme: theme,
+                  ),
+                  if (showMessage) ...[
+                    IconButton(
+                      onPressed: onMessage,
+                      icon: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 20,
+                        color: primary,
+                      ),
+                      tooltip: DiscChat.openChat,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  ClientReservationReviewAction(
+                    item: item,
+                    onReviewSubmitted: onReviewSubmitted,
                   ),
                   const Spacer(),
                   if (showCancel)

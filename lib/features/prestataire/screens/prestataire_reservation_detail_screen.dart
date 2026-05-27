@@ -6,6 +6,7 @@ import '../../../shared/widgets/discovery_empty_state.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/prestataire_agenda_provider.dart';
+import '../../messaging/messaging_navigation.dart';
 import '../widgets/prestataire_reservation_detail_body.dart';
 
 class PrestataireReservationDetailScreen extends ConsumerStatefulWidget {
@@ -77,6 +78,11 @@ class _PrestataireReservationDetailScreenState
           return PrestataireReservationDetailBody(
             item: item,
             busy: _acting,
+            onMessage: () => openChatForReservation(
+              context,
+              ref,
+              item.id,
+            ),
             onAccept: () => _runAction(() => _actions.accept(item.id)),
             onReject: () => _runAction(() => _actions.reject(item.id)),
             onMarkDone: () => _runAction(() => _actions.markDone(item.id)),

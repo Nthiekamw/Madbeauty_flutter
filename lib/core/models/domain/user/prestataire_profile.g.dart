@@ -27,7 +27,9 @@ _PrestataireProfile _$PrestataireProfileFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      conditionsService: _conditionsServiceFromJson(json['conditions_service']),
+      conditionsService: json['conditions_service'] == null
+          ? const []
+          : _conditionsServiceFromJson(json['conditions_service']),
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       noteMoyenne: (json['note_moyenne'] as num?)?.toDouble(),

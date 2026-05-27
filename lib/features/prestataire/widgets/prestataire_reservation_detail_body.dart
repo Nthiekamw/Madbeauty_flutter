@@ -15,6 +15,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onMarkDone,
+    this.onMessage,
     this.busy = false,
   });
 
@@ -22,6 +23,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onMarkDone;
+  final VoidCallback? onMessage;
   final bool busy;
 
   String _initials(String name) {
@@ -183,6 +185,18 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             child: FilledButton.tonal(
               onPressed: busy ? null : onMarkDone,
               child: Text(busy ? '…' : DiscPrestaAgenda.markDone),
+            ),
+          ),
+        ],
+        if (onMessage != null &&
+            status != ClientReservationUiStatus.cancelled) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: busy ? null : onMessage,
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              label: const Text(DiscChat.openChat),
             ),
           ),
         ],

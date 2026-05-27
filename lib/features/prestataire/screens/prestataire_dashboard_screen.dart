@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/notifications/in_app_notifications_provider.dart';
+import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/widgets/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery_screen_header.dart';
@@ -86,9 +88,25 @@ class _PrestataireDashboardScreenState
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.only(bottom: 32),
               children: [
-                const DiscoveryScreenHeader(
+                DiscoveryScreenHeader(
                   title: DiscNav.prestDashboard,
                   subtitle: DiscPrestaDash.pageSubtitle,
+                  action: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Consumer(
+                      builder: (ctx, ref, _) {
+                        final unread =
+                            ref.watch(unreadInAppNotificationsCountProvider);
+                        return NotificationBellButton(
+                          compact: true,
+                          unreadCount: unread,
+                          tooltip: DiscHome.notificationsTooltip,
+                          onPressed: () =>
+                              showInAppNotificationsSheet(context, ref),
+                        );
+                      },
+                    ),
+                  ),
                 ),
                 PrestataireSalonHero(
                   title: title,

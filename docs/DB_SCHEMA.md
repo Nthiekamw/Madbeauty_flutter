@@ -2,7 +2,7 @@
 
 Référence des tables **`public`**, colonnes, relations et **Row Level Security (RLS)** après application des migrations du dépôt.
 
-> Ordre d’application : `20260507140000_init_extensions` → `20260507215055_init_schema` (vide) → `20260508113500_auth_profiles_and_roles` → `20260510120000_domain_schema_core` → `20260512200000_user_profiles_select_prestataire_catalog` → `20260512210000_user_roles_update_policy` → `20260512220000_categories_service_seed_types` → `20260512230000_profile_photos_storage` → `20260514110000_realisation_photos_storage` → `20260514122000_catalog_anon_and_role_profiles` → `20260515100000_booking_unique_active_slot` → `20260518120000_reservations_notes_prestataire_realtime` → `20260518140000_disponibilites_indisponibilites`.
+> Ordre d’application : `20260507140000_init_extensions` → … → `20260526210000_avis_note_moyenne_trigger` → `20260526220000_update_note_moyenne_trigger`.
 
 ---
 
@@ -32,7 +32,11 @@ Profil identité (1:1 avec `auth.users`). Remplace l’ancienne table `profiles`
 | `prenom` | `text` | nullable |
 | `avatar_url` | `text` | nullable |
 | `telephone` | `text` | nullable |
+| `fcm_token` | `text` | nullable — token device Firebase (notifications push) |
+| `fcm_token_updated_at` | `timestamptz` | nullable — dernière mise à jour du token FCM |
 | `updated_at` | `timestamptz` | NOT NULL, default `now()` ; trigger `set_updated_at` |
+
+**Index** : `idx_user_profiles_fcm_nonnull` sur `(user_id)` où `fcm_token IS NOT NULL`.
 
 **Trigger** : `trg_user_profiles_updated_at` → `public.set_updated_at()`.
 
@@ -74,7 +78,7 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `ville` | `text` | nullable |
 | `latitude` | `double precision` | nullable |
 | `longitude` | `double precision` | nullable |
-| `note_moyenne` | `double precision` | nullable |
+| `note_moyenne` | `double precision` | nullable — recalculée automatiquement depuis `avis` (trigger) |
 | `is_verified` | `boolean` | NOT NULL, default `false` |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
@@ -169,15 +173,29 @@ Fermetures **ponctuelles** (congés, jour off).
 
 ### `public.avis`
 
+Un avis par réservation (`reservation_id` unique). Réservé aux réservations **terminées** (contrôle trigger + app).
+
 | Colonne | Type | Contraintes |
 |---------|------|-------------|
 | `id` | `uuid` | PK |
 | `client_id` | `uuid` | NOT NULL, FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
 | `reservation_id` | `uuid` | NOT NULL, UNIQUE, FK → `reservations(id)` ON DELETE CASCADE |
-| `note` | `integer` | NOT NULL, entre 1 et 5 |
+| `note` | `integer` | NOT NULL, `CHECK (note >= 1 AND note <= 5)` |
 | `commentaire` | `text` | nullable |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+**Triggers** :
+
+| Trigger | Rôle |
+|---------|------|
+| `avis_check_reservation_before_insert` | Avant INSERT : réservation terminée, `client_id` cohérent, renseigne `prestataire_id` |
+| **`update_note_moyenne`** | **Après INSERT** : recalcule `prestataire_profiles.note_moyenne` (`avg(note)`) |
+| `avis_refresh_note_moyenne` | Après UPDATE/DELETE : même recalcul |
+
+**Vue** `public.reviews` : alias lecture de `avis` (`booking_id` = `reservation_id`).
+
+**App** : `ReviewService` / `reviewsByPrestataireProvider`, `hasReviewedProvider` (Riverpod).
 
 ### `public.photos_realisation`
 
@@ -202,16 +220,23 @@ Fermetures **ponctuelles** (congés, jour off).
 
 ## Messagerie
 
-### `public.conversations`
+Un fil de discussion est lié à une **réservation** (`reservation_id` / `booking_id`). Les messages sont synchronisés en temps réel via **Supabase Realtime** (`publication supabase_realtime` sur `messages`).
+
+### `public.conversations` (métadonnées du fil)
 
 | Colonne | Type | Contraintes |
 |---------|------|-------------|
 | `id` | `uuid` | PK |
 | `client_id` | `uuid` | NOT NULL, FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
+| `reservation_id` | `uuid` | nullable, FK → `reservations(id)` ON DELETE CASCADE |
 | `last_message_at` | `timestamptz` | nullable |
 
-**Contrainte UNIQUE** : `(client_id, prestataire_id)`.
+**Index** : `conversations_reservation_id_uidx` UNIQUE sur `reservation_id` (où non null) — un fil par réservation.
+
+**Index** : `idx_conversations_client_last`, `idx_conversations_prestataire_last` pour l’inbox.
+
+> L’ancienne contrainte UNIQUE `(client_id, prestataire_id)` a été retirée au profit du lien par réservation.
 
 ### `public.messages`
 
@@ -219,12 +244,41 @@ Fermetures **ponctuelles** (congés, jour off).
 |---------|------|-------------|
 | `id` | `uuid` | PK |
 | `conversation_id` | `uuid` | NOT NULL, FK → `conversations(id)` ON DELETE CASCADE |
+| `booking_id` | `uuid` | nullable, FK → `reservations(id)` ON DELETE CASCADE |
 | `sender_id` | `uuid` | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
-| `contenu` | `text` | NOT NULL |
+| `content` | `text` | nullable (canonique côté app) |
+| `contenu` | `text` | NOT NULL (legacy, synchronisé avec `content`) |
 | `is_read` | `boolean` | NOT NULL, default `false` |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-**Index** : `idx_messages_conversation` sur `(conversation_id, created_at DESC)`.
+**Index** : `idx_messages_conversation` sur `(conversation_id, created_at DESC)` ; `idx_messages_booking_created` sur `(booking_id, created_at ASC)`.
+
+**Triggers** :
+
+| Trigger | Rôle |
+|---------|------|
+| `messages_sync_content_columns` | Avant INSERT/UPDATE : aligne `content` et `contenu` |
+| `messages_set_conversation_from_booking` | Avant INSERT : remplit `conversation_id` / `booking_id` depuis l’autre clé |
+| `messages_touch_conversation` | Après INSERT : met à jour `conversations.last_message_at` |
+
+**Realtime** : `replica identity full` ; table ajoutée à `supabase_realtime`.
+
+### `public.booking_conversations` (vue)
+
+Agrégat lecture seule par réservation (dernier message, compteur). `security_invoker = true` ; `GRANT SELECT` à `authenticated`.
+
+| Colonne exposée | Description |
+|-----------------|-------------|
+| `id` | id du fil `conversations` (si existant) |
+| `booking_id` | `reservations.id` |
+| `client_id`, `prestataire_id` | participants |
+| `last_message_at` | date du dernier message |
+| `last_message_content`, `last_sender_id` | aperçu |
+| `message_count` | nombre de messages |
+
+### Edge Function `on_message_created`
+
+Webhook **INSERT** sur `public.messages` → FCM vers le **destinataire** (client ou prestataire de la réservation, ≠ `sender_id`). Voir `docs/BOOKING_PUSH_NOTIFICATIONS.md` § messagerie.
 
 ---
 
@@ -250,6 +304,8 @@ erDiagram
   prestataire_profiles ||--o{ favoris : prestataire_id
   client_profiles ||--o{ conversations : client_id
   prestataire_profiles ||--o{ conversations : prestataire_id
+  reservations ||--o{ conversations : reservation_id
+  reservations ||--o{ messages : booking_id
   conversations ||--o{ messages : conversation_id
   auth_users ||--o{ messages : sender_id
 ```
@@ -381,9 +437,19 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 
 | Policy | Commande | Règle |
 |--------|----------|--------|
-| `messages_select_participant` | SELECT | participant à la conversation |
-| `messages_insert_sender` | INSERT | `sender_id = auth.uid()` et participant |
-| `messages_update_participant` | UPDATE | participant |
+| `messages_select_booking_participant` | SELECT | client ou prestataire de la réservation (`booking_id`) |
+| `messages_insert_booking_participant` | INSERT | `sender_id = auth.uid()` et participant à la réservation |
+| `messages_update_booking_participant` | UPDATE | participant à la réservation |
+
+---
+
+## Supabase Realtime
+
+| Table | Publication | Notes |
+|-------|-------------|--------|
+| `reservations` | `supabase_realtime` | agenda prestataire |
+| `messages` | `supabase_realtime` | chat instantané (`replica identity full`) |
+| `prestataire_profiles` | `supabase_realtime` | note moyenne sur fiche prestataire |
 
 ---
 
