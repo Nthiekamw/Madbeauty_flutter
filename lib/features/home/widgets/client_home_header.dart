@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../theme/home_styles.dart';
 
@@ -39,6 +40,7 @@ class ClientHomeHeader extends StatelessWidget {
     final screenW = MediaQuery.sizeOf(context).width;
     // Petits phones : texte légèrement réduit
     final isCompact = screenW < 360;
+    final normalizedDisplayName = normalizeSingleLineText(displayName);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -118,7 +120,9 @@ class ClientHomeHeader extends StatelessWidget {
                     child: AppAvatar(
                       imageUrl: avatarUrl,
                       radius: isCompact ? 24 : 28,
-                      displayName: displayName.isEmpty ? null : displayName,
+                      displayName: normalizedDisplayName.isEmpty
+                          ? null
+                          : normalizedDisplayName,
                       email: email.isEmpty ? null : email,
                     ),
                   ),

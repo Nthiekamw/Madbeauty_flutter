@@ -1,6 +1,7 @@
 enum UserRole {
   client('client'),
-  prestataire('prestataire');
+  prestataire('prestataire'),
+  admin('admin');
 
   const UserRole(this.value);
 

@@ -91,20 +91,18 @@ class _ConversationsInboxScreenState
 
                 return RefreshIndicator(
                   onRefresh: () => _refreshInbox(),
-                  child: ListView.separated(
+                  child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: 72,
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.5),
-                    ),
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      return ConversationListTile(
-                        item: item,
-                        onTap: () => _openChat(item.conversation.reservationId),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: ConversationListTile(
+                          item: item,
+                          onTap: () => _openChat(item.conversation.reservationId),
+                        ),
                       );
                     },
                   ),

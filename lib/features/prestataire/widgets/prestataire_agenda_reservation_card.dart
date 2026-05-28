@@ -233,13 +233,30 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                                   Expanded(
                                     child: OutlinedButton(
                                       onPressed: busy ? null : onReject,
-                                      child: const Text(DiscPrestaDash.reject),
+                                      style: OutlinedButton.styleFrom(
+                                        minimumSize: const Size(0, 40),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        DiscPrestaDash.reject,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        softWrap: false,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: FilledButton(
                                       onPressed: busy ? null : onAccept,
+                                      style: FilledButton.styleFrom(
+                                        minimumSize: const Size(0, 40),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                      ),
                                       child: busy
                                           ? const SizedBox(
                                               width: 20,
@@ -248,7 +265,12 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                                                 strokeWidth: 2,
                                               ),
                                             )
-                                          : const Text(DiscPrestaDash.accept),
+                                          : const Text(
+                                              DiscPrestaDash.accept,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              softWrap: false,
+                                            ),
                                     ),
                                   ),
                                 ],

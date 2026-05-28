@@ -15,19 +15,16 @@ class ChatBubble extends StatelessWidget {
   final bool isMine;
   final String timeLabel;
 
-  static const _sentColor = Color(0xFF007AFF);
-  static const _receivedLight = Color(0xFFE9E9EB);
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     final bg = isMine
-        ? _sentColor
+        ? theme.colorScheme.primary
         : (isDark
             ? theme.colorScheme.surfaceContainerHighest
-            : _receivedLight);
+            : theme.colorScheme.surfaceContainerHigh);
     final fg = isMine ? Colors.white : theme.colorScheme.onSurface;
 
     return Align(
@@ -50,11 +47,18 @@ class ChatBubble extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
               decoration: BoxDecoration(
                 color: bg,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMine ? 18 : 4),
-                  bottomRight: Radius.circular(isMine ? 4 : 18),
+                  topLeft: const Radius.circular(22),
+                  topRight: const Radius.circular(22),
+                  bottomLeft: Radius.circular(isMine ? 22 : 8),
+                  bottomRight: Radius.circular(isMine ? 8 : 22),
                 ),
               ),
               child: Column(

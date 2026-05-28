@@ -227,6 +227,21 @@ abstract final class AuthStrings {
   static const String registerSuccessBody =
       'Ton compte MadBeauty est prêt. Tu peux commencer à utiliser l’application.';
   static const String registerSuccessCta = 'C’est parti';
+  static const String registerEmailVerifyTitle = 'Vérifie ton e-mail';
+  static String registerEmailVerifySubtitle(String email) =>
+      email.trim().isEmpty ? 'Confirme ton adresse e-mail' : email.trim();
+  static const String registerEmailVerifyBody =
+      'On vient de t’envoyer un lien de confirmation. Ouvre ta boîte mail, clique sur le lien, puis reviens ici.';
+  static const String registerEmailVerifyCta = 'J’ai vérifié mon e-mail';
+  static const String registerEmailVerifyResendLabel = 'Je ne vois pas le mail';
+  static const String registerEmailVerifyResendHint =
+      'Vérifie les spams / promotions, puis réessaie dans quelques secondes.';
+  static const String registerEmailVerifyResendSuccess =
+      'Email de confirmation renvoyé. Vérifie ta boîte mail.';
+  static const String registerEmailVerifyResendError =
+      'Impossible de renvoyer l’email pour le moment.';
+  static const String registerEmailVerifyStillPending =
+      'Ton e-mail n’est pas encore confirmé. Clique sur le lien reçu puis réessaie.';
 
   static const String loginSuccessTitle = 'Bon retour !';
   static const String loginSuccessBody =

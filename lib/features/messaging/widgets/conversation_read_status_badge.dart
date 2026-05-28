@@ -27,13 +27,13 @@ class ConversationReadStatusBadge extends StatelessWidget {
     final String label;
 
     if (hasUnread) {
-      bg = theme.colorScheme.primaryContainer;
-      fg = theme.colorScheme.onPrimaryContainer;
+      bg = theme.colorScheme.primary.withValues(alpha: 0.14);
+      fg = theme.colorScheme.primary;
       label = unreadCount > 1
           ? DiscChat.unreadCountLabel(unreadCount)
           : DiscChat.unreadLabel;
     } else {
-      bg = theme.colorScheme.surfaceContainerHighest;
+      bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9);
       fg = theme.colorScheme.onSurfaceVariant;
       label = DiscChat.readLabel;
     }
@@ -43,6 +43,11 @@ class ConversationReadStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: hasUnread
+              ? theme.colorScheme.primary.withValues(alpha: 0.26)
+              : theme.colorScheme.outline.withValues(alpha: 0.2),
+        ),
       ),
       child: Text(
         label,

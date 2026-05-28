@@ -74,6 +74,9 @@ class RegisterWizardBottomBar extends StatelessWidget {
             onPressed: onPrimary,
             child: Text(
               primaryLabel,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontFamily: AppFonts.body,
                 fontWeight: FontWeight.w600,

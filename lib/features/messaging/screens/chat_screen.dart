@@ -15,6 +15,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 
 import '../../../services/supabase/messaging/messaging_providers.dart';
+import '../../../services/supabase/messaging/message_service.dart';
 import '../providers/message_provider.dart';
 
 import '../../../shared/widgets/app_snack_bar.dart';
@@ -58,6 +59,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _sending = false;
 
   int _lastMessageCount = 0;
+  ConversationInboxItem? _lastHeader;
 
 
 
@@ -185,11 +187,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
 
-    } catch (_) {
+    } catch (error) {
 
       if (mounted) {
-
-        AppSnackBar.show(context, message: DiscChat.sendError);
+        final message =
+            error is MessageValidationException &&
+                error.code == 'phone_number_not_allowed'
+            ? DiscChat.phoneBlocked
+            : DiscChat.sendError;
+        AppSnackBar.show(context, message: message);
 
       }
 
@@ -264,6 +270,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
 
     final isDark = theme.brightness == Brightness.dark;
+    final appBarStart = theme.colorScheme.primary;
+    final appBarEnd = theme.colorScheme.secondary;
+    final scaffoldBg = theme.colorScheme.surface;
 
     final userId = switch (ref.watch(authNotifierProvider)) {
 
@@ -293,6 +302,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     });
 
+    ref.listen(chatInboxItemProvider(widget.bookingId), (_, next) {
+      final fresh = next.asData?.value;
+      if (fresh != null && mounted) {
+        setState(() => _lastHeader = fresh);
+      }
+    });
+
 
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -303,19 +319,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
 
-    final header = headerAsync.asData?.value;
+    final freshHeader = headerAsync.asData?.value;
+    if (freshHeader != null) {
+      _lastHeader = freshHeader;
+    }
+    final header = freshHeader ?? _lastHeader;
 
 
 
     return Scaffold(
 
-      backgroundColor: isDark
-
-          ? theme.colorScheme.surface
-
-          : const Color(0xFFF2F2F7),
+      backgroundColor: scaffoldBg,
 
       appBar: AppBar(
+        elevation: 0,
+        foregroundColor: Colors.white,
+        backgroundColor: appBarStart,
+        surfaceTintColor: Colors.transparent,
+        flexibleSpace: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [appBarStart, appBarEnd],
+            ),
+          ),
+        ),
 
         titleSpacing: 0,
 
@@ -326,18 +355,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           avatarUrl: header?.peerAvatarUrl,
 
           subtitle: _headerSubtitle(header),
+          titleColor: Colors.white,
+          subtitleColor: Colors.white.withValues(alpha: 0.86),
 
         ),
 
       ),
 
-      body: Column(
-
-        children: [
-
-          Expanded(
-
-            child: messagesAsync.when(
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              appBarStart.withValues(alpha: isDark ? 0.12 : 0.08),
+              scaffoldBg,
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: messagesAsync.when(
 
               loading: () => const Center(child: CircularProgressIndicator()),
 
@@ -357,22 +396,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
               },
 
+              ),
             ),
-
-          ),
-
-          ChatComposer(
-
-            controller: _controller,
-
-            sending: _sending,
-
-            onSend: _send,
-
-          ),
-
-        ],
-
+            ChatComposer(
+              controller: _controller,
+              sending: _sending,
+              onSend: _send,
+            ),
+          ],
+        ),
       ),
 
     );

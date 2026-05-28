@@ -9,6 +9,7 @@ import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../features/messaging/messaging_navigation.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app_avatar.dart';
 import '../../../shared/widgets/prestataire_favorite_button.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
@@ -231,15 +232,15 @@ class _DetailSliverAppBar extends StatelessWidget {
     final primary = theme.colorScheme.primary;
     final tertiary = theme.colorScheme.tertiary;
 
-    final display = profile.nomAffiche?.trim();
-    final salon = profile.nomSalon?.trim();
-    final title = (display?.isNotEmpty == true)
-        ? display!
-        : (salon?.isNotEmpty == true)
-            ? salon!
+    final display = normalizeSingleLineText(profile.nomAffiche);
+    final salon = normalizeSingleLineText(profile.nomSalon);
+    final title = (display.isNotEmpty)
+        ? display
+        : (salon.isNotEmpty)
+            ? salon
             : 'Salon';
-    final showSalonLine = display?.isNotEmpty == true &&
-        salon?.isNotEmpty == true &&
+    final showSalonLine = display.isNotEmpty &&
+        salon.isNotEmpty &&
         salon != display;
     final ville = profile.ville?.trim() ?? '';
     final cp = profile.codePostal?.trim() ?? '';
@@ -387,7 +388,7 @@ class _DetailSliverAppBar extends StatelessWidget {
                                     const SizedBox(width: 4),
                                     Flexible(
                                       child: Text(
-                                        salon!,
+                                        salon,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(

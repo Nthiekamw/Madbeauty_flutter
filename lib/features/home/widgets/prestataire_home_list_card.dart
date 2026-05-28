@@ -6,6 +6,7 @@ import '../../../core/geo/geo_utils.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/text_normalizer.dart';
 import '../../prestataire/widgets/prestataire_card_photo_header.dart';
 import '../theme/home_styles.dart';
 
@@ -32,8 +33,8 @@ class PrestataireHomeListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final salon = profile.nomSalon?.trim();
-    final title = (salon != null && salon.isNotEmpty) ? salon : 'Salon';
+    final salon = normalizeSingleLineText(profile.nomSalon);
+    final title = salon.isNotEmpty ? salon : 'Salon';
     final ville = profile.ville?.trim();
     final la = profile.latitude;
     final lo = profile.longitude;

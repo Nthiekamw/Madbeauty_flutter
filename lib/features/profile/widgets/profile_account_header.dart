@@ -7,6 +7,7 @@ import '../../../core/models/domain/user/user_profile.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app_avatar.dart';
 
 /// En-tête profil : photo, nom, actions de modification.
@@ -37,6 +38,7 @@ class ProfileAccountHeader extends StatelessWidget {
     final primary = theme.colorScheme.primary;
     final tertiary = theme.colorScheme.tertiary;
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+    final normalizedDisplayName = normalizeSingleLineText(displayName);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
@@ -85,7 +87,7 @@ class ProfileAccountHeader extends StatelessWidget {
                     child: _AvatarPreview(
                       radius: 52,
                       imageUrl: profile?.avatarUrl,
-                      displayName: displayName,
+                      displayName: normalizedDisplayName,
                       email: email,
                       avatarBytes: avatarBytes,
                     ),
@@ -129,8 +131,11 @@ class ProfileAccountHeader extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                displayName,
+                normalizedDisplayName.isEmpty ? displayName : normalizedDisplayName,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w900,

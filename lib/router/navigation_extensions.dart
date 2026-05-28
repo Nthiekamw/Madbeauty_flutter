@@ -32,6 +32,8 @@ extension AppNavigationX on BuildContext {
 
   void goLogin() => goNamed(AppRouteNames.login);
   void goRegister() => goNamed(AppRouteNames.register);
+  void goRegisterResume() =>
+      goNamed(AppRouteNames.register, queryParameters: {'resume': '1'});
   void goRoleChoice() => goNamed(AppRouteNames.role);
   void goPrestataire() => goNamed(AppRouteNames.prestataireProfile);
   void goPrestataireDashboard() =>
@@ -65,6 +67,7 @@ extension AppNavigationX on BuildContext {
   void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
+  void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
   Future<T?> pushChat<T extends Object?>(String bookingId) => pushNamed<T>(

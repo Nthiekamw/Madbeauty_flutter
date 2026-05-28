@@ -112,6 +112,18 @@ class AuthService {
         ),
       );
 
+  Future<void> resendSignupConfirmationEmail({
+    required String email,
+    String? emailRedirectTo,
+  }) =>
+      _runAuth(
+        () => _auth.resend(
+          type: OtpType.signup,
+          email: email,
+          emailRedirectTo: emailRedirectTo,
+        ),
+      );
+
   Future<void> signOut({SignOutScope scope = SignOutScope.global}) =>
       _runAuth(() => _auth.signOut(scope: scope));
 

@@ -4,6 +4,7 @@ import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/utils/text_normalizer.dart';
 import '../../prestataire/widgets/prestataire_card_photo_header.dart';
 
 const int _kMaxChips = 3;
@@ -27,7 +28,8 @@ class PrestataireCatalogListCard extends StatelessWidget {
     final profile = entry.profile;
     final ville = profile.ville?.trim();
     final url = entry.avatarUrl;
-    final display = entry.displayName;
+    final display = normalizeSingleLineText(entry.displayName);
+    final safeDisplay = display.isEmpty ? 'Salon' : display;
     final rating = profile.noteMoyenne;
     final screenW = MediaQuery.sizeOf(context).width;
     final isNarrow = screenW < 360;
@@ -70,7 +72,7 @@ class PrestataireCatalogListCard extends StatelessWidget {
                   topLeft: cardRadius.topLeft,
                   topRight: cardRadius.topRight,
                 ),
-                fallbackDisplayName: display,
+                fallbackDisplayName: safeDisplay,
                 fallbackAvatarUrl: url,
                 compactBadge: compact,
               ),
@@ -89,7 +91,7 @@ class PrestataireCatalogListCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            display,
+                            safeDisplay,
                             maxLines: compact ? 1 : 2,
                             overflow: TextOverflow.ellipsis,
                             style: (compact

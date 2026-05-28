@@ -9,9 +9,11 @@ import '../features/auth/welcome/screens/auth_welcome_screen.dart';
 import '../features/auth/guest/guest_mode_provider.dart';
 import '../features/auth/guest/guest_route_policy.dart';
 import '../features/auth/providers/auth_notifier.dart';
+import '../features/auth/providers/my_roles_provider.dart';
 import '../features/auth/providers/password_recovery_provider.dart'
     show isPasswordRecoveryActiveProvider;
 import '../features/auth/register/routes/register_route.dart';
+import '../features/auth/register/screens/register_email_verification_screen.dart';
 import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
@@ -35,6 +37,7 @@ import '../features/favorites/screens/client_favorites_screen.dart';
 import '../features/messaging/screens/chat_screen.dart';
 import '../features/messaging/screens/conversations_inbox_screen.dart';
 import '../features/reviews/screens/reviews_screen.dart';
+import '../features/admin/screens/admin_verification_screen.dart';
 import '../services/supabase/messaging/messaging_providers.dart';
 import '../features/profile/screens/edit_client_account_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -50,6 +53,7 @@ abstract final class AppRoutes {
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String register = '/register';
+  static const String registerVerifyEmail = '/register/verify-email';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
   static const String role = '/role';
@@ -68,6 +72,7 @@ abstract final class AppRoutes {
   static const String editClientAccount = '/client/profile/edit';
   static const String clientFavorites = '/client/favorites';
   static const String clientReviews = '/client/reviews';
+  static const String adminVerifications = '/admin/verifications';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -93,6 +98,7 @@ abstract final class AppRouteNames {
   static const String welcome = 'welcome';
   static const String login = 'login';
   static const String register = 'register';
+  static const String registerVerifyEmail = 'register-verify-email';
   static const String forgotPassword = 'forgot-password';
   static const String resetPassword = 'reset-password';
   static const String role = 'role';
@@ -111,6 +117,7 @@ abstract final class AppRouteNames {
   static const String editClientAccount = 'edit-client-account';
   static const String clientFavorites = 'client-favorites';
   static const String clientReviews = 'client-reviews';
+  static const String adminVerifications = 'admin-verifications';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -160,6 +167,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.welcome,
         AppRoutes.login,
         AppRoutes.register,
+        AppRoutes.registerVerifyEmail,
         AppRoutes.forgotPassword,
         AppRoutes.resetPassword,
         if (kDebugMode) AppRoutes.asyncStateTest,
@@ -168,11 +176,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.welcome,
         AppRoutes.login,
         AppRoutes.register,
+        AppRoutes.registerVerifyEmail,
         AppRoutes.forgotPassword,
       };
 
       final preferredPath = AuthRoleCache.preferredAuthenticatedPath();
       final effectiveRole = AuthRoleCache.preferredAuthenticatedRole();
+      final hasAdminRole = ref
+          .read(myRolesProvider)
+          .maybeWhen(
+            data: (roles) => roles.any((r) => r.value == 'admin'),
+            orElse: () => false,
+          );
 
       String? legacyRedirect() {
         return switch (location) {
@@ -242,6 +257,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return preferredPath;
       }
 
+      if (location.startsWith(AppRoutes.adminVerifications) && !hasAdminRole) {
+        return preferredPath;
+      }
+
       return null;
     },
     routes: [
@@ -269,6 +288,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.register,
         path: AppRoutes.register,
         builder: (context, state) => const RegisterRoute(),
+      ),
+      GoRoute(
+        name: AppRouteNames.registerVerifyEmail,
+        path: AppRoutes.registerVerifyEmail,
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return RegisterEmailVerificationScreen(email: email);
+        },
       ),
       GoRoute(
         name: AppRouteNames.forgotPassword,
@@ -304,6 +331,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.clientReviews,
         path: AppRoutes.clientReviews,
         builder: (context, state) => const ReviewsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminVerifications,
+        path: AppRoutes.adminVerifications,
+        builder: (context, state) => const AdminVerificationScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',

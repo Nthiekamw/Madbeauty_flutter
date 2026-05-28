@@ -65,6 +65,9 @@ class MessageService {
           if (text.isEmpty) {
             throw ArgumentError('Le contenu du message est vide.');
           }
+          if (containsPhoneNumber(text)) {
+            throw const MessageValidationException.phoneNumberNotAllowed();
+          }
           final thread = await ensureThreadForBooking(bookingId);
           await _client.from('messages').insert({
             'booking_id': bookingId,
@@ -75,6 +78,14 @@ class MessageService {
           });
         },
       );
+
+  static bool containsPhoneNumber(String text) {
+    final normalized = text.replaceAll(RegExp(r'[^\d+]'), '');
+    final digitsOnly = normalized.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length < 8) return false;
+    final pattern = RegExp(r'(?:\+?\d[\d .-]{7,}\d)');
+    return pattern.hasMatch(text);
+  }
 
   /// Flux temps réel des messages d'une réservation.
   Stream<List<Message>> getMessages(String bookingId) => watchMessages(bookingId);
@@ -315,3 +326,10 @@ class MessageService {
 }
 
 enum MessagingParticipantRole { client, prestataire }
+
+class MessageValidationException implements Exception {
+  const MessageValidationException.phoneNumberNotAllowed()
+    : code = 'phone_number_not_allowed';
+
+  final String code;
+}

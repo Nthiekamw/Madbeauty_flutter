@@ -862,6 +862,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compactTopAction = MediaQuery.sizeOf(context).width < 390;
     final async = ref.watch(prestataireProfileFormProvider);
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     horairesAsync.whenData((plages) {
@@ -904,14 +905,20 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
           ),
           actions: [
             if (onboarding && focused == null)
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                onPressed: _saving ? null : _completeLater,
-                child: const Text(DiscPrestaForm.completeLater),
-              ),
+              compactTopAction
+                  ? IconButton(
+                      tooltip: DiscPrestaForm.completeLater,
+                      onPressed: _saving ? null : _completeLater,
+                      icon: const Icon(Icons.schedule_outlined),
+                    )
+                  : TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: _saving ? null : _completeLater,
+                      child: const Text(DiscPrestaForm.completeLater),
+                    ),
           ],
         ),
         body: KeyboardDismissArea(

@@ -38,6 +38,10 @@ abstract final class DiscProfile {
   static const actionFavorites = 'Mes favoris';
   static const actionReviews = 'Mes avis';
   static const actionHistory = 'Historique';
+  static const sectionAdmin = 'Administration';
+  static const actionAdminVerifications = 'Demandes de vérification';
+  static const actionAdminVerificationsHint =
+      'Valider ou retirer la vérification des prestataires';
 
   static const signOut = 'Se déconnecter';
   static const deleteAccount = 'Supprimer mon compte';

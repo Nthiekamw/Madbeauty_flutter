@@ -120,7 +120,12 @@ class RegisterPage extends StatelessWidget {
                   isLoading: isLoading,
                   enabled: formEnabled,
                   onPressed: onSubmit,
-                  child: const Text(AuthStrings.registerActionSubmit),
+                  child: const Text(
+                    AuthStrings.registerActionSubmit,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

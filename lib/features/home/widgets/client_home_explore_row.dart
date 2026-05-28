@@ -52,7 +52,8 @@ class ClientHomeExploreRow extends StatelessWidget {
             // 3 colonnes avec espacement, hauteur calculée proportionnellement
             const spacing = 10.0;
             final tileW = (constraints.maxWidth - spacing * 2) / 3;
-            final tileH = tileW * 0.9;
+            // Un peu plus haut pour éviter le "bottom overflow" sur petits écrans.
+            final tileH = tileW * 0.98;
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
@@ -96,63 +97,77 @@ class _ExploreTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: HomeStyles.cardBorderRadius,
-        child: Ink(
-          decoration: BoxDecoration(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileHeight = constraints.maxHeight;
+        final compact = tileHeight < 110;
+        final circleSize = compact ? 38.0 : 44.0;
+        final iconSize = compact ? 19.0 : 22.0;
+        final verticalGap = compact ? 6.0 : 8.0;
+        final contentPadding = compact ? 10.0 : 12.0;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: HomeStyles.cardBorderRadius,
-            color: theme.colorScheme.surface.withValues(
-              alpha: isDark ? 0.85 : 0.95,
-            ),
-            border: Border.all(
-              color: accentColor.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: accentColor.withValues(alpha: isDark ? 0.08 : 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: HomeStyles.cardBorderRadius,
+                color: theme.colorScheme.surface.withValues(
+                  alpha: isDark ? 0.85 : 0.95,
+                ),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: isDark ? 0.08 : 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: accentColor.withValues(alpha: 0.2),
+              child: Padding(
+                padding: EdgeInsets.all(contentPadding),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: circleSize,
+                      height: circleSize,
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Icon(icon, size: iconSize, color: accentColor),
                     ),
-                  ),
-                  child: Icon(icon, size: 22, color: accentColor),
+                    SizedBox(height: verticalGap),
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                          fontSize: compact ? 11 : null,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

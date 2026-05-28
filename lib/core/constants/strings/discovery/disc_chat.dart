@@ -21,6 +21,8 @@ abstract final class DiscChat {
   static const send = 'Envoyer';
   static const loadError = 'Impossible de charger les messages.';
   static const sendError = 'Envoi impossible. Réessaie.';
+  static const phoneBlocked =
+      'Les numéros de téléphone ne sont pas autorisés dans le chat.';
   static const loginRequired = 'Connecte-toi pour accéder à tes messages.';
   static const reservationPrefix = 'Réservation';
   static const you = 'Vous';

@@ -75,11 +75,14 @@ class _PrestataireDashboardScreenState
     return DiscoveryBrandScaffold(
       body: profileAsync.when(
         data: (data) {
-          final currentName = currentPrestataire?.nomSalon?.trim();
+          final currentName = currentPrestataire?.nomSalon
+              ?.replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+          final fallbackName = data.nomSalon.replaceAll(RegExp(r'\s+'), ' ').trim();
           final title = currentName != null && currentName.isNotEmpty
               ? currentName
-              : data.nomSalon.trim().isNotEmpty
-              ? data.nomSalon.trim()
+              : fallbackName.isNotEmpty
+              ? fallbackName
               : DiscNav.prestDashboard;
 
           return RefreshIndicator(

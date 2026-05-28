@@ -10,6 +10,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/supabase_service_exception.dart';
 import '../../../../core/models/user_role.dart';
+import '../../../../router/app_router.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
@@ -44,7 +45,12 @@ import '../storage/register_wizard_draft_store.dart';
 
 /// Inscription en 3 étapes : identité → rôle → infos complémentaires.
 class RegisterWizardScreen extends ConsumerStatefulWidget {
-  const RegisterWizardScreen({super.key});
+  const RegisterWizardScreen({
+    super.key,
+    this.autoResumeFinalize = false,
+  });
+
+  final bool autoResumeFinalize;
 
   @override
   ConsumerState<RegisterWizardScreen> createState() =>
@@ -74,6 +80,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   Timer? _saveDebounce;
   bool _restoredDraft = false;
   bool _persistDraftOnDispose = true;
+  bool _autoResumeTriggered = false;
 
   final _prenom = TextEditingController();
   final _nom = TextEditingController();
@@ -110,11 +117,24 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     final draft = RegisterWizardDraftStore.instance.read();
     if (draft != null) {
       _applyDraft(draft);
-      _restoredDraft = true;
+      // Retour depuis l'écran de vérification e-mail: on reprend sans bannière.
+      _restoredDraft = !widget.autoResumeFinalize;
     }
     _attachAutosave();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       exitGuestMode(ref);
+      final signedIn = switch (ref.read(authNotifierProvider)) {
+        AsyncData(:final value) => value != null,
+        _ => false,
+      };
+      if (widget.autoResumeFinalize &&
+          !_autoResumeTriggered &&
+          signedIn &&
+          _step == 2 &&
+          !_loading) {
+        _autoResumeTriggered = true;
+        unawaited(_submit());
+      }
     });
   }
 
@@ -427,6 +447,90 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     }
   }
 
+  Future<void> _completeRegistrationAfterAuth({
+    required User session,
+    required String prenom,
+    required String nom,
+    required String phone,
+    required ProviderContainer providerContainer,
+  }) async {
+    final uid = session.id;
+    final post = PostSignupProfileService.fromEnv();
+    final shellRole = _roleChoice == UserRole.prestataire
+        ? 'prestataire'
+        : 'client';
+
+    // Avant sync serveur : évite que persistServerRoles ne force « client »
+    // (rôle créé par le trigger auth) pendant ensureRole(prestataire).
+    await LocalCacheService.instance.setSelectedRole(shellRole);
+    await LocalCacheService.instance.setSignupShellRole(shellRole);
+
+    await post.updateUserIdentity(
+      userId: uid,
+      prenom: prenom,
+      nom: nom,
+      phone: phone,
+    );
+
+    if (!mounted) return;
+
+    if (_roleChoice == UserRole.prestataire) {
+      await _syncRoleBestEffort(UserRole.prestataire, providerContainer);
+      await post.updatePrestataireExtras(
+        userId: uid,
+        nomSalon: _salon.text.trim(),
+        nomAffiche: _nomAffiche.text.trim().isEmpty
+            ? _salon.text.trim()
+            : _nomAffiche.text.trim(),
+        ville: _ville.text.trim(),
+        codePostal: _codePostal.text.trim().isEmpty
+            ? null
+            : _codePostal.text.trim(),
+        description: _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
+        bio: _bio.text.trim(),
+        adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
+      );
+    } else {
+      await _syncRoleBestEffort(UserRole.client, providerContainer);
+      await post.updateClientExtras(
+        userId: uid,
+        adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
+      );
+    }
+
+    await LocalCacheService.instance.setSelectedRole(shellRole);
+    _persistDraftOnDispose = false;
+    _saveDebounce?.cancel();
+    await _clearDraft();
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    await _showRegistrationSuccessDialog();
+    if (!mounted) return;
+
+    if (_roleChoice == UserRole.prestataire) {
+      await BecomePrestataireDraftStore.instance.save(
+        BecomePrestataireDraft(
+          salon: _salon.text.trim(),
+          ville: _ville.text.trim(),
+          bio: _bio.text.trim(),
+          step1Submitted: true,
+          step2Started: true,
+        ),
+      );
+      if (!mounted) return;
+      await PrestataireNavigation.afterPrestaRegistration(
+        context,
+        providerContainer,
+      );
+    } else {
+      context.goHome();
+    }
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
@@ -470,47 +574,56 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       };
 
       if (!_signedUpViaOAuth) {
-        await providerContainer
-            .read(authNotifierProvider.notifier)
-            .signUpWithPassword(
-              email: email,
-              password: _password.text,
-              displayName: '$prenom $nom'.trim(),
-              prenom: prenom,
-              nom: nom,
-              phone: phone,
-            );
+        final hasVerifiedSession = session != null &&
+            session.email?.trim().toLowerCase() == email.toLowerCase();
 
-        if (!mounted) return;
+        if (!hasVerifiedSession) {
+          await providerContainer
+              .read(authNotifierProvider.notifier)
+              .signUpWithPassword(
+                email: email,
+                password: _password.text,
+                displayName: '$prenom $nom'.trim(),
+                prenom: prenom,
+                nom: nom,
+                phone: phone,
+              );
 
-        final authState = providerContainer.read(authNotifierProvider);
+          if (!mounted) return;
 
-        if (authState.hasError) {
-          final err = authState.error;
-          setState(() {
-            _loading = false;
-            _error = err is AppFailure
-                ? err.message
-                : CoreStrings.errorUnexpected;
-          });
-          return;
+          final authState = providerContainer.read(authNotifierProvider);
+
+          if (authState.hasError) {
+            final err = authState.error;
+            setState(() {
+              _loading = false;
+              _error = err is AppFailure
+                  ? err.message
+                  : CoreStrings.errorUnexpected;
+            });
+            return;
+          }
+
+          session = switch (authState) {
+            AsyncData(:final value) => value,
+            _ => null,
+          };
+
+          session = providerContainer
+                  .read(authServiceProvider)
+                  .currentSession
+                  ?.user ??
+              session;
         }
 
-        session = switch (authState) {
-          AsyncData(:final value) => value,
-          _ => null,
-        };
-
-        session = providerContainer
-                .read(authServiceProvider)
-                .currentSession
-                ?.user ??
-            session;
         if (session == null) {
-          setState(() {
-            _loading = false;
-            _error = AuthStrings.authEmailNotConfirmed;
-          });
+          await _persistDraft();
+          if (!mounted) return;
+          setState(() => _loading = false);
+          context.pushNamed(
+            AppRouteNames.registerVerifyEmail,
+            queryParameters: {'email': email},
+          );
           return;
         }
       } else if (session == null) {
@@ -521,81 +634,13 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         return;
       }
 
-      final uid = session.id;
-      final post = PostSignupProfileService.fromEnv();
-      final shellRole = _roleChoice == UserRole.prestataire
-          ? 'prestataire'
-          : 'client';
-
-      // Avant sync serveur : évite que persistServerRoles ne force « client »
-      // (rôle créé par le trigger auth) pendant ensureRole(prestataire).
-      await LocalCacheService.instance.setSelectedRole(shellRole);
-      await LocalCacheService.instance.setSignupShellRole(shellRole);
-
-      await post.updateUserIdentity(
-        userId: uid,
+      await _completeRegistrationAfterAuth(
+        session: session,
         prenom: prenom,
         nom: nom,
         phone: phone,
+        providerContainer: providerContainer,
       );
-
-      if (!mounted) return;
-
-      if (_roleChoice == UserRole.prestataire) {
-        await _syncRoleBestEffort(UserRole.prestataire, providerContainer);
-        await post.updatePrestataireExtras(
-          userId: uid,
-          nomSalon: _salon.text.trim(),
-          nomAffiche: _nomAffiche.text.trim().isEmpty
-              ? _salon.text.trim()
-              : _nomAffiche.text.trim(),
-          ville: _ville.text.trim(),
-          codePostal: _codePostal.text.trim().isEmpty
-              ? null
-              : _codePostal.text.trim(),
-          description: _description.text.trim().isEmpty
-              ? null
-              : _description.text.trim(),
-          bio: _bio.text.trim(),
-          adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
-        );
-      } else {
-        await _syncRoleBestEffort(UserRole.client, providerContainer);
-        await post.updateClientExtras(
-          userId: uid,
-          adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
-        );
-      }
-
-      await LocalCacheService.instance.setSelectedRole(shellRole);
-      _persistDraftOnDispose = false;
-      _saveDebounce?.cancel();
-      await _clearDraft();
-
-      if (!mounted) return;
-      setState(() => _loading = false);
-
-      await _showRegistrationSuccessDialog();
-      if (!mounted) return;
-
-      if (_roleChoice == UserRole.prestataire) {
-        await BecomePrestataireDraftStore.instance.save(
-          BecomePrestataireDraft(
-            salon: _salon.text.trim(),
-            ville: _ville.text.trim(),
-            bio: _bio.text.trim(),
-            step1Submitted: true,
-            step2Started: true,
-          ),
-        );
-        if (!mounted) return;
-        await PrestataireNavigation.afterPrestaRegistration(
-          context,
-          providerContainer,
-        );
-      } else {
-        context.goHome();
-      }
     } on AppFailure catch (e) {
       debugPrint(
         '[RegisterWizard] submit AppFailure: ${e.message} cause=${e.cause}',
