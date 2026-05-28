@@ -26,9 +26,11 @@ class _RegisterEmailVerificationScreenState
     extends ConsumerState<RegisterEmailVerificationScreen> {
   bool _redirecting = false;
   bool _resending = false;
+  bool _checkingVerification = false;
 
   Future<void> _continueAfterVerification() async {
-    if (!mounted || _redirecting) return;
+    if (!mounted || _redirecting || _checkingVerification) return;
+    setState(() => _checkingVerification = true);
     final authService = ref.read(authServiceProvider);
     try {
       await authService.refreshSession();
@@ -39,9 +41,11 @@ class _RegisterEmailVerificationScreenState
     if (user == null) {
       if (!mounted) return;
       AppSnackBar.info(context, AuthStrings.registerEmailVerifyStillPending);
+      setState(() => _checkingVerification = false);
       return;
     }
     _redirecting = true;
+    setState(() => _checkingVerification = false);
     context.goRegisterResume();
   }
 
@@ -104,9 +108,24 @@ class _RegisterEmailVerificationScreenState
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => _continueAfterVerification(),
-              icon: const Icon(Icons.mark_email_read_outlined),
-              label: const Text(AuthStrings.registerEmailVerifyCta),
+              onPressed: _checkingVerification
+                  ? null
+                  : () => _continueAfterVerification(),
+              icon: _checkingVerification
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.mark_email_read_outlined),
+              label: Text(
+                _checkingVerification
+                    ? 'Vérification...'
+                    : AuthStrings.registerEmailVerifyCta,
+              ),
             ),
             const SizedBox(height: 8),
             TextButton(
