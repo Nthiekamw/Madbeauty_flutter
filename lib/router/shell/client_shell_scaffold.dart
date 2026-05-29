@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +8,7 @@ import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../features/reviews/widgets/client_review_prompt_coordinator.dart';
-import '../../shared/widgets/offline_shell.dart';
+import '../../shared/widgets/layout/offline_shell.dart';
 import 'client_shell_bottom_nav.dart';
 
 class ClientShellScaffold extends ConsumerStatefulWidget {

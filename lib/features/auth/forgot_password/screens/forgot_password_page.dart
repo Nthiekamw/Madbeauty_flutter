@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app/app_button.dart';
+import '../../../../shared/widgets/app/app_text_field.dart';
 import '../../widgets/auth_error_banner.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';

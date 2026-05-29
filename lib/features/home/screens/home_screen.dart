@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,8 +18,8 @@ import '../providers/home_profile_provider.dart';
 import '../widgets/client_home_header.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/brand_background.dart';
+import '../../../shared/widgets/app/app_button.dart';
+import '../../../shared/widgets/layout/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

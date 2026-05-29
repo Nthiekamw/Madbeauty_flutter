@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 import '../logic/booking_formatters.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
@@ -170,8 +170,14 @@ class ClientReservationCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (item.hasPaymentReceipt) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: _PaymentReceiptStrip(item: item, theme: theme),
+              ),
+            ],
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: isDark ? 0.07 : 0.04),
                 borderRadius: const BorderRadius.only(
@@ -184,72 +190,90 @@ class ClientReservationCard extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _MetaChip(
-                    icon: Icons.calendar_today_rounded,
-                    text: formatBookingDate(item.dateHeure),
-                    theme: theme,
-                  ),
-                  const SizedBox(width: 8),
-                  _MetaChip(
-                    icon: Icons.schedule_rounded,
-                    text: formatBookingTime(item.dateHeure),
-                    theme: theme,
-                  ),
-                  if (showMessage) ...[
-                    IconButton(
-                      onPressed: onMessage,
-                      icon: Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 20,
-                        color: primary,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: _MetaChip(
+                          icon: Icons.calendar_today_rounded,
+                          text: formatBookingDate(item.dateHeure),
+                          theme: theme,
+                        ),
                       ),
-                      tooltip: DiscChat.openChat,
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  ClientReservationReviewAction(
-                    item: item,
-                    onReviewSubmitted: onReviewSubmitted,
+                      const SizedBox(width: 6),
+                      _MetaChip(
+                        icon: Icons.schedule_rounded,
+                        text: formatBookingTime(item.dateHeure),
+                        theme: theme,
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  if (showCancel)
-                    cancelLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: primary,
-                            ),
-                          )
-                        : OutlinedButton(
-                            onPressed: onCancel,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 34),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 0,
+                  if (showMessage || showCancel)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          if (showMessage)
+                            IconButton(
+                              onPressed: onMessage,
+                              icon: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 20,
+                                color: primary,
                               ),
-                              side: BorderSide(
-                                color: primary.withValues(alpha: 0.5),
-                              ),
-                              foregroundColor: primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              DiscBk.revokeLabel,
-                              style: TextStyle(
-                                fontFamily: AppFonts.body,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                              tooltip: DiscChat.openChat,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
                               ),
                             ),
+                          ClientReservationReviewAction(
+                            item: item,
+                            onReviewSubmitted: onReviewSubmitted,
                           ),
+                          const Spacer(),
+                          if (showCancel)
+                            cancelLoading
+                                ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: primary,
+                                    ),
+                                  )
+                                : TextButton.icon(
+                                    onPressed: onCancel,
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      size: 16,
+                                      color: primary,
+                                    ),
+                                    label: Text(
+                                      DiscBk.revokeLabel,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.body,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      minimumSize: const Size(0, 34),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                      ),
+                                      foregroundColor: primary,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -277,6 +301,79 @@ class ClientReservationCard extends StatelessWidget {
   }
 }
 
+class _PaymentReceiptStrip extends StatelessWidget {
+  const _PaymentReceiptStrip({required this.item, required this.theme});
+
+  final ClientReservationSummary item;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final paidAt = item.paidAt!;
+    final primary = theme.colorScheme.primary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.receipt_long_rounded,
+                  size: 18, color: Color(0xFF10B981)),
+              const SizedBox(width: 8),
+              Text(
+                DiscPay.receiptLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF10B981),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${DiscPay.receiptAmount} : ${item.formattedPaidAmount}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${DiscPay.receiptPaidOn} ${formatBookingDate(paidAt)} à ${formatBookingTime(paidAt)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: AppFonts.body,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (item.prestataireName?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 2),
+            Text(
+              item.prestataireName!.trim(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: AppFonts.body,
+                color: primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _MetaChip extends StatelessWidget {
   const _MetaChip({
     required this.icon,
@@ -294,13 +391,18 @@ class _MetaChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 5),
-        Text(
-          text,
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontFamily: AppFonts.body,
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: AppFonts.body,
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
           ),
         ),
       ],

@@ -110,9 +110,16 @@ void main() {
         'date_heure': '2026-06-15T15:00:00.000Z',
         'statut': 'confirmee',
         'notes_client': 'Sans ammoniaque',
+        'amount_cents': 4500,
+        'currency': 'eur',
+        'stripe_payment_intent_id': 'pi_test_123',
+        'payment_status': 'authorized',
+        'paid_at': '2026-05-10T08:30:00.000Z',
         'created_at': '2026-05-10T09:00:00.000Z',
       };
       final m = SupabaseDomainCodec.reservation(row);
+      expect(m.amountCents, 4500);
+      expect(m.paymentStatus, 'authorized');
       expect(SupabaseDomainCodec.reservation(m.toSupabaseMap()), m);
     });
 

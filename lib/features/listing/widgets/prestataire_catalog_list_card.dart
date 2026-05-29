@@ -5,11 +5,11 @@ import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../prestataire/widgets/prestataire_card_photo_header.dart';
+import '../../prestataire/widgets/shared/prestataire_card_photo_header.dart';
 
-const int _kMaxChips = 3;
+const int _kMaxChips = 2;
 
-/// Carte catalogue (liste verticale) : réalisations, nom, spécialités, note, ville.
+/// Carte catalogue (liste verticale / grille recherche).
 class PrestataireCatalogListCard extends StatelessWidget {
   const PrestataireCatalogListCard({
     super.key,
@@ -31,11 +31,8 @@ class PrestataireCatalogListCard extends StatelessWidget {
     final display = normalizeSingleLineText(entry.displayName);
     final safeDisplay = display.isEmpty ? 'Salon' : display;
     final rating = profile.noteMoyenne;
-    final screenW = MediaQuery.sizeOf(context).width;
-    final isNarrow = screenW < 360;
-    final dense = compact || isNarrow;
     final cardRadius = DiscoveryStyles.catalogListCardBorderRadius;
-    final photoH = compact ? 92.0 : DiscoveryStyles.catalogCardPhotoHeight;
+    final photoH = compact ? 88.0 : DiscoveryStyles.catalogCardPhotoHeight;
 
     return Material(
       color: Colors.transparent,
@@ -50,127 +47,138 @@ class PrestataireCatalogListCard extends StatelessWidget {
               alpha: isDark ? 0.92 : 0.98,
             ),
             border: Border.all(
-              color: primary.withValues(alpha: isDark ? 0.1 : 0.08),
+              color: primary.withValues(alpha: isDark ? 0.12 : 0.1),
             ),
             boxShadow: isDark
                 ? null
                 : [
                     BoxShadow(
-                      color: primary.withValues(alpha: 0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: primary.withValues(alpha: 0.07),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PrestataireCardPhotoHeader(
-                prestataireId: profile.id,
-                height: photoH,
-                borderRadius: BorderRadius.only(
-                  topLeft: cardRadius.topLeft,
-                  topRight: cardRadius.topRight,
-                ),
-                fallbackDisplayName: safeDisplay,
-                fallbackAvatarUrl: url,
-                compactBadge: compact,
+              Stack(
+                children: [
+                  PrestataireCardPhotoHeader(
+                    prestataireId: profile.id,
+                    height: photoH,
+                    borderRadius: BorderRadius.only(
+                      topLeft: cardRadius.topLeft,
+                      topRight: cardRadius.topRight,
+                    ),
+                    fallbackDisplayName: safeDisplay,
+                    fallbackAvatarUrl: url,
+                    compactBadge: compact,
+                  ),
+                  if (rating != null)
+                    Positioned(
+                      left: 8,
+                      bottom: 8,
+                      child: _RatingBadge(
+                        rating: rating,
+                        compact: compact,
+                      ),
+                    ),
+                ],
               ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  dense ? 8 : 14,
-                  dense ? 8 : 12,
-                  dense ? 8 : 14,
-                  dense ? 6 : 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            safeDisplay,
-                            maxLines: compact ? 1 : 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: (compact
-                                    ? theme.textTheme.titleSmall
-                                    : theme.textTheme.titleMedium)
-                                ?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 10 : 14,
+                    compact ? 8 : 12,
+                    compact ? 10 : 14,
+                    compact ? 6 : 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              safeDisplay,
+                              maxLines: compact ? 1 : 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: (compact
+                                      ? theme.textTheme.titleSmall
+                                      : theme.textTheme.titleMedium)
+                                  ?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                                height: 1.15,
+                                fontSize: compact ? 13 : null,
+                              ),
                             ),
                           ),
-                        ),
-                        if (profile.isVerified)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 6, top: 2),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
+                          if (profile.isVerified)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 1),
                               child: Icon(
                                 Icons.verified_rounded,
                                 color: primary,
-                                size: 14,
+                                size: compact ? 14 : 16,
                               ),
                             ),
-                          ),
+                        ],
+                      ),
+                      if (ville != null && ville.isNotEmpty) ...[
+                        SizedBox(height: compact ? 3 : 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: compact ? 11 : 14,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                ville,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: compact ? 10 : 12,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
-                    ),
-                    if (ville != null && ville.isNotEmpty) ...[
-                      SizedBox(height: compact ? 4 : 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            size: compact ? 12 : 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 3),
-                          Expanded(
-                            child: Text(
-                              ville,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontSize: compact ? 11 : null,
+                      if (!compact && entry.specialtyNames.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 5,
+                          children: [
+                            ...entry.specialtyNames.take(_kMaxChips).map(
+                                  (n) => _SpecialtyChip(label: n),
+                                ),
+                            if (entry.specialtyNames.length > _kMaxChips)
+                              _SpecialtyChip(
+                                label:
+                                    '+${entry.specialtyNames.length - _kMaxChips}',
+                                muted: true,
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
+                      const Spacer(),
                     ],
-                    if (!compact && entry.specialtyNames.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 5,
-                        runSpacing: 5,
-                        children: [
-                          ...entry.specialtyNames.take(_kMaxChips).map(
-                                (n) => _SpecialtyChip(label: n),
-                              ),
-                          if (entry.specialtyNames.length > _kMaxChips)
-                            _SpecialtyChip(
-                              label:
-                                  '+${entry.specialtyNames.length - _kMaxChips}',
-                              muted: true,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 8 : 14,
-                  vertical: compact ? 6 : 10,
+                  horizontal: compact ? 10 : 14,
+                  vertical: compact ? 7 : 10,
                 ),
                 decoration: BoxDecoration(
                   color: primary.withValues(alpha: isDark ? 0.07 : 0.04),
@@ -186,27 +194,19 @@ class PrestataireCatalogListCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    if (rating != null) ...[
-                      Icon(
-                        Icons.star_rounded,
-                        size: compact ? 14 : 16,
-                        color: const Color(0xFFF59E0B),
+                    Text(
+                      compact ? 'Voir' : 'Voir le profil',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w700,
+                        color: primary,
+                        fontSize: compact ? 11 : null,
                       ),
-                      const SizedBox(width: 3),
-                      Text(
-                        rating.toStringAsFixed(1),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFF59E0B),
-                          fontSize: compact ? 11 : null,
-                        ),
-                      ),
-                    ],
+                    ),
                     const Spacer(),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      size: compact ? 16 : 18,
+                      size: compact ? 15 : 18,
                       color: primary,
                     ),
                   ],
@@ -215,6 +215,47 @@ class PrestataireCatalogListCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.rating, required this.compact});
+
+  final double rating;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : 8,
+        vertical: compact ? 3 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            size: compact ? 12 : 14,
+            color: const Color(0xFFFBBF24),
+          ),
+          const SizedBox(width: 3),
+          Text(
+            rating.toStringAsFixed(1),
+            style: TextStyle(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w700,
+              fontSize: compact ? 10 : 12,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -240,6 +281,8 @@ class _SpecialtyChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: theme.textTheme.labelSmall?.copyWith(
           fontFamily: AppFonts.body,
           fontWeight: FontWeight.w600,

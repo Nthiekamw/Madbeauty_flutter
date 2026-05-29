@@ -36,9 +36,9 @@ class DiscoveryResponsive {
     return (inner / 2.15).clamp(152.0, 188.0);
   }
 
-  double get homeListCardHeight => homeListCardWidth * (220 / 176);
+  double get homeListCardHeight => homeListCardWidth * (232 / 176);
 
-  double get homeListPhotoHeight => homeListCardHeight * (112 / 220);
+  double get homeListPhotoHeight => homeListCardHeight * (100 / 232);
 
   /// Colonnes catalogue recherche (toujours 2 colonnes).
   int get catalogGridColumns => 2;
@@ -50,7 +50,7 @@ class DiscoveryResponsive {
     final inner = (contentMaxWidth < width ? contentMaxWidth : width) -
         horizontalPadding * 2;
     final cellW = (inner - catalogGridSpacing) / catalogGridColumns;
-    return (cellW * 1.12 + 54).clamp(198.0, 268.0);
+    return (cellW * 1.18 + 58).clamp(204.0, 276.0);
   }
 
   /// Filtres rapides recherche (puces compactes).

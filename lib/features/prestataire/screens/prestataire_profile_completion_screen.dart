@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,19 +13,19 @@ import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_constrained_body.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
-import '../../../shared/widgets/keyboard_dismiss_area.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/prestataire_service_field_set.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/prestataire_completion_progress.dart';
-import '../widgets/prestataire_profile_basics_step.dart';
-import '../widgets/prestataire_profile_gallery_step.dart';
-import '../widgets/prestataire_profile_load_error.dart';
-import '../widgets/prestataire_profile_services_step.dart';
+import '../widgets/profile/prestataire_completion_progress.dart';
+import '../widgets/profile/prestataire_profile_basics_step.dart';
+import '../widgets/profile/prestataire_profile_gallery_step.dart';
+import '../widgets/profile/prestataire_profile_load_error.dart';
+import '../widgets/profile/prestataire_profile_services_step.dart';
 
 /// Parcours guidé post-inscription : complétion du profil pro étape par étape.
 class PrestataireProfileCompletionScreen extends ConsumerStatefulWidget {

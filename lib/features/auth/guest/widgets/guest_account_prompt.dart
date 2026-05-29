@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
-import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/discovery_empty_state.dart';
+import '../../../../shared/widgets/app/app_button.dart';
+import '../../../../shared/widgets/discovery/discovery_empty_state.dart';
 
 /// Invite à se connecter / s’inscrire pour une action réservée aux comptes.
 class GuestAccountPrompt extends StatelessWidget {

@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 /// En-tête chat : avatar + nom de l'interlocuteur (+ sous-titre réservation).
 class ChatPeerHeader extends StatelessWidget {
   const ChatPeerHeader({

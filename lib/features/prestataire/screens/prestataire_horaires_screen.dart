@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -7,8 +7,8 @@ import '../models/weekly_jour_horaire.dart';
 import '../providers/current_prestataire_provider.dart';
 import '../providers/disponibilite_provider.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../widgets/prestataire_weekly_horaires_editor.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
   const PrestataireHorairesScreen({super.key});

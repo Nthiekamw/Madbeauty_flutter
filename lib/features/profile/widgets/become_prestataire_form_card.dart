@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/widgets/auth_step_section.dart';
 
 class BecomePrestataireFormCard extends StatelessWidget {

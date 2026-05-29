@@ -10,7 +10,8 @@ android {
     namespace = "com.madbeauty.madbeauty"
     // API 31+ requise pour les attributs splash (values-v31). Évite l’erreur
     // « postSplashScreenTheme not found » si flutter.compileSdkVersion est trop bas.
-    compileSdk = maxOf(34, flutter.compileSdkVersion)
+    // stripe_android 12.x exige compileSdk 36.
+    compileSdk = maxOf(36, flutter.compileSdkVersion)
     // Doit être installée via SDK Manager (NDK side by side). Alignée avec les plugins Flutter Android courants.
     ndkVersion = "27.0.12077973"
 
@@ -20,8 +21,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
     }
 
     defaultConfig {
@@ -29,7 +32,8 @@ android {
         applicationId = "com.madbeauty.madbeauty"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // stripe_android 12.x exige minSdk 23.
+        minSdk = maxOf(23, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

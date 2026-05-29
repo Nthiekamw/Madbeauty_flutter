@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/widgets/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import 'profile_section_title.dart';
 
 class ProfileAccountSection extends StatelessWidget {

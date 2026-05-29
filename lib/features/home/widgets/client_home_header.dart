@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 import '../theme/home_styles.dart';
 
 /// En-tête accueil client : carte hero premium, salutation, avatar.

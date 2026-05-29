@@ -1,11 +1,11 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 
 class EditClientAccountAvatarSection extends StatelessWidget {
   const EditClientAccountAvatarSection({

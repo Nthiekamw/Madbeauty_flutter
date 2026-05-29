@@ -40,6 +40,12 @@ abstract final class OfflineCacheCodec {
         prestataireId: map['prestataireId'] as String?,
         prestataireName: map['prestataireName'] as String?,
         prestataireAvatarUrl: map['prestataireAvatarUrl'] as String?,
+        amountCents: (map['amountCents'] as num?)?.toInt(),
+        currency: map['currency'] as String?,
+        paidAt: map['paidAt'] != null
+            ? DateTime.tryParse(map['paidAt'] as String)
+            : null,
+        paymentStatus: map['paymentStatus'] as String?,
       );
     }).toList();
   }
@@ -57,6 +63,10 @@ abstract final class OfflineCacheCodec {
               'prestataireId': e.prestataireId,
               'prestataireName': e.prestataireName,
               'prestataireAvatarUrl': e.prestataireAvatarUrl,
+              'amountCents': e.amountCents,
+              'currency': e.currency,
+              'paidAt': e.paidAt?.toIso8601String(),
+              'paymentStatus': e.paymentStatus,
             },
           )
           .toList();

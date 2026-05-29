@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/widgets/app_snack_bar.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_verification_request.dart';
 import '../providers/admin_verification_provider.dart';
 

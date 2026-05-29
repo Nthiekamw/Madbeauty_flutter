@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +15,7 @@ import '../../providers/auth_notifier.dart';
 import '../../widgets/auth_success_dialog.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
-import '../../../../shared/widgets/app_snack_bar.dart';
+import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../screens/login_page.dart';
 
 /// Entrée route `/login` : Riverpod, navigation et [SnackBar] (hors design).

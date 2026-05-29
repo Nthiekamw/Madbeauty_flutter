@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../providers/profile_preferences_provider.dart';
 import 'profile_section_title.dart';
 

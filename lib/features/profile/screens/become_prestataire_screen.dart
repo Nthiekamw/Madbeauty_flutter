@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,10 +11,10 @@ import '../../../services/auth/post_signup_profile_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_form_scroll_view.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/app/app_button.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_form_scroll_view.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/providers/my_roles_provider.dart';

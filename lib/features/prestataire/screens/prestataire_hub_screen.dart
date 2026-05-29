@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -18,23 +18,23 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../models/prestataire_service_field_set.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/prestataire_form_scroll_view.dart';
-import '../widgets/prestataire_profile_basics_step.dart';
-import '../widgets/prestataire_profile_client_experience_step.dart';
+import '../widgets/profile/prestataire_form_scroll_view.dart';
+import '../widgets/profile/prestataire_profile_basics_step.dart';
+import '../widgets/profile/prestataire_profile_client_experience_step.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/weekly_jour_horaire.dart';
 import '../providers/disponibilite_provider.dart';
-import '../widgets/prestataire_onboarding_finish_dialog.dart';
-import '../widgets/prestataire_profile_gallery_step.dart';
-import '../widgets/prestataire_profile_load_error.dart';
-import '../widgets/prestataire_profile_services_step.dart';
-import '../widgets/prestataire_weekly_horaires_editor.dart';
+import '../widgets/dialogs/prestataire_onboarding_finish_dialog.dart';
+import '../widgets/profile/prestataire_profile_gallery_step.dart';
+import '../widgets/profile/prestataire_profile_load_error.dart';
+import '../widgets/profile/prestataire_profile_services_step.dart';
+import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../providers/current_prestataire_provider.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
-import '../../../shared/widgets/keyboard_dismiss_area.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 
 /// Formulaire de profil professionnel prestataire.
 class PrestataireHubScreen extends ConsumerStatefulWidget {

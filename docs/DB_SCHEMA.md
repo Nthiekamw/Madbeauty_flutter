@@ -2,7 +2,7 @@
 
 Référence des tables **`public`**, colonnes, relations et **Row Level Security (RLS)** après application des migrations du dépôt.
 
-> Ordre d’application : `20260507140000_init_extensions` → … → `20260526210000_avis_note_moyenne_trigger` → `20260526220000_update_note_moyenne_trigger`.
+> Ordre d’application : `20260507140000_init_extensions` → … → `20260526220000_update_note_moyenne_trigger` → `20260529140000_stripe_booking_payments` → `20260530120000_stripe_connect_webhooks`.
 
 ---
 
@@ -65,6 +65,7 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `id` | `uuid` | PK |
 | `user_id` | `uuid` | NOT NULL, UNIQUE, FK → `auth.users(id)` ON DELETE CASCADE |
 | `adresse` | `text` | nullable |
+| `stripe_customer_id` | `text` | nullable — client Stripe (`cus_...`) pour PaymentSheet |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
 ### `public.prestataire_profiles`
@@ -80,9 +81,17 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `longitude` | `double precision` | nullable |
 | `note_moyenne` | `double precision` | nullable — recalculée automatiquement depuis `avis` (trigger) |
 | `is_verified` | `boolean` | NOT NULL, default `false` |
+| `stripe_connect_account_id` | `text` | nullable — compte Connect Express (`acct_...`) |
+| `stripe_connect_onboarding_status` | `text` | NOT NULL, default `'not_started'` — `not_started`, `pending`, `complete`, `restricted` |
+| `stripe_connect_charges_enabled` | `boolean` | NOT NULL, default `false` |
+| `stripe_connect_payouts_enabled` | `boolean` | NOT NULL, default `false` |
+| `stripe_connect_details_submitted` | `boolean` | NOT NULL, default `false` |
+| `stripe_connect_updated_at` | `timestamptz` | nullable — dernière synchro webhook / `prestataire_connect_sync` |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
 **Index** : `idx_prestataire_profiles_ville` sur `ville`.
+
+**Paiements** : le prestataire doit avoir `stripe_connect_account_id` renseigné et `stripe_connect_charges_enabled = true` pour accepter les réservations payantes (voir `docs/STRIPE_CONNECT_SETUP.md`).
 
 ---
 
@@ -164,12 +173,27 @@ Fermetures **ponctuelles** (congés, jour off).
 | `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
 | `service_id` | `uuid` | NOT NULL, FK → `services_beaute(id)` ON DELETE RESTRICT |
 | `date_heure` | `timestamptz` | NOT NULL |
-| `statut` | `text` | NOT NULL, default `'en_attente'` |
+| `statut` | `text` | NOT NULL, default `'en_attente'` — voir valeurs courantes ci-dessous |
 | `notes_client` | `text` | nullable |
 | `notes_prestataire` | `text` | nullable (motif de refus, note pro) |
+| `amount_cents` | `integer` | nullable, `>= 0` — montant payé (centimes) |
+| `currency` | `text` | default `'eur'` |
+| `stripe_payment_intent_id` | `text` | nullable, UNIQUE si renseigné |
+| `payment_status` | `text` | nullable — `authorized`, `captured`, `failed`, `canceled` |
+| `paid_at` | `timestamptz` | nullable — autorisation ou capture selon le flux |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-**Index** : `date_heure`, `client_id`, `prestataire_id`.
+**Valeurs `statut` (app)** : `en_attente`, `confirmee`, `terminee`, `annulee` (variantes anglaises possibles en lecture).
+
+**Cycle paiement Stripe (capture manuelle)** :
+
+| Moment | `statut` | `payment_status` |
+|--------|----------|------------------|
+| Après PaymentSheet + `complete_booking_after_payment` | `en_attente` | `authorized` |
+| Prestataire confirme | `confirmee` | `authorized` |
+| Prestataire termine + `capture_booking_payment` | `terminee` | `captured` |
+
+**Index** : `date_heure`, `client_id`, `prestataire_id`, `idx_reservations_stripe_payment_intent` (unique partiel sur `stripe_payment_intent_id`).
 
 ### `public.avis`
 
@@ -215,6 +239,19 @@ Un avis par réservation (`reservation_id` unique). Réservé aux réservations 
 | `client_id` | `uuid` | PK (composite), FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | PK (composite), FK → `prestataire_profiles(id)` ON DELETE CASCADE |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+### `public.stripe_webhook_events`
+
+Journal d’idempotence pour les webhooks Stripe (Edge Function `stripe_webhook`). **Pas d’accès client** : RLS activé sans policy → `service_role` uniquement.
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `text` | PK — id événement Stripe (`evt_...`) |
+| `type` | `text` | NOT NULL — ex. `payment_intent.succeeded` |
+| `payload` | `jsonb` | nullable — objet événement |
+| `processed_at` | `timestamptz` | NOT NULL, default `now()` |
+
+**Index** : `idx_stripe_webhook_events_processed` sur `processed_at DESC`.
 
 ---
 
@@ -309,6 +346,8 @@ erDiagram
   conversations ||--o{ messages : conversation_id
   auth_users ||--o{ messages : sender_id
 ```
+
+Les colonnes Stripe sur `reservations`, `client_profiles` et `prestataire_profiles` ne modifient pas ce diagramme (attributs sur les entités existantes).
 
 ---
 
@@ -440,6 +479,25 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 | `messages_select_booking_participant` | SELECT | client ou prestataire de la réservation (`booking_id`) |
 | `messages_insert_booking_participant` | INSERT | `sender_id = auth.uid()` et participant à la réservation |
 | `messages_update_booking_participant` | UPDATE | participant à la réservation |
+
+### `stripe_webhook_events`
+
+RLS **activé**, **aucune policy** : lecture/écriture réservées aux Edge Functions (`service_role`).
+
+---
+
+## Edge Functions Stripe (paiements)
+
+| Fonction | Auth | Rôle |
+|----------|------|------|
+| `create_booking_payment_intent` | JWT client | Crée un PaymentIntent (`capture_method: manual`, Connect) |
+| `complete_booking_after_payment` | JWT client | Insère la réservation après PaymentSheet |
+| `capture_booking_payment` | JWT prestataire | Capture le PI après prestation `terminee` |
+| `prestataire_connect_onboarding` | JWT prestataire | Onboarding Connect Express |
+| `prestataire_connect_sync` | JWT prestataire | Met à jour les colonnes `stripe_connect_*` |
+| `stripe_webhook` | Signature Stripe | Idempotence + synchro paiements / comptes |
+
+Déploiement et secrets : `docs/STRIPE_CONNECT_SETUP.md`. Test manuel : `docs/STRIPE_TEST_FLOW.md`.
 
 ---
 

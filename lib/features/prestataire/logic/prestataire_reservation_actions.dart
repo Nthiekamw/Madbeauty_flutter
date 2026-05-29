@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -7,8 +7,8 @@ import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../providers/prestataire_bookings_invalidate.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../widgets/reject_reservation_dialog.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../widgets/dialogs/reject_reservation_dialog.dart';
 
 /// Actions réservation (accepter, refuser, terminer) partagées dashboard / agenda.
 class PrestataireReservationActions {

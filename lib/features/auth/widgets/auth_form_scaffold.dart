@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
-import '../../../shared/widgets/brand_background.dart';
-import '../../../shared/widgets/keyboard_dismiss_area.dart';
+import '../../../shared/widgets/layout/brand_background.dart';
+import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 import 'auth_marketing_logo.dart';
 
 /// Scaffold auth : fond brand, en-tête, contenu scrollable, barre basse optionnelle.

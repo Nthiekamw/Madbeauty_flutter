@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,8 +22,8 @@ import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
-import '../../../../shared/widgets/app_snack_bar.dart';
-import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../shared/widgets/app/app_text_field.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';

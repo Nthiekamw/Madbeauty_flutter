@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,7 +8,7 @@ import '../../../../core/errors/app_failure.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../login/logic/login_validators.dart';
 import '../../providers/auth_notifier.dart';
-import '../../../../shared/widgets/app_snack_bar.dart';
+import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../screens/forgot_password_page.dart';
 
 class ForgotPasswordRoute extends ConsumerStatefulWidget {

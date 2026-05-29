@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/widgets/role_switch_section.dart';
 import 'profile_section_title.dart';
 

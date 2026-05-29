@@ -7,7 +7,7 @@ import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../prestataire/widgets/prestataire_card_photo_header.dart';
+import '../../prestataire/widgets/shared/prestataire_card_photo_header.dart';
 import '../theme/home_styles.dart';
 
 /// Carte compacte pour listes horizontales d’accueil (proches, mieux notés).
@@ -89,7 +89,7 @@ class PrestataireHomeListCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -103,25 +103,26 @@ class PrestataireHomeListCard extends StatelessWidget {
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontFamily: AppFonts.display,
                                   fontWeight: FontWeight.w700,
-                                  height: 1.2,
+                                  height: 1.15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
                             if (profile.isVerified)
                               Icon(
                                 Icons.verified_rounded,
-                                size: 18,
+                                size: 16,
                                 color: theme.colorScheme.primary,
                               ),
                           ],
                         ),
                         if (ville != null && ville.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Row(
                             children: [
                               Icon(
                                 Icons.location_on_outlined,
-                                size: 13,
+                                size: 12,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 2),
@@ -132,28 +133,35 @@ class PrestataireHomeListCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 11,
+                                    fontSize: 10,
+                                    height: 1.2,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ],
-                        const Spacer(),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
+                        const Spacer(flex: 1),
+                        Row(
                           children: [
                             if (rating != null)
-                              _InfoChip(
-                                icon: Icons.star_rounded,
-                                label: rating.toStringAsFixed(1),
-                                emphasized: true,
+                              Flexible(
+                                child: _InfoChip(
+                                  icon: Icons.star_rounded,
+                                  label: rating.toStringAsFixed(1),
+                                  emphasized: true,
+                                ),
                               ),
+                            if (rating != null &&
+                                !km.isInfinite &&
+                                !km.isNaN)
+                              const SizedBox(width: 6),
                             if (!km.isInfinite && !km.isNaN)
-                              _InfoChip(
-                                icon: Icons.near_me_outlined,
-                                label: DiscHome.nearbyKm(km),
+                              Flexible(
+                                child: _InfoChip(
+                                  icon: Icons.near_me_outlined,
+                                  label: DiscHome.nearbyKm(km),
+                                ),
                               ),
                           ],
                         ),
@@ -187,7 +195,7 @@ class _InfoChip extends StatelessWidget {
     final primary = theme.colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: emphasized
             ? primary.withValues(alpha: 0.12)
@@ -201,16 +209,22 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 14,
+            size: 12,
             color: emphasized ? primary : theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w600,
-              color: emphasized ? primary : theme.colorScheme.onSurfaceVariant,
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w600,
+                fontSize: 10,
+                color:
+                    emphasized ? primary : theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],

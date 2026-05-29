@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -9,7 +9,7 @@ import '../../navigation/post_auth_navigation.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/password_recovery_provider.dart';
 import '../logic/reset_password_validators.dart';
-import '../../../../shared/widgets/app_snack_bar.dart';
+import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../screens/reset_password_page.dart';
 
 class ResetPasswordRoute extends ConsumerStatefulWidget {

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Reservation {
 
- String get id; String get clientId; String get prestataireId; String get serviceId;@IsoDateTimeConverter() DateTime get dateHeure; String get statut; String? get notesClient;@IsoDateTimeConverter() DateTime get createdAt;
+ String get id; String get clientId; String get prestataireId; String get serviceId;@IsoDateTimeConverter() DateTime get dateHeure; String get statut; String? get notesClient; int? get amountCents; String? get currency; String? get stripePaymentIntentId; String? get paymentStatus;@NullableIsoDateTimeConverter() DateTime? get paidAt;@IsoDateTimeConverter() DateTime get createdAt;
 /// Create a copy of Reservation
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ReservationCopyWith<Reservation> get copyWith => _$ReservationCopyWithImpl<Rese
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Reservation&&(identical(other.id, id) || other.id == id)&&(identical(other.clientId, clientId) || other.clientId == clientId)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.dateHeure, dateHeure) || other.dateHeure == dateHeure)&&(identical(other.statut, statut) || other.statut == statut)&&(identical(other.notesClient, notesClient) || other.notesClient == notesClient)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Reservation&&(identical(other.id, id) || other.id == id)&&(identical(other.clientId, clientId) || other.clientId == clientId)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.dateHeure, dateHeure) || other.dateHeure == dateHeure)&&(identical(other.statut, statut) || other.statut == statut)&&(identical(other.notesClient, notesClient) || other.notesClient == notesClient)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.stripePaymentIntentId, stripePaymentIntentId) || other.stripePaymentIntentId == stripePaymentIntentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,clientId,prestataireId,serviceId,dateHeure,statut,notesClient,createdAt);
+int get hashCode => Object.hash(runtimeType,id,clientId,prestataireId,serviceId,dateHeure,statut,notesClient,amountCents,currency,stripePaymentIntentId,paymentStatus,paidAt,createdAt);
 
 @override
 String toString() {
-  return 'Reservation(id: $id, clientId: $clientId, prestataireId: $prestataireId, serviceId: $serviceId, dateHeure: $dateHeure, statut: $statut, notesClient: $notesClient, createdAt: $createdAt)';
+  return 'Reservation(id: $id, clientId: $clientId, prestataireId: $prestataireId, serviceId: $serviceId, dateHeure: $dateHeure, statut: $statut, notesClient: $notesClient, amountCents: $amountCents, currency: $currency, stripePaymentIntentId: $stripePaymentIntentId, paymentStatus: $paymentStatus, paidAt: $paidAt, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ReservationCopyWith<$Res>  {
   factory $ReservationCopyWith(Reservation value, $Res Function(Reservation) _then) = _$ReservationCopyWithImpl;
 @useResult
 $Res call({
- String id, String clientId, String prestataireId, String serviceId,@IsoDateTimeConverter() DateTime dateHeure, String statut, String? notesClient,@IsoDateTimeConverter() DateTime createdAt
+ String id, String clientId, String prestataireId, String serviceId,@IsoDateTimeConverter() DateTime dateHeure, String statut, String? notesClient, int? amountCents, String? currency, String? stripePaymentIntentId, String? paymentStatus,@NullableIsoDateTimeConverter() DateTime? paidAt,@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -65,7 +65,7 @@ class _$ReservationCopyWithImpl<$Res>
 
 /// Create a copy of Reservation
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? clientId = null,Object? prestataireId = null,Object? serviceId = null,Object? dateHeure = null,Object? statut = null,Object? notesClient = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? clientId = null,Object? prestataireId = null,Object? serviceId = null,Object? dateHeure = null,Object? statut = null,Object? notesClient = freezed,Object? amountCents = freezed,Object? currency = freezed,Object? stripePaymentIntentId = freezed,Object? paymentStatus = freezed,Object? paidAt = freezed,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,clientId: null == clientId ? _self.clientId : clientId // ignore: cast_nullable_to_non_nullable
@@ -74,7 +74,12 @@ as String,serviceId: null == serviceId ? _self.serviceId : serviceId // ignore: 
 as String,dateHeure: null == dateHeure ? _self.dateHeure : dateHeure // ignore: cast_nullable_to_non_nullable
 as DateTime,statut: null == statut ? _self.statut : statut // ignore: cast_nullable_to_non_nullable
 as String,notesClient: freezed == notesClient ? _self.notesClient : notesClient // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,amountCents: freezed == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int?,currency: freezed == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String?,stripePaymentIntentId: freezed == stripePaymentIntentId ? _self.stripePaymentIntentId : stripePaymentIntentId // ignore: cast_nullable_to_non_nullable
+as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -160,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient, @IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient,  int? amountCents,  String? currency,  String? stripePaymentIntentId,  String? paymentStatus, @NullableIsoDateTimeConverter()  DateTime? paidAt, @IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Reservation() when $default != null:
-return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.createdAt);case _:
+return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.amountCents,_that.currency,_that.stripePaymentIntentId,_that.paymentStatus,_that.paidAt,_that.createdAt);case _:
   return orElse();
 
 }
@@ -181,10 +186,10 @@ return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient, @IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient,  int? amountCents,  String? currency,  String? stripePaymentIntentId,  String? paymentStatus, @NullableIsoDateTimeConverter()  DateTime? paidAt, @IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Reservation():
-return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.createdAt);case _:
+return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.amountCents,_that.currency,_that.stripePaymentIntentId,_that.paymentStatus,_that.paidAt,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +206,10 @@ return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient, @IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String clientId,  String prestataireId,  String serviceId, @IsoDateTimeConverter()  DateTime dateHeure,  String statut,  String? notesClient,  int? amountCents,  String? currency,  String? stripePaymentIntentId,  String? paymentStatus, @NullableIsoDateTimeConverter()  DateTime? paidAt, @IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Reservation() when $default != null:
-return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.createdAt);case _:
+return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_that.dateHeure,_that.statut,_that.notesClient,_that.amountCents,_that.currency,_that.stripePaymentIntentId,_that.paymentStatus,_that.paidAt,_that.createdAt);case _:
   return null;
 
 }
@@ -216,7 +221,7 @@ return $default(_that.id,_that.clientId,_that.prestataireId,_that.serviceId,_tha
 @JsonSerializable()
 
 class _Reservation implements Reservation {
-  const _Reservation({required this.id, required this.clientId, required this.prestataireId, required this.serviceId, @IsoDateTimeConverter() required this.dateHeure, required this.statut, this.notesClient, @IsoDateTimeConverter() required this.createdAt});
+  const _Reservation({required this.id, required this.clientId, required this.prestataireId, required this.serviceId, @IsoDateTimeConverter() required this.dateHeure, required this.statut, this.notesClient, this.amountCents, this.currency, this.stripePaymentIntentId, this.paymentStatus, @NullableIsoDateTimeConverter() this.paidAt, @IsoDateTimeConverter() required this.createdAt});
   factory _Reservation.fromJson(Map<String, dynamic> json) => _$ReservationFromJson(json);
 
 @override final  String id;
@@ -226,6 +231,11 @@ class _Reservation implements Reservation {
 @override@IsoDateTimeConverter() final  DateTime dateHeure;
 @override final  String statut;
 @override final  String? notesClient;
+@override final  int? amountCents;
+@override final  String? currency;
+@override final  String? stripePaymentIntentId;
+@override final  String? paymentStatus;
+@override@NullableIsoDateTimeConverter() final  DateTime? paidAt;
 @override@IsoDateTimeConverter() final  DateTime createdAt;
 
 /// Create a copy of Reservation
@@ -241,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Reservation&&(identical(other.id, id) || other.id == id)&&(identical(other.clientId, clientId) || other.clientId == clientId)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.dateHeure, dateHeure) || other.dateHeure == dateHeure)&&(identical(other.statut, statut) || other.statut == statut)&&(identical(other.notesClient, notesClient) || other.notesClient == notesClient)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Reservation&&(identical(other.id, id) || other.id == id)&&(identical(other.clientId, clientId) || other.clientId == clientId)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.dateHeure, dateHeure) || other.dateHeure == dateHeure)&&(identical(other.statut, statut) || other.statut == statut)&&(identical(other.notesClient, notesClient) || other.notesClient == notesClient)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.stripePaymentIntentId, stripePaymentIntentId) || other.stripePaymentIntentId == stripePaymentIntentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,clientId,prestataireId,serviceId,dateHeure,statut,notesClient,createdAt);
+int get hashCode => Object.hash(runtimeType,id,clientId,prestataireId,serviceId,dateHeure,statut,notesClient,amountCents,currency,stripePaymentIntentId,paymentStatus,paidAt,createdAt);
 
 @override
 String toString() {
-  return 'Reservation(id: $id, clientId: $clientId, prestataireId: $prestataireId, serviceId: $serviceId, dateHeure: $dateHeure, statut: $statut, notesClient: $notesClient, createdAt: $createdAt)';
+  return 'Reservation(id: $id, clientId: $clientId, prestataireId: $prestataireId, serviceId: $serviceId, dateHeure: $dateHeure, statut: $statut, notesClient: $notesClient, amountCents: $amountCents, currency: $currency, stripePaymentIntentId: $stripePaymentIntentId, paymentStatus: $paymentStatus, paidAt: $paidAt, createdAt: $createdAt)';
 }
 
 
@@ -261,7 +271,7 @@ abstract mixin class _$ReservationCopyWith<$Res> implements $ReservationCopyWith
   factory _$ReservationCopyWith(_Reservation value, $Res Function(_Reservation) _then) = __$ReservationCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String clientId, String prestataireId, String serviceId,@IsoDateTimeConverter() DateTime dateHeure, String statut, String? notesClient,@IsoDateTimeConverter() DateTime createdAt
+ String id, String clientId, String prestataireId, String serviceId,@IsoDateTimeConverter() DateTime dateHeure, String statut, String? notesClient, int? amountCents, String? currency, String? stripePaymentIntentId, String? paymentStatus,@NullableIsoDateTimeConverter() DateTime? paidAt,@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -278,7 +288,7 @@ class __$ReservationCopyWithImpl<$Res>
 
 /// Create a copy of Reservation
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? clientId = null,Object? prestataireId = null,Object? serviceId = null,Object? dateHeure = null,Object? statut = null,Object? notesClient = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? clientId = null,Object? prestataireId = null,Object? serviceId = null,Object? dateHeure = null,Object? statut = null,Object? notesClient = freezed,Object? amountCents = freezed,Object? currency = freezed,Object? stripePaymentIntentId = freezed,Object? paymentStatus = freezed,Object? paidAt = freezed,Object? createdAt = null,}) {
   return _then(_Reservation(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,clientId: null == clientId ? _self.clientId : clientId // ignore: cast_nullable_to_non_nullable
@@ -287,7 +297,12 @@ as String,serviceId: null == serviceId ? _self.serviceId : serviceId // ignore: 
 as String,dateHeure: null == dateHeure ? _self.dateHeure : dateHeure // ignore: cast_nullable_to_non_nullable
 as DateTime,statut: null == statut ? _self.statut : statut // ignore: cast_nullable_to_non_nullable
 as String,notesClient: freezed == notesClient ? _self.notesClient : notesClient // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,amountCents: freezed == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int?,currency: freezed == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String?,stripePaymentIntentId: freezed == stripePaymentIntentId ? _self.stripePaymentIntentId : stripePaymentIntentId // ignore: cast_nullable_to_non_nullable
+as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

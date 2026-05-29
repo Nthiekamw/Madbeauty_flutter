@@ -1,28 +1,30 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/in_app_notifications_sheet.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/current_prestataire_provider.dart';
+import '../providers/prestataire_analytics_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/disponibilite_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/prestataire_profile_enrichment_banner.dart';
-import '../widgets/prestataire_agenda_reservation_card.dart';
-import '../widgets/prestataire_completeness_badge.dart';
-import '../widgets/prestataire_dashboard_section.dart';
-import '../widgets/prestataire_dashboard_stats_strip.dart';
-import '../widgets/prestataire_profile_incomplete_banner.dart';
-import '../widgets/prestataire_profile_load_error.dart';
-import '../widgets/prestataire_salon_hero.dart';
+import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
+import '../widgets/analytics/prestataire_analytics_panel.dart';
+import '../widgets/dashboard/prestataire_dashboard_section.dart';
+import '../widgets/dashboard/prestataire_dashboard_stats_strip.dart';
+import '../widgets/profile/prestataire_completeness_badge.dart';
+import '../widgets/profile/prestataire_profile_enrichment_banner.dart';
+import '../widgets/profile/prestataire_profile_incomplete_banner.dart';
+import '../widgets/profile/prestataire_profile_load_error.dart';
+import '../widgets/public/prestataire_salon_hero.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
   const PrestataireDashboardScreen({super.key});
@@ -38,9 +40,11 @@ class _PrestataireDashboardScreenState
 
   Future<void> _refresh() async {
     ref.invalidate(prestataireProfileFormProvider);
+    ref.invalidate(prestataireAnalyticsProvider);
     ref.invalidate(prestataireDashboardProvider);
     await Future.wait([
       ref.read(prestataireProfileFormProvider.future),
+      ref.read(prestataireAnalyticsProvider.future),
       ref.read(prestataireDashboardProvider.future),
     ]);
   }
@@ -126,6 +130,8 @@ class _PrestataireDashboardScreenState
                 if (data.isProfessionallyComplete &&
                     !data.isProfileFullyEnriched(hasHoraires: hasHoraires))
                   const PrestataireProfileEnrichmentBanner(),
+                const PrestataireAnalyticsPanel(),
+                const SizedBox(height: 8),
                 dashboardAsync.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.all(32),

@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,11 +15,11 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_form_scroll_view.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/app/app_button.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_form_scroll_view.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
-import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app/app_button.dart';
 
 /// Barre d’actions du wizard : retour (optionnel) + action principale.
 class RegisterWizardBottomBar extends StatelessWidget {

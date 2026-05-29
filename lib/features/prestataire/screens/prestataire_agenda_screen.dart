@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/prestataire_agenda_provider.dart';
-import '../widgets/prestataire_agenda_day_section.dart';
-import '../widgets/prestataire_agenda_stats_strip.dart';
-import '../widgets/prestataire_agenda_week_calendar.dart';
+import '../widgets/agenda/prestataire_agenda_day_section.dart';
+import '../widgets/agenda/prestataire_agenda_stats_strip.dart';
+import '../widgets/agenda/prestataire_agenda_week_calendar.dart';
 
 class PrestataireAgendaScreen extends ConsumerStatefulWidget {
   const PrestataireAgendaScreen({super.key});

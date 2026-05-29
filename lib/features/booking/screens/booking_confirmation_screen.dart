@@ -1,22 +1,30 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
 
+import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/stripe/stripe_booking_payment_service.dart';
+import '../../../services/stripe/stripe_payment_exception.dart';
+import '../../../services/stripe/stripe_payment_providers.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart'
     show
         bookingServiceProvider,
         invalidateBookingDetail,
         invalidateClientReservations;
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app_avatar.dart';
-import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
+import '../../../shared/widgets/app/app_button.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../prestataire/providers/prestataire_detail_provider.dart';
+import '../providers/prestataire_online_payment_provider.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
 import '../logic/booking_create_failure.dart';
 import '../logic/booking_formatters.dart';
+import '../logic/booking_payment_flow.dart';
 import '../widgets/booking_message.dart';
 import '../widgets/booking_success_view.dart';
 
@@ -48,7 +56,10 @@ class _BookingConfirmationScreenState
   bool _isSubmitting = false;
   bool _isSuccess = false;
   bool _queuedOffline = false;
+  bool _paidWithStripe = false;
+  bool _paidOnSite = false;
   String? _errorMessage;
+  BookingPaymentPhase _paymentPhase = BookingPaymentPhase.idle;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +71,13 @@ class _BookingConfirmationScreenState
         ),
         body: BookingSuccessView(
           onViewReservations: () => context.goMyReservations(),
-          body: _queuedOffline ? DiscBk.doneBodyQueued : DiscBk.doneBody,
+          body: _queuedOffline
+              ? DiscBk.doneBodyQueued
+              : _paidWithStripe
+                  ? DiscBk.doneBodyPaid
+                  : _paidOnSite
+                      ? DiscPay.doneBodyOnSite
+                      : DiscBk.doneBody,
         ),
       );
     }
@@ -75,6 +92,15 @@ class _BookingConfirmationScreenState
       data: (value) => value,
       orElse: () => false,
     );
+    final acceptsOnlineAsync = ref.watch(
+      prestataireAcceptsOnlinePaymentProvider(widget.prestataireId),
+    );
+    final acceptsOnline = acceptsOnlineAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => false,
+    );
+    final requiresOnlinePayment =
+        bookingRequiresOnlinePayment(acceptsOnline);
 
     return Scaffold(
       appBar: AppBar(
@@ -268,23 +294,42 @@ class _BookingConfirmationScreenState
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                  color: (requiresOnlinePayment
+                          ? const Color(0xFF10B981)
+                          : theme.colorScheme.primary)
+                      .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    color: (requiresOnlinePayment
+                            ? const Color(0xFF10B981)
+                            : theme.colorScheme.primary)
+                        .withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_outlined,
-                        size: 18, color: Color(0xFF10B981)),
+                    Icon(
+                      requiresOnlinePayment
+                          ? Icons.shield_outlined
+                          : Icons.payments_outlined,
+                      size: 18,
+                      color: requiresOnlinePayment
+                          ? const Color(0xFF10B981)
+                          : theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        DiscBk.recapTrust,
+                        requiresOnlinePayment
+                            ? DiscPay.recapTrust
+                            : BookingPaymentFlow.isPaymentAvailable
+                                ? DiscPay.recapTrustOnSite
+                                : DiscBk.recapTrust,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontFamily: AppFonts.body,
-                          color: const Color(0xFF10B981),
+                          color: requiresOnlinePayment
+                              ? const Color(0xFF10B981)
+                              : theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
                           height: 1.4,
                         ),
@@ -293,6 +338,16 @@ class _BookingConfirmationScreenState
                   ],
                 ),
               ),
+
+              if (!BookingPaymentFlow.isPaymentAvailable &&
+                  widget.price > 0) ...[
+                const SizedBox(height: 12),
+                BookingMessage(
+                  icon: Icons.payment_outlined,
+                  title: 'Paiement indisponible',
+                  message: DiscPay.errNotConfigured,
+                ),
+              ],
 
               // Erreur
               if (_errorMessage != null) ...[
@@ -351,10 +406,12 @@ class _BookingConfirmationScreenState
                       : null,
                 ),
                 child: AppButton(
-                  isLoading: _isSubmitting,
-                  enabled: !_isSubmitting && !isOwnProfile,
+                  isLoading: _isSubmitting || acceptsOnlineAsync.isLoading,
+                  enabled: !_isSubmitting &&
+                      !isOwnProfile &&
+                      !acceptsOnlineAsync.isLoading,
                   onPressed: _isSubmitting || isOwnProfile ? null : _confirm,
-                  child: const Text(DiscBk.recapCta),
+                  child: Text(_ctaLabel(requiresOnlinePayment)),
                 ),
               ),
             ],
@@ -364,10 +421,43 @@ class _BookingConfirmationScreenState
     );
   }
 
+  String _ctaLabel(bool requiresOnlinePayment) {
+    if (!_isSubmitting) {
+      if (requiresOnlinePayment) return DiscBk.recapCtaPay;
+      if (BookingPaymentFlow.isPaymentAvailable) return DiscPay.recapCtaOnSite;
+      return DiscBk.recapCta;
+    }
+    return switch (_paymentPhase) {
+      BookingPaymentPhase.preparing => DiscPay.preparing,
+      BookingPaymentPhase.presenting => DiscPay.preparing,
+      BookingPaymentPhase.confirming => DiscPay.confirming,
+      BookingPaymentPhase.idle => DiscBk.recapCta,
+    };
+  }
+
   Future<void> _confirm() async {
     final bookingService = ref.read(bookingServiceProvider);
+    final payments = ref.read(stripeBookingPaymentServiceProvider);
+
+    final acceptsOnline = await ref.read(
+      prestataireAcceptsOnlinePaymentProvider(widget.prestataireId).future,
+    );
+    final requiresOnlinePayment =
+        bookingRequiresOnlinePayment(acceptsOnline);
+
+    if (!AppConfig.hasSupabase) {
+      _showConfirmError(
+        'Configuration Supabase absente. Relance avec '
+        'flutter run --dart-define-from-file=.env',
+      );
+      return;
+    }
+    if (requiresOnlinePayment && payments == null) {
+      _showConfirmError(DiscPay.errNotConfigured);
+      return;
+    }
     if (bookingService == null) {
-      setState(() => _errorMessage = DiscBk.errGenericSave);
+      _showConfirmError(DiscBk.errGenericSave);
       return;
     }
 
@@ -402,6 +492,7 @@ class _BookingConfirmationScreenState
         _isSubmitting = false;
         _isSuccess = true;
         _queuedOffline = true;
+        _paidWithStripe = false;
       });
       return;
     }
@@ -409,9 +500,39 @@ class _BookingConfirmationScreenState
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
+      _paymentPhase = BookingPaymentPhase.idle;
     });
 
     try {
+      if (requiresOnlinePayment) {
+        final paymentService = ref.read(stripeBookingPaymentServiceProvider);
+        if (paymentService == null) {
+          throw const StripePaymentNotConfiguredException();
+        }
+        final flow = BookingPaymentFlow(paymentService);
+        final reservation = await flow.payAndCreateReservation(
+          prestataireId: widget.prestataireId,
+          serviceId: widget.serviceId,
+          dateHeure: widget.dateTime,
+          priceEur: widget.price,
+          onPhase: (phase) {
+            if (!mounted) return;
+            setState(() => _paymentPhase = phase);
+          },
+        );
+        invalidateBookingDetail(ref, reservation.id);
+        invalidateClientReservations(ref);
+        if (!mounted) return;
+        setState(() {
+          _isSubmitting = false;
+          _isSuccess = true;
+          _queuedOffline = false;
+          _paidWithStripe = true;
+          _paidOnSite = false;
+        });
+        return;
+      }
+
       final reservation = await bookingService.create(
         prestataireId: widget.prestataireId,
         serviceId: widget.serviceId,
@@ -424,14 +545,46 @@ class _BookingConfirmationScreenState
         _isSubmitting = false;
         _isSuccess = true;
         _queuedOffline = false;
+        _paidWithStripe = false;
+        _paidOnSite = BookingPaymentFlow.isPaymentAvailable;
       });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-        _errorMessage = bookingCreateFailureMessage(error);
-      });
+    } on StripePaymentException catch (e) {
+      _showConfirmError(BookingPaymentFlow.messageFor(e));
+    } on FormatException catch (e) {
+      _showConfirmError(
+        e.message.isNotEmpty ? e.message : DiscBk.errGenericSave,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Booking confirm failed: $error\n$stackTrace');
+      _showConfirmError(_resolveConfirmError(error));
     }
+  }
+
+  String _resolveConfirmError(Object error) {
+    if (error is StripePaymentException) {
+      return BookingPaymentFlow.messageFor(error);
+    }
+    if (error is FunctionException) {
+      return BookingPaymentFlow.messageFor(
+        StripeBookingPaymentService.fromInvokeError(error),
+      );
+    }
+    return bookingCreateFailureMessage(error);
+  }
+
+  void _showConfirmError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _paymentPhase = BookingPaymentPhase.idle;
+      _errorMessage = message;
+    });
+    AppSnackBar.show(
+      context,
+      message: message,
+      kind: AppSnackKind.error,
+      duration: const Duration(seconds: 5),
+    );
   }
 
   String _formatTime(DateTime value) {

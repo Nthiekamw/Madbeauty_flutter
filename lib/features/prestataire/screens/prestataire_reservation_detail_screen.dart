@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/prestataire_agenda_provider.dart';
 import '../../messaging/messaging_navigation.dart';
-import '../widgets/prestataire_reservation_detail_body.dart';
+import '../widgets/agenda/prestataire_reservation_detail_body.dart';
 
 class PrestataireReservationDetailScreen extends ConsumerStatefulWidget {
   const PrestataireReservationDetailScreen({

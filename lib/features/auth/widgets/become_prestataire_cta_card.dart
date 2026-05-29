@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app/app_button.dart';
 
 /// Carte d’incitation « Devenir prestataire » (profil client seul).
 class BecomePrestataireCtaCard extends StatelessWidget {

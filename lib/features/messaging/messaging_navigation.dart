@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_strings.dart';
@@ -6,7 +6,7 @@ import '../../features/auth/providers/auth_notifier.dart';
 import '../../router/navigation_extensions.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../services/supabase/profile/client_profile_providers.dart';
-import '../../shared/widgets/app_snack_bar.dart';
+import '../../shared/widgets/app/app_snack_bar.dart';
 
 /// Ouvre le fil de discussion lié à une réservation (crée la conversation si besoin).
 Future<void> openChatForReservation(

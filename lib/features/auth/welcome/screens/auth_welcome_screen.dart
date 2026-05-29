@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,7 +12,7 @@ import '../../../../router/app_router.dart';
 
 import '../../../../shared/theme/app_fonts.dart';
 
-import '../../../../shared/widgets/brand_background.dart';
+import '../../../../shared/widgets/layout/brand_background.dart';
 
 import '../../guest/guest_mode_provider.dart';
 

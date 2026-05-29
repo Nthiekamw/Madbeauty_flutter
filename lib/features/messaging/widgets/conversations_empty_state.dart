@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 
 /// État vide de l'inbox messagerie (texte selon le rôle).
 class ConversationsEmptyState extends StatelessWidget {

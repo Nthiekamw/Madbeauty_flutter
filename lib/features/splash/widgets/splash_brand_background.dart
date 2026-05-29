@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/brand_background.dart';
+import '../../../shared/widgets/layout/brand_background.dart';
 
 /// Fond splash — délègue à [BrandBackground].
 class SplashBrandBackground extends StatelessWidget {

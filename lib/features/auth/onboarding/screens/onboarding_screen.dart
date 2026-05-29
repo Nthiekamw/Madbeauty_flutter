@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/app_router.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
-import '../../../../shared/widgets/brand_background.dart';
+import '../../../../shared/widgets/layout/brand_background.dart';
 import '../../widgets/onboarding_page_content.dart';
 
 /// Tour d’horizon du projet (3 pages) avant l’écran Bienvenue.

@@ -18,6 +18,11 @@ abstract class Reservation with _$Reservation {
     @IsoDateTimeConverter() required DateTime dateHeure,
     required String statut,
     String? notesClient,
+    int? amountCents,
+    String? currency,
+    String? stripePaymentIntentId,
+    String? paymentStatus,
+    @NullableIsoDateTimeConverter() DateTime? paidAt,
     @IsoDateTimeConverter() required DateTime createdAt,
   }) = _Reservation;
 

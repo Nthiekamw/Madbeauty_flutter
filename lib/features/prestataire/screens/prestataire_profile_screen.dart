@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/layout/discovery_responsive.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../profile/providers/app_version_provider.dart';
 import '../../profile/widgets/profile_account_section.dart';
@@ -18,13 +18,14 @@ import '../../profile/widgets/profile_preferences_section.dart';
 import '../../profile/widgets/profile_role_space_section.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/prestataire_completeness_badge.dart';
-import '../widgets/prestataire_profile_load_error.dart';
-import '../widgets/prestataire_profile_manage_menu.dart';
-import '../widgets/prestataire_profile_messages_tile.dart';
-import '../widgets/prestataire_profile_stats_strip.dart';
-import '../widgets/prestataire_section_header.dart';
-import '../widgets/prestataire_salon_hero.dart';
+import '../widgets/profile/prestataire_completeness_badge.dart';
+import '../widgets/profile/prestataire_profile_load_error.dart';
+import '../widgets/profile/prestataire_profile_manage_menu.dart';
+import '../widgets/profile/prestataire_profile_messages_tile.dart';
+import '../widgets/profile/prestataire_profile_stats_strip.dart';
+import '../widgets/profile/prestataire_stripe_connect_tile.dart';
+import '../widgets/public/prestataire_salon_hero.dart';
+import '../widgets/shared/prestataire_section_header.dart';
 
 /// Onglet Profil de l’espace prestataire (compte + raccourcis pro).
 class PrestataireProfileScreen extends ConsumerWidget {
@@ -195,6 +196,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
               ],
               const SizedBox(height: 20),
               const PrestataireProfileMessagesTile(),
+              const SizedBox(height: 16),
+              const PrestataireStripeConnectTile(),
               const SizedBox(height: 16),
               const PrestataireProfileManageMenu(),
               if (data.prestataireId != null) ...[

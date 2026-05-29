@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/discovery_search_card.dart';
+import '../../../shared/widgets/discovery/discovery_search_card.dart';
 
 /// Barre de recherche mise en avant sur l’accueil.
 class ClientHomeSearchCard extends StatelessWidget {

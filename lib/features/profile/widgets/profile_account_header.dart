@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -8,7 +8,7 @@ import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 
 /// En-tête profil : photo, nom, actions de modification.
 class ProfileAccountHeader extends StatelessWidget {

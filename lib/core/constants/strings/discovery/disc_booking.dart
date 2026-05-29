@@ -29,8 +29,11 @@ abstract final class DiscBk {
   static const recapTime = 'Heure';
   static const recapPrice = 'Prix';
   static const recapCta = 'Confirmer la réservation';
+  static const recapCtaPay = 'Payer et confirmer';
   static const recapTrust =
       'Vérifie les informations ci-dessus. Ta réservation ne sera enregistrée qu’après confirmation.';
+  static const doneBodyPaid =
+      'Ton paiement est enregistré et ta réservation est confirmée. Le prestataire pourra la valider sous peu.';
   static const recapPrestaBadTitle = 'Prestataire introuvable';
   static const recapPrestaBadBody =
       'Impossible d’afficher le récapitulatif. Retourne à la fiche prestataire et réessaie.';

@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
-import '../../../shared/widgets/google_logo.dart';
+import '../../../shared/widgets/auth/google_logo.dart';
 
 /// Bouton OAuth Google cohérent avec la charte MadBeauty.
 class AuthGoogleButton extends StatelessWidget {

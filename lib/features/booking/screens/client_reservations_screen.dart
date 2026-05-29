@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -6,11 +6,11 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_ui_status.dart';

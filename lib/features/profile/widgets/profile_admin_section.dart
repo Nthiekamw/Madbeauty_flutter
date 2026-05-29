@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/user_role.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/widgets/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery_surface_card.dart';
+import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
+import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import 'profile_section_title.dart';
 
 class ProfileAdminSection extends ConsumerWidget {

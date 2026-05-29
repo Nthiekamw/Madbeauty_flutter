@@ -1,1 +1,1 @@
-export '../../../shared/widgets/discovery_screen_header.dart';
+﻿export '../../../shared/widgets/discovery/discovery_screen_header.dart';

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 
 
@@ -18,7 +18,7 @@ import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../services/supabase/messaging/message_service.dart';
 import '../providers/message_provider.dart';
 
-import '../../../shared/widgets/app_snack_bar.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
 
 import '../models/conversation_inbox_item.dart';
 

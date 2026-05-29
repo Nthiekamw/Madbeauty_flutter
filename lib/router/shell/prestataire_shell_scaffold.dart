@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_strings.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
-import '../../shared/widgets/offline_shell.dart';
+import '../../shared/widgets/layout/offline_shell.dart';
 
 class PrestataireShellScaffold extends ConsumerStatefulWidget {
   const PrestataireShellScaffold({

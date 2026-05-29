@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,9 +13,9 @@ import '../../../services/offline/offline_actions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/layout/discovery_responsive.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_constrained_body.dart';
-import '../../../shared/widgets/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';

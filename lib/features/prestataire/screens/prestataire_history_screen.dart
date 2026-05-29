@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../logic/prestataire_history_grouping.dart';
 import '../providers/prestataire_agenda_provider.dart';
-import '../widgets/prestataire_history_client_section.dart';
+import '../widgets/history/prestataire_history_client_section.dart';
 
 class PrestataireHistoryScreen extends ConsumerWidget {
   const PrestataireHistoryScreen({super.key});

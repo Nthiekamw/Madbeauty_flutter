@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -10,14 +10,14 @@ import '../../../features/messaging/messaging_navigation.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
-import '../../../shared/widgets/app_avatar.dart';
-import '../../../shared/widgets/prestataire_favorite_button.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
+import '../../../shared/widgets/prestataire/prestataire_favorite_button.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../logic/lieu_travail_display.dart';
 import '../providers/prestataire_detail_provider.dart';
-import '../widgets/prestataire_client_experience_section.dart';
-import '../widgets/prestataire_public_horaires_section.dart';
-import '../widgets/prestataire_public_reviews_live_section.dart';
+import '../widgets/profile/prestataire_client_experience_section.dart';
+import '../widgets/public/prestataire_public_horaires_section.dart';
+import '../widgets/public/prestataire_public_reviews_live_section.dart';
 import '../../reviews/providers/prestataire_note_moyenne_provider.dart';
 
 class PrestataireDetailScreen extends ConsumerWidget {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,10 +7,10 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
-import '../../../shared/widgets/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery_screen_header.dart';
-import '../../../shared/widgets/discovery_search_card.dart';
+import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_search_card.dart';
 import '../../prestataire/providers/prestataire_filters_provider.dart';
 import '../../prestataire/providers/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
