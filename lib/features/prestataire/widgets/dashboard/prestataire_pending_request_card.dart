@@ -4,6 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../booking/logic/booking_formatters.dart';
+import '../../../booking/widgets/reservation_payment_summary_card.dart';
 import '../../models/prestataire_reservation_item.dart';
 
 class PrestatairePendingRequestCard extends StatelessWidget {
@@ -79,6 +80,14 @@ class PrestatairePendingRequestCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (item.paymentDisplay.shouldShow) ...[
+                  const SizedBox(height: 10),
+                  ReservationPaymentSummaryCard(
+                    display: item.paymentDisplay,
+                    lines: item.paymentDisplay.prestataireLines(),
+                    compact: true,
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Row(
                   children: [

@@ -3,7 +3,8 @@
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
-/// En-tête chat : avatar + nom de l'interlocuteur (+ sous-titre réservation).
+
+/// En-tête chat : avatar + nom (+ sous-titre réservation).
 class ChatPeerHeader extends StatelessWidget {
   const ChatPeerHeader({
     super.key,
@@ -12,6 +13,7 @@ class ChatPeerHeader extends StatelessWidget {
     this.subtitle,
     this.titleColor,
     this.subtitleColor,
+    this.onLightGradient = false,
   });
 
   final String displayName;
@@ -19,11 +21,14 @@ class ChatPeerHeader extends StatelessWidget {
   final String? subtitle;
   final Color? titleColor;
   final Color? subtitleColor;
+  final bool onLightGradient;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final normalizedName = normalizeSingleLineText(displayName);
+    final title = normalizedName.isEmpty ? displayName : normalizedName;
+    final primary = theme.colorScheme.primary;
 
     return Row(
       children: [
@@ -31,23 +36,20 @@ class ChatPeerHeader extends StatelessWidget {
           padding: const EdgeInsets.all(2.5),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFFFFFFF), Color(0x99FFFFFF)],
+            color: onLightGradient
+                ? Colors.white.withValues(alpha: 0.22)
+                : primary.withValues(alpha: 0.1),
+            border: Border.all(
+              color: onLightGradient
+                  ? Colors.white.withValues(alpha: 0.55)
+                  : primary.withValues(alpha: 0.25),
+              width: 2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 3),
-              ),
-            ],
           ),
           child: AppAvatar(
             imageUrl: avatarUrl,
-            displayName: normalizedName.isEmpty ? displayName : normalizedName,
-            radius: 20,
+            displayName: title,
+            radius: 21,
           ),
         ),
         const SizedBox(width: 12),
@@ -57,9 +59,8 @@ class ChatPeerHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                normalizedName.isEmpty ? displayName : normalizedName,
+                title,
                 maxLines: 1,
-                softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontFamily: AppFonts.display,
@@ -69,15 +70,31 @@ class ChatPeerHeader extends StatelessWidget {
                 ),
               ),
               if (subtitle != null && subtitle!.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: subtitleColor ?? theme.colorScheme.onSurfaceVariant,
-                    height: 1.1,
-                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.event_available_rounded,
+                      size: 13,
+                      color: subtitleColor ??
+                          theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w500,
+                          color: subtitleColor ??
+                              theme.colorScheme.onSurfaceVariant,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],

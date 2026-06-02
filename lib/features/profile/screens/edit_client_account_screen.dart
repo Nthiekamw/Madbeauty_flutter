@@ -14,7 +14,9 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/phone_number_utils.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
@@ -41,6 +43,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
   final _phone = TextEditingController();
   final _city = TextEditingController();
 
+  String _phoneDialCode = '+33';
   bool _bound = false;
   bool _saving = false;
   bool _savingPhoto = false;
@@ -62,7 +65,9 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     if (_bound) return;
     _prenom.text = profile?.prenom?.trim() ?? '';
     _nom.text = profile?.nom?.trim() ?? '';
-    _phone.text = profile?.telephone?.trim() ?? '';
+    final parsed = PhoneNumberUtils.parseStored(profile?.telephone);
+    _phoneDialCode = parsed.dialCode;
+    _phone.text = parsed.local;
     _city.text = client?.adresse?.trim() ?? '';
     _bound = true;
   }
@@ -243,7 +248,14 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
             _bindFields(profile, client);
             final displayName = profileDisplayName(profile: profile, email: email);
 
+            final layout = DiscoveryResponsive.of(context);
             return DiscoveryFormScrollView(
+              padding: EdgeInsets.fromLTRB(
+                layout.horizontalPadding,
+                8,
+                layout.horizontalPadding,
+                20,
+              ),
               children: [
                 Row(
                   children: [
@@ -278,13 +290,17 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                   loading: _savingPhoto,
                   onChangePhoto: _savingPhoto ? null : _pickAndUploadPhoto,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 DiscoverySurfaceCard(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: EditClientAccountForm(
                     prenomController: _prenom,
                     nomController: _nom,
                     phoneController: _phone,
+                    phoneDialCode: _phoneDialCode,
+                    onPhoneDialCodeChanged: (code) {
+                      setState(() => _phoneDialCode = code);
+                    },
                     cityController: _city,
                     email: email,
                     prenomError: _prenomError,
@@ -292,7 +308,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                     errorText: _error,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 AppButton(
                   onPressed: _saving ? null : _save,
                   isLoading: _saving,

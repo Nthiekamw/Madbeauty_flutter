@@ -22,11 +22,14 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 
 import '../models/conversation_inbox_item.dart';
 
+import '../logic/chat_message_moderator.dart';
+import '../logic/chat_message_templates.dart';
+import '../../prestataire/providers/current_prestataire_provider.dart';
 import '../widgets/chat_composer.dart';
-
 import '../widgets/chat_message_list.dart';
-
-import '../widgets/chat_peer_header.dart';
+import '../../trust/widgets/report_content_sheet.dart';
+import '../../../services/supabase/trust/content_report_service.dart';
+import '../widgets/chat_screen_app_bar.dart';
 
 
 
@@ -144,12 +147,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
   Future<void> _send() async {
-
     final text = _controller.text.trim();
-
     if (text.isEmpty || _sending) return;
 
-
+    final moderation = ChatMessageModerator.analyze(text);
+    if (moderation.isBlocked) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: Icon(
+            Icons.shield_outlined,
+            color: Theme.of(ctx).colorScheme.error,
+            size: 28,
+          ),
+          title: Text(moderation.dialogTitle),
+          content: Text(moderation.dialogBody),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text(DiscChat.moderationDialogOk),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     final service = ref.read(messageServiceProvider);
 
@@ -167,38 +190,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     setState(() => _sending = true);
 
-    _controller.clear();
-
-
-
     try {
-
       await service.send(
-
         bookingId: widget.bookingId,
-
         senderId: user.id,
-
         content: text,
-
       );
-
+      _controller.clear();
       ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-
       ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
-
-    } catch (error) {
-
+    } on MessageValidationException catch (error) {
       if (mounted) {
-        final message =
-            error is MessageValidationException &&
-                error.code == 'phone_number_not_allowed'
-            ? DiscChat.phoneBlocked
-            : DiscChat.sendError;
-        AppSnackBar.show(context, message: message);
-
+        final result =
+            ChatMessageModerationResult(violations: [error.violation]);
+        AppSnackBar.show(context, message: result.bannerMessage);
       }
-
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(context, message: DiscChat.sendError);
+      }
     } finally {
 
       if (mounted) setState(() => _sending = false);
@@ -271,7 +281,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     final isDark = theme.brightness == Brightness.dark;
     final appBarStart = theme.colorScheme.primary;
-    final appBarEnd = theme.colorScheme.secondary;
     final scaffoldBg = theme.colorScheme.surface;
 
     final userId = switch (ref.watch(authNotifierProvider)) {
@@ -290,7 +299,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
         ref.watch(messagesProvider(widget.bookingId));
 
-
+    final isPresta =
+        ref.watch(currentPrestataireProvider).asData?.value != null;
+    final quickTemplates = isPresta
+        ? ChatMessageTemplates.prestataire
+        : ChatMessageTemplates.client;
 
     ref.listen(messagesProvider(widget.bookingId), (prev, next) {
 
@@ -331,35 +344,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       backgroundColor: scaffoldBg,
 
-      appBar: AppBar(
-        elevation: 0,
-        foregroundColor: Colors.white,
-        backgroundColor: appBarStart,
-        surfaceTintColor: Colors.transparent,
-        flexibleSpace: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [appBarStart, appBarEnd],
-            ),
-          ),
-        ),
-
-        titleSpacing: 0,
-
-        title: ChatPeerHeader(
-
-          displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
-
-          avatarUrl: header?.peerAvatarUrl,
-
-          subtitle: _headerSubtitle(header),
-          titleColor: Colors.white,
-          subtitleColor: Colors.white.withValues(alpha: 0.86),
-
-        ),
-
+      appBar: ChatScreenAppBar(
+        displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
+        avatarUrl: header?.peerAvatarUrl,
+        subtitle: _headerSubtitle(header),
+        onReport: header == null
+            ? null
+            : () => showReportContentSheet(
+                  context,
+                  targetType: ContentReportTargetType.conversation,
+                  targetId: header.conversation.id,
+                ),
       ),
 
       body: DecoratedBox(
@@ -375,6 +370,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(
+                DiscChat.moderationSafetyHint,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.3,
+                ),
+              ),
+            ),
             Expanded(
               child: messagesAsync.when(
 
@@ -402,6 +408,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _controller,
               sending: _sending,
               onSend: _send,
+              quickReplyTemplates: quickTemplates,
             ),
           ],
         ),

@@ -21,6 +21,11 @@ abstract final class DiscList {
   static const chipAll = 'Tout';
   static const modeList = 'Liste';
   static const modeMap = 'Carte';
+  static const layoutExpanded = 'Étendu';
+  static const layoutGrid = 'Grille';
+  static const layoutExpandedHint =
+      'Cartes pleine largeur avec plus de détails';
+  static const layoutGridHint = 'Deux colonnes, aperçu rapide';
   static const sortLabel = 'Trier par';
   static const sortRating = 'Note';
   static const sortDistance = 'Distance';

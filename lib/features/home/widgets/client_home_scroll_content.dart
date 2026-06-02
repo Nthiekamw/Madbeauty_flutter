@@ -6,11 +6,11 @@ import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../client/widgets/workspace/client_workspace_header.dart';
+import '../../client/widgets/workspace/client_workspace_search_row.dart';
 import 'client_home_explore_row.dart';
 import 'client_home_feed_prestataires_section.dart';
-import 'client_home_header.dart';
 import 'client_home_nearby_prestataires_section.dart';
-import 'client_home_search_card.dart';
 import 'client_home_top_rated_prestataires_section.dart';
 import '../theme/home_styles.dart';
 
@@ -21,7 +21,6 @@ class ClientHomeScrollContent extends ConsumerWidget {
     required this.searchController,
     required this.onSubmitSearch,
     required this.onExplorePick,
-    required this.header,
     this.footer,
     this.showCatalogCta = true,
   });
@@ -29,7 +28,6 @@ class ClientHomeScrollContent extends ConsumerWidget {
   final TextEditingController searchController;
   final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
-  final ClientHomeHeader header;
   final Widget? footer;
   final bool showCatalogCta;
 
@@ -40,18 +38,16 @@ class ClientHomeScrollContent extends ConsumerWidget {
     final pad = DiscoveryResponsive.of(context).horizontalPadding;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(pad, 8, pad, 32),
+      padding: EdgeInsets.fromLTRB(pad, 0, pad, 32),
       children: [
-        header,
-        const SizedBox(height: 20),
-        ClientHomeSearchCard(
+        ClientWorkspaceSearchRow(
           controller: searchController,
-          hint: DiscHome.hintSearch,
-          searchTooltip: DiscHome.actionSearch,
-          onSubmit: onSubmitSearch,
+          onChanged: (_) => onSubmitSearch(),
+          onSubmitted: (_) => onSubmitSearch(),
+          onFilterTap: () => context.goClientSearch(),
         ),
         if (showCatalogCta) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           _CatalogCta(onTap: () => context.goClientSearch()),
         ],
         const SizedBox(height: 28),

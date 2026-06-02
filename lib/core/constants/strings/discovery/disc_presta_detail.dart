@@ -29,9 +29,24 @@ abstract final class DiscPrestaDetail {
   static const actionBookSvc = 'Réserver';
   static const ownProfileBookHint =
       'C’est ton profil professionnel : tu peux le consulter, mais pas réserver tes propres services.';
+  static const share = 'Partager';
+  static const shareTooltip = 'Partager cette fiche';
+  static String shareMessage(String name) =>
+      'Découvre $name sur MadBeauty — réserve un soin en quelques clics.';
   static const contact = 'Contacter';
-  static const contactSoon =
-      'Ouvre le chat pour échanger directement avec ce prestataire.';
+  static const contactSectionTitle = 'Messagerie';
+  static const contactBookTitle = 'Réserve pour échanger';
+  static const contactBookBody =
+      'Après ta réservation, le prestataire accepte ou refuse la demande. '
+      'Tu pourras ensuite lui écrire ici.';
+  static const contactPendingTitle = 'Demande en attente';
+  static const contactPendingBody =
+      'Ton prestataire n’a pas encore répondu. Le chat s’ouvrira '
+      'dès qu’il aura confirmé ta réservation.';
+  static const contactViewReservations = 'Voir mes réservations';
+  static const contactReadyBody =
+      'Ta réservation est confirmée. Organise ton rendez-vous par message.';
+  static const contactOpenChat = 'Ouvrir la conversation';
   static String reviewDate(DateTime date) {
     final d = date;
     final months = [
@@ -55,6 +70,7 @@ abstract final class DiscPrestaDetail {
   static const trustId = 'Identité professionnelle vérifiée';
   static const trustPrices = 'Services et tarifs visibles';
   static const trustBook = 'Réservation simple';
+  static const trustFastResponse = 'Répond en général sous 2 h';
   static const noSvcsTitle =
       'Aucun service publié pour le moment';
   static const noSvcsBody =

@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -9,13 +11,15 @@ import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
+import '../logic/client_reservation_lists.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
 import '../../messaging/messaging_navigation.dart';
+import '../../../services/notifications/booking_local_reminders.dart';
 import '../widgets/client_reservation_card.dart';
 
 class ClientReservationsScreen extends ConsumerStatefulWidget {
@@ -41,7 +45,23 @@ class _ClientReservationsScreenState
 
   Future<void> _refresh() async {
     invalidateClientReservations(ref);
-    await ref.read(clientReservationsProvider.future);
+    final list = await ref.read(clientReservationsProvider.future);
+    await _syncReminders(list);
+  }
+
+  Future<void> _syncReminders(List<ClientReservationSummary> list) async {
+    await BookingLocalReminders.instance.syncForReservations(
+      list
+          .map(
+            (r) => (
+              id: r.id,
+              dateHeure: r.dateHeure,
+              title: r.serviceName ?? DiscBk.unknownSvc,
+              statut: r.statut,
+            ),
+          )
+          .toList(),
+    );
   }
 
   Future<void> _confirmCancel(ClientReservationSummary item) async {
@@ -119,15 +139,22 @@ class _ClientReservationsScreenState
       });
     });
 
+    ref.listen(clientReservationsProvider, (_, next) {
+      final list = next.asData?.value;
+      if (list != null) {
+        unawaited(_syncReminders(list));
+      }
+    });
+
     if (ref.watch(isGuestBrowsingProvider)) {
       return DiscoveryBrandScaffold(
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DiscoveryScreenHeader(
+            const DiscoveryFeatureHeader(
               title: DiscNav.myReservationsTitle,
               subtitle: DiscBk.reservationsSubtitle,
-              icon: Icons.event_note_rounded,
+              icon: Icons.calendar_month_rounded,
             ),
             Expanded(
               child: GuestAccountPrompt(
@@ -149,16 +176,16 @@ class _ClientReservationsScreenState
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DiscoveryScreenHeader(
+            const DiscoveryFeatureHeader(
               title: DiscNav.myReservationsTitle,
               subtitle: DiscBk.reservationsSubtitle,
-              icon: Icons.event_note_rounded,
+              icon: Icons.calendar_month_rounded,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: DiscoverySurfaceCard(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 child: TabBar(
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
@@ -174,9 +201,29 @@ class _ClientReservationsScreenState
                   labelColor: Theme.of(context).colorScheme.onPrimary,
                   unselectedLabelColor:
                       Theme.of(context).colorScheme.onSurfaceVariant,
-                  tabs: const [
-                    Tab(text: DiscBk.tabFuture),
-                    Tab(text: DiscBk.tabPast),
+                  tabs: [
+                    Tab(
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.upcoming_rounded, size: 18),
+                          const SizedBox(width: 6),
+                          Text(DiscBk.tabFuture),
+                        ],
+                      ),
+                    ),
+                    Tab(
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history_rounded, size: 18),
+                          const SizedBox(width: 6),
+                          Text(DiscBk.tabPast),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -206,12 +253,12 @@ class _ClientReservationsScreenState
                 data: (all) => TabBarView(
                   children: [
                     _tabList(
-                      items: _upcoming(all),
+                      items: clientUpcomingReservations(all),
                       emptyTitle: DiscBk.emptyFutureTitle,
                       emptyBody: DiscBk.emptyFutureBody,
                     ),
                     _tabList(
-                      items: _past(all),
+                      items: clientPastReservations(all),
                       emptyTitle: DiscBk.emptyPastTitle,
                       emptyBody: DiscBk.emptyPastBody,
                     ),
@@ -223,45 +270,6 @@ class _ClientReservationsScreenState
         ),
       ),
     );
-  }
-
-  List<ClientReservationSummary> _upcoming(List<ClientReservationSummary> all) {
-    final now = DateTime.now();
-    return all
-        .where((r) {
-          final ui = clientReservationUiStatusFromStatut(r.statut);
-          if (ui == ClientReservationUiStatus.cancelled) return false;
-          if (ui == ClientReservationUiStatus.done) return false;
-          // Une réservation en attente ou confirmée est toujours « à venir »
-          // même si la date est légèrement passée (tolérance 2h).
-          if (ui == ClientReservationUiStatus.pending ||
-              ui == ClientReservationUiStatus.syncPending ||
-              ui == ClientReservationUiStatus.confirmed) {
-            return true;
-          }
-          return !r.dateHeure.isBefore(now);
-        })
-        .toList()
-      ..sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
-  }
-
-  List<ClientReservationSummary> _past(List<ClientReservationSummary> all) {
-    final now = DateTime.now();
-    return all
-        .where((r) {
-          final ui = clientReservationUiStatusFromStatut(r.statut);
-          if (ui == ClientReservationUiStatus.cancelled) return true;
-          if (ui == ClientReservationUiStatus.done) return true;
-          // Pas en attente ni confirmée, et date passée
-          if (ui == ClientReservationUiStatus.pending ||
-              ui == ClientReservationUiStatus.syncPending ||
-              ui == ClientReservationUiStatus.confirmed) {
-            return false;
-          }
-          return r.dateHeure.isBefore(now);
-        })
-        .toList()
-      ..sort((a, b) => b.dateHeure.compareTo(a.dateHeure));
   }
 
   Widget _tabList({
@@ -300,6 +308,7 @@ class _ClientReservationsScreenState
           final canCancel = clientReservationCanCancel(ui);
           return ClientReservationCard(
             item: item,
+            onTap: () => context.pushClientReservationDetail(item.id),
             cancelLoading: _cancellingId == item.id,
             onCancel: canCancel ? () => _confirmCancel(item) : null,
             onMessage: () => openChatForReservation(context, ref, item.id),

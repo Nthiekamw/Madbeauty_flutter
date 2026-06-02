@@ -5,6 +5,7 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
+import '../../../booking/widgets/reservation_payment_summary_card.dart';
 import '../../models/prestataire_reservation_item.dart';
 
 class PrestataireAgendaReservationCard extends StatelessWidget {
@@ -207,6 +208,14 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            if (item.paymentDisplay.shouldShow) ...[
+                              ReservationPaymentSummaryCard(
+                                display: item.paymentDisplay,
+                                lines: item.paymentDisplay.prestataireLines(),
+                                compact: true,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                             if (item.notesClient?.trim().isNotEmpty ==
                                 true) ...[
                               _NoteBlock(

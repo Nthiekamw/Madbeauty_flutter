@@ -1,4 +1,10 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import {
+  type BookingPaymentMode,
+  computeBookingPricing,
+  countClientBookingsForPlatformFee,
+} from "../_shared/booking_pricing.ts";
+import { fetchActiveReferralDiscount } from "../_shared/referral_discount.ts";
 import { accountCanAcceptPayments } from "../_shared/stripe_connect.ts";
 import {
   activeReservationsAtSlot,
@@ -14,7 +20,14 @@ interface Body {
   prestataireId?: string;
   serviceId?: string;
   dateHeure?: string;
+  paymentMode?: string;
+  /** Déprécié : le montant est recalculé côté serveur. */
   amountCents?: number;
+}
+
+function parsePaymentMode(raw: string): BookingPaymentMode | null {
+  if (raw === "deposit_20" || raw === "on_site") return raw;
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -32,13 +45,10 @@ Deno.serve(async (req) => {
     const serviceId = String(body.serviceId ?? "").trim();
     const dateHeureRaw = String(body.dateHeure ?? "").trim();
     const dateHeure = normalizeBookingInstant(dateHeureRaw);
-    const amountCents = Number(body.amountCents);
+    const paymentMode = parsePaymentMode(String(body.paymentMode ?? "").trim());
 
-    if (!prestataireId || !serviceId || !dateHeureRaw || !Number.isFinite(amountCents)) {
+    if (!prestataireId || !serviceId || !dateHeureRaw || !paymentMode) {
       return jsonResponse({ error: "Paramètres invalides" }, 400);
-    }
-    if (amountCents < 50) {
-      return jsonResponse({ error: "Montant trop faible" }, 400);
     }
 
     const admin = serviceClient();
@@ -72,30 +82,64 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Service introuvable" }, 404);
     }
 
-    const expectedCents = Math.round(Number(service.prix) * 100);
-    if (expectedCents !== amountCents) {
-      return jsonResponse({ error: "Montant incorrect pour ce service" }, 400);
-    }
+    const originalServicePriceCents = Math.round(Number(service.prix) * 100);
+    const referralDiscount = await fetchActiveReferralDiscount(admin, clientId);
 
     const { data: prestataire } = await admin
       .from("prestataire_profiles")
-      .select("stripe_connect_account_id, nom_salon")
+      .select(
+        "stripe_connect_account_id, stripe_connect_charges_enabled, nom_salon",
+      )
       .eq("id", prestataireId)
       .maybeSingle();
-    const connectAccountId = prestataire?.stripe_connect_account_id as string | undefined;
-    if (!connectAccountId?.startsWith("acct_")) {
+
+    const connectAccountId = prestataire?.stripe_connect_account_id as
+      | string
+      | undefined;
+    const chargesEnabled = prestataire?.stripe_connect_charges_enabled === true;
+    const prestataireAcceptsConnect = Boolean(
+      connectAccountId?.startsWith("acct_") && chargesEnabled,
+    );
+
+    let connectReady = false;
+    if (prestataireAcceptsConnect && connectAccountId) {
+      const connectAccount = await stripe.accounts.retrieve(connectAccountId);
+      connectReady = accountCanAcceptPayments(connectAccount);
+    }
+
+    const priorBookingCount = await countClientBookingsForPlatformFee(
+      admin,
+      clientId,
+    );
+
+    let pricing;
+    try {
+      pricing = computeBookingPricing({
+        servicePriceCents: originalServicePriceCents,
+        paymentMode,
+        priorBookingCount,
+        prestataireAcceptsConnect: connectReady,
+        referralDiscountPercent: referralDiscount?.percent,
+      });
+    } catch (e) {
+      if (String(e).includes("deposit_requires_connect")) {
+        return jsonResponse({
+          error: "Acompte indisponible pour ce prestataire",
+          code: "deposit_requires_connect",
+        }, 400);
+      }
+      throw e;
+    }
+
+    if (!pricing.requiresInAppPayment) {
       return jsonResponse({
-        error: "Ce prestataire n'accepte pas encore les paiements en ligne",
-        code: "prestataire_not_payable",
+        error: "Aucun paiement requis dans l'application",
+        code: "no_payment_required",
       }, 400);
     }
 
-    const connectAccount = await stripe.accounts.retrieve(connectAccountId);
-    if (!accountCanAcceptPayments(connectAccount)) {
-      return jsonResponse({
-        error: "Le compte paiement du prestataire n'est pas encore activé",
-        code: "prestataire_not_payable",
-      }, 400);
+    if (pricing.totalChargeCents < 50) {
+      return jsonResponse({ error: "Montant trop faible" }, 400);
     }
 
     const slotAt = new Date(dateHeure);
@@ -118,28 +162,50 @@ Deno.serve(async (req) => {
       { apiVersion: "2024-11-20.acacia" },
     );
 
-    const feePercent = Number(Deno.env.get("STRIPE_PLATFORM_FEE_PERCENT") ?? "10");
-    const applicationFeeAmount = Math.max(
-      0,
-      Math.round(amountCents * (feePercent / 100)),
-    );
+    const platformFee = pricing.platformFeeCents;
+    const prestatairePortion = pricing.prestatairePortionCents;
+    const useConnect = prestatairePortion > 0 && connectReady && connectAccountId;
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
+    if (paymentMode === "deposit_20" && !useConnect) {
+      return jsonResponse({
+        error: "Ce prestataire n'accepte pas encore les paiements en ligne",
+        code: "prestataire_not_payable",
+      }, 400);
+    }
+
+    const metadata: Record<string, string> = {
+      client_id: clientId,
+      prestataire_id: prestataireId,
+      service_id: serviceId,
+      date_heure: dateHeure,
+      supabase_user_id: user.id,
+      payment_mode: paymentMode,
+      platform_fee_cents: String(platformFee),
+      service_price_cents: String(pricing.servicePriceCents),
+      prestataire_amount_cents: String(prestatairePortion),
+    };
+    if (pricing.referralDiscountPercent != null && pricing.referralDiscountPercent > 0) {
+      metadata.original_service_price_cents = String(
+        pricing.originalServicePriceCents ?? originalServicePriceCents,
+      );
+      metadata.referral_discount_percent = String(pricing.referralDiscountPercent);
+    }
+
+    const piParams: Parameters<typeof stripe.paymentIntents.create>[0] = {
+      amount: pricing.totalChargeCents,
       currency: "eur",
       customer: customerId,
       capture_method: "manual",
       automatic_payment_methods: { enabled: true },
-      application_fee_amount: applicationFeeAmount,
-      transfer_data: { destination: connectAccountId },
-      metadata: {
-        client_id: clientId,
-        prestataire_id: prestataireId,
-        service_id: serviceId,
-        date_heure: dateHeure,
-        supabase_user_id: user.id,
-      },
-    });
+      metadata,
+    };
+
+    if (useConnect) {
+      piParams.application_fee_amount = platformFee;
+      piParams.transfer_data = { destination: connectAccountId! };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(piParams);
 
     if (!paymentIntent.client_secret) {
       return jsonResponse({ error: "Impossible de créer le paiement" }, 500);
@@ -150,8 +216,9 @@ Deno.serve(async (req) => {
       paymentIntentClientSecret: paymentIntent.client_secret,
       customerId,
       ephemeralKey: ephemeralKey.secret,
-      amountCents,
+      amountCents: pricing.totalChargeCents,
       currency: "eur",
+      pricing,
     });
   } catch (e) {
     if (e instanceof Response) return e;

@@ -21,6 +21,9 @@ class LocalCacheService {
   static const String pushPermissionPromptedKey =
       'push.permission_prompted_v1';
 
+  /// Code parrain reçu via lien d’invitation (à appliquer après connexion).
+  static const String pendingReferralCodeKey = 'referral.pending_code_v1';
+
   static LocalCacheService? _instance;
 
   final SharedPreferences _prefs;
@@ -69,6 +72,13 @@ class LocalCacheService {
       setString(cachedServerRolesKey, roles.join(','));
 
   Future<bool> clearCachedServerRoles() => remove(cachedServerRolesKey);
+
+  String? get pendingReferralCode => getString(pendingReferralCodeKey);
+
+  Future<bool> setPendingReferralCode(String code) =>
+      setString(pendingReferralCodeKey, code.trim().toUpperCase());
+
+  Future<bool> clearPendingReferralCode() => remove(pendingReferralCodeKey);
 
   bool get onboardingCompleted =>
       _prefs.getBool(onboardingCompletedKey) ?? false;

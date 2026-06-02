@@ -26,6 +26,34 @@ class CategorieSuggestionService {
         },
       );
 
+  Future<void> replaceLabelsForPrestataire({
+    required String prestataireId,
+    required List<String> labels,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'categorieSuggestion.replaceLabelsForPrestataire',
+        action: () async {
+          await _client
+              .from('suggestions_categorie')
+              .delete()
+              .eq('prestataire_id', prestataireId);
+
+          final rows = labels
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .toSet()
+              .map(
+                (nom) => {
+                  'prestataire_id': prestataireId,
+                  'nom': nom,
+                },
+              )
+              .toList();
+          if (rows.isEmpty) return;
+          await _client.from('suggestions_categorie').insert(rows);
+        },
+      );
+
   Future<void> replaceForPrestataire({
     required String prestataireId,
     String? nom,

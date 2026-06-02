@@ -16,7 +16,9 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../models/prestataire_profile_edit_section.dart';
+import '../models/prestataire_service_catalog_selection.dart';
 import '../models/prestataire_service_field_set.dart';
+import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/profile/prestataire_form_scroll_view.dart';
 import '../widgets/profile/prestataire_profile_basics_step.dart';
@@ -27,7 +29,8 @@ import '../providers/disponibilite_provider.dart';
 import '../widgets/dialogs/prestataire_onboarding_finish_dialog.dart';
 import '../widgets/profile/prestataire_profile_gallery_step.dart';
 import '../widgets/profile/prestataire_profile_load_error.dart';
-import '../widgets/profile/prestataire_profile_services_step.dart';
+import '../widgets/profile/prestataire_onboarding_services_panel.dart';
+import '../widgets/profile/prestataire_subscription_onboarding_panel.dart';
 import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../providers/current_prestataire_provider.dart';
@@ -49,7 +52,7 @@ class PrestataireHubScreen extends ConsumerStatefulWidget {
 
 class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   static const _galleryMaxPhotos = 10;
-  static const wizardStepCount = 6;
+  static const wizardStepCount = 7;
   static const _defaultAvatarUrls = <String>[
     'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty1',
     'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty2',
@@ -71,6 +74,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   final _suggestionNomController = TextEditingController();
   final _suggestionDescController = TextEditingController();
   final _services = <PrestataireServiceFieldSet>[];
+  var _catalogSelection = PrestataireServiceCatalogSelection();
   final _selectedComfortIds = <String>{};
   final _selectedConditionIds = <String>{};
 
@@ -94,6 +98,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   String? _adresseError;
   String? _lieuTravailError;
   String? _servicesError;
+  String? _pricingError;
   String? _galleryError;
   List<PhotoRealisation> _galleryPhotos = [];
   final _pendingGallery = <StorageUploadFile>[];
@@ -312,6 +317,11 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     _avatarBytes = null;
     _avatarFileName = null;
     _avatarMimeType = null;
+    _catalogSelection = PrestataireServiceCatalogSelection.fromProfileData(
+      selectedCategoryIds: data.selectedCategoryIds,
+      services: data.services,
+      legacySuggestionLabels: data.customSpecialtyLabels,
+    );
     _disposeServices();
     for (final service in data.services) {
       _services.add(PrestataireServiceFieldSet.fromData(service));
@@ -320,14 +330,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     if (!force) {
       _prepareOnboardingDraftRestore();
     }
-  }
-
-  void _addService() {
-    setState(() {
-      _services.add(PrestataireServiceFieldSet());
-      _servicesError = null;
-    });
-    _schedulePersistHubDraft();
   }
 
   Future<void> _pickAvatar() async {
@@ -364,15 +366,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       _avatarFileName = null;
       _avatarMimeType = null;
       _avatarError = null;
-    });
-    _schedulePersistHubDraft();
-  }
-
-  void _removeService(int index) {
-    setState(() {
-      final removed = _services.removeAt(index);
-      removed.dispose();
-      _servicesError = null;
     });
     _schedulePersistHubDraft();
   }
@@ -559,38 +552,64 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     );
   }
 
+  void _syncServicesFromCatalog() {
+    final existing = _services
+        .map(
+          (s) => PrestataireServiceFormData(
+            id: s.id,
+            nom: s.nomController.text.trim(),
+            description: s.descriptionController.text.trim(),
+            categorieId: s.categorieId,
+            prix: _parsePrice(s.prixController.text) ?? 0,
+            dureeMinutes:
+                int.tryParse(s.dureeController.text.trim()) ?? 60,
+          ),
+        )
+        .toList();
+    final generated =
+        _catalogSelection.toServiceFormData(existing: existing);
+    _disposeServices();
+    for (final service in generated) {
+      _services.add(PrestataireServiceFieldSet.fromData(service));
+    }
+  }
+
+  bool _validatePricing() {
+    var valid = true;
+    for (final service in _services) {
+      final price = _parsePrice(service.prixController.text);
+      final duration = int.tryParse(service.dureeController.text.trim());
+      service.prixError =
+          price == null || price < 1 ? DiscPrestaForm.svcPriceBad : null;
+      service.dureeError =
+          duration == null || duration <= 0 ? DiscPrestaForm.svcDurationBad : null;
+      valid = valid &&
+          service.prixError == null &&
+          service.dureeError == null;
+    }
+    return valid;
+  }
+
   bool _validateServices() {
     var valid = true;
     setState(() {
-      _servicesError =
-          _services.isEmpty ? DiscPrestaForm.reqService : null;
-      valid = _servicesError == null;
-
-      for (final service in _services) {
-        final name = service.nomController.text.trim();
-        final price = _parsePrice(service.prixController.text);
-        final duration = int.tryParse(service.dureeController.text.trim());
-        final categorieId = service.categorieId?.trim();
-
-        service.nomError =
-            name.isEmpty ? DiscPrestaForm.reqSvcName : null;
-        service.categorieError =
-            categorieId == null || categorieId.isEmpty
-            ? DiscPrestaForm.reqSvcCategory
-            : null;
-        service.prixError = price == null || price < 0
-            ? DiscPrestaForm.svcPriceBad
-            : null;
-        service.dureeError = duration == null || duration <= 0
-            ? DiscPrestaForm.svcDurationBad
-            : null;
-
-        valid =
-            valid &&
-            service.nomError == null &&
-            service.categorieError == null &&
-            service.prixError == null &&
-            service.dureeError == null;
+      if (!_catalogSelection.isValid) {
+        _servicesError = _catalogSelection.selectedMains.isEmpty
+            ? DiscPrestaForm.reqCatalogMain
+            : DiscPrestaForm.reqCatalogSpecialty;
+        _pricingError = null;
+        valid = false;
+      } else {
+        _servicesError = null;
+        _syncServicesFromCatalog();
+        if (_services.isEmpty) {
+          _pricingError = DiscPrestaForm.pricingEmptyHint;
+          valid = false;
+        } else {
+          final pricingOk = _validatePricing();
+          _pricingError = pricingOk ? null : DiscPrestaForm.reqPricing;
+          valid = pricingOk;
+        }
       }
     });
     return valid;
@@ -616,17 +635,23 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       avatarFileName: _avatarFileName,
       avatarMimeType: _avatarMimeType,
       avatarUrl: _avatarUrl,
-      services: _services.map((service) {
-        return PrestataireServiceFormData(
-          id: service.id,
-          nom: service.nomController.text.trim(),
-          description: service.descriptionController.text.trim(),
-          categorieId: service.categorieId,
-          prix: _parsePrice(service.prixController.text) ?? 0,
-          dureeMinutes:
-              int.tryParse(service.dureeController.text.trim()) ?? 60,
-        );
-      }).toList(),
+      services: _catalogSelection.toServiceFormData(
+        existing: _services
+            .map(
+              (s) => PrestataireServiceFormData(
+                id: s.id,
+                nom: s.nomController.text.trim(),
+                description: s.descriptionController.text.trim(),
+                categorieId: s.categorieId,
+                prix: _parsePrice(s.prixController.text) ?? 0,
+                dureeMinutes:
+                    int.tryParse(s.dureeController.text.trim()) ?? 60,
+              ),
+            )
+            .toList(),
+      ),
+      specialtyCategoryIds: _catalogSelection.allCategoryIds,
+      customSpecialtyLabels: _catalogSelection.allCustomLabels,
       suggestionCategorieNom: _suggestionNomController.text.trim(),
       suggestionCategorieDescription: _suggestionDescController.text.trim(),
       confortClient: _selectedComfortIds.toList(),
@@ -709,6 +734,11 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       return;
     }
     if (step == 5) {
+      setState(() => _currentStep = 6);
+      unawaited(_persistOnboardingHubDraft());
+      return;
+    }
+    if (step == 6) {
       _save();
     }
   }
@@ -944,6 +974,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             avatarUrl: _avatarUrl,
             avatarBytes: _avatarBytes,
             services: _services,
+            catalogSelection: _catalogSelection,
             suggestionNomController: _suggestionNomController,
             suggestionDescController: _suggestionDescController,
             selectedComfortIds: _selectedComfortIds,
@@ -962,6 +993,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             adresseError: _adresseError,
             lieuTravailError: _lieuTravailError,
             servicesError: _servicesError,
+            pricingError: _pricingError,
             galleryPhotos: _galleryPhotos,
             pendingGallery: _pendingGallery,
             galleryError: _galleryError,
@@ -998,9 +1030,10 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
               _pendingGallery.removeAt(index);
               _galleryError = null;
             }),
-            onAddService: _addService,
-            onRemoveService: _removeService,
-            onServicesChanged: () => setState(() => _servicesError = null),
+            onServicesChanged: () => setState(() {
+              _servicesError = null;
+              _pricingError = null;
+            }),
             horaireWeek: _horaireWeek,
             horairesError: _horairesError,
             onToggleHoraireDay: (index, enabled) {
@@ -1049,6 +1082,7 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.avatarUrl,
     required this.avatarBytes,
     required this.services,
+    required this.catalogSelection,
     required this.suggestionNomController,
     required this.suggestionDescController,
     required this.selectedComfortIds,
@@ -1067,6 +1101,7 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.adresseError,
     required this.lieuTravailError,
     required this.servicesError,
+    this.pricingError,
     required this.galleryPhotos,
     required this.pendingGallery,
     required this.galleryError,
@@ -1082,8 +1117,6 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.onPickGallery,
     required this.onRemoveGalleryPhoto,
     required this.onRemovePendingGallery,
-    required this.onAddService,
-    required this.onRemoveService,
     required this.onServicesChanged,
     required this.horaireWeek,
     required this.horairesError,
@@ -1115,6 +1148,7 @@ class _PrestataireProfileForm extends StatelessWidget {
   final String? avatarUrl;
   final Uint8List? avatarBytes;
   final List<PrestataireServiceFieldSet> services;
+  final PrestataireServiceCatalogSelection catalogSelection;
   final TextEditingController suggestionNomController;
   final TextEditingController suggestionDescController;
   final Set<String> selectedComfortIds;
@@ -1133,6 +1167,7 @@ class _PrestataireProfileForm extends StatelessWidget {
   final String? adresseError;
   final String? lieuTravailError;
   final String? servicesError;
+  final String? pricingError;
   final List<PhotoRealisation> galleryPhotos;
   final List<StorageUploadFile> pendingGallery;
   final String? galleryError;
@@ -1148,8 +1183,6 @@ class _PrestataireProfileForm extends StatelessWidget {
   final VoidCallback onPickGallery;
   final ValueChanged<PhotoRealisation> onRemoveGalleryPhoto;
   final ValueChanged<int> onRemovePendingGallery;
-  final VoidCallback onAddService;
-  final ValueChanged<int> onRemoveService;
   final VoidCallback onServicesChanged;
   final List<WeeklyJourHoraire>? horaireWeek;
   final String? horairesError;
@@ -1223,14 +1256,12 @@ class _PrestataireProfileForm extends StatelessWidget {
         onChanged: onBasicsChanged,
         locationOnly: true,
       ),
-      PrestataireProfileEditSection.services => PrestataireProfileServicesStep(
-        categories: data.categories,
+      PrestataireProfileEditSection.services =>
+          PrestataireOnboardingServicesPanel(
+        catalogSelection: catalogSelection,
         services: services,
-        errorText: servicesError,
-        suggestionNomController: suggestionNomController,
-        suggestionDescController: suggestionDescController,
-        onAdd: onAddService,
-        onRemove: onRemoveService,
+        catalogError: servicesError,
+        pricingError: pricingError,
         onChanged: onServicesChanged,
       ),
       PrestataireProfileEditSection.gallery => PrestataireProfileGalleryStep(
@@ -1285,12 +1316,14 @@ class _PrestataireProfileForm extends StatelessWidget {
       );
     }
 
+    final isSubscriptionStep = currentStep == 6;
     final currentSection = switch (currentStep) {
       0 => PrestataireProfileEditSection.vitrine,
       1 => PrestataireProfileEditSection.location,
       2 => PrestataireProfileEditSection.services,
       3 => PrestataireProfileEditSection.gallery,
       4 => PrestataireProfileEditSection.clientExperience,
+      5 => PrestataireProfileEditSection.horaires,
       _ => PrestataireProfileEditSection.horaires,
     };
     final currentTitle = switch (currentStep) {
@@ -1299,11 +1332,13 @@ class _PrestataireProfileForm extends StatelessWidget {
       2 => DiscPrestaForm.stepServices,
       3 => DiscPrestaForm.stepGallery,
       4 => DiscPrestaForm.stepComfort,
-      _ => DiscPrestaForm.stepHoraires,
+      5 => DiscPrestaForm.stepHoraires,
+      _ => DiscPrestaSub.onboardingTitle,
     };
     final currentSubtitle = switch (currentStep) {
       4 =>
         'Décris ton confort et tes conditions pour instaurer la confiance, clarifier tes règles et augmenter les réservations confirmées.',
+      6 => DiscPrestaSub.onboardingBody,
       _ => DiscPrestaForm.intro,
     };
     final isLast = currentStep == wizardStepCount - 1;
@@ -1337,8 +1372,24 @@ class _PrestataireProfileForm extends StatelessWidget {
           onTap: onStepTapped,
         ),
         if (onboardingWizard) const SizedBox(height: 12),
-        _HubStepSurface(child: _stepContent(currentSection)),
+        if (isSubscriptionStep)
+          const PrestataireSubscriptionOnboardingPanel(compact: true)
+        else
+          _HubStepSurface(child: _stepContent(currentSection)),
         const SizedBox(height: 18),
+        if (isSubscriptionStep) ...[
+          TextButton(
+            onPressed: saving ? null : onContinue,
+            child: Text(
+              DiscPrestaSub.skipForNow,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
         FilledButton(
           onPressed: saving ? null : onContinue,
           style: FilledButton.styleFrom(
@@ -1465,6 +1516,10 @@ const List<_HubStepMeta> _hubSteps = [
   _HubStepMeta(title: DiscPrestaForm.stepGallery, icon: Icons.photo_library_outlined),
   _HubStepMeta(title: DiscPrestaForm.stepComfort, icon: Icons.favorite_rounded),
   _HubStepMeta(title: DiscPrestaForm.stepHoraires, icon: Icons.schedule_rounded),
+  _HubStepMeta(
+    title: DiscPrestaCompletion.stepSubscription,
+    icon: Icons.card_membership_outlined,
+  ),
 ];
 
 class _HubHeroCard extends StatelessWidget {

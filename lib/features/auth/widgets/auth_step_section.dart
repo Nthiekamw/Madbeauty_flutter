@@ -68,7 +68,7 @@ class AuthStepSection extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: compact ? 8 : 14),
+        SizedBox(height: compact ? 6 : 14),
         child,
       ],
     );

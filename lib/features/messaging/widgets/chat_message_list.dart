@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/messaging/message.dart';
+import '../logic/chat_message_moderator.dart';
 import 'chat_bubble.dart';
 
 /// Liste des messages avec séparateurs de date.
@@ -69,7 +70,7 @@ class ChatMessageList extends StatelessWidget {
                 ),
               ),
             ChatBubble(
-              text: msg.content,
+              text: ChatMessageModerator.sanitizeForDisplay(msg.content),
               isMine: isMine,
               timeLabel:
                   DateFormat('HH:mm', 'fr_FR').format(msg.createdAt.toLocal()),

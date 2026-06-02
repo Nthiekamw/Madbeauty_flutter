@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/domain/availability/horaire_plage.dart';
+import '../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../features/booking/models/booking_availability_rules.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
@@ -46,6 +47,18 @@ final bookingAvailabilityForPrestaProvider = FutureProvider.autoDispose
       return service.buildAvailabilityRules(horaires);
     });
 
+/// Congés / fermetures à venir du prestataire connecté.
+final prestataireIndisponibilitesProvider =
+    FutureProvider.autoDispose<List<Indisponibilite>>((ref) async {
+      final service = ref.watch(disponibiliteServiceProvider);
+      final presta = await ref.watch(currentPrestataireProvider.future);
+      if (service == null || presta == null) return const [];
+      return service.listIndisponibilites(presta.id);
+    });
+
 void invalidateDisponibiliteProviders(WidgetRef ref) {
   ref.invalidate(prestataireHorairesProvider);
+  ref.invalidate(prestataireIndisponibilitesProvider);
+  ref.invalidate(bookingAvailabilityForPrestaProvider);
+  ref.invalidate(creneauxDisponiblesProvider);
 }

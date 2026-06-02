@@ -4,6 +4,10 @@ import {
 } from "../_shared/booking_notify.ts";
 import { syncPrestataireByAccountId } from "../_shared/stripe_connect.ts";
 import {
+  findPrestataireIdForSubscription,
+  syncPrestataireSubscriptionRow,
+} from "../_shared/prestataire_subscription.ts";
+import {
   ensureReservationForPaymentIntent,
   updateReservationPaymentByIntentId,
 } from "../_shared/stripe_reservation.ts";
@@ -162,6 +166,50 @@ Deno.serve(async (req) => {
       case "account.updated": {
         const account = event.data.object as Stripe.Account;
         await syncPrestataireByAccountId(admin, account);
+        break;
+      }
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode !== "subscription") break;
+        const subRef = session.subscription;
+        const subId = typeof subRef === "string" ? subRef : subRef?.id;
+        if (!subId) break;
+        const subscription = await stripe.subscriptions.retrieve(subId);
+        const prestataireId = session.metadata?.prestataire_id ??
+          subscription.metadata?.prestataire_id ??
+          (await findPrestataireIdForSubscription(admin, subscription));
+        if (prestataireId) {
+          await syncPrestataireSubscriptionRow(admin, prestataireId, subscription);
+        }
+        break;
+      }
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const prestataireId = await findPrestataireIdForSubscription(
+          admin,
+          subscription,
+        );
+        if (prestataireId) {
+          await syncPrestataireSubscriptionRow(admin, prestataireId, subscription);
+        }
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const prestataireId = await findPrestataireIdForSubscription(
+          admin,
+          subscription,
+        );
+        if (prestataireId) {
+          await admin
+            .from("prestataire_profiles")
+            .update({
+              subscription_status: "canceled",
+              subscription_updated_at: new Date().toISOString(),
+            })
+            .eq("id", prestataireId);
+        }
         break;
       }
       default:

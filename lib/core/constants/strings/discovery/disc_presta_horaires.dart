@@ -15,6 +15,28 @@ abstract final class DiscPrestaHoraires {
   static const capacite = 'Capacité simultanée';
   static const invalidPlage = 'L’heure de fin doit être après l’heure de début.';
 
+  static const congesTitle = 'Congés & fermetures';
+  static const congesIntro =
+      'Bloque une ou plusieurs journées : aucun créneau ne sera proposé aux clientes sur ces dates.';
+  static const congesAdd = 'Ajouter une période';
+  static const congesEmpty = 'Aucune fermeture planifiée.';
+  static const congesPickRange = 'Choisir les dates';
+  static const congesAdded = 'Période de fermeture enregistrée.';
+  static const congesRemoved = 'Période supprimée.';
+  static const congesErr = 'Impossible de mettre à jour les congés.';
+  static const congesInvalidRange = 'La date de fin doit être après le début.';
+  static String congesRangeLabel(DateTime start, DateTime end) {
+    final s = '${start.day.toString().padLeft(2, '0')}/'
+        '${start.month.toString().padLeft(2, '0')}/${start.year}';
+    final e = '${end.day.toString().padLeft(2, '0')}/'
+        '${end.month.toString().padLeft(2, '0')}/${end.year}';
+    return start.year == end.year &&
+            start.month == end.month &&
+            start.day == end.day
+        ? s
+        : '$s → $e';
+  }
+
   static const jours = [
     'Lundi',
     'Mardi',

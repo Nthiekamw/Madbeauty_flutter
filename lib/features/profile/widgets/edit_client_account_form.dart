@@ -2,6 +2,7 @@
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app/app_text_field.dart';
+import '../../../shared/widgets/phone/phone_number_field.dart';
 import '../../auth/widgets/auth_step_section.dart';
 
 class EditClientAccountForm extends StatelessWidget {
@@ -10,6 +11,8 @@ class EditClientAccountForm extends StatelessWidget {
     required this.prenomController,
     required this.nomController,
     required this.phoneController,
+    required this.phoneDialCode,
+    required this.onPhoneDialCodeChanged,
     required this.cityController,
     required this.email,
     this.prenomError,
@@ -20,6 +23,8 @@ class EditClientAccountForm extends StatelessWidget {
   final TextEditingController prenomController;
   final TextEditingController nomController;
   final TextEditingController phoneController;
+  final String phoneDialCode;
+  final ValueChanged<String> onPhoneDialCodeChanged;
   final TextEditingController cityController;
   final String email;
   final String? prenomError;
@@ -52,7 +57,7 @@ class EditClientAccountForm extends StatelessWidget {
                   color: onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               AppTextField(
                 dense: true,
                 controller: nomController,
@@ -68,27 +73,20 @@ class EditClientAccountForm extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         AuthStepSection(
           compact: true,
           title: DiscProfile.editAccountSectionContact,
           icon: Icons.contact_phone_outlined,
           child: Column(
             children: [
-              AppTextField(
+              PhoneNumberField(
                 dense: true,
-                controller: phoneController,
-                label: DiscProfile.labelPhone,
-                hint: AuthStrings.registerFieldPhoneHint,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.telephoneNumber],
-                prefixIcon: Icon(
-                  Icons.phone_outlined,
-                  color: onSurfaceVariant,
-                ),
+                localController: phoneController,
+                dialCode: phoneDialCode,
+                onDialCodeChanged: onPhoneDialCodeChanged,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               InputDecorator(
                 decoration: InputDecoration(
                   labelText: DiscProfile.labelEmail,
@@ -104,7 +102,7 @@ class EditClientAccountForm extends StatelessWidget {
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 DiscProfile.editAccountEmailHint,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -115,7 +113,7 @@ class EditClientAccountForm extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         AuthStepSection(
           compact: true,
           title: DiscProfile.editAccountSectionLocation,
@@ -134,14 +132,14 @@ class EditClientAccountForm extends StatelessWidget {
           ),
         ),
         if (errorText != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           DecoratedBox(
             decoration: BoxDecoration(
               color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Text(
                 errorText!,
                 style: theme.textTheme.bodySmall?.copyWith(

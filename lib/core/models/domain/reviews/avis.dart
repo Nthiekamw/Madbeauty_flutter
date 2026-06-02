@@ -15,6 +15,7 @@ abstract class Avis with _$Avis {
     required String reservationId,
     required int note,
     String? commentaire,
+    @JsonKey(name: 'photo_urls') @Default([]) List<String> photoUrls,
     @IsoDateTimeConverter() required DateTime createdAt,
   }) = _Avis;
 

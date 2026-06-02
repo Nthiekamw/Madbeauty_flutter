@@ -38,6 +38,13 @@ abstract final class DiscProfile {
   static const actionFavorites = 'Mes favoris';
   static const actionReviews = 'Mes avis';
   static const actionHistory = 'Historique';
+  static const actionHelp = 'Aide & informations';
+  static const actionReferral = 'Parrainage';
+  static const actionReferralHint = 'Invite tes amies avec ton code';
+  static const ambassadorBadgeLabel = 'Ambassadrice';
+  static const historyTitle = 'Historique';
+  static const historySubtitle =
+      'Tes prestations passées et annulées.';
   static const sectionAdmin = 'Administration';
   static const actionAdminVerifications = 'Demandes de vérification';
   static const actionAdminVerificationsHint =

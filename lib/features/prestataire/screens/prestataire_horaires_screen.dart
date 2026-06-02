@@ -8,6 +8,7 @@ import '../providers/current_prestataire_provider.dart';
 import '../providers/disponibilite_provider.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../widgets/profile/prestataire_indisponibilites_editor.dart';
 import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
@@ -115,7 +116,9 @@ class _PrestataireHorairesScreenState
                 onPickStart: (i) => _pickTime(i, true),
                 onPickEnd: (i) => _pickTime(i, false),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
+              const PrestataireIndisponibilitesEditor(),
+              const SizedBox(height: 24),
               FilledButton(
                 onPressed: _saving ? null : _save,
                 child: _saving

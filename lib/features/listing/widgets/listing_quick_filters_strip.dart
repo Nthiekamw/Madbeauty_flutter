@@ -13,10 +13,16 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
     super.key,
     this.onStyleQuerySelected,
     this.dense = true,
+    this.outlinedStyle = false,
+    this.showTitle = true,
   });
 
   final ValueChanged<String>? onStyleQuerySelected;
   final bool dense;
+
+  /// Puces blanches bordées (écran recherche type maquette).
+  final bool outlinedStyle;
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,25 +38,26 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
             : null);
 
     return Padding(
-      padding: EdgeInsets.only(top: dense ? 4 : 8),
+      padding: EdgeInsets.only(top: dense ? 2 : 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPad),
-            child: Row(
-              children: [
-                Text(
-                  DiscList.quickFiltersTitle,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w700,
+          if (showTitle)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPad),
+              child: Row(
+                children: [
+                  Text(
+                    DiscList.quickFiltersTitle,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                if (activeId != null && activeId != 'all')
-                  TextButton(
+                  const Spacer(),
+                  if (activeId != null && activeId != 'all')
+                    TextButton(
                     onPressed: () {
                       ref
                           .read(prestatairesFilterProvider.notifier)
@@ -68,10 +75,10 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                       style: theme.textTheme.labelSmall,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
+          if (showTitle) const SizedBox(height: 6),
           SizedBox(
             height: layout.quickFiltersStripHeight,
             child: ListView.separated(
@@ -92,6 +99,7 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                 return _QuickFilterChip(
                   filter: filter,
                   selected: selected,
+                  outlinedStyle: outlinedStyle,
                   onTap: () {
                     ref
                         .read(prestatairesFilterProvider.notifier)
@@ -117,11 +125,13 @@ class _QuickFilterChip extends StatelessWidget {
     required this.filter,
     required this.selected,
     required this.onTap,
+    this.outlinedStyle = false,
   });
 
   final ListingQuickFilter filter;
   final bool selected;
   final VoidCallback onTap;
+  final bool outlinedStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +163,7 @@ class _QuickFilterChip extends StatelessWidget {
               Icon(
                 filter.icon,
                 size: 14,
-                color: selected
+                color: selected && !outlinedStyle
                     ? theme.colorScheme.onPrimary
                     : theme.colorScheme.onSurfaceVariant,
               ),
@@ -164,7 +174,7 @@ class _QuickFilterChip extends StatelessWidget {
                   fontFamily: AppFonts.body,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
-                  color: selected
+                  color: selected && !outlinedStyle
                       ? theme.colorScheme.onPrimary
                       : theme.colorScheme.onSurface,
                 ),

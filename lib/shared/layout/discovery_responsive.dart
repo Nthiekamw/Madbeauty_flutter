@@ -40,17 +40,17 @@ class DiscoveryResponsive {
 
   double get homeListPhotoHeight => homeListCardHeight * (100 / 232);
 
-  /// Colonnes catalogue recherche (toujours 2 colonnes).
+  /// Colonnes catalogue en mode grille.
   int get catalogGridColumns => 2;
 
-  static const double catalogGridSpacing = 10;
+  static const double catalogGridSpacing = 8;
 
-  /// Hauteur d’une tuile grille selon la largeur utile.
+  /// Hauteur d’une tuile grille (alignée sur la carte compacte).
   double catalogGridTileHeight() {
     final inner = (contentMaxWidth < width ? contentMaxWidth : width) -
         horizontalPadding * 2;
     final cellW = (inner - catalogGridSpacing) / catalogGridColumns;
-    return (cellW * 1.18 + 58).clamp(204.0, 276.0);
+    return (cellW * 1.02 + 48).clamp(188.0, 228.0);
   }
 
   /// Filtres rapides recherche (puces compactes).

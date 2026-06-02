@@ -53,6 +53,7 @@ class PrestataireProfileFormData {
     this.realisationPhotos = const [],
     this.suggestionCategorieNom = '',
     this.suggestionCategorieDescription = '',
+    this.customSpecialtyLabels = const [],
     this.confortClient = const [],
     this.conditionsService = const [],
   });
@@ -75,6 +76,7 @@ class PrestataireProfileFormData {
   final List<PhotoRealisation> realisationPhotos;
   final String suggestionCategorieNom;
   final String suggestionCategorieDescription;
+  final List<String> customSpecialtyLabels;
   final List<String> confortClient;
   final List<String> conditionsService;
 
@@ -96,6 +98,7 @@ class PrestataireProfileFormData {
     realisationPhotos: [],
     suggestionCategorieNom: '',
     suggestionCategorieDescription: '',
+    customSpecialtyLabels: [],
     confortClient: [],
     conditionsService: const [],
   );
@@ -120,6 +123,8 @@ class PrestataireProfileSavePayload {
     required this.services,
     this.suggestionCategorieNom = '',
     this.suggestionCategorieDescription = '',
+    this.customSpecialtyLabels = const [],
+    this.specialtyCategoryIds,
     this.confortClient = const [],
     this.conditionsService = const [],
   });
@@ -141,14 +146,20 @@ class PrestataireProfileSavePayload {
   final List<PrestataireServiceFormData> services;
   final String suggestionCategorieNom;
   final String suggestionCategorieDescription;
+  final List<String> customSpecialtyLabels;
   final List<String> confortClient;
   final List<String> conditionsService;
 
-  Set<String> get categoryIdsFromServices => services
-      .map((s) => s.categorieId)
-      .whereType<String>()
-      .where((id) => id.trim().isNotEmpty)
-      .toSet();
+  /// Catégories issues du catalogue (prioritaire) ou des services saisis.
+  final Set<String>? specialtyCategoryIds;
+
+  Set<String> get categoryIdsFromServices =>
+      specialtyCategoryIds ??
+      services
+          .map((s) => s.categorieId)
+          .whereType<String>()
+          .where((id) => id.trim().isNotEmpty)
+          .toSet();
 }
 
 class PrestataireProfileFormService {
@@ -221,6 +232,10 @@ class PrestataireProfileFormService {
               ?.getByPrestataire(prestataire.id) ??
           const [];
       final suggestion = suggestions.isNotEmpty ? suggestions.first : null;
+      final customLabels = suggestions
+          .map((s) => s.nom.trim())
+          .where((n) => n.isNotEmpty)
+          .toList();
 
       return PrestataireProfileFormData(
         prestataireId: prestataire.id,
@@ -253,6 +268,7 @@ class PrestataireProfileFormService {
         realisationPhotos: photos,
         suggestionCategorieNom: suggestion?.nom.trim() ?? '',
         suggestionCategorieDescription: suggestion?.description?.trim() ?? '',
+        customSpecialtyLabels: customLabels,
         confortClient: List<String>.from(prestataire.confortClient),
         conditionsService: List<String>.from(prestataire.conditionsService),
       );
@@ -335,11 +351,18 @@ class PrestataireProfileFormService {
         categoryIds: payload.categoryIdsFromServices,
       );
       await _syncServices(prestataireId, payload.services);
-      await _categorieSuggestionService?.replaceForPrestataire(
-        prestataireId: prestataireId,
-        nom: payload.suggestionCategorieNom,
-        description: payload.suggestionCategorieDescription,
-      );
+      if (payload.customSpecialtyLabels.isNotEmpty) {
+        await _categorieSuggestionService?.replaceLabelsForPrestataire(
+          prestataireId: prestataireId,
+          labels: payload.customSpecialtyLabels,
+        );
+      } else {
+        await _categorieSuggestionService?.replaceForPrestataire(
+          prestataireId: prestataireId,
+          nom: payload.suggestionCategorieNom,
+          description: payload.suggestionCategorieDescription,
+        );
+      }
     },
   );
 

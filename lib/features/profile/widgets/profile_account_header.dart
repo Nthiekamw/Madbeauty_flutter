@@ -9,8 +9,9 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
+import 'profile_stats_row.dart';
 
-/// En-tête profil : photo, nom, actions de modification.
+/// En-tête profil : photo, nom, statistiques en bas de la carte.
 class ProfileAccountHeader extends StatelessWidget {
   const ProfileAccountHeader({
     super.key,
@@ -18,18 +19,20 @@ class ProfileAccountHeader extends StatelessWidget {
     required this.email,
     this.profile,
     this.avatarBytes,
-    this.onEditPhoto,
     this.onEditName,
+    this.onEditPhoto,
     this.photoLoading = false,
+    this.showAmbassadorBadge = false,
   });
 
   final String displayName;
   final String email;
   final UserProfile? profile;
   final Uint8List? avatarBytes;
-  final VoidCallback? onEditPhoto;
   final VoidCallback? onEditName;
+  final VoidCallback? onEditPhoto;
   final bool photoLoading;
+  final bool showAmbassadorBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +73,7 @@ class ProfileAccountHeader extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           child: Column(
             children: [
               Stack(
@@ -84,7 +87,7 @@ class ProfileAccountHeader extends StatelessWidget {
                         width: 3,
                       ),
                     ),
-                    child: _AvatarPreview(
+                    child: _ProfileAvatar(
                       radius: 52,
                       imageUrl: profile?.avatarUrl,
                       displayName: normalizedDisplayName,
@@ -110,19 +113,21 @@ class ProfileAccountHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (onEditPhoto != null && !photoLoading)
+                  if (!photoLoading && onEditPhoto != null)
                     Material(
                       color: primary,
                       shape: const CircleBorder(),
+                      elevation: 2,
+                      shadowColor: Colors.black26,
                       child: InkWell(
-                        customBorder: const CircleBorder(),
                         onTap: onEditPhoto,
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
+                        customBorder: const CircleBorder(),
+                        child: const Padding(
+                          padding: EdgeInsets.all(9),
                           child: Icon(
                             Icons.camera_alt_rounded,
                             size: 20,
-                            color: theme.colorScheme.onPrimary,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -142,32 +147,95 @@ class ProfileAccountHeader extends StatelessWidget {
                   letterSpacing: -0.4,
                 ),
               ),
-              if (onEditName != null || onEditPhoto != null) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (onEditName != null)
-                      _EditChip(
-                        icon: Icons.edit_rounded,
-                        label: ShellStrings.profileEditName,
-                        onTap: onEditName!,
+              if (showAmbassadorBadge) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.military_tech_rounded,
+                        size: 18,
+                        color: Color(0xFF7C3AED),
                       ),
-                    if (onEditPhoto != null)
-                      _EditChip(
-                        icon: Icons.photo_camera_outlined,
-                        label: ShellStrings.profileEditPhoto,
-                        onTap: onEditPhoto!,
+                      const SizedBox(width: 6),
+                      Text(
+                        DiscProfile.ambassadorBadgeLabel,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF6D28D9),
+                        ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
+              if (onEditName != null) ...[
+                const SizedBox(height: 10),
+                _EditChip(
+                  icon: Icons.edit_rounded,
+                  label: ShellStrings.profileEditName,
+                  onTap: onEditName!,
+                ),
+              ],
+              const SizedBox(height: 16),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withValues(
+                    alpha: isDark ? 0.22 : 0.72,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const ProfileStatsRow(),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.radius,
+    required this.displayName,
+    required this.email,
+    this.imageUrl,
+    this.avatarBytes,
+  });
+
+  final double radius;
+  final String? imageUrl;
+  final String displayName;
+  final String email;
+  final Uint8List? avatarBytes;
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = avatarBytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: MemoryImage(bytes),
+      );
+    }
+    return AppAvatar(
+      radius: radius,
+      imageUrl: imageUrl,
+      displayName: displayName,
+      email: email.isNotEmpty ? email : null,
     );
   }
 }
@@ -220,35 +288,3 @@ class _EditChip extends StatelessWidget {
   }
 }
 
-class _AvatarPreview extends StatelessWidget {
-  const _AvatarPreview({
-    required this.radius,
-    required this.displayName,
-    required this.email,
-    this.imageUrl,
-    this.avatarBytes,
-  });
-
-  final double radius;
-  final String? imageUrl;
-  final String displayName;
-  final String email;
-  final Uint8List? avatarBytes;
-
-  @override
-  Widget build(BuildContext context) {
-    final bytes = avatarBytes;
-    if (bytes != null && bytes.isNotEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: MemoryImage(bytes),
-      );
-    }
-    return AppAvatar(
-      radius: radius,
-      imageUrl: imageUrl,
-      displayName: displayName,
-      email: email.isNotEmpty ? email : null,
-    );
-  }
-}

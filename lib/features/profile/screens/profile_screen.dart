@@ -25,10 +25,9 @@ import '../logic/profile_display.dart';
 import '../providers/app_version_provider.dart';
 import '../providers/current_user_profile_provider.dart';
 import '../widgets/edit_profile_name_dialog.dart';
+import '../../../services/supabase/referral/referral_providers.dart';
 import '../widgets/profile_account_header.dart';
 import '../widgets/profile_account_section.dart';
-import '../widgets/profile_favorites_section.dart';
-import '../widgets/profile_messages_section.dart';
 import '../widgets/profile_admin_section.dart';
 import '../widgets/profile_footer_actions.dart';
 import '../widgets/profile_my_info_section.dart';
@@ -274,6 +273,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final phone = profile?.telephone?.trim() ?? '';
     final displayName = profileDisplayName(profile: profile, email: email);
     final loadingProfile = profileAsync.isLoading && profile == null;
+    final isAmbassador = ref
+        .watch(myReferralInfoProvider)
+        .maybeWhen(data: (i) => i?.isAmbassador ?? false, orElse: () => false);
 
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
@@ -297,6 +299,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               email: email,
               avatarBytes: _avatarPreviewBytes,
               photoLoading: _savingPhoto,
+              showAmbassadorBadge: isAmbassador,
               onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
               onEditName: _savingName ? null : () => _editName(profile),
             ),
@@ -311,10 +314,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const ProfilePreferencesSection(),
           const SizedBox(height: 16),
           const ProfileRoleSpaceSection(),
-          const SizedBox(height: 16),
-          const ProfileFavoritesSection(),
-          const SizedBox(height: 16),
-          const ProfileMessagesSection(),
           const SizedBox(height: 16),
           const ProfileAdminSection(),
           const ProfileAccountSection(),

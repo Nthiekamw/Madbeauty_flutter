@@ -31,11 +31,16 @@ class BookingPushNotifications {
   bool _localNotificationsReady = false;
   bool _inboxOpenedAppAttached = false;
   void Function(RemoteMessage)? _onInboxMessage;
+  void Function(RemoteMessage)? _onNotificationOpened;
 
   bool get isConfigured => isFirebaseConfiguredForPush();
 
   void setOnInboxMessage(void Function(RemoteMessage)? handler) {
     _onInboxMessage = handler;
+  }
+
+  void setOnNotificationOpened(void Function(RemoteMessage)? handler) {
+    _onNotificationOpened = handler;
   }
 
   void _deliverToInbox(RemoteMessage message) {
@@ -46,14 +51,19 @@ class BookingPushNotifications {
     _onInboxMessage?.call(message);
   }
 
+  void _deliverOpened(RemoteMessage message) {
+    _deliverToInbox(message);
+    _onNotificationOpened?.call(message);
+  }
+
   Future<void> _attachOpenedAppInboxDelivery() async {
     if (_inboxOpenedAppAttached) return;
     _inboxOpenedAppAttached = true;
     await _onOpenedAppSub?.cancel();
     _onOpenedAppSub =
-        FirebaseMessaging.onMessageOpenedApp.listen(_deliverToInbox);
+        FirebaseMessaging.onMessageOpenedApp.listen(_deliverOpened);
     final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial != null) _deliverToInbox(initial);
+    if (initial != null) _deliverOpened(initial);
   }
 
   Future<void> syncForUser({

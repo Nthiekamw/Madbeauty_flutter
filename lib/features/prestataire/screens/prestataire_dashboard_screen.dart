@@ -6,25 +6,19 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
-import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/current_prestataire_provider.dart';
-import '../providers/prestataire_analytics_provider.dart';
-import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/disponibilite_provider.dart';
+import '../providers/prestataire_analytics_provider.dart';
+import '../providers/prestataire_dashboard_layout_provider.dart';
+import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
-import '../widgets/analytics/prestataire_analytics_panel.dart';
-import '../widgets/dashboard/prestataire_dashboard_section.dart';
-import '../widgets/dashboard/prestataire_dashboard_stats_strip.dart';
-import '../widgets/profile/prestataire_completeness_badge.dart';
-import '../widgets/profile/prestataire_profile_enrichment_banner.dart';
-import '../widgets/profile/prestataire_profile_incomplete_banner.dart';
+import '../widgets/dashboard/prestataire_dashboard_layout_tile.dart';
+import '../widgets/dashboard/prestataire_dashboard_reorderable_sections.dart';
 import '../widgets/profile/prestataire_profile_load_error.dart';
-import '../widgets/public/prestataire_salon_hero.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
   const PrestataireDashboardScreen({super.key});
@@ -42,10 +36,12 @@ class _PrestataireDashboardScreenState
     ref.invalidate(prestataireProfileFormProvider);
     ref.invalidate(prestataireAnalyticsProvider);
     ref.invalidate(prestataireDashboardProvider);
+    ref.invalidate(prestataireDashboardLayoutProvider);
     await Future.wait([
       ref.read(prestataireProfileFormProvider.future),
       ref.read(prestataireAnalyticsProvider.future),
       ref.read(prestataireDashboardProvider.future),
+      ref.read(prestataireDashboardLayoutProvider.future),
     ]);
   }
 
@@ -63,7 +59,6 @@ class _PrestataireDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
@@ -89,146 +84,55 @@ class _PrestataireDashboardScreenState
               ? fallbackName
               : DiscNav.prestDashboard;
 
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                DiscoveryScreenHeader(
-                  title: DiscNav.prestDashboard,
-                  subtitle: DiscPrestaDash.pageSubtitle,
-                  action: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Consumer(
-                      builder: (ctx, ref, _) {
-                        final unread =
-                            ref.watch(unreadInAppNotificationsCountProvider);
-                        return NotificationBellButton(
-                          compact: true,
-                          unreadCount: unread,
-                          tooltip: DiscHome.notificationsTooltip,
-                          onPressed: () =>
-                              showInAppNotificationsSheet(context, ref),
-                        );
-                      },
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DiscoveryScreenHeader(
+                title: DiscNav.prestDashboard,
+                subtitle: DiscPrestaDash.pageSubtitle,
+                action: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Consumer(
+                    builder: (ctx, ref, _) {
+                      final unread =
+                          ref.watch(unreadInAppNotificationsCountProvider);
+                      return NotificationBellButton(
+                        compact: true,
+                        unreadCount: unread,
+                        tooltip: DiscHome.notificationsTooltip,
+                        onPressed: () =>
+                            showInAppNotificationsSheet(context, ref),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const PrestataireDashboardLayoutHint(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: PrestataireDashboardReorderableSections(
+                    profileData: data,
+                    title: title,
+                    hasHoraires: hasHoraires,
+                    dashboardAsync: dashboardAsync,
+                    reservationTimelineBuilder: (items) =>
+                        _ReservationTimeline(
+                      items: items,
+                      actingId: _actingReservationId,
+                      onAccept: (id) =>
+                          _runAction(id, () => _actions.accept(id)),
+                      onReject: (id) =>
+                          _runAction(id, () => _actions.reject(id)),
+                      onMarkDone: (id) =>
+                          _runAction(id, () => _actions.markDone(id)),
+                      onItemTap: (id) =>
+                          context.pushPrestataireReservationDetail(id),
                     ),
                   ),
                 ),
-                PrestataireSalonHero(
-                  title: title,
-                  subtitle: data.isProfessionallyComplete
-                      ? DiscPrestaDash.welcome
-                      : DiscPrestaDash.profileMissing,
-                  avatarUrl: data.avatarUrl,
-                  trailing: PrestataireCompletenessBadge(
-                    complete: data.isProfessionallyComplete,
-                  ),
-                ),
-                if (!data.isProfessionallyComplete)
-                  const PrestataireProfileIncompleteBanner(),
-                if (data.isProfessionallyComplete &&
-                    !data.isProfileFullyEnriched(hasHoraires: hasHoraires))
-                  const PrestataireProfileEnrichmentBanner(),
-                const PrestataireAnalyticsPanel(),
-                const SizedBox(height: 8),
-                dashboardAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: DiscoveryEmptyState(
-                      icon: Icons.cloud_off_outlined,
-                      title: DiscPrestaDash.loadErr,
-                      body: DiscList.pullDownHint,
-                      iconColor: theme.colorScheme.error,
-                      actionLabel: DiscList.retry,
-                      onAction: () =>
-                          ref.invalidate(prestataireDashboardProvider),
-                    ),
-                  ),
-                  data: (dashboard) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-                      PrestataireDashboardStatsStrip(
-                        pendingCount: dashboard.pending.length,
-                        todayCount: dashboard.todayConfirmed.length,
-                        weekCount: dashboard.weekConfirmed.length,
-                      ),
-                      const SizedBox(height: 16),
-                      PrestataireDashboardSection(
-                        icon: Icons.inbox_rounded,
-                        title: DiscPrestaDash.pendingTitle,
-                        subtitle: DiscPrestaDash.pendingEmpty,
-                        badgeCount: dashboard.pending.length,
-                        isEmpty: dashboard.pending.isEmpty,
-                        emptyTitle: DiscPrestaDash.pendingEmptyTitle,
-                        emptyMessage: DiscPrestaDash.pendingEmpty,
-                        iconColor: theme.colorScheme.tertiary,
-                        child: _ReservationTimeline(
-                          items: dashboard.pending,
-                          actingId: _actingReservationId,
-                          onAccept: (id) =>
-                              _runAction(id, () => _actions.accept(id)),
-                          onReject: (id) =>
-                              _runAction(id, () => _actions.reject(id)),
-                          onMarkDone: (id) =>
-                              _runAction(id, () => _actions.markDone(id)),
-                          onItemTap: (id) =>
-                              context.pushPrestataireReservationDetail(id),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      PrestataireDashboardSection(
-                        icon: Icons.today_rounded,
-                        title: DiscPrestaDash.todayTitle,
-                        subtitle: DiscPrestaDash.todayEmpty,
-                        badgeCount: dashboard.todayConfirmed.length,
-                        isEmpty: dashboard.todayConfirmed.isEmpty,
-                        emptyTitle: DiscPrestaDash.todayEmptyTitle,
-                        emptyMessage: DiscPrestaDash.todayEmpty,
-                        child: _ReservationTimeline(
-                          items: dashboard.todayConfirmed,
-                          actingId: _actingReservationId,
-                          onAccept: (id) =>
-                              _runAction(id, () => _actions.accept(id)),
-                          onReject: (id) =>
-                              _runAction(id, () => _actions.reject(id)),
-                          onMarkDone: (id) =>
-                              _runAction(id, () => _actions.markDone(id)),
-                          onItemTap: (id) =>
-                              context.pushPrestataireReservationDetail(id),
-                        ),
-                      ),
-                      if (dashboard.weekConfirmed.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        PrestataireDashboardSection(
-                          icon: Icons.date_range_rounded,
-                          title: DiscPrestaDash.weekTitle,
-                          badgeCount: dashboard.weekConfirmed.length,
-                          iconColor: theme.colorScheme.secondary,
-                          child: _ReservationTimeline(
-                            items: dashboard.weekConfirmed,
-                            actingId: _actingReservationId,
-                            onAccept: (id) =>
-                                _runAction(id, () => _actions.accept(id)),
-                            onReject: (id) =>
-                                _runAction(id, () => _actions.reject(id)),
-                            onMarkDone: (id) =>
-                                _runAction(id, () => _actions.markDone(id)),
-                            onItemTap: (id) =>
-                                context.pushPrestataireReservationDetail(id),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         },
         error: (_, __) => PrestataireProfileLoadError(

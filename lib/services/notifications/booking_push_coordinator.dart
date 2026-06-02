@@ -6,10 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/app_config.dart';
 import '../../features/auth/providers/auth_notifier.dart';
+import '../../features/referral/logic/referral_pending_apply.dart';
+import '../../router/app_router.dart';
 import '../supabase/profile/profile_providers.dart';
 import 'booking_push_notifications.dart';
 import '../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import 'in_app_notifications_provider.dart';
+import 'push_navigation.dart';
 
 /// À chaque événement d’auth : FCM dans [user_profiles] + liste locale des notifs push.
 class BookingPushCoordinator extends ConsumerStatefulWidget {
@@ -35,6 +38,11 @@ class _BookingPushCoordinatorState
       ref
           .read(inAppNotificationsProvider.notifier)
           .enqueueFromRemoteMessage(msg);
+    });
+    BookingPushNotifications.instance.setOnNotificationOpened((msg) {
+      if (!mounted) return;
+      final router = ref.read(goRouterProvider);
+      handlePushMessageNavigationWithRouter(router, msg);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !AppConfig.hasSupabase) return;
@@ -64,6 +72,9 @@ class _BookingPushCoordinatorState
           userId: uid,
           profileService: profileSvc,
         );
+        if (uid != null) {
+          unawaited(applyPendingReferralCode(ref));
+        }
       },
       loading: () async {},
       error: (_, __) async {},

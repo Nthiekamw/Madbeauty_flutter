@@ -5,7 +5,7 @@
 | Fonction | Déclencheur | Cible |
 |----------|-------------|--------|
 | `on_booking_created` | `INSERT reservations` | prestataire |
-| `on_booking_updated` | `UPDATE reservations` | client (statut) |
+| `on_booking_updated` | `UPDATE` / `DELETE reservations` | client (statut) + liste d'attente (créneau libéré) |
 | `on_message_created` | `INSERT messages` | autre participant |
 
 Partagé : `_shared/booking_notify.ts`

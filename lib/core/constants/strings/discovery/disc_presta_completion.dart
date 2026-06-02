@@ -14,6 +14,7 @@ abstract final class DiscPrestaCompletion {
   static const stepBasics = 'Salon & vitrine';
   static const stepServices = 'Services & tarifs';
   static const stepGallery = 'Réalisations';
+  static const stepSubscription = 'Abonnement';
   static const stepDone = 'C’est prêt';
   static const doneHeadline = 'Profil prêt pour le catalogue';
   static const doneBody =

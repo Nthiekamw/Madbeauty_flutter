@@ -120,6 +120,7 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
     final id = msg.messageId ??
         '${DateTime.now().microsecondsSinceEpoch}_${body.hashCode}';
 
+    final type = msg.data['type'] as String?;
     enqueue(
       InAppNotification(
         id: id,
@@ -127,6 +128,10 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
         body: body,
         createdAt: DateTime.now(),
         read: false,
+        actionType: type,
+        prestataireId: msg.data['prestataire_id'] as String?,
+        serviceId: msg.data['service_id'] as String?,
+        dateJour: msg.data['date_jour'] as String?,
       ),
     );
   }

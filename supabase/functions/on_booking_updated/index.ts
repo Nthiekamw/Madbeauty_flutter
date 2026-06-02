@@ -1,7 +1,9 @@
 import {
   createServiceClient,
   normalizeStatut,
+  notifySlotWaitlistForFreedDay,
   sendFcmNotification,
+  statusIsActiveReservation,
   statusIsCancelled,
   statusIsConfirmed,
   verifyWebhookSecret,
@@ -18,6 +20,29 @@ Deno.serve(async (req) => {
     }
 
     const payload = await req.json() as WebhookPayload;
+    const supabase = createServiceClient();
+
+    if (payload.type === "DELETE" && payload.old_record) {
+      const old = payload.old_record;
+      const oldS = normalizeStatut(old["statut"]);
+      let waitlistNotified = 0;
+      if (statusIsActiveReservation(oldS)) {
+        const prestataireId = String(old["prestataire_id"] ?? "");
+        if (prestataireId) {
+          const result = await notifySlotWaitlistForFreedDay(supabase, {
+            prestataireId,
+            dateHeureIso: old["date_heure"],
+            excludeClientId: String(old["client_id"] ?? ""),
+          });
+          waitlistNotified = result.notified;
+        }
+      }
+      return new Response(
+        JSON.stringify({ ok: true, waitlist_notified: waitlistNotified }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const record = payload.record;
     const old = payload.old_record;
     if (payload.type !== "UPDATE" || !record || !old) {
@@ -56,7 +81,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createServiceClient();
     const { data: cli } = await supabase
       .from("client_profiles")
       .select("user_id")
@@ -85,9 +109,27 @@ Deno.serve(async (req) => {
 
     await sendFcmNotification({ token, title, body });
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    let waitlistNotified = 0;
+    if (
+      statusIsCancelled(newS) &&
+      !statusIsCancelled(oldS) &&
+      statusIsActiveReservation(oldS)
+    ) {
+      const prestataireId = String(record["prestataire_id"] ?? "");
+      if (prestataireId) {
+        const result = await notifySlotWaitlistForFreedDay(supabase, {
+          prestataireId,
+          dateHeureIso: record["date_heure"],
+          excludeClientId: String(record["client_id"] ?? ""),
+        });
+        waitlistNotified = result.notified;
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ ok: true, waitlist_notified: waitlistNotified }),
+      { headers: { "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ ok: false, error: String(e) }), {

@@ -63,6 +63,11 @@ class PrestatairesFilterNotifier extends Notifier<PrestatairesFilterState> {
           query: filter.query ?? '',
           activeQuickFilterId: filter.id,
         );
+      case ListingQuickFilterKind.categoryId:
+        state = PrestatairesFilterState(
+          categoryId: filter.categoryId,
+          activeQuickFilterId: filter.id,
+        );
     }
   }
 

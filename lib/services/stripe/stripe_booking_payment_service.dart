@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../core/models/domain/booking/reservation.dart';
+import '../../features/booking/logic/booking_pricing.dart';
 import '../../core/models/domain/serialization/supabase_domain_codec.dart';
 import 'stripe_payment_exception.dart';
 import 'stripe_service.dart';
@@ -44,21 +45,20 @@ class StripeBookingPaymentService {
     required String prestataireId,
     required String serviceId,
     required DateTime dateHeure,
-    required double priceEur,
+    required BookingPaymentModeKind paymentMode,
   }) async {
     if (kIsWeb) throw const StripePaymentGenericException(DiscPay.errWebUnsupported);
     if (!StripeService.isConfigured) {
       throw const StripePaymentNotConfiguredException();
     }
 
-    final amountCents = (priceEur * 100).round();
     final response = await _invoke(
       'create_booking_payment_intent',
       body: {
         'prestataireId': prestataireId,
         'serviceId': serviceId,
         'dateHeure': _bookingInstantPayload(dateHeure),
-        'amountCents': amountCents,
+        'paymentMode': paymentMode.wireValue,
       },
     );
 
@@ -76,12 +76,14 @@ class StripeBookingPaymentService {
       );
     }
 
+    final amountCents = data['amountCents'] as int? ?? 0;
+
     return BookingPaymentSheetData(
       paymentIntentId: paymentIntentId,
       paymentIntentClientSecret: clientSecret,
       customerId: customerId,
       ephemeralKey: ephemeralKey,
-      amountCents: data['amountCents'] as int? ?? amountCents,
+      amountCents: amountCents,
       currency: data['currency'] as String? ?? 'eur',
     );
   }
@@ -269,6 +271,12 @@ class StripeBookingPaymentService {
         return const StripePaymentPrestaNotPayableException();
       case 'slot_taken':
         return const StripePaymentSlotTakenException();
+      case 'deposit_requires_connect':
+        return const StripePaymentPrestaNotPayableException();
+      case 'no_payment_required':
+        return StripePaymentGenericException(
+          error ?? DiscPay.errNoPaymentRequired,
+        );
       case 'payment_not_ready':
         return StripePaymentGenericException(
           error ?? DiscPay.errPaymentPending,

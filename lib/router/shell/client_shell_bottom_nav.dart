@@ -154,21 +154,26 @@ class _NavItem extends StatelessWidget {
               child: icon,
             ),
             const SizedBox(height: 2),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontFamily: AppFonts.body,
-                fontSize: selected ? labelSzSelected : labelSzUnselected,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected
-                    ? primary
-                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-              ),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontFamily: AppFonts.body,
+                  fontSize: selected ? labelSzSelected : labelSzUnselected,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected
+                      ? primary
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.6,
+                        ),
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],

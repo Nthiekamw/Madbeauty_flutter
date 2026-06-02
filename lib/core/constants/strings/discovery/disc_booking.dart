@@ -32,6 +32,9 @@ abstract final class DiscBk {
   static const recapCtaPay = 'Payer et confirmer';
   static const recapTrust =
       'Vérifie les informations ci-dessus. Ta réservation ne sera enregistrée qu’après confirmation.';
+  static const recapCancelPolicy =
+      'Tu pourras annuler depuis « Mes réservations » tant que le rendez-vous n’a pas eu lieu. '
+      'En cas de paiement en ligne, le remboursement suit les règles Stripe.';
   static const doneBodyPaid =
       'Ton paiement est enregistré et ta réservation est confirmée. Le prestataire pourra la valider sous peu.';
   static const recapPrestaBadTitle = 'Prestataire introuvable';
@@ -60,6 +63,13 @@ abstract final class DiscBk {
   static const tabPast = 'Passées';
 
   static const badgePending = 'En attente';
+  static const pendingPrestaBanner =
+      'En attente de confirmation par le prestataire. Tu seras notifié dès sa réponse.';
+  static const rejectReasonTitle = 'Motif du refus';
+  static const addToCalendar = 'Ajouter au calendrier';
+  static const rebookSamePresta = 'Réserver à nouveau';
+  static const calendarExportFail =
+      'Impossible d’ouvrir le calendrier sur cet appareil.';
   static const badgeSyncPending = 'En attente d’envoi';
   static const badgeConfirmed = 'Confirmé';
   static const badgeDone = 'Terminé';
@@ -82,6 +92,12 @@ abstract final class DiscBk {
   static const revokeFail =
       'Impossible d’annuler maintenant. Réessaie.';
 
+  static const detailTitle = 'Ma réservation';
+  static const detailNotFoundTitle = 'Réservation introuvable';
+  static const detailNotFoundBody =
+      'Cette réservation n’existe plus ou n’est plus accessible.';
+  static const detailTapHint = 'Voir le détail';
+
   static const errSlotTaken =
       'Ce créneau vient d’être réservé par quelqu’un d’autre. Choisis un autre horaire.';
   static const errOffline =
@@ -92,6 +108,8 @@ abstract final class DiscBk {
       'Profil client incomplet. Reconnecte-toi ou contacte le support.';
   static const errGenericSave =
       'Impossible de confirmer la réservation. Réessaie dans un instant.';
+  static const errReferralDiscountExpired =
+      'Ta remise parrainage n’est plus disponible. Recharge la page et réessaie.';
   static const errForbiddenBookingsLookup =
       'Tu ne peux pas consulter les réservations de ce profil.';
   static const cannotBookOwnTitle = 'Réservation impossible';

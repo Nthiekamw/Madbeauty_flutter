@@ -132,3 +132,115 @@ export function statusIsCancelled(norm: string): boolean {
     norm,
   );
 }
+
+export function statusIsActiveReservation(norm: string): boolean {
+  return [
+    "en_attente",
+    "pending",
+    "confirmee",
+    "confirmed",
+    "validee",
+    "valide",
+  ].includes(norm);
+}
+
+/** Date calendaire (Europe/Paris) pour matcher `slot_waitlist.date_jour`. */
+export function dateJourParisFromIso(iso: unknown): string | null {
+  if (iso == null) return null;
+  const d = new Date(String(iso));
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(
+    d,
+  );
+}
+
+function formatDateFr(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(dt);
+}
+
+/** Notifie les clientes en liste d'attente après libération d'un créneau. */
+export async function notifySlotWaitlistForFreedDay(
+  supabase: ReturnType<typeof createServiceClient>,
+  opts: {
+    prestataireId: string;
+    dateHeureIso: unknown;
+    excludeClientId?: string;
+  },
+): Promise<{ notified: number }> {
+  const dateJour = dateJourParisFromIso(opts.dateHeureIso);
+  if (!dateJour) return { notified: 0 };
+
+  const { data: presta } = await supabase
+    .from("prestataire_profiles")
+    .select("nom_affiche, nom_salon")
+    .eq("id", opts.prestataireId)
+    .maybeSingle();
+
+  const prestaName = String(
+    presta?.nom_affiche ?? presta?.nom_salon ?? "ton prestataire",
+  ).trim() || "ton prestataire";
+
+  const { data: rows, error } = await supabase
+    .from("slot_waitlist")
+    .select("id, client_id, service_id")
+    .eq("prestataire_id", opts.prestataireId)
+    .eq("date_jour", dateJour);
+
+  if (error) {
+    console.error("slot_waitlist select:", error);
+    return { notified: 0 };
+  }
+
+  let notified = 0;
+  const dateLabel = formatDateFr(dateJour);
+
+  for (const row of rows ?? []) {
+    const clientId = String(row.client_id ?? "");
+    if (!clientId) continue;
+    if (opts.excludeClientId && clientId === opts.excludeClientId) continue;
+
+    const { data: cli } = await supabase
+      .from("client_profiles")
+      .select("user_id")
+      .eq("id", clientId)
+      .maybeSingle();
+
+    const userId = cli?.user_id as string | undefined;
+    if (!userId) continue;
+
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("fcm_token")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const token = profile?.fcm_token as string | null | undefined;
+    if (!token) continue;
+
+    const serviceId = String(row.service_id ?? "");
+    await sendFcmNotification({
+      token,
+      title: "Créneau disponible",
+      body:
+        `Un créneau s'est libéré chez ${prestaName} le ${dateLabel}. Réserve vite !`,
+      data: {
+        type: "slot_waitlist",
+        prestataire_id: opts.prestataireId,
+        service_id: serviceId,
+        date_jour: dateJour,
+      },
+    });
+
+    await supabase.from("slot_waitlist").delete().eq("id", row.id);
+    notified += 1;
+  }
+
+  return { notified };
+}

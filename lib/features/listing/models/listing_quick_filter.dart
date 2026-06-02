@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
+
 /// Filtre rapide prédéfini de l’écran recherche / catalogue.
 enum ListingQuickFilterKind {
   all,
@@ -7,6 +9,7 @@ enum ListingQuickFilterKind {
   nearby,
   topRated,
   styleQuery,
+  categoryId,
 }
 
 class ListingQuickFilter {
@@ -16,6 +19,7 @@ class ListingQuickFilter {
     required this.icon,
     required this.kind,
     this.query,
+    this.categoryId,
   });
 
   final String id;
@@ -25,6 +29,9 @@ class ListingQuickFilter {
 
   /// Pour [ListingQuickFilterKind.styleQuery] (aligné sur les inspirations accueil).
   final String? query;
+
+  /// Pour [ListingQuickFilterKind.categoryId] (famille de service).
+  final String? categoryId;
 
   /// Filtres mis en avant — thèmes coiffure + tri + disponibilité.
   static const List<ListingQuickFilter> featured = [
@@ -93,6 +100,34 @@ class ListingQuickFilter {
       icon: Icons.palette_outlined,
       kind: ListingQuickFilterKind.styleQuery,
       query: 'Coloration',
+    ),
+    ListingQuickFilter(
+      id: 'manucure',
+      label: 'Manucure',
+      icon: Icons.back_hand_outlined,
+      kind: ListingQuickFilterKind.categoryId,
+      categoryId: PrestataireServiceCatalog.manucureCategoryId,
+    ),
+    ListingQuickFilter(
+      id: 'maquillage',
+      label: 'Maquillage',
+      icon: Icons.face_retouching_natural_outlined,
+      kind: ListingQuickFilterKind.categoryId,
+      categoryId: PrestataireServiceCatalog.maquillageCategoryId,
+    ),
+    ListingQuickFilter(
+      id: 'pedicure',
+      label: 'Pédicure',
+      icon: Icons.spa_outlined,
+      kind: ListingQuickFilterKind.categoryId,
+      categoryId: PrestataireServiceCatalog.pedicureCategoryId,
+    ),
+    ListingQuickFilter(
+      id: 'coiffure',
+      label: 'Coiffure',
+      icon: Icons.content_cut_rounded,
+      kind: ListingQuickFilterKind.categoryId,
+      categoryId: PrestataireServiceCatalog.coiffureAfroCategoryId,
     ),
   ];
 }

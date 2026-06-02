@@ -29,10 +29,32 @@ abstract final class DiscPay {
   static const errPaymentPending =
       'Paiement reçu, confirmation en cours… Réessaie dans quelques secondes.';
 
-  static const recapCtaOnSite = 'Confirmer — paiement sur place';
+  static const recapCtaOnSite = 'Confirmer la réservation';
+  static const recapCtaPayAmount = 'Payer %s et confirmer';
   static const recapTrustOnSite =
-      'Ce prestataire n’accepte pas encore le paiement en ligne. '
-      'Tu règleras sur place le jour de la prestation.';
+      'Tu règleras la prestation chez le prestataire le jour J. '
+      'Les frais MadBeauty éventuels sont réglés dans l’app à la confirmation.';
   static const doneBodyOnSite =
-      'Ta réservation est enregistrée. Le paiement se fera sur place le jour J.';
+      'Ta réservation est enregistrée. Le solde de la prestation se règle sur place le jour J.';
+
+  static const paymentModeTitle = 'Comment payer ?';
+  static const paymentModeDeposit20 = 'Acompte 20 % dans l’app';
+  static const paymentModeDeposit20Hint =
+      'Le reste (%s) se paie sur place chez le prestataire.';
+  static const paymentModeOnSite = 'Tout payer sur place';
+  static const paymentModeOnSiteHint =
+      'Prestation intégrale chez le prestataire. Frais MadBeauty éventuels dans l’app.';
+  static const checkoutDueNow = 'À payer maintenant';
+  static const checkoutOnSiteLater = 'À régler sur place';
+  static const checkoutPlatformFee = 'Frais MadBeauty';
+  static const checkoutDeposit = 'Acompte prestation (20 %)';
+  static const checkoutReferralDiscount = 'Remise parrainage';
+  static const checkoutServiceAfterDiscount = 'Prestation (après remise)';
+  static const checkoutFreePlatform = 'Pas de frais MadBeauty (1ʳᵉ ou 2ᵉ réservation)';
+  static const recapReferralDiscountBanner =
+      'Ta remise parrainage −10 % est appliquée sur cette réservation.';
+  static const errNoPaymentRequired =
+      'Aucun paiement en ligne requis : confirme sans passer par la carte.';
+  static const errDepositRequiresConnect =
+      'Ce prestataire n’accepte pas encore l’acompte en ligne.';
 }

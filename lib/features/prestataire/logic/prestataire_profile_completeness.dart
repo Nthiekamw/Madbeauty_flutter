@@ -16,12 +16,15 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
   bool get hasRealisationGallery => realisationPhotos.isNotEmpty;
 
   bool get servicesAreValid =>
+      selectedCategoryIds.isNotEmpty &&
       services.isNotEmpty &&
       services.every(
         (s) =>
             s.nom.trim().isNotEmpty &&
             s.categorieId != null &&
-            s.categorieId!.trim().isNotEmpty,
+            s.categorieId!.trim().isNotEmpty &&
+            s.prix >= 1 &&
+            s.dureeMinutes > 0,
       );
 
   bool get isProfessionallyComplete {

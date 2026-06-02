@@ -15,7 +15,7 @@ import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
 import '../providers/home_feed_provider.dart';
 import '../providers/home_profile_provider.dart';
-import '../widgets/client_home_header.dart';
+import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -133,7 +133,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         fit: StackFit.expand,
         children: [
           BrandBackground(isDark: isDark),
-          SafeArea(child: body),
+          SafeArea(
+            child: ClientWorkspaceShell(
+              subtitle: currentUser != null
+                  ? DiscHome.taglineDiscovery
+                  : AuthStrings.guestHomeSubtitle,
+              child: body,
+            ),
+          ),
         ],
       ),
     );
@@ -164,16 +171,6 @@ class _ConnectedClientHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final email = switch (profileSnapshotAsync) {
-      AsyncData(:final value) when value != null && value.email.isNotEmpty =>
-        value.email,
-      _ => currentUser.email ?? '',
-    };
-    final displayName = switch (profileSnapshotAsync) {
-      AsyncData(:final value) when value != null => value.displayName,
-      _ => (currentUser.userMetadata?['full_name'] as String?) ?? '',
-    };
-
     final fromCache = switch (profileSnapshotAsync) {
       AsyncData(:final value) when value != null => value.isFromCache,
       _ => false,
@@ -183,16 +180,6 @@ class _ConnectedClientHome extends StatelessWidget {
       searchController: searchController,
       onSubmitSearch: onSubmitSearch,
       onExplorePick: onExplorePick,
-      header: ClientHomeHeader(
-        greetingLine: DiscHome.greeting(displayName),
-        subtitle: DiscHome.taglineDiscovery,
-        displayName: displayName,
-        email: email,
-        avatarUrl: avatarUrl,
-        onAvatarTap: () => context.goClientProfile(),
-        onNotificationsTap: onNotificationsTap,
-        notificationsUnreadCount: notificationsUnreadCount,
-      ),
       footer: clientHomeProfileCacheFooter(theme, fromCache),
     );
   }
@@ -222,19 +209,6 @@ class _GuestBrowseHome extends StatelessWidget {
       searchController: searchController,
       onSubmitSearch: onSubmitSearch,
       onExplorePick: onExplorePick,
-      header: ClientHomeHeader(
-        greetingLine: AuthStrings.guestHomeGreeting,
-        subtitle: AuthStrings.guestHomeSubtitle,
-        displayName: '',
-        email: '',
-        notificationsUnreadCount: notificationsUnreadCount,
-        onNotificationsTap: onNotificationsTap,
-        trailing: IconButton.filledTonal(
-          tooltip: AuthStrings.guestHomeSignIn,
-          onPressed: () => context.pushLogin(),
-          icon: const Icon(Icons.login_rounded),
-        ),
-      ),
       footer: Text(
         AuthStrings.welcomeGuestHint,
         textAlign: TextAlign.center,

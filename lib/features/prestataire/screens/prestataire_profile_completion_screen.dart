@@ -1,4 +1,5 @@
-﻿import 'dart:typed_data';
+﻿import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,13 +20,16 @@ import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 import '../logic/prestataire_profile_completeness.dart';
+import '../models/prestataire_service_catalog_selection.dart';
 import '../models/prestataire_service_field_set.dart';
+import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/profile/prestataire_completion_progress.dart';
 import '../widgets/profile/prestataire_profile_basics_step.dart';
 import '../widgets/profile/prestataire_profile_gallery_step.dart';
 import '../widgets/profile/prestataire_profile_load_error.dart';
-import '../widgets/profile/prestataire_profile_services_step.dart';
+import '../widgets/profile/prestataire_onboarding_services_panel.dart';
+import '../widgets/profile/prestataire_subscription_onboarding_panel.dart';
 
 /// Parcours guidé post-inscription : complétion du profil pro étape par étape.
 class PrestataireProfileCompletionScreen extends ConsumerStatefulWidget {
@@ -38,7 +42,7 @@ class PrestataireProfileCompletionScreen extends ConsumerStatefulWidget {
 
 class _PrestataireProfileCompletionScreenState
     extends ConsumerState<PrestataireProfileCompletionScreen> {
-  static const _contentSteps = 4;
+  static const _contentSteps = 5;
   static const _maxGalleryPhotos = 10;
 
   final _nomController = TextEditingController();
@@ -53,8 +57,9 @@ class _PrestataireProfileCompletionScreenState
   final _suggestionNomController = TextEditingController();
   final _suggestionDescController = TextEditingController();
   final _services = <PrestataireServiceFieldSet>[];
+  var _catalogSelection = PrestataireServiceCatalogSelection();
 
-  /// 0 intro, 1 basics, 2 services, 3 gallery, 4 done.
+  /// 0 intro, 1 basics, 2 services, 3 gallery, 4 subscription, 5 done.
   var _phase = 0;
   var _hydrated = false;
   var _busy = false;
@@ -77,6 +82,7 @@ class _PrestataireProfileCompletionScreenState
   String? _adresseError;
   String? _lieuTravailError;
   String? _servicesError;
+  String? _pricingError;
   String? _galleryError;
 
   PrestataireProfileFormData? _loadedData;
@@ -86,13 +92,13 @@ class _PrestataireProfileCompletionScreenState
     super.initState();
     final restored = LocalCacheService.instance.prestataireProfileCompletionPhase;
     if (restored != null) {
-      _phase = restored.clamp(0, 4);
+      _phase = restored.clamp(0, 5);
     }
   }
 
   @override
   void dispose() {
-    if (_phase >= 0 && _phase < 4) {
+    if (_phase >= 0 && _phase < 5) {
       LocalCacheService.instance.setPrestataireProfileCompletionPhase(_phase);
     }
     _nomController.dispose();
@@ -129,6 +135,11 @@ class _PrestataireProfileCompletionScreenState
     _galleryPhotos = List<PhotoRealisation>.from(data.realisationPhotos);
     _suggestionNomController.text = data.suggestionCategorieNom;
     _suggestionDescController.text = data.suggestionCategorieDescription;
+    _catalogSelection = PrestataireServiceCatalogSelection.fromProfileData(
+      selectedCategoryIds: data.selectedCategoryIds,
+      services: data.services,
+      legacySuggestionLabels: data.customSpecialtyLabels,
+    );
     for (final service in data.services) {
       _services.add(PrestataireServiceFieldSet.fromData(service));
     }
@@ -139,7 +150,7 @@ class _PrestataireProfileCompletionScreenState
   void _jumpToFirstIncomplete(PrestataireProfileFormData data) {
     final restored = LocalCacheService.instance.prestataireProfileCompletionPhase;
     if (restored != null) {
-      _phase = restored.clamp(0, 4);
+      _phase = restored.clamp(0, 5);
       return;
     }
     if (data.isProfessionallyComplete) {
@@ -253,31 +264,66 @@ class _PrestataireProfileCompletionScreenState
         _lieuTravailError == null;
   }
 
+  void _syncServicesFromCatalog() {
+    final existing = _services
+        .map(
+          (s) => PrestataireServiceFormData(
+            id: s.id,
+            nom: s.nomController.text.trim(),
+            description: s.descriptionController.text.trim(),
+            categorieId: s.categorieId,
+            prix: _parsePrice(s.prixController.text) ?? 0,
+            dureeMinutes: _parseDuration(s.dureeController.text) ?? 60,
+          ),
+        )
+        .toList();
+    final generated =
+        _catalogSelection.toServiceFormData(existing: existing);
+    for (final s in _services) {
+      s.dispose();
+    }
+    _services.clear();
+    for (final service in generated) {
+      _services.add(PrestataireServiceFieldSet.fromData(service));
+    }
+  }
+
+  bool _validatePricing() {
+    var valid = true;
+    for (final service in _services) {
+      final price = _parsePrice(service.prixController.text);
+      final duration = _parseDuration(service.dureeController.text);
+      service.prixError =
+          price == null || price < 1 ? DiscPrestaForm.svcPriceBad : null;
+      service.dureeError =
+          duration == null || duration <= 0 ? DiscPrestaForm.svcDurationBad : null;
+      valid = valid &&
+          service.prixError == null &&
+          service.dureeError == null;
+    }
+    return valid;
+  }
+
   bool _validateServices() {
     var valid = true;
     setState(() {
-      _servicesError = _services.isEmpty ? DiscPrestaForm.reqService : null;
-      valid = _servicesError == null;
-      for (final service in _services) {
-        final name = service.nomController.text.trim();
-        final price = _parsePrice(service.prixController.text);
-        final duration = _parseDuration(service.dureeController.text);
-
-        service.nomError = name.isEmpty ? DiscPrestaForm.reqSvcName : null;
-        service.categorieError = service.categorieId == null ||
-                service.categorieId!.trim().isEmpty
-            ? DiscPrestaForm.reqSvcCategory
-            : null;
-        service.prixError =
-            price == null || price < 0 ? DiscPrestaForm.svcPriceBad : null;
-        service.dureeError =
-            duration == null || duration <= 0 ? DiscPrestaForm.svcDurationBad : null;
-
-        valid = valid &&
-            service.nomError == null &&
-            service.categorieError == null &&
-            service.prixError == null &&
-            service.dureeError == null;
+      if (!_catalogSelection.isValid) {
+        _servicesError = _catalogSelection.selectedMains.isEmpty
+            ? DiscPrestaForm.reqCatalogMain
+            : DiscPrestaForm.reqCatalogSpecialty;
+        _pricingError = null;
+        valid = false;
+      } else {
+        _servicesError = null;
+        _syncServicesFromCatalog();
+        if (_services.isEmpty) {
+          _pricingError = DiscPrestaForm.pricingEmptyHint;
+          valid = false;
+        } else {
+          final pricingOk = _validatePricing();
+          _pricingError = pricingOk ? null : DiscPrestaForm.reqPricing;
+          valid = pricingOk;
+        }
       }
     });
     return valid;
@@ -297,6 +343,7 @@ class _PrestataireProfileCompletionScreenState
 
   PrestataireProfileSavePayload _buildSavePayload() {
     final lieu = _lieuTravail ?? _loadedData?.lieuTravail ?? LieuTravail.both;
+    _syncServicesFromCatalog();
     return PrestataireProfileSavePayload(
       nomSalon: _nomController.text,
       nomAffiche: _nomAfficheController.text,
@@ -311,16 +358,22 @@ class _PrestataireProfileCompletionScreenState
       avatarBytes: _avatarBytes,
       avatarFileName: _avatarFileName,
       avatarMimeType: _avatarMimeType,
-      services: _services.map((service) {
-        return PrestataireServiceFormData(
-          id: service.id,
-          nom: service.nomController.text.trim(),
-          description: service.descriptionController.text.trim(),
-          categorieId: service.categorieId,
-          prix: _parsePrice(service.prixController.text) ?? 0,
-          dureeMinutes: _parseDuration(service.dureeController.text) ?? 60,
-        );
-      }).toList(),
+      services: _catalogSelection.toServiceFormData(
+        existing: _services
+            .map(
+              (s) => PrestataireServiceFormData(
+                id: s.id,
+                nom: s.nomController.text.trim(),
+                description: s.descriptionController.text.trim(),
+                categorieId: s.categorieId,
+                prix: _parsePrice(s.prixController.text) ?? 0,
+                dureeMinutes: _parseDuration(s.dureeController.text) ?? 60,
+              ),
+            )
+            .toList(),
+      ),
+      specialtyCategoryIds: _catalogSelection.allCategoryIds,
+      customSpecialtyLabels: _catalogSelection.allCustomLabels,
       suggestionCategorieNom: _suggestionNomController.text,
       suggestionCategorieDescription: _suggestionDescController.text,
       confortClient: _loadedData?.confortClient ?? const [],
@@ -490,13 +543,27 @@ class _PrestataireProfileCompletionScreenState
       if (!await _saveProfile()) return;
       if (!mounted) return;
       setState(() => _phase = 4);
-      await LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
+      await LocalCacheService.instance.setPrestataireProfileCompletionPhase(4);
       return;
     }
     if (phase == 4) {
+      if (!mounted) return;
+      setState(() => _phase = 5);
+      await LocalCacheService.instance.setPrestataireProfileCompletionPhase(5);
+      return;
+    }
+    if (phase == 5) {
       await LocalCacheService.instance.clearPrestataireProfileCompletionPhase();
       context.goPrestataireDashboard();
     }
+  }
+
+  void _skipSubscription() {
+    if (_busy) return;
+    setState(() => _phase = 5);
+    unawaited(
+      LocalCacheService.instance.setPrestataireProfileCompletionPhase(5),
+    );
   }
 
   void _onBack() {
@@ -520,7 +587,8 @@ class _PrestataireProfileCompletionScreenState
         1 => DiscPrestaCompletion.stepBasics,
         2 => DiscPrestaCompletion.stepServices,
         3 => DiscPrestaCompletion.stepGallery,
-        4 => DiscPrestaCompletion.stepDone,
+        4 => DiscPrestaCompletion.stepSubscription,
+        5 => DiscPrestaCompletion.stepDone,
         _ => '',
       };
 
@@ -610,6 +678,8 @@ class _PrestataireProfileCompletionScreenState
                 onSkipIntro: _busy
                     ? null
                     : () => context.goPrestataireDashboard(),
+                onSkipSubscription:
+                    _busy || _phase != 4 ? null : _skipSubscription,
               ),
             ],
           );
@@ -622,6 +692,7 @@ class _PrestataireProfileCompletionScreenState
     1 => DiscPrestaCompletion.stepBasics,
     2 => DiscPrestaCompletion.stepServices,
     3 => DiscPrestaCompletion.stepGallery,
+    4 => DiscPrestaCompletion.stepSubscription,
     _ => DiscPrestaCompletion.stepDone,
   };
 
@@ -629,7 +700,8 @@ class _PrestataireProfileCompletionScreenState
     if (_busy) return DiscPrestaForm.saving;
     return switch (_phase) {
       0 => DiscPrestaCompletion.introStart,
-      4 => DiscPrestaCompletion.doneCta,
+      5 => DiscPrestaCompletion.doneCta,
+      4 => DiscPrestaForm.onward,
       3 => DiscPrestaForm.save,
       _ => DiscPrestaForm.onward,
     };
@@ -677,22 +749,15 @@ class _PrestataireProfileCompletionScreenState
           _adresseError = null;
         }),
       ),
-      2 => PrestataireProfileServicesStep(
-        categories: data.categories,
+      2 => PrestataireOnboardingServicesPanel(
+        catalogSelection: _catalogSelection,
         services: _services,
-        errorText: _servicesError,
-        suggestionNomController: _suggestionNomController,
-        suggestionDescController: _suggestionDescController,
-        onAdd: () => setState(() {
-          _services.add(PrestataireServiceFieldSet());
+        catalogError: _servicesError,
+        pricingError: _pricingError,
+        onChanged: () => setState(() {
           _servicesError = null;
+          _pricingError = null;
         }),
-        onRemove: (index) => setState(() {
-          final removed = _services.removeAt(index);
-          removed.dispose();
-          _servicesError = null;
-        }),
-        onChanged: () => setState(() => _servicesError = null),
       ),
       3 => PrestataireProfileGalleryStep(
         photos: _galleryPhotos,
@@ -706,6 +771,7 @@ class _PrestataireProfileCompletionScreenState
           _pendingGallery.removeAt(index);
         }),
       ),
+      4 => const PrestataireSubscriptionOnboardingPanel(compact: true),
       _ => const _DoneStep(),
     };
   }
@@ -829,6 +895,7 @@ class _CompletionBottomActions extends StatelessWidget {
     required this.primaryLabel,
     required this.onPrimary,
     required this.onSkipIntro,
+    this.onSkipSubscription,
   });
 
   final int phase;
@@ -836,6 +903,7 @@ class _CompletionBottomActions extends StatelessWidget {
   final String primaryLabel;
   final VoidCallback onPrimary;
   final VoidCallback? onSkipIntro;
+  final VoidCallback? onSkipSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -868,6 +936,19 @@ class _CompletionBottomActions extends StatelessWidget {
                   ),
                 ),
               if (phase == 0) const SizedBox(height: 4),
+              if (phase == 4 && onSkipSubscription != null) ...[
+                TextButton(
+                  onPressed: onSkipSubscription,
+                  child: Text(
+                    DiscPrestaSub.skipForNow,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               FilledButton(
                 onPressed: busy ? null : onPrimary,
                 style: FilledButton.styleFrom(
@@ -1250,6 +1331,7 @@ class _StepRail extends StatelessWidget {
       DiscPrestaCompletion.stepBasics,
       DiscPrestaCompletion.stepServices,
       DiscPrestaCompletion.stepGallery,
+      DiscPrestaCompletion.stepSubscription,
       DiscPrestaCompletion.stepDone,
     ];
 
@@ -1291,7 +1373,7 @@ class _StepRail extends StatelessWidget {
                 label: entries[i],
                 isLast: i == entries.length - 1,
                 active: phase == i + 1 || (phase == 0 && i == 0),
-                done: phase > i + 1 || (phase == 4 && i == 3),
+                done: phase > i + 1 || phase >= 5,
               ),
             if (busy) ...[
               const SizedBox(height: 12),

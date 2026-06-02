@@ -68,6 +68,10 @@ String _fromSupabase(SupabaseServiceException error) {
       message.contains('conflict')) {
     return DiscBk.errSlotTaken;
   }
+  if (message.contains('referral_discount_not_available') ||
+      message.contains('referral_discount_amount_mismatch')) {
+    return DiscBk.errReferralDiscountExpired;
+  }
   if (message.contains('network') ||
       message.contains('connection') ||
       message.contains('timeout')) {

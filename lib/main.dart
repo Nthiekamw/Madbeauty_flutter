@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'services/notifications/booking_local_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
 import 'services/storage/local_cache_service.dart';
 import 'services/stripe/stripe_service.dart';
@@ -19,6 +20,9 @@ Future<void> main() async {
   }
   await LocalCacheService.initialize();
   await initializeDateFormatting('fr_FR');
+  if (!kIsWeb) {
+    await BookingLocalReminders.instance.initialize();
+  }
 
   if (AppConfig.hasSupabase) {
     await SupabaseService.initialize();

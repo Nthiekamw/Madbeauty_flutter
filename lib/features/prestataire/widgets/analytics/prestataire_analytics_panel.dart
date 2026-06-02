@@ -16,7 +16,10 @@ import '../shared/prestataire_section_header.dart';
 
 /// Bloc analytique : filtre période, revenus, occupation, réservations.
 class PrestataireAnalyticsPanel extends ConsumerWidget {
-  const PrestataireAnalyticsPanel({super.key});
+  const PrestataireAnalyticsPanel({super.key, this.hideOuterHeader = false});
+
+  /// Masque le titre du bloc (déjà affiché par la tuile dashboard repliable).
+  final bool hideOuterHeader;
 
   static final _currency = NumberFormat.currency(
     locale: 'fr_FR',
@@ -33,13 +36,15 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PrestataireSectionHeader(
-          icon: Icons.insights_rounded,
-          title: DiscPrestaAnalytics.sectionTitle,
-          subtitle: DiscPrestaAnalytics.revenueBreakdown,
-          iconColor: theme.colorScheme.primary,
-        ),
-        const SizedBox(height: 12),
+        if (!hideOuterHeader) ...[
+          PrestataireSectionHeader(
+            icon: Icons.insights_rounded,
+            title: DiscPrestaAnalytics.sectionTitle,
+            subtitle: DiscPrestaAnalytics.revenueBreakdown,
+            iconColor: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 12),
+        ],
         DiscoverySurfaceCard(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: _PeriodFilter(

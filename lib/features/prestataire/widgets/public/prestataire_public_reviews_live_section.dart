@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/models/domain/reviews/avis.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../reviews/providers/review_provider.dart';
+import '../../../reviews/widgets/review_photos_row.dart';
 import 'prestataire_public_reviews_section.dart';
 
 /// Liste d’avis avec rechargement après nouvelle note.
@@ -38,6 +39,7 @@ class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
               reservationId: r.bookingId,
               note: r.note,
               commentaire: r.commentaire,
+              photoUrls: r.photoUrls,
               createdAt: r.createdAt,
             ),
         ];
@@ -104,6 +106,10 @@ class _LiveReviewCard extends StatelessWidget {
                 height: 1.45,
               ),
             ),
+          ],
+          if (review.photoUrls.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ReviewPhotosRow(urls: review.photoUrls),
           ],
         ],
       ),

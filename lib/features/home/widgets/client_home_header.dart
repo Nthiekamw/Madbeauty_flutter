@@ -6,7 +6,7 @@ import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../theme/home_styles.dart';
 
-/// En-tête accueil client : carte hero premium, salutation, avatar.
+/// En-tête accueil client : carte compacte, avatar centré.
 class ClientHomeHeader extends StatelessWidget {
   const ClientHomeHeader({
     super.key,
@@ -38,9 +38,9 @@ class ClientHomeHeader extends StatelessWidget {
     final primary = theme.colorScheme.primary;
     final tertiary = theme.colorScheme.tertiary;
     final screenW = MediaQuery.sizeOf(context).width;
-    // Petits phones : texte légèrement réduit
     final isCompact = screenW < 360;
     final normalizedDisplayName = normalizeSingleLineText(displayName);
+    final avatarRadius = isCompact ? 30.0 : 34.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -59,77 +59,85 @@ class ClientHomeHeader extends StatelessWidget {
         ),
         border: Border.all(
           color: primary.withValues(alpha: isDark ? 0.3 : 0.18),
-          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: isDark ? 0.18 : 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            color: primary.withValues(alpha: isDark ? 0.14 : 0.1),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(isCompact ? 14 : 20, 20, isCompact ? 12 : 16, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.fromLTRB(
+          isCompact ? 12 : 16,
+          12,
+          isCompact ? 12 : 16,
+          14,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _BrandBadge(primary: primary, theme: theme),
-                      const SizedBox(height: 10),
-                      Text(
-                        greetingLine,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.6,
-                          height: 1.1,
-                          fontSize: isCompact ? 20 : null,
+                const SizedBox(height: 4),
+                Center(
+                  child: trailing ??
+                      _AvatarButton(
+                        onTap: onAvatarTap,
+                        child: AppAvatar(
+                          imageUrl: avatarUrl,
+                          radius: avatarRadius,
+                          displayName: normalizedDisplayName.isEmpty
+                              ? null
+                              : normalizedDisplayName,
+                          email: email.isEmpty ? null : email,
                         ),
                       ),
-                      const SizedBox(height: 7),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontFamily: AppFonts.body,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(height: 10),
+                _BrandBadge(primary: primary, theme: theme),
+                const SizedBox(height: 8),
+                Text(
+                  greetingLine,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                    height: 1.15,
+                    fontSize: isCompact ? 18 : 20,
                   ),
                 ),
-                const SizedBox(width: 12),
-                if (onNotificationsTap != null)
-                  NotificationBellButton(
-                    compact: isCompact,
-                    unreadCount: notificationsUnreadCount,
-                    onPressed: onNotificationsTap!,
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                    fontSize: isCompact ? 12 : null,
                   ),
-                if (trailing != null)
-                  trailing!
-                else
-                  _AvatarButton(
-                    onTap: onAvatarTap,
-                    child: AppAvatar(
-                      imageUrl: avatarUrl,
-                      radius: isCompact ? 24 : 28,
-                      displayName: normalizedDisplayName.isEmpty
-                          ? null
-                          : normalizedDisplayName,
-                      email: email.isEmpty ? null : email,
-                    ),
-                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            _QuickStatRow(theme: theme, primary: primary, isCompact: isCompact),
+            if (onNotificationsTap != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: NotificationBellButton(
+                  compact: isCompact,
+                  unreadCount: notificationsUnreadCount,
+                  onPressed: onNotificationsTap!,
+                ),
+              ),
           ],
         ),
       ),
@@ -145,24 +153,23 @@ class _BrandBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.15),
+        color: primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_awesome_rounded, size: 13, color: primary),
-          const SizedBox(width: 5),
+          Icon(Icons.auto_awesome_rounded, size: 12, color: primary),
+          const SizedBox(width: 4),
           Text(
             'MadBeauty',
             style: theme.textTheme.labelSmall?.copyWith(
               fontFamily: AppFonts.display,
               fontWeight: FontWeight.w700,
               color: primary,
-              letterSpacing: 0.3,
+              fontSize: 11,
             ),
           ),
         ],
@@ -170,105 +177,6 @@ class _BrandBadge extends StatelessWidget {
     );
   }
 }
-
-class _QuickStatRow extends StatelessWidget {
-  const _QuickStatRow({
-    required this.theme,
-    required this.primary,
-    required this.isCompact,
-  });
-
-  final ThemeData theme;
-  final Color primary;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _StatBadge(
-          icon: Icons.storefront_rounded,
-          label: 'Salons\nproches',
-          theme: theme,
-          primary: primary,
-          isCompact: isCompact,
-        ),
-        const SizedBox(width: 7),
-        _StatBadge(
-          icon: Icons.star_rounded,
-          label: 'Top\nnotés',
-          theme: theme,
-          primary: primary,
-          isCompact: isCompact,
-        ),
-        const SizedBox(width: 7),
-        _StatBadge(
-          icon: Icons.verified_rounded,
-          label: 'Certifiés',
-          theme: theme,
-          primary: primary,
-          isCompact: isCompact,
-        ),
-      ],
-    );
-  }
-}
-
-class _StatBadge extends StatelessWidget {
-  const _StatBadge({
-    required this.icon,
-    required this.label,
-    required this.theme,
-    required this.primary,
-    required this.isCompact,
-  });
-
-  final IconData icon;
-  final String label;
-  final ThemeData theme;
-  final Color primary;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 6 : 8,
-          vertical: isCompact ? 6 : 7,
-        ),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.25 : 0.55,
-          ),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: primary.withValues(alpha: 0.12)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: isCompact ? 16 : 18, color: primary),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w600,
-                fontSize: isCompact ? 8.5 : 9.5,
-                height: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
 
 class _AvatarButton extends StatelessWidget {
   const _AvatarButton({required this.child, this.onTap});
@@ -279,17 +187,17 @@ class _AvatarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ring = theme.colorScheme.primary.withValues(alpha: 0.3);
+    final ring = theme.colorScheme.primary.withValues(alpha: 0.35);
 
     final avatar = DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: ring, width: 2.5),
+        border: Border.all(color: ring, width: 2),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),

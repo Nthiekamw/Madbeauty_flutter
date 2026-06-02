@@ -1,4 +1,5 @@
 import '../../../router/app_router.dart';
+import '../../../router/prestataire_public_route.dart';
 
 /// Routes accessibles sans compte (mode invité).
 abstract final class GuestRoutePolicy {
@@ -7,14 +8,17 @@ abstract final class GuestRoutePolicy {
   static bool isClientShellPath(String location) =>
       location.startsWith('/client/');
 
-  static bool isPrestataireSpacePath(String location) =>
-      location.startsWith('/prestataire/') ||
-      location == AppRoutes.becomePrestataire ||
-      location == AppRoutes.role;
+  static bool isPrestataireSpacePath(String location) {
+    if (isPublicPrestataireProfilePath(location)) return false;
+    return location.startsWith('/prestataire/') ||
+        location == AppRoutes.becomePrestataire ||
+        location == AppRoutes.role;
+  }
 
   static bool isBrowsableAsGuest(String location) {
     if (isClientShellPath(location)) return true;
-    if (location.startsWith('${AppRoutes.prestataires}/')) return true;
+    if (isPublicPrestataireProfilePath(location)) return true;
+    if (location.startsWith('${AppRoutes.prestatairesLegacy}/')) return true;
     if (location == AppRoutes.booking) return true;
     return false;
   }

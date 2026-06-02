@@ -5,6 +5,7 @@ import '../../../core/models/domain/booking/reservation.dart';
 import '../../../services/stripe/stripe_booking_payment_service.dart';
 import '../../../services/stripe/stripe_payment_exception.dart';
 import '../../../services/stripe/stripe_service.dart';
+import 'booking_pricing.dart';
 
 enum BookingPaymentPhase {
   idle,
@@ -37,7 +38,7 @@ class BookingPaymentFlow {
     required String prestataireId,
     required String serviceId,
     required DateTime dateHeure,
-    required double priceEur,
+    required BookingPaymentModeKind paymentMode,
     void Function(BookingPaymentPhase phase)? onPhase,
   }) async {
     onPhase?.call(BookingPaymentPhase.preparing);
@@ -45,7 +46,7 @@ class BookingPaymentFlow {
       prestataireId: prestataireId,
       serviceId: serviceId,
       dateHeure: dateHeure,
-      priceEur: priceEur,
+      paymentMode: paymentMode,
     );
 
     onPhase?.call(BookingPaymentPhase.presenting);

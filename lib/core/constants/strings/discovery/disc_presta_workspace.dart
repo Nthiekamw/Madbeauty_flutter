@@ -1,0 +1,33 @@
+/// En-tête et cartes communes (agenda, clients, profil prestataire).
+abstract final class DiscPrestaWorkspace {
+  DiscPrestaWorkspace._();
+
+  static String greeting(String name) => 'Bonjour $name 👋';
+  static const spaceLabel = 'Espace prestataire';
+  static const refreshTooltip = 'Actualiser';
+  static const paymentsTooltip = 'Paiements & abonnement';
+  static const notificationsTooltip = 'Notifications';
+  static const messagesTooltip = 'Messages';
+
+  static const completionTitle =
+      'Complétez votre profil pour recevoir des clients';
+  static const completionBody =
+      'Une fiche complète inspire confiance et améliore ta visibilité sur MadBeauty.';
+  static const completionProgress = 'Progression';
+
+  static const agendaTabUpcoming = 'À venir';
+  static const agendaTabPast = 'Passés';
+  static const agendaTabCancelled = 'Annulés';
+  static const agendaNewCta = 'Nouveau';
+
+  static const clientsSearchHint = 'Rechercher un client…';
+  static const clientsTabClients = 'Clients';
+  static const clientsTabReviews = 'Avis';
+  static String clientsCount(int n) => 'Clients ($n)';
+  static String reviewsCount(int n) => 'Avis ($n)';
+  static const loyalBadge = 'Fidèle';
+  static String lastVisit(String date) => 'Dernière visite · $date';
+
+  static const profileSummaryFree = 'Gratuit';
+  static const profileMenuTitle = 'Mon compte';
+}

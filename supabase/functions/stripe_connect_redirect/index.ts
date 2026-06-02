@@ -4,6 +4,10 @@ import { corsHeaders } from "../_shared/cors.ts";
 const DEEP_LINKS: Record<string, string> = {
   return: "com.madbeauty.madbeauty://stripe-connect-return",
   refresh: "com.madbeauty.madbeauty://stripe-connect-refresh",
+  subscription_success:
+    "com.madbeauty.madbeauty://subscription-return?result=success",
+  subscription_cancel:
+    "com.madbeauty.madbeauty://subscription-return?result=cancel",
 };
 
 Deno.serve(async (req) => {

@@ -32,9 +32,9 @@ class ProfileFooterActions extends StatelessWidget {
             label: const Text(DiscProfile.signOut),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              foregroundColor: theme.colorScheme.primary,
+              foregroundColor: error,
               side: BorderSide(
-                color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                color: error.withValues(alpha: 0.55),
               ),
             ),
           ),

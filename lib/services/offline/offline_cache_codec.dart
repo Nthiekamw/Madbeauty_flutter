@@ -46,6 +46,11 @@ abstract final class OfflineCacheCodec {
             ? DateTime.tryParse(map['paidAt'] as String)
             : null,
         paymentStatus: map['paymentStatus'] as String?,
+        paymentMode: map['paymentMode'] as String?,
+        servicePriceCents: (map['servicePriceCents'] as num?)?.toInt(),
+        platformFeeCents: (map['platformFeeCents'] as num?)?.toInt(),
+        prestataireAmountCents:
+            (map['prestataireAmountCents'] as num?)?.toInt(),
       );
     }).toList();
   }
@@ -67,6 +72,10 @@ abstract final class OfflineCacheCodec {
               'currency': e.currency,
               'paidAt': e.paidAt?.toIso8601String(),
               'paymentStatus': e.paymentStatus,
+              'paymentMode': e.paymentMode,
+              'servicePriceCents': e.servicePriceCents,
+              'platformFeeCents': e.platformFeeCents,
+              'prestataireAmountCents': e.prestataireAmountCents,
             },
           )
           .toList();
@@ -107,6 +116,13 @@ abstract final class OfflineCacheCodec {
         clientId: map['clientId'] as String?,
         notesClient: map['notesClient'] as String?,
         notesPrestataire: map['notesPrestataire'] as String?,
+        amountCents: (map['amountCents'] as num?)?.toInt(),
+        paymentStatus: map['paymentStatus'] as String?,
+        paymentMode: map['paymentMode'] as String?,
+        servicePriceCents: (map['servicePriceCents'] as num?)?.toInt(),
+        platformFeeCents: (map['platformFeeCents'] as num?)?.toInt(),
+        prestataireAmountCents:
+            (map['prestataireAmountCents'] as num?)?.toInt(),
       );
     }).toList();
   }
@@ -133,6 +149,12 @@ abstract final class OfflineCacheCodec {
               'clientId': e.clientId,
               'notesClient': e.notesClient,
               'notesPrestataire': e.notesPrestataire,
+              'amountCents': e.amountCents,
+              'paymentStatus': e.paymentStatus,
+              'paymentMode': e.paymentMode,
+              'servicePriceCents': e.servicePriceCents,
+              'platformFeeCents': e.platformFeeCents,
+              'prestataireAmountCents': e.prestataireAmountCents,
             },
           )
           .toList();

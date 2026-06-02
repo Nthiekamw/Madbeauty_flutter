@@ -4,6 +4,14 @@ abstract final class DiscPrestaDash {
 
   static const pageSubtitle =
       'Demandes en attente, rendez-vous du jour et de la semaine.';
+  static const layoutCustomizeTitle = 'Sections personnalisables';
+  static const layoutCustomizeHint =
+      'Maintiens l’icône ⋮⋮ puis glisse pour réordonner. Utilise la flèche pour replier une section.';
+  static const layoutDragHint = 'Glisser pour déplacer';
+  static const layoutCollapse = 'Replier la section';
+  static const layoutExpand = 'Déplier la section';
+  static const sectionHero = 'Mon salon';
+  static const sectionStats = 'Aperçu rapide';
   static const welcome =
       'Ton profil est prêt à être visible par les clients.';
   static const profileMissing =

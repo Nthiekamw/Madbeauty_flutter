@@ -25,6 +25,8 @@ abstract final class AuthStrings {
 
   static const String loginFieldEmail = 'E-mail';
   static const String loginFieldPassword = 'Mot de passe';
+  static const String loginShowPassword = 'Afficher le mot de passe';
+  static const String loginHidePassword = 'Masquer le mot de passe';
   static const String loginActionSubmit = 'Se connecter';
   static const String loginSectionQuick = 'Connexion rapide';
   static const String loginSectionQuickHint =
@@ -184,7 +186,7 @@ abstract final class AuthStrings {
   static const String registerValidationPrestaRequired =
       'Indique au minimum le nom de ton salon et ta ville.';
   static const String registerWizardBack = 'Retour';
-  static const String registerFieldPhoneHint = 'Ex. 06 12 34 56 78';
+  static const String registerFieldPhoneHint = 'Ex. 6 12 34 56 78';
   static const String registerFieldPasswordHint = '8 caractères minimum';
   static const String registerFieldPrenom = 'Prénom';
   static const String registerFieldNom = 'Nom';

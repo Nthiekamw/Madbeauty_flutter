@@ -16,6 +16,7 @@ abstract class Review with _$Review {
     @JsonKey(name: 'reservation_id') required String bookingId,
     required int note,
     String? commentaire,
+    @JsonKey(name: 'photo_urls') @Default([]) List<String> photoUrls,
     @JsonKey(name: 'created_at')
     @IsoDateTimeConverter()
     required DateTime createdAt,
@@ -30,6 +31,7 @@ abstract class Review with _$Review {
         bookingId: avis.reservationId,
         note: avis.note,
         commentaire: avis.commentaire,
+        photoUrls: avis.photoUrls,
         createdAt: avis.createdAt,
       );
 }

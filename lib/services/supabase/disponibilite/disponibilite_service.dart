@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
+import '../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../features/booking/models/booking_availability_rules.dart';
 import '../../../features/booking/models/booking_slot.dart';
@@ -79,6 +80,30 @@ class DisponibiliteService {
         },
       );
 
+  Future<List<Indisponibilite>> listIndisponibilites(String prestataireId) =>
+      SupabaseErrorHandler.run(
+        operation: 'disponibilite.listIndisponibilites',
+        action: () async {
+          final now = DateTime.now();
+          final response = await _client
+              .from('indisponibilites')
+              .select('id, date_debut, date_fin')
+              .eq('prestataire_id', prestataireId)
+              .gte('date_fin', now.toUtc().toIso8601String())
+              .order('date_debut');
+
+          return (response as List<dynamic>).map((raw) {
+            final row = Map<String, dynamic>.from(raw as Map);
+            return Indisponibilite(
+              id: row['id'] as String,
+              dateDebut:
+                  DateTime.parse(row['date_debut'] as String).toLocal(),
+              dateFin: DateTime.parse(row['date_fin'] as String).toLocal(),
+            );
+          }).toList();
+        },
+      );
+
   Future<void> addIndisponibilite(
     String prestataireId,
     DateTime dateDebut,
@@ -92,6 +117,13 @@ class DisponibiliteService {
             'date_debut': dateDebut.toUtc().toIso8601String(),
             'date_fin': dateFin.toUtc().toIso8601String(),
           });
+        },
+      );
+
+  Future<void> removeIndisponibilite(String id) => SupabaseErrorHandler.run(
+        operation: 'disponibilite.removeIndisponibilite',
+        action: () async {
+          await _client.from('indisponibilites').delete().eq('id', id);
         },
       );
 

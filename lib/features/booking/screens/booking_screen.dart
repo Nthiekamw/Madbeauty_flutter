@@ -18,10 +18,17 @@ import '../providers/is_own_prestataire_profile_provider.dart';
 import '../widgets/booking_step_one_content.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
-  const BookingScreen({super.key, this.prestataireId, this.serviceId});
+  const BookingScreen({
+    super.key,
+    this.prestataireId,
+    this.serviceId,
+    this.initialDay,
+  });
 
   final String? prestataireId;
   final String? serviceId;
+  /// `YYYY-MM-DD` depuis deep link / notification.
+  final String? initialDay;
 
   @override
   ConsumerState<BookingScreen> createState() => _BookingScreenState();
@@ -33,10 +40,25 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
-          .read(bookingSelectionProvider.notifier)
-          .initialize(serviceId: widget.serviceId);
+      final notifier = ref.read(bookingSelectionProvider.notifier);
+      notifier.initialize(serviceId: widget.serviceId);
+      final day = _parseInitialDay(widget.initialDay);
+      if (day != null) {
+        notifier.selectDay(day, day);
+      }
     });
+  }
+
+  DateTime? _parseInitialDay(String? raw) {
+    final text = raw?.trim();
+    if (text == null || text.length < 10) return null;
+    final parts = text.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    return DateTime(y, m, d);
   }
 
   @override
@@ -160,6 +182,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                           .read(bookingSelectionProvider.notifier)
                           .selectSlot,
                       onContinue: () => _confirmSelection(selectedService),
+                      prestataireId: prestataireId,
                     );
                   },
                 ),

@@ -5,6 +5,8 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
+import '../../../booking/logic/reservation_chat_eligibility.dart';
+import '../../../booking/widgets/reservation_payment_summary_card.dart';
 import '../../models/prestataire_reservation_item.dart';
 
 /// Corps de l’écran détail réservation (infos + actions).
@@ -102,6 +104,16 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             ],
           ),
         ),
+        if (item.paymentDisplay.shouldShow) ...[
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0),
+            child: ReservationPaymentSummaryCard(
+              display: item.paymentDisplay,
+              lines: item.paymentDisplay.prestataireLines(),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         DiscoverySurfaceCard(
           padding: const EdgeInsets.all(16),
@@ -188,8 +200,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             ),
           ),
         ],
-        if (onMessage != null &&
-            status != ClientReservationUiStatus.cancelled) ...[
+        if (onMessage != null && clientReservationCanMessage(status)) ...[
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,

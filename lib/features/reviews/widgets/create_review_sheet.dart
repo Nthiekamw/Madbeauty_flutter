@@ -1,12 +1,18 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../auth/providers/auth_notifier.dart';
+import '../../../services/supabase/profile/client_profile_providers.dart';
+import '../../../services/supabase/storage/storage_providers.dart';
+import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../providers/prestataire_note_moyenne_provider.dart';
 import '../providers/review_provider.dart';
-import '../../../services/supabase/profile/client_profile_providers.dart';
+import 'review_photo_picker.dart';
 
 /// Bottom sheet : note (1–5) + commentaire optionnel.
 Future<bool?> showCreateReviewSheet(
@@ -49,6 +55,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
   int _note = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
+  List<Uint8List> _photoBytes = const [];
 
   @override
   void dispose() {
@@ -60,21 +67,41 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
     if (_note < 1 || _submitting) return;
 
     final service = ref.read(reviewServiceProvider);
+    final storage = ref.read(storageServiceProvider);
     final client = await ref.read(currentClientProfileProvider.future);
-    if (service == null || client == null) {
+    final userId = ref.read(authNotifierProvider).asData?.value?.id;
+    if (service == null || client == null || storage == null || userId == null) {
       if (mounted) AppSnackBar.error(context, DiscReview.errorGeneric);
       return;
     }
 
     setState(() => _submitting = true);
     try {
-      await service.create(
+      final reviewId = await service.create(
         bookingId: widget.bookingId,
         clientId: client.id,
         note: _note,
         commentaire: _commentController.text,
       );
+
+      if (_photoBytes.isNotEmpty) {
+        final urls = <String>[];
+        for (final bytes in _photoBytes) {
+          final url = await storage.uploadReviewPhoto(
+            userId: userId,
+            reviewId: reviewId,
+            file: StorageUploadFile(bytes: bytes),
+          );
+          urls.add(url);
+        }
+        await service.attachPhotoUrls(
+          reviewId: reviewId,
+          clientId: client.id,
+          photoUrls: urls,
+        );
+      }
       ref.invalidate(hasReviewedProvider(widget.bookingId));
+      ref.invalidate(clientReviewsForCurrentClientProvider);
       final prestaId = widget.prestataireId;
       if (prestaId != null) {
         ref.invalidate(reviewsByPrestataireProvider(prestaId));
@@ -179,6 +206,10 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
                 ),
               ),
             ),
+          const SizedBox(height: 12),
+          ReviewPhotoPicker(
+            onChanged: (bytes, _) => setState(() => _photoBytes = bytes),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _commentController,

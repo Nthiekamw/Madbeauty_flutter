@@ -6,7 +6,7 @@ abstract final class DiscPrestaForm {
       'Complète ton profil professionnel pour apparaître dans le catalogue client.';
   static const stepBasics = 'Vitrine & salon';
   static const stepLocation = 'Adresse & lieu';
-  static const stepServices = 'Services & tarifs';
+  static const stepServices = 'Mes services';
   static const stepGallery = 'Réalisations';
   static const stepComfort = 'Confort & conditions';
   static const stepHoraires = 'Horaires';
@@ -73,6 +73,27 @@ abstract final class DiscPrestaForm {
   static const workLocationBoth = 'Les deux';
   static const specialtiesHint =
       'Choisis un ou plusieurs types de services proposés.';
+  static const catalogIntro =
+      'Sélectionne les services que tu proposes, puis précise tes spécialités '
+      'pour chaque activité. Tu pourras affiner tes tarifs ensuite.';
+  static const catalogMainTitle = 'Tes activités';
+  static const catalogSpecialtiesHint =
+      'Choisis au moins une spécialité, ou ajoute la tienne.';
+  static String catalogSpecialtiesTitle(String serviceName) =>
+      'Spécialités — $serviceName';
+  static const catalogCustomHint = 'Autre spécialité';
+  static const catalogCustomAdd = 'Ajouter';
+  static const reqCatalogMain =
+      'Sélectionne au moins un service (coiffure, manucure…).';
+  static const reqCatalogSpecialty =
+      'Choisis au moins une spécialité pour chaque service sélectionné.';
+  static const pricingTitle = 'Tarifs & durée';
+  static const pricingHint =
+      'Indique le prix et la durée pour chaque prestation proposée.';
+  static const pricingEmptyHint =
+      'Sélectionne d’abord tes services et spécialités ci-dessus.';
+  static const reqPricing =
+      'Renseigne un prix valide (≥ 1 €) et une durée pour chaque prestation.';
   static const svcAdd = 'Ajouter un service';
   static const svcName = 'Nom du service';
   static const svcDescription = 'Description';
@@ -104,7 +125,7 @@ abstract final class DiscPrestaForm {
   static const reqWorkLocation = 'Indique où tu travailles.';
   static const descriptionTooLong = '200 caractères maximum.';
   static const experienceProTooLong = '150 caractères maximum.';
-  static const reqService = 'Ajoute au moins un service.';
+  static const reqService = 'Configure au moins un service et une spécialité.';
   static const reqSvcName = 'Saisis le nom du service.';
   static const reqSvcCategory = 'Choisis une catégorie pour ce service.';
   static const svcPriceBad = 'Prix invalide.';

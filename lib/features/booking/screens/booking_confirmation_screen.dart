@@ -20,11 +20,15 @@ import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../prestataire/providers/prestataire_detail_provider.dart';
+import '../../../services/supabase/referral/referral_providers.dart';
+import '../providers/client_prior_booking_count_provider.dart';
 import '../providers/prestataire_online_payment_provider.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
 import '../logic/booking_create_failure.dart';
 import '../logic/booking_formatters.dart';
 import '../logic/booking_payment_flow.dart';
+import '../logic/booking_pricing.dart';
+import '../widgets/booking_checkout_panel.dart';
 import '../widgets/booking_message.dart';
 import '../widgets/booking_success_view.dart';
 
@@ -60,6 +64,7 @@ class _BookingConfirmationScreenState
   bool _paidOnSite = false;
   String? _errorMessage;
   BookingPaymentPhase _paymentPhase = BookingPaymentPhase.idle;
+  BookingPaymentModeKind _paymentMode = BookingPaymentModeKind.onSite;
 
   @override
   Widget build(BuildContext context) {
@@ -99,8 +104,29 @@ class _BookingConfirmationScreenState
       data: (value) => value,
       orElse: () => false,
     );
-    final requiresOnlinePayment =
-        bookingRequiresOnlinePayment(acceptsOnline);
+    final priorCount = ref.watch(clientPriorBookingCountProvider).maybeWhen(
+          data: (value) => value,
+          orElse: () => 0,
+        );
+    final referralDiscountPercent =
+        ref.watch(clientReferralDiscountPercentProvider);
+    final stripeAvailable = BookingPaymentFlow.isPaymentAvailable;
+    final effectiveMode = acceptsOnline && stripeAvailable
+        ? _paymentMode
+        : BookingPaymentModeKind.onSite;
+
+    BookingPricingBreakdown? breakdown;
+    try {
+      breakdown = computeBookingPricing(
+        servicePriceEur: widget.price,
+        paymentMode: effectiveMode,
+        priorBookingCount: priorCount,
+        prestataireAcceptsConnect: acceptsOnline,
+        referralDiscountPercent: referralDiscountPercent,
+      );
+    } on BookingPricingException {
+      breakdown = null;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -278,29 +304,116 @@ class _BookingConfirmationScreenState
               // Prix mis en avant
               _PriceHighlight(
                 label: DiscBk.recapPrice,
-                value: '${widget.price.toStringAsFixed(2)} €',
+                value: breakdown != null && breakdown.hasReferralDiscount
+                    ? '${(breakdown.servicePriceCents / 100).toStringAsFixed(2)} €'
+                    : '${widget.price.toStringAsFixed(2)} €',
+                originalValue: breakdown != null && breakdown.hasReferralDiscount
+                    ? '${widget.price.toStringAsFixed(2)} €'
+                    : null,
                 meta: formatBookingServiceMeta(
                   durationMinutes: widget.durationMinutes,
-                  price: widget.price,
+                  price: breakdown != null && breakdown.hasReferralDiscount
+                      ? breakdown.servicePriceEur
+                      : widget.price,
                 ),
                 theme: theme,
                 primary: primary,
                 isDark: isDark,
               ),
 
+              if (breakdown != null && breakdown.hasReferralDiscount) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF7C3AED).withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.local_offer_outlined,
+                        size: 20,
+                        color: Color(0xFF6D28D9),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          DiscPay.recapReferralDiscountBanner,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF5B21B6),
+                            height: 1.4,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 14),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: isDark ? 0.35 : 0.65),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        DiscBk.recapCancelPolicy,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              if (breakdown != null) ...[
+                BookingCheckoutPanel(
+                  breakdown: breakdown,
+                  paymentMode: effectiveMode,
+                  prestataireAcceptsDeposit: acceptsOnline,
+                  stripeAvailable: stripeAvailable,
+                  onPaymentModeChanged: (mode) {
+                    setState(() => _paymentMode = mode);
+                  },
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // Mention de confiance
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (requiresOnlinePayment
+                  color: (breakdown?.requiresInAppPayment == true
                           ? const Color(0xFF10B981)
                           : theme.colorScheme.primary)
                       .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: (requiresOnlinePayment
+                    color: (breakdown?.requiresInAppPayment == true
                             ? const Color(0xFF10B981)
                             : theme.colorScheme.primary)
                         .withValues(alpha: 0.2),
@@ -309,25 +422,25 @@ class _BookingConfirmationScreenState
                 child: Row(
                   children: [
                     Icon(
-                      requiresOnlinePayment
+                      breakdown?.requiresInAppPayment == true
                           ? Icons.shield_outlined
                           : Icons.payments_outlined,
                       size: 18,
-                      color: requiresOnlinePayment
+                      color: breakdown?.requiresInAppPayment == true
                           ? const Color(0xFF10B981)
                           : theme.colorScheme.primary,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        requiresOnlinePayment
+                        breakdown?.requiresInAppPayment == true
                             ? DiscPay.recapTrust
-                            : BookingPaymentFlow.isPaymentAvailable
+                            : stripeAvailable
                                 ? DiscPay.recapTrustOnSite
                                 : DiscBk.recapTrust,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontFamily: AppFonts.body,
-                          color: requiresOnlinePayment
+                          color: breakdown?.requiresInAppPayment == true
                               ? const Color(0xFF10B981)
                               : theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -339,8 +452,8 @@ class _BookingConfirmationScreenState
                 ),
               ),
 
-              if (!BookingPaymentFlow.isPaymentAvailable &&
-                  widget.price > 0) ...[
+              if (!stripeAvailable &&
+                  breakdown?.requiresInAppPayment == true) ...[
                 const SizedBox(height: 12),
                 BookingMessage(
                   icon: Icons.payment_outlined,
@@ -411,7 +524,7 @@ class _BookingConfirmationScreenState
                       !isOwnProfile &&
                       !acceptsOnlineAsync.isLoading,
                   onPressed: _isSubmitting || isOwnProfile ? null : _confirm,
-                  child: Text(_ctaLabel(requiresOnlinePayment)),
+                  child: Text(_ctaLabel(breakdown)),
                 ),
               ),
             ],
@@ -421,11 +534,16 @@ class _BookingConfirmationScreenState
     );
   }
 
-  String _ctaLabel(bool requiresOnlinePayment) {
+  String _ctaLabel(BookingPricingBreakdown? breakdown) {
     if (!_isSubmitting) {
-      if (requiresOnlinePayment) return DiscBk.recapCtaPay;
-      if (BookingPaymentFlow.isPaymentAvailable) return DiscPay.recapCtaOnSite;
-      return DiscBk.recapCta;
+      if (breakdown == null) return DiscBk.recapCta;
+      if (breakdown.requiresInAppPayment) {
+        return DiscPay.recapCtaPayAmount.replaceFirst(
+          '%s',
+          '${breakdown.totalChargeEur.toStringAsFixed(2)} €',
+        );
+      }
+      return DiscPay.recapCtaOnSite;
     }
     return switch (_paymentPhase) {
       BookingPaymentPhase.preparing => DiscPay.preparing,
@@ -442,8 +560,26 @@ class _BookingConfirmationScreenState
     final acceptsOnline = await ref.read(
       prestataireAcceptsOnlinePaymentProvider(widget.prestataireId).future,
     );
-    final requiresOnlinePayment =
-        bookingRequiresOnlinePayment(acceptsOnline);
+    final priorCount = await ref.read(clientPriorBookingCountProvider.future);
+    final referralDiscountPercent =
+        ref.read(clientReferralDiscountPercentProvider);
+    final effectiveMode = acceptsOnline && BookingPaymentFlow.isPaymentAvailable
+        ? _paymentMode
+        : BookingPaymentModeKind.onSite;
+
+    BookingPricingBreakdown breakdown;
+    try {
+      breakdown = computeBookingPricing(
+        servicePriceEur: widget.price,
+        paymentMode: effectiveMode,
+        priorBookingCount: priorCount,
+        prestataireAcceptsConnect: acceptsOnline,
+        referralDiscountPercent: referralDiscountPercent,
+      );
+    } on BookingPricingException {
+      _showConfirmError(DiscPay.errDepositRequiresConnect);
+      return;
+    }
 
     if (!AppConfig.hasSupabase) {
       _showConfirmError(
@@ -452,7 +588,7 @@ class _BookingConfirmationScreenState
       );
       return;
     }
-    if (requiresOnlinePayment && payments == null) {
+    if (breakdown.requiresInAppPayment && payments == null) {
       _showConfirmError(DiscPay.errNotConfigured);
       return;
     }
@@ -504,7 +640,7 @@ class _BookingConfirmationScreenState
     });
 
     try {
-      if (requiresOnlinePayment) {
+      if (breakdown.requiresInAppPayment) {
         final paymentService = ref.read(stripeBookingPaymentServiceProvider);
         if (paymentService == null) {
           throw const StripePaymentNotConfiguredException();
@@ -514,7 +650,7 @@ class _BookingConfirmationScreenState
           prestataireId: widget.prestataireId,
           serviceId: widget.serviceId,
           dateHeure: widget.dateTime,
-          priceEur: widget.price,
+          paymentMode: effectiveMode,
           onPhase: (phase) {
             if (!mounted) return;
             setState(() => _paymentPhase = phase);
@@ -522,13 +658,15 @@ class _BookingConfirmationScreenState
         );
         invalidateBookingDetail(ref, reservation.id);
         invalidateClientReservations(ref);
+        ref.invalidate(clientPriorBookingCountProvider);
+        ref.invalidate(myReferralInfoProvider);
         if (!mounted) return;
         setState(() {
           _isSubmitting = false;
           _isSuccess = true;
           _queuedOffline = false;
           _paidWithStripe = true;
-          _paidOnSite = false;
+          _paidOnSite = effectiveMode == BookingPaymentModeKind.onSite;
         });
         return;
       }
@@ -537,16 +675,25 @@ class _BookingConfirmationScreenState
         prestataireId: widget.prestataireId,
         serviceId: widget.serviceId,
         dateHeure: widget.dateTime,
+        paymentMode: effectiveMode.wireValue,
+        servicePriceCents: breakdown.servicePriceCents,
+        platformFeeCents: breakdown.platformFeeCents,
+        originalServicePriceCents: breakdown.hasReferralDiscount
+            ? breakdown.originalServicePriceCents
+            : null,
+        referralDiscountPercent: breakdown.referralDiscountPercent,
       );
       invalidateBookingDetail(ref, reservation.id);
       invalidateClientReservations(ref);
+      ref.invalidate(clientPriorBookingCountProvider);
+      ref.invalidate(myReferralInfoProvider);
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
         _isSuccess = true;
         _queuedOffline = false;
         _paidWithStripe = false;
-        _paidOnSite = BookingPaymentFlow.isPaymentAvailable;
+        _paidOnSite = true;
       });
     } on StripePaymentException catch (e) {
       _showConfirmError(BookingPaymentFlow.messageFor(e));
@@ -706,6 +853,7 @@ class _PriceHighlight extends StatelessWidget {
   const _PriceHighlight({
     required this.label,
     required this.value,
+    this.originalValue,
     required this.meta,
     required this.theme,
     required this.primary,
@@ -714,6 +862,7 @@ class _PriceHighlight extends StatelessWidget {
 
   final String label;
   final String value;
+  final String? originalValue;
   final String meta;
   final ThemeData theme;
   final Color primary;
@@ -764,14 +913,29 @@ class _PriceHighlight extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w900,
-              fontSize: 24,
-              color: primary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (originalValue != null) ...[
+                Text(
+                  originalValue!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    decoration: TextDecoration.lineThrough,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+              ],
+              Text(
+                value,
+                style: TextStyle(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  color: primary,
+                ),
+              ),
+            ],
           ),
         ],
       ),

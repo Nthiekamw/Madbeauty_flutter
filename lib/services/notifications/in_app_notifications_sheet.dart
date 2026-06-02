@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
 import 'in_app_notifications_provider.dart';
+import 'push_navigation.dart';
 
 Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
@@ -92,7 +93,11 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                           child: ListTile(
                             contentPadding:
                                 const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                            onTap: () => notifier.markRead(item.id),
+                            onTap: () {
+                              notifier.markRead(item.id);
+                              Navigator.of(context).pop();
+                              handleInAppNotificationNavigation(context, item);
+                            },
                             leading: Icon(
                               item.read
                                   ? Icons.notifications_none_rounded

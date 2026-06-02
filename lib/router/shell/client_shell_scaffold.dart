@@ -9,7 +9,7 @@ import '../../services/supabase/booking/booking_service_providers.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../features/reviews/widgets/client_review_prompt_coordinator.dart';
 import '../../shared/widgets/layout/offline_shell.dart';
-import 'client_shell_bottom_nav.dart';
+import 'client_shell_nav_bar.dart';
 
 class ClientShellScaffold extends ConsumerStatefulWidget {
   const ClientShellScaffold({super.key, required this.navigationShell});
@@ -46,9 +46,7 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
       body: ClientReviewPromptCoordinator(
         child: OfflineShell(child: navigationShell),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: ClientShellBottomNav(
+      bottomNavigationBar: ClientShellNavBar(
           selectedIndex: selectedIndex,
           reservationsBadgeCount: pendingCount,
           messagesBadgeCount: messagesUnread,
@@ -68,7 +66,6 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
             );
           },
         ),
-      ),
     );
   }
 }

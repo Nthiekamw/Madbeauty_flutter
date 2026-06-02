@@ -6,7 +6,6 @@ import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
-import '../../../features/messaging/messaging_navigation.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
@@ -14,11 +13,16 @@ import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/prestataire/prestataire_favorite_button.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../logic/lieu_travail_display.dart';
+import '../logic/prestataire_share.dart';
 import '../providers/prestataire_detail_provider.dart';
 import '../widgets/profile/prestataire_client_experience_section.dart';
+import '../widgets/public/prestataire_detail_messaging_section.dart';
 import '../widgets/public/prestataire_public_horaires_section.dart';
 import '../widgets/public/prestataire_public_reviews_live_section.dart';
 import '../../reviews/providers/prestataire_note_moyenne_provider.dart';
+import '../../trust/widgets/report_content_sheet.dart';
+import '../../../services/supabase/trust/content_report_service.dart';
+import '../providers/prestataire_response_time_provider.dart';
 
 class PrestataireDetailScreen extends ConsumerWidget {
   const PrestataireDetailScreen({super.key, required this.prestataireId});
@@ -55,8 +59,18 @@ class PrestataireDetailScreen extends ConsumerWidget {
                 avatarUrl: data.avatarUrl,
                 isOwnProfile: isOwnProfile,
                 onBook: () => context.pushBooking(prestataireId: data.profile.id),
-                onContact: () =>
-                    openChatWithPrestataire(context, ref, data.profile.id),
+                onShare: () => sharePrestataireProfile(
+                  prestataireId: data.profile.id,
+                  displayName: _profileShareTitle(data.profile),
+                ),
+                onReport: isOwnProfile
+                    ? null
+                    : () => showReportContentSheet(
+                          context,
+                          targetType:
+                              ContentReportTargetType.prestataireProfile,
+                          targetId: data.profile.id,
+                        ),
               ),
               SliverToBoxAdapter(
                 child: Column(
@@ -69,7 +83,14 @@ class PrestataireDetailScreen extends ConsumerWidget {
                       servicesCount: data.services.length,
                     ),
                     // Badges confiance
-                    _TrustBar(isVerified: data.profile.isVerified),
+                    _TrustBar(
+                      prestataireId: data.profile.id,
+                      isVerified: data.profile.isVerified,
+                    ),
+                    if (!isOwnProfile)
+                      PrestataireDetailMessagingSection(
+                        prestataireId: data.profile.id,
+                      ),
                     // Bannière profil propre
                     if (isOwnProfile)
                       _OwnProfileBanner(),
@@ -208,6 +229,14 @@ bool _hasExperience(PrestataireProfile profile) {
       profile.anneesExperience?.trim().isNotEmpty == true;
 }
 
+String _profileShareTitle(PrestataireProfile profile) {
+  final display = normalizeSingleLineText(profile.nomAffiche);
+  final salon = normalizeSingleLineText(profile.nomSalon);
+  if (display.isNotEmpty) return display;
+  if (salon.isNotEmpty) return salon;
+  return DiscPrestaDetail.screenTitle;
+}
+
 // ─── SliverAppBar hero ────────────────────────────────────────────────────────
 
 class _DetailSliverAppBar extends StatelessWidget {
@@ -216,14 +245,16 @@ class _DetailSliverAppBar extends StatelessWidget {
     required this.avatarUrl,
     required this.isOwnProfile,
     required this.onBook,
-    required this.onContact,
+    required this.onShare,
+    this.onReport,
   });
 
   final PrestataireProfile profile;
   final String? avatarUrl;
   final bool isOwnProfile;
   final VoidCallback onBook;
-  final VoidCallback onContact;
+  final VoidCallback onShare;
+  final VoidCallback? onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -258,6 +289,17 @@ class _DetailSliverAppBar extends StatelessWidget {
       stretch: true,
       backgroundColor: theme.colorScheme.surface,
       actions: [
+        if (onReport != null)
+          IconButton(
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: DiscReport.action,
+            onPressed: onReport,
+          ),
+        IconButton(
+          icon: const Icon(Icons.share_outlined),
+          tooltip: DiscPrestaDetail.shareTooltip,
+          onPressed: onShare,
+        ),
         if (!isOwnProfile)
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -429,29 +471,14 @@ class _DetailSliverAppBar extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    // Boutons CTA dans le hero
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: _HeroCta(
-                            label: DiscPrestaDetail.actionBook,
-                            icon: Icons.calendar_month_rounded,
-                            filled: true,
-                            onPressed: isOwnProfile ? null : onBook,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 2,
-                          child: _HeroCta(
-                            label: DiscPrestaDetail.contact,
-                            icon: Icons.chat_bubble_outline_rounded,
-                            filled: false,
-                            onPressed: isOwnProfile ? null : onContact,
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: _HeroCta(
+                        label: DiscPrestaDetail.actionBook,
+                        icon: Icons.calendar_month_rounded,
+                        filled: true,
+                        onPressed: isOwnProfile ? null : onBook,
+                      ),
                     ),
                   ],
                 ),
@@ -640,12 +667,21 @@ class _StatBox extends StatelessWidget {
 
 // ─── Trust bar ────────────────────────────────────────────────────────────────
 
-class _TrustBar extends StatelessWidget {
-  const _TrustBar({required this.isVerified});
+class _TrustBar extends ConsumerWidget {
+  const _TrustBar({
+    required this.prestataireId,
+    required this.isVerified,
+  });
+
+  final String prestataireId;
   final bool isVerified;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final respondsQuickly = ref
+        .watch(prestataireRespondsQuicklyProvider(prestataireId))
+        .maybeWhen(data: (v) => v, orElse: () => false);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Wrap(
@@ -657,6 +693,12 @@ class _TrustBar extends StatelessWidget {
               icon: Icons.verified_user_outlined,
               label: DiscPrestaDetail.trustId,
               color: Theme.of(context).colorScheme.primary,
+            ),
+          if (respondsQuickly)
+            _TrustChip(
+              icon: Icons.chat_bubble_outline_rounded,
+              label: DiscPrestaDetail.trustFastResponse,
+              color: const Color(0xFF8B5CF6),
             ),
           _TrustChip(
             icon: Icons.sell_outlined,

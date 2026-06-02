@@ -11,6 +11,7 @@ import 'booking_continue_button.dart';
 import 'booking_section_title.dart';
 import 'selected_service_header.dart';
 import 'service_choice_card.dart';
+import 'booking_waitlist_card.dart';
 import 'slot_choice_wrap.dart';
 
 class BookingStepOneContent extends StatelessWidget {
@@ -30,6 +31,7 @@ class BookingStepOneContent extends StatelessWidget {
     required this.onPageChanged,
     required this.onSlotSelected,
     required this.onContinue,
+    this.prestataireId,
   });
 
   final List<ServiceBeaute> services;
@@ -93,14 +95,23 @@ class BookingStepOneContent extends StatelessWidget {
         const SizedBox(height: 10),
         if (daySlotsLoading)
           const Center(child: CircularProgressIndicator())
-        else if (slots.isEmpty)
+        else if (slots.isEmpty) ...[
           Text(
             DiscBk.noSlotsDay,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-          )
-        else
+          ),
+          if (prestataireId != null &&
+              prestataireId!.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            BookingWaitlistCard(
+              prestataireId: prestataireId!,
+              serviceId: selectedService.id,
+              day: selection.selectedDay,
+            ),
+          ],
+        ] else
           SlotChoiceWrap(
             slots: slots,
             bookedSlots: bookedSlots,

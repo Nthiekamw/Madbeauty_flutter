@@ -31,6 +31,11 @@ class BookingService {
     required DateTime dateHeure,
     String? notesClient,
     String? clientProfileId,
+    String? paymentMode,
+    int? servicePriceCents,
+    int? platformFeeCents,
+    int? originalServicePriceCents,
+    int? referralDiscountPercent,
   }) async {
     return SupabaseErrorHandler.run(
       operation: 'booking.create',
@@ -62,6 +67,15 @@ class BookingService {
           'statut': 'en_attente',
           if (notesClient != null && notesClient.trim().isNotEmpty)
             'notes_client': notesClient.trim(),
+          if (paymentMode != null && paymentMode.isNotEmpty)
+            'payment_mode': paymentMode,
+          if (servicePriceCents != null) 'service_price_cents': servicePriceCents,
+          if (platformFeeCents != null) 'platform_fee_cents': platformFeeCents,
+          if (paymentMode == 'on_site') 'prestataire_amount_cents': 0,
+          if (originalServicePriceCents != null)
+            'original_service_price_cents': originalServicePriceCents,
+          if (referralDiscountPercent != null && referralDiscountPercent > 0)
+            'referral_discount_percent': referralDiscountPercent,
         };
 
         try {
@@ -277,6 +291,72 @@ class BookingService {
     );
   }
 
+  /// Détail réservation pour le client connecté (enrichi UI).
+  Future<ClientReservationSummary?> getClientReservationDetail(
+    String reservationId,
+  ) async {
+    return SupabaseErrorHandler.run(
+      operation: 'booking.getClientReservationDetail',
+      action: () async {
+        final clientId = await _requireClientId();
+        final response = await _client
+            .from('reservations')
+            .select(
+              'id, date_heure, statut, prestataire_id, service_id, '
+              'notes_prestataire, amount_cents, currency, '
+              'paid_at, payment_status, payment_mode, service_price_cents, '
+              'platform_fee_cents, prestataire_amount_cents, notes_client, '
+              'services_beaute(nom, duree_minutes), '
+              'prestataire_profiles(id, nom_salon, user_id)',
+            )
+            .eq('id', reservationId)
+            .eq('client_id', clientId)
+            .maybeSingle();
+
+        if (response == null) return null;
+
+        final map = Map<String, dynamic>.from(response);
+        final service = map['services_beaute'];
+        final prestataire = map['prestataire_profiles'];
+        var summary = _clientReservationSummaryFromRow(map, service, prestataire);
+
+        final profileSvc = _profileService;
+        if (profileSvc != null) {
+          final userId =
+              prestataire is Map ? prestataire['user_id'] as String? : null;
+          if (userId != null && userId.isNotEmpty) {
+            final profileMap = await profileSvc.getByUserIds([userId]);
+            final avatar = profileMap[userId]?.avatarUrl;
+            if (avatar?.trim().isNotEmpty == true) {
+              summary = ClientReservationSummary(
+                id: summary.id,
+                dateHeure: summary.dateHeure,
+                statut: summary.statut,
+                serviceName: summary.serviceName,
+                prestataireId: summary.prestataireId,
+                prestataireName: summary.prestataireName,
+                prestataireAvatarUrl: avatar!.trim(),
+                amountCents: summary.amountCents,
+                currency: summary.currency,
+                paidAt: summary.paidAt,
+                paymentStatus: summary.paymentStatus,
+                paymentMode: summary.paymentMode,
+                servicePriceCents: summary.servicePriceCents,
+                platformFeeCents: summary.platformFeeCents,
+                prestataireAmountCents: summary.prestataireAmountCents,
+                serviceId: summary.serviceId,
+                notesPrestataire: summary.notesPrestataire,
+                durationMinutes: summary.durationMinutes,
+              );
+            }
+          }
+        }
+
+        return summary;
+      },
+    );
+  }
+
   Future<Reservation?> getById(String id) async {
     return SupabaseErrorHandler.run(
       operation: 'booking.getById',
@@ -342,6 +422,8 @@ class BookingService {
             .from('reservations')
             .select(
               'id, date_heure, statut, client_id, notes_client, notes_prestataire, '
+              'amount_cents, payment_status, payment_mode, service_price_cents, '
+              'platform_fee_cents, prestataire_amount_cents, '
               'services_beaute(nom), client_profiles(user_id)',
             )
             .eq('prestataire_id', prestataireId)
@@ -361,22 +443,7 @@ class BookingService {
           if (userId != null && userId.isNotEmpty) userIds.add(userId);
 
           final service = map['services_beaute'];
-          items.add(
-            PrestataireReservationItem(
-              id: map['id'] as String,
-              dateHeure: DateTime.parse(
-                map['date_heure'] as String,
-              ).toLocal(),
-              statut: map['statut'] as String,
-              serviceName: service is Map
-                  ? (service['nom'] as String?)?.trim() ?? ''
-                  : '',
-              clientName: '',
-              clientId: map['client_id'] as String?,
-              notesClient: map['notes_client'] as String?,
-              notesPrestataire: map['notes_prestataire'] as String?,
-            ),
-          );
+          items.add(_prestataireReservationItemFromRow(map, service, ''));
         }
 
         final profileSvc = _profileService;
@@ -394,6 +461,12 @@ class BookingService {
                   clientId: e.clientId,
                   notesClient: e.notesClient,
                   notesPrestataire: e.notesPrestataire,
+                  amountCents: e.amountCents,
+                  paymentStatus: e.paymentStatus,
+                  paymentMode: e.paymentMode,
+                  servicePriceCents: e.servicePriceCents,
+                  platformFeeCents: e.platformFeeCents,
+                  prestataireAmountCents: e.prestataireAmountCents,
                 ),
               )
               .toList();
@@ -425,9 +498,40 @@ class BookingService {
             clientId: item.clientId,
             notesClient: item.notesClient,
             notesPrestataire: item.notesPrestataire,
+            amountCents: item.amountCents,
+            paymentStatus: item.paymentStatus,
+            paymentMode: item.paymentMode,
+            servicePriceCents: item.servicePriceCents,
+            platformFeeCents: item.platformFeeCents,
+            prestataireAmountCents: item.prestataireAmountCents,
           );
         });
       },
+    );
+  }
+
+  PrestataireReservationItem _prestataireReservationItemFromRow(
+    Map<String, dynamic> map,
+    Object? service,
+    String clientName,
+  ) {
+    return PrestataireReservationItem(
+      id: map['id'] as String,
+      dateHeure: DateTime.parse(map['date_heure'] as String).toLocal(),
+      statut: map['statut'] as String,
+      serviceName:
+          service is Map ? (service['nom'] as String?)?.trim() ?? '' : '',
+      clientName: clientName,
+      clientId: map['client_id'] as String?,
+      notesClient: map['notes_client'] as String?,
+      notesPrestataire: map['notes_prestataire'] as String?,
+      amountCents: (map['amount_cents'] as num?)?.toInt(),
+      paymentStatus: map['payment_status'] as String?,
+      paymentMode: map['payment_mode'] as String?,
+      servicePriceCents: (map['service_price_cents'] as num?)?.toInt(),
+      platformFeeCents: (map['platform_fee_cents'] as num?)?.toInt(),
+      prestataireAmountCents:
+          (map['prestataire_amount_cents'] as num?)?.toInt(),
     );
   }
 
@@ -454,8 +558,11 @@ class BookingService {
         final response = await _client
             .from('reservations')
             .select(
-              'id, date_heure, statut, prestataire_id, amount_cents, currency, '
-              'paid_at, payment_status, services_beaute(nom), '
+              'id, date_heure, statut, prestataire_id, service_id, '
+              'notes_prestataire, amount_cents, currency, '
+              'paid_at, payment_status, payment_mode, service_price_cents, '
+              'platform_fee_cents, prestataire_amount_cents, '
+              'services_beaute(nom, duree_minutes), '
               'prestataire_profiles(id, nom_salon, user_id)',
             )
             .eq('client_id', clientId)
@@ -506,6 +613,13 @@ class BookingService {
             currency: summary.currency,
             paidAt: summary.paidAt,
             paymentStatus: summary.paymentStatus,
+            paymentMode: summary.paymentMode,
+            servicePriceCents: summary.servicePriceCents,
+            platformFeeCents: summary.platformFeeCents,
+            prestataireAmountCents: summary.prestataireAmountCents,
+            serviceId: summary.serviceId,
+            notesPrestataire: summary.notesPrestataire,
+            durationMinutes: summary.durationMinutes,
           );
         });
       },
@@ -518,6 +632,9 @@ class BookingService {
     Object? prestataire,
   ) {
     final paidRaw = map['paid_at'] as String?;
+    final duree = service is Map
+        ? (service['duree_minutes'] as num?)?.toInt() ?? 60
+        : 60;
     return ClientReservationSummary(
       id: map['id'] as String,
       dateHeure: DateTime.parse(map['date_heure'] as String).toLocal(),
@@ -526,10 +643,18 @@ class BookingService {
       prestataireId: map['prestataire_id'] as String?,
       prestataireName:
           prestataire is Map ? prestataire['nom_salon'] as String? : null,
+      serviceId: map['service_id'] as String?,
+      notesPrestataire: map['notes_prestataire'] as String?,
+      durationMinutes: duree,
       amountCents: (map['amount_cents'] as num?)?.toInt(),
       currency: map['currency'] as String?,
       paidAt: paidRaw != null ? DateTime.tryParse(paidRaw)?.toLocal() : null,
       paymentStatus: map['payment_status'] as String?,
+      paymentMode: map['payment_mode'] as String?,
+      servicePriceCents: (map['service_price_cents'] as num?)?.toInt(),
+      platformFeeCents: (map['platform_fee_cents'] as num?)?.toInt(),
+      prestataireAmountCents:
+          (map['prestataire_amount_cents'] as num?)?.toInt(),
     );
   }
 

@@ -23,7 +23,9 @@ import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../shared/utils/phone_number_utils.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
+import '../../../../shared/widgets/phone/phone_number_field.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';
@@ -57,24 +59,10 @@ class RegisterWizardScreen extends ConsumerStatefulWidget {
       _RegisterWizardScreenState();
 }
 
-class _DialCodeOption {
-  const _DialCodeOption({required this.flag, required this.dialCode});
-
-  final String flag;
-  final String dialCode;
-}
-
 class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   static const _totalSteps = 3;
   static const _fieldGap = 10.0;
   static const _sectionGap = 12.0;
-  static const _phoneDialOptions = <_DialCodeOption>[
-    _DialCodeOption(flag: '🇫🇷', dialCode: '+33'),
-    _DialCodeOption(flag: '🇧🇪', dialCode: '+32'),
-    _DialCodeOption(flag: '🇨🇭', dialCode: '+41'),
-    _DialCodeOption(flag: '🇩🇪', dialCode: '+49'),
-    _DialCodeOption(flag: '🇬🇧', dialCode: '+44'),
-  ];
 
   int _step = 0;
   Timer? _saveDebounce;
@@ -110,6 +98,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   bool _signedUpViaOAuth = false;
   bool _googleLaunched = false;
   bool _phoneRequiredOnExtras = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -248,19 +238,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     final phone = meta?['phone'] as String?;
     if (phone != null && phone.trim().isNotEmpty) {
-      final raw = phone.trim();
-      final dial = _phoneDialOptions
-          .map((o) => o.dialCode)
-          .firstWhere(
-            (code) => raw.startsWith(code),
-            orElse: () => '',
-          );
-      if (dial.isNotEmpty) {
-        _phoneDialCode = dial;
-        _phone.text = raw.substring(dial.length).trim();
-      } else {
-        _phone.text = raw;
-      }
+      final parsed = PhoneNumberUtils.parseStored(phone);
+      _phoneDialCode = parsed.dialCode;
+      _phone.text = parsed.local;
     } else {
       _phoneRequiredOnExtras = true;
     }
@@ -563,9 +543,10 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       final prenom = _prenom.text.trim();
       final nom = _nom.text.trim();
       final email = _email.text.trim();
-      final phoneNumber = _phone.text.trim();
-      final phone =
-          phoneNumber.isEmpty ? '' : '$_phoneDialCode $phoneNumber';
+      final phone = PhoneNumberUtils.toStored(
+        dialCode: _phoneDialCode,
+        local: _phone.text,
+      );
 
       User? session = switch (
           providerContainer.read(authNotifierProvider)) {
@@ -875,74 +856,16 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
             icon: Icons.contact_phone_outlined,
             child: Column(
               children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 132,
-                      child: DropdownButtonFormField<String>(
-                        value: _phoneDialCode,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: '+',
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AuthFormStyles.fieldRadius),
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 14,
-                          ),
-                        ),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontFamily: AppFonts.body,
-                              fontWeight: FontWeight.w600,
-                            ),
-                        selectedItemBuilder: (context) =>
-                            _phoneDialOptions
-                                .map(
-                                  (o) => Align(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    child: Text(
-                                      '${o.flag} ${o.dialCode}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                        items: _phoneDialOptions
-                            .map(
-                              (o) => DropdownMenuItem<String>(
-                                value: o.dialCode,
-                                child: Text('${o.flag} ${o.dialCode}'),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: formEnabled
-                            ? (value) {
-                                if (value == null) return;
-                                setState(() => _phoneDialCode = value);
-                              }
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: AppTextField(
-                        dense: true,
-                        controller: _phone,
-                        onChanged: (_) => setState(() => _phoneError = null),
-                        enabled: formEnabled,
-                        label: AuthStrings.registerFieldPhone,
-                        hint: AuthStrings.registerFieldPhoneHint,
-                        errorText: _phoneError,
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.telephoneNumber],
-                      ),
-                    ),
-                  ],
+                PhoneNumberField(
+                  dense: true,
+                  enabled: formEnabled,
+                  localController: _phone,
+                  dialCode: _phoneDialCode,
+                  errorText: _phoneError,
+                  onDialCodeChanged: (code) {
+                    setState(() => _phoneDialCode = code);
+                  },
+                  onLocalChanged: () => setState(() => _phoneError = null),
                 ),
                 const SizedBox(height: _fieldGap),
                 AppTextField(
@@ -987,12 +910,28 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                     label: AuthStrings.loginFieldPassword,
                     hint: AuthStrings.registerFieldPasswordHint,
                     errorText: _passwordError,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.newPassword],
                     prefixIcon: Icon(
                       Icons.lock_outline,
                       color: onSurfaceVariant,
+                    ),
+                    suffixIcon: IconButton(
+                      tooltip: _obscurePassword
+                          ? AuthStrings.loginShowPassword
+                          : AuthStrings.loginHidePassword,
+                      onPressed: formEnabled
+                          ? () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              )
+                          : null,
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: onSurfaceVariant,
+                      ),
                     ),
                   ),
                   const SizedBox(height: _fieldGap),
@@ -1003,12 +942,29 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                     enabled: formEnabled,
                     label: AuthStrings.registerFieldConfirmPassword,
                     errorText: _confirmError,
-                    obscureText: true,
+                    obscureText: _obscureConfirmPassword,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.newPassword],
                     prefixIcon: Icon(
                       Icons.lock_outline,
                       color: onSurfaceVariant,
+                    ),
+                    suffixIcon: IconButton(
+                      tooltip: _obscureConfirmPassword
+                          ? AuthStrings.loginShowPassword
+                          : AuthStrings.loginHidePassword,
+                      onPressed: formEnabled
+                          ? () => setState(
+                                () => _obscureConfirmPassword =
+                                    !_obscureConfirmPassword,
+                              )
+                          : null,
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
@@ -1100,23 +1056,19 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
               title: AuthStrings.registerSectionContact,
               subtitle: AuthStrings.registerGooglePhoneHint,
               icon: Icons.phone_outlined,
-              child: AppTextField(
+              child: PhoneNumberField(
                 dense: true,
-                controller: _phone,
-                onChanged: (_) => setState(() {
+                enabled: formEnabled,
+                localController: _phone,
+                dialCode: _phoneDialCode,
+                errorText: _phoneError,
+                onDialCodeChanged: (code) {
+                  setState(() => _phoneDialCode = code);
+                },
+                onLocalChanged: () => setState(() {
                   _phoneError = null;
                   _error = null;
                 }),
-                enabled: formEnabled,
-                label: AuthStrings.registerFieldPhone,
-                hint: AuthStrings.registerFieldPhoneHint,
-                errorText: _phoneError,
-                keyboardType: TextInputType.phone,
-                autofillHints: const [AutofillHints.telephoneNumber],
-                prefixIcon: Icon(
-                  Icons.phone_outlined,
-                  color: onSurfaceVariant,
-                ),
               ),
             ),
             const SizedBox(height: _sectionGap),
@@ -1231,7 +1183,52 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: _sectionGap),
+            _PrestaSubscriptionRegisterHint(
+              onSurfaceVariant: onSurfaceVariant,
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PrestaSubscriptionRegisterHint extends StatelessWidget {
+  const _PrestaSubscriptionRegisterHint({required this.onSurfaceVariant});
+
+  final Color onSurfaceVariant;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.card_membership_outlined,
+            size: 22,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              DiscPrestaSub.registerHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );

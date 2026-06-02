@@ -61,12 +61,17 @@ extension AppNavigationX on BuildContext {
   void pushPrestataireProfileComplete() =>
       pushNamed(AppRouteNames.prestataireProfileComplete);
   void pushPrestataireHoraires() => pushNamed(AppRouteNames.prestataireHoraires);
+  void pushPrestataireSubscription() =>
+      pushNamed(AppRouteNames.prestataireSubscription);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
   void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
+  void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
+  void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);
+  void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
   void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
@@ -75,6 +80,10 @@ extension AppNavigationX on BuildContext {
         pathParameters: {'bookingId': bookingId},
       );
   void goMyReservations() => goNamed(AppRouteNames.clientReservations);
+  void pushClientReservationDetail(String reservationId) => pushNamed(
+        AppRouteNames.clientReservationDetail,
+        pathParameters: {'id': reservationId},
+      );
 
   void goBooking({String? prestataireId, String? serviceId}) {
     final id = prestataireId?.trim();
@@ -100,7 +109,7 @@ extension AppNavigationX on BuildContext {
   void pushPrestataireDetail(String id) =>
       pushNamed(AppRouteNames.prestataireDetail, pathParameters: {'id': id});
   void pushPrestataire() => pushNamed(AppRouteNames.prestataireProfile);
-  void pushBooking({String? prestataireId, String? serviceId}) {
+  void pushBooking({String? prestataireId, String? serviceId, DateTime? day}) {
     final id = prestataireId?.trim();
     final service = serviceId?.trim();
     if (id != null && id.isNotEmpty) {
@@ -109,6 +118,10 @@ extension AppNavigationX on BuildContext {
         queryParameters: {
           'prestataireId': id,
           if (service != null && service.isNotEmpty) 'serviceId': service,
+          if (day != null)
+            'date': '${day.year.toString().padLeft(4, '0')}-'
+                '${day.month.toString().padLeft(2, '0')}-'
+                '${day.day.toString().padLeft(2, '0')}',
         },
       );
     } else {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../favorites/providers/client_favorite_prestataire_ids_provider.dart';
@@ -38,8 +37,10 @@ class ProfileStatsRow extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      child: Row(
-        children: [
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           Expanded(
             child: _StatTile(
               label: DiscProfile.statAppointments,
@@ -55,7 +56,6 @@ class ProfileStatsRow extends ConsumerWidget {
               value: favoritesValue,
               icon: Icons.favorite_rounded,
               color: primary,
-              onTap: () => context.pushClientFavorites(),
             ),
           ),
           const SizedBox(width: 8),
@@ -68,6 +68,7 @@ class ProfileStatsRow extends ConsumerWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -79,27 +80,26 @@ class _StatTile extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
-    this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color color;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final child = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 18, color: color),
           const SizedBox(height: 6),
@@ -111,31 +111,28 @@ class _StatTile extends StatelessWidget {
               color: color,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: AppFonts.body,
-              fontSize: 10,
-              height: 1.15,
-              color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 26,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    fontSize: 10,
+                    height: 1.1,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
-      ),
-    );
-
-    if (onTap == null) return child;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: child,
       ),
     );
   }

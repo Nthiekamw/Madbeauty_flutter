@@ -59,7 +59,9 @@ Synthèse **MVP** (première version utilisable) vs **V2** (extensions et maturi
 
 ### Paiements & prestataire
 
-- Stripe / Stripe Connect : acompte, solde, commissions
+- Stripe / Stripe Connect : acompte 20 %, frais 1 € (3ᵉ résa+), solde sur place — voir [MODELE_TARIFAIRE.md](./MODELE_TARIFAIRE.md)
+- Abonnement prestataire (Stripe Checkout) — voir [STRIPE_SUBSCRIPTION_SETUP.md](./STRIPE_SUBSCRIPTION_SETUP.md)
+- Abonnement prestataire (grille définie, facturation à brancher)
 - Écran revenus & stats (agrégations, exports)
 
 ### Social & confiance

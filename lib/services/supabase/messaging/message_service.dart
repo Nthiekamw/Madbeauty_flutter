@@ -6,6 +6,7 @@ import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
+import '../../../features/messaging/logic/chat_message_moderator.dart';
 
 /// Couche data messagerie (réservation / booking + Supabase Realtime).
 class MessageService {
@@ -65,8 +66,9 @@ class MessageService {
           if (text.isEmpty) {
             throw ArgumentError('Le contenu du message est vide.');
           }
-          if (containsPhoneNumber(text)) {
-            throw const MessageValidationException.phoneNumberNotAllowed();
+          final moderation = ChatMessageModerator.analyze(text);
+          if (moderation.isBlocked) {
+            throw MessageValidationException(moderation.primary!);
           }
           final thread = await ensureThreadForBooking(bookingId);
           await _client.from('messages').insert({
@@ -78,14 +80,6 @@ class MessageService {
           });
         },
       );
-
-  static bool containsPhoneNumber(String text) {
-    final normalized = text.replaceAll(RegExp(r'[^\d+]'), '');
-    final digitsOnly = normalized.replaceAll(RegExp(r'\D'), '');
-    if (digitsOnly.length < 8) return false;
-    final pattern = RegExp(r'(?:\+?\d[\d .-]{7,}\d)');
-    return pattern.hasMatch(text);
-  }
 
   /// Flux temps réel des messages d'une réservation.
   Stream<List<Message>> getMessages(String bookingId) => watchMessages(bookingId);
@@ -328,8 +322,12 @@ class MessageService {
 enum MessagingParticipantRole { client, prestataire }
 
 class MessageValidationException implements Exception {
-  const MessageValidationException.phoneNumberNotAllowed()
-    : code = 'phone_number_not_allowed';
+  MessageValidationException(this.violation) : code = violation.name;
 
+  MessageValidationException.phoneNumberNotAllowed()
+      : violation = ChatMessageViolationType.phoneNumber,
+        code = ChatMessageViolationType.phoneNumber.name;
+
+  final ChatMessageViolationType violation;
   final String code;
 }

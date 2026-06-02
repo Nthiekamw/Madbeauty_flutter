@@ -1,3 +1,5 @@
+import '../logic/reservation_payment_display.dart';
+
 class ClientReservationSummary {
   const ClientReservationSummary({
     required this.id,
@@ -11,6 +13,13 @@ class ClientReservationSummary {
     this.currency,
     this.paidAt,
     this.paymentStatus,
+    this.paymentMode,
+    this.servicePriceCents,
+    this.platformFeeCents,
+    this.prestataireAmountCents,
+    this.serviceId,
+    this.notesPrestataire,
+    this.durationMinutes = 60,
   });
 
   final String id;
@@ -19,12 +28,31 @@ class ClientReservationSummary {
   final String? serviceName;
   final String? prestataireId;
   final String? prestataireName;
-  /// Photo affichée dans la liste (profil identité du prestataire).
   final String? prestataireAvatarUrl;
   final int? amountCents;
   final String? currency;
   final DateTime? paidAt;
   final String? paymentStatus;
+  final String? paymentMode;
+  final int? servicePriceCents;
+  final int? platformFeeCents;
+  final int? prestataireAmountCents;
+  final String? serviceId;
+  final String? notesPrestataire;
+  final int durationMinutes;
+
+  bool get hasRejectReason =>
+      notesPrestataire != null && notesPrestataire!.trim().isNotEmpty;
+
+  ReservationPaymentDisplay get paymentDisplay =>
+      ReservationPaymentDisplay.fromFields(
+        paymentMode: paymentMode,
+        servicePriceCents: servicePriceCents,
+        platformFeeCents: platformFeeCents,
+        prestataireAmountCents: prestataireAmountCents,
+        amountCents: amountCents,
+        paymentStatus: paymentStatus,
+      );
 
   bool get hasPaymentReceipt =>
       amountCents != null &&
@@ -34,7 +62,6 @@ class ClientReservationSummary {
 
   String get formattedPaidAmount {
     if (amountCents == null) return '';
-    final euros = amountCents! / 100;
-    return '${euros.toStringAsFixed(2)} €';
+    return formatCentsEur(amountCents!);
   }
 }

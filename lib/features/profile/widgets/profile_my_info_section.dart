@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../shared/utils/phone_number_utils.dart';
 import '../providers/profile_city_provider.dart';
 import 'profile_info_row.dart';
 import 'profile_section_title.dart';
-import 'profile_stats_row.dart';
-
 class ProfileMyInfoSection extends ConsumerWidget {
   const ProfileMyInfoSection({
     super.key,
@@ -50,7 +49,9 @@ class ProfileMyInfoSection extends ConsumerWidget {
               ProfileInfoRow(
                 icon: Icons.phone_outlined,
                 label: DiscProfile.labelPhone,
-                value: phone.isNotEmpty ? phone : '—',
+                value: phone.isNotEmpty
+                    ? PhoneNumberUtils.formatForDisplay(phone)
+                    : '—',
               ),
               Divider(
                 height: 1,
@@ -65,7 +66,6 @@ class ProfileMyInfoSection extends ConsumerWidget {
                 label: DiscProfile.labelCity,
                 value: city,
               ),
-              const ProfileStatsRow(),
             ],
           ),
         ),
