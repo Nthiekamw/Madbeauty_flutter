@@ -1,4 +1,4 @@
-/// Grille d’abonnement prestataire (facturation à brancher — voir [docs/MODELE_TARIFAIRE.md]).
+﻿/// Grille d’abonnement prestataire (facturation à brancher — voir [docs/MODELE_TARIFAIRE.md]).
 abstract final class PrestataireSubscriptionConfig {
   PrestataireSubscriptionConfig._();
 

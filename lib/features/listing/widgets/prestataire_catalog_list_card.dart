@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/utils/text_normalizer.dart';
@@ -72,13 +73,13 @@ class _ExpandedCatalogCard extends StatelessWidget {
     final location = [
       if (ville != null && ville.isNotEmpty) ville,
       if (cp != null && cp.isNotEmpty) cp,
-    ].join(' · ');
+    ].join(' Â· ');
     final teaser = _teaserText(profile.description, profile.bio);
     final rating = profile.noteMoyenne;
     const photoWidth = 112.0;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       borderRadius: cardRadius,
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
@@ -204,7 +205,7 @@ class _ExpandedCatalogCard extends StatelessWidget {
                                       DiscClientWorkspace.distanceKm(
                                         distanceKm!,
                                       ),
-                                  ].join(' · '),
+                                  ].join(' Â· '),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodySmall?.copyWith(
@@ -222,7 +223,7 @@ class _ExpandedCatalogCard extends StatelessWidget {
                               Icon(
                                 Icons.star_rounded,
                                 size: 16,
-                                color: const Color(0xFFE6A817),
+                                color: AppColors.starAmber,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -327,7 +328,7 @@ class _VerticalCatalogCard extends StatelessWidget {
         compact ? compactPhotoH : DiscoveryStyles.catalogCardPhotoHeight;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       borderRadius: cardRadius,
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
@@ -580,7 +581,7 @@ class _AvailableBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF22C55E),
+        color: AppColors.availableBadge,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -589,7 +590,7 @@ class _AvailableBadge extends StatelessWidget {
           fontFamily: AppFonts.body,
           fontWeight: FontWeight.w700,
           fontSize: 10,
-          color: Colors.white,
+          color: AppColors.white,
         ),
       ),
     );
@@ -610,7 +611,7 @@ class _RatingBadge extends StatelessWidget {
         vertical: compact ? 3 : 4,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
+        color: AppColors.scrimDark55,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -619,7 +620,7 @@ class _RatingBadge extends StatelessWidget {
           Icon(
             Icons.star_rounded,
             size: compact ? 12 : 14,
-            color: const Color(0xFFFBBF24),
+            color: AppColors.starGold,
           ),
           const SizedBox(width: 3),
           Text(
@@ -628,7 +629,7 @@ class _RatingBadge extends StatelessWidget {
               fontFamily: AppFonts.body,
               fontWeight: FontWeight.w700,
               fontSize: compact ? 10 : 12,
-              color: Colors.white,
+              color: AppColors.white,
             ),
           ),
         ],
@@ -670,3 +671,4 @@ class _SpecialtyChip extends StatelessWidget {
     );
   }
 }
+

@@ -73,7 +73,7 @@ class BookingPushNotifications {
     if (!isConfigured) {
       if (kDebugMode) {
         debugPrint(
-          'BookingPushNotifications: Firebase non configuré — exécuter '
+          'BookingPushNotifications: Firebase non configuré – exécuter '
           '`dart run flutterfire_cli:flutterfire configure`.',
         );
       }
@@ -100,7 +100,7 @@ class BookingPushNotifications {
       }
     } catch (e, st) {
       if (kDebugMode) {
-        debugPrint('BookingPushNotifications: init Firebase — $e\n$st');
+        debugPrint('BookingPushNotifications: init Firebase – $e\n$st');
       }
       return;
     }
@@ -182,7 +182,7 @@ class BookingPushNotifications {
     if (Platform.isAndroid) {
       const channel = AndroidNotificationChannel(
         madBeautyBookingAndroidChannelId,
-        'MadBeauty — réservations',
+        'MadBeauty – réservations',
         description: 'Demandes et statuts de réservation.',
         importance: Importance.high,
       );
@@ -219,7 +219,7 @@ class BookingPushNotifications {
     if (notification != null) {
       final androidDetails = AndroidNotificationDetails(
         madBeautyBookingAndroidChannelId,
-        'MadBeauty — réservations',
+        'MadBeauty – réservations',
         channelDescription: 'Demandes et statuts de réservation.',
         importance: Importance.high,
         priority: Priority.high,
@@ -262,3 +262,4 @@ class BookingPushNotifications {
     } catch (_) {}
   }
 }
+

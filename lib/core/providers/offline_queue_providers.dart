@@ -78,3 +78,4 @@ class OfflineActionQueueNotifier extends Notifier<List<PendingOfflineAction>> {
     }
   }
 }
+

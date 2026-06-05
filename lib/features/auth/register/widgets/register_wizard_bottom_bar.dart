@@ -28,45 +28,59 @@ class RegisterWizardBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (showBack) ...[
-          OutlinedButton(
-            onPressed: (isLoading || !enabled) ? null : onBack,
-            style: AuthFormStyles.secondaryButtonStyle(theme).copyWith(
-              minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              ),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.arrow_back_rounded,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  AuthStrings.registerWizardBack,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
-                  style: TextStyle(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: theme.colorScheme.primary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 340;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (showBack) ...[
+              OutlinedButton(
+                onPressed: (isLoading || !enabled) ? null : onBack,
+                style: AuthFormStyles.secondaryButtonStyle(theme).copyWith(
+                  minimumSize: WidgetStatePropertyAll(
+                    Size(narrow ? 48 : 0, 48),
                   ),
+                  padding: WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(
+                      horizontal: narrow ? 12 : 14,
+                      vertical: 14,
+                    ),
+                  ),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
+                child: narrow
+                    ? Icon(
+                        Icons.arrow_back_rounded,
+                        size: 22,
+                        color: theme.colorScheme.primary,
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.arrow_back_rounded,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            AuthStrings.registerWizardBack,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                            style: TextStyle(
+                              fontFamily: AppFonts.body,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              const SizedBox(width: 12),
+            ],
         Expanded(
           child: AppButton(
             isLoading: isLoading,
@@ -85,7 +99,10 @@ class RegisterWizardBottomBar extends StatelessWidget {
             ),
           ),
         ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
+

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/theme/app_fonts.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
@@ -18,32 +17,39 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../models/prestataire_service_catalog_selection.dart';
 import '../models/prestataire_service_field_set.dart';
-import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/profile/prestataire_form_scroll_view.dart';
-import '../widgets/profile/prestataire_profile_basics_step.dart';
-import '../widgets/profile/prestataire_profile_client_experience_step.dart';
+import '../widgets/profile/hub/prestataire_hub_layout.dart';
+import '../widgets/profile/prestataire_hub_step_frame.dart';
+import '../widgets/profile/overview/prestataire_form_scroll_view.dart';
+import '../widgets/profile/steps/prestataire_hub_steps.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/weekly_jour_horaire.dart';
 import '../providers/disponibilite_provider.dart';
 import '../widgets/dialogs/prestataire_onboarding_finish_dialog.dart';
-import '../widgets/profile/prestataire_profile_gallery_step.dart';
-import '../widgets/profile/prestataire_profile_load_error.dart';
-import '../widgets/profile/prestataire_onboarding_services_panel.dart';
-import '../widgets/profile/prestataire_subscription_onboarding_panel.dart';
-import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
+import '../widgets/profile/overview/prestataire_profile_load_error.dart';
+import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
+import '../widgets/profile/subscription/prestataire_subscription_onboarding_panel.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../providers/current_prestataire_provider.dart';
+import '../providers/resolve_prestataire_id.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
+import '../navigation/prestataire_hub_wizard_navigation.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 
 /// Formulaire de profil professionnel prestataire.
 class PrestataireHubScreen extends ConsumerStatefulWidget {
-  const PrestataireHubScreen({super.key, this.focusedSection});
+  const PrestataireHubScreen({
+    super.key,
+    this.focusedSection,
+    this.initialStep,
+  });
 
   final PrestataireProfileEditSection? focusedSection;
+
+  /// Étape initiale du wizard (0–6) lorsque [focusedSection] est null.
+  final int? initialStep;
 
   @override
   ConsumerState<PrestataireHubScreen> createState() =>
@@ -116,6 +122,11 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     final section = widget.focusedSection;
     if (section != null) {
       _currentStep = section.hubStepIndex;
+    } else if (widget.initialStep != null) {
+      _currentStep = widget.initialStep!.clamp(0, wizardStepCount - 1);
+      unawaited(
+        PrestataireHubWizardNavigation.prepareWizardSession(step: _currentStep),
+      );
     }
     if (PrestataireHubOnboardingDraft.isActive) {
       unawaited(PrestataireHubOnboardingDraft.markStep2Started());
@@ -502,21 +513,38 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     _schedulePersistHubDraft();
   }
 
+  bool get _shouldPersistHoraires =>
+      widget.focusedSection == null ||
+      widget.focusedSection == PrestataireProfileEditSection.horaires ||
+      _currentStep == 5;
+
   Future<bool> _saveHorairesIfNeeded() async {
     final jours = _horaireWeek;
-    if (jours == null || !jours.hasAnyOpenDay) return true;
-    if (!jours.validatePlages()) {
+    if (jours == null) return true;
+
+    if (jours.hasAnyOpenDay && !jours.validatePlages()) {
       setState(() => _horairesError = DiscPrestaHoraires.invalidPlage);
+      if (mounted) {
+        _showSnack(DiscPrestaHoraires.invalidPlage, kind: AppSnackKind.error);
+      }
       return false;
     }
+
     final service = ref.read(disponibiliteServiceProvider);
-    final presta = await ref.read(currentPrestataireProvider.future);
-    if (service == null || presta == null) {
-      setState(() => _horairesError = DiscPrestaHoraires.saveErr);
+    final prestaId = await resolveConnectedPrestataireId(ref.container);
+    if (service == null || prestaId == null) {
+      setState(() => _horairesError = DiscPrestaHoraires.congesProfileErr);
+      if (mounted) {
+        _showSnack(DiscPrestaHoraires.congesProfileErr, kind: AppSnackKind.error);
+      }
       return false;
     }
-    await service.setHoraires(presta.id, jours.toPlages());
+
+    await service.setHoraires(prestaId, jours.toPlages());
     invalidateDisponibiliteProviders(ref);
+    if (mounted && widget.focusedSection == PrestataireProfileEditSection.horaires) {
+      _showSnack(DiscPrestaHoraires.saveOk, kind: AppSnackKind.success);
+    }
     return true;
   }
 
@@ -553,6 +581,14 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   }
 
   void _syncServicesFromCatalog() {
+    final preserved = <String, ({String? id, String prix, String duree})>{
+      for (final s in _services)
+        s.nomController.text.trim().toLowerCase(): (
+          id: s.id,
+          prix: s.prixController.text,
+          duree: s.dureeController.text,
+        ),
+    };
     final existing = _services
         .map(
           (s) => PrestataireServiceFormData(
@@ -570,8 +606,27 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _catalogSelection.toServiceFormData(existing: existing);
     _disposeServices();
     for (final service in generated) {
-      _services.add(PrestataireServiceFieldSet.fromData(service));
+      final key = service.nom.trim().toLowerCase();
+      final keep = preserved[key];
+      _services.add(
+        PrestataireServiceFieldSet(
+          id: keep?.id ?? service.id,
+          nom: service.nom,
+          description: service.description,
+          categorieId: service.categorieId,
+          prix: keep?.prix ?? _prixFieldText(service.prix),
+          duree: keep?.duree ?? service.dureeMinutes.toString(),
+        ),
+      );
     }
+  }
+
+  /// Texte affiché dans le champ prix (vide si non renseigné).
+  String _prixFieldText(double prix) {
+    if (prix <= 0) return '';
+    return prix == prix.roundToDouble()
+        ? prix.toInt().toString()
+        : prix.toStringAsFixed(2);
   }
 
   bool _validatePricing() {
@@ -758,13 +813,21 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _validateServices();
     final service = ref.read(prestataireProfileFormServiceProvider);
 
+    var profileSaved = false;
     if (canSaveCore && service != null) {
       setState(() => _saving = true);
       try {
         await service.save(_buildSavePayload());
+        ref.invalidate(currentPrestataireProvider);
         if (_horaireWeek != null && _horaireWeek!.hasAnyOpenDay) {
-          await _saveHorairesIfNeeded();
+          final horairesOk = await _saveHorairesIfNeeded();
+          if (!horairesOk) {
+            if (mounted) {
+              _showSnack(DiscPrestaHoraires.saveErr, kind: AppSnackKind.warning);
+            }
+          }
         }
+        profileSaved = true;
       } on AppFailure catch (e) {
         if (mounted) {
           _showSnack(e.message, kind: AppSnackKind.error);
@@ -779,10 +842,17 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     }
 
     if (!mounted) return;
-    _showSnack(
-      DiscPrestaForm.completeLaterSaved,
-      kind: AppSnackKind.info,
-    );
+    if (profileSaved) {
+      _showSnack(
+        DiscPrestaForm.completeLaterSaved,
+        kind: AppSnackKind.info,
+      );
+    } else if (!canSaveCore) {
+      _showSnack(
+        DiscPrestaForm.completeLaterNeedsCore,
+        kind: AppSnackKind.warning,
+      );
+    }
     context.goPrestataireDashboard();
   }
 
@@ -813,14 +883,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       return;
     }
 
-    if (widget.focusedSection == null) {
-      final horairesOk = await _saveHorairesIfNeeded();
-      if (!horairesOk) {
-        setState(() => _currentStep = 5);
-        return;
-      }
-    }
-
     setState(() {
       _saving = true;
       _uploadProgress = _avatarBytes == null ? null : 0;
@@ -833,6 +895,23 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
           setState(() => _uploadProgress = progress);
         },
       );
+
+      ref.invalidate(currentPrestataireProvider);
+
+      if (_shouldPersistHoraires) {
+        final horairesOk = await _saveHorairesIfNeeded();
+        if (!horairesOk) {
+          if (!mounted) return;
+          setState(() {
+            _saving = false;
+            _uploadProgress = null;
+            if (widget.focusedSection == null) {
+              _currentStep = 5;
+            }
+          });
+          return;
+        }
+      }
 
       var updated = await ref.refresh(prestataireProfileFormProvider.future);
       final prestataireId = updated.prestataireId;
@@ -917,21 +996,14 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           surfaceTintColor: Colors.transparent,
           scrolledUnderElevation: 0,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(focused?.screenTitle ?? DiscPrestaProfile.editTitle),
-              if (onboarding && focused == null)
-                Text(
-                  DiscPrestaForm.hubWizardProgressLabel(
-                    _currentStep + 1,
-                    wizardStepCount,
-                  ),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
+          title: Text(
+            focused?.screenTitle ?? DiscPrestaProfile.editTitle,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.onSurface,
+              letterSpacing: -0.3,
+            ),
           ),
           actions: [
             if (onboarding && focused == null)
@@ -1030,8 +1102,12 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
               _pendingGallery.removeAt(index);
               _galleryError = null;
             }),
-            onServicesChanged: () => setState(() {
+            onCatalogChanged: () => setState(() {
               _servicesError = null;
+              _pricingError = null;
+              _syncServicesFromCatalog();
+            }),
+            onPricingChanged: () => setState(() {
               _pricingError = null;
             }),
             horaireWeek: _horaireWeek,
@@ -1047,7 +1123,16 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             },
             onPickHoraireStart: (index) => _pickHoraireTime(index, true),
             onPickHoraireEnd: (index) => _pickHoraireTime(index, false),
-            onboardingWizard: onboarding && focused == null,
+            onCapaciteChanged: (index, capacite) {
+              final jours = _horaireWeek;
+              if (jours == null) return;
+              setState(() {
+                jours[index].capaciteSimultanee = capacite;
+                _horairesError = null;
+              });
+              _schedulePersistHubDraft();
+            },
+            onboardingWizard: focused == null,
             onCompleteLater: _completeLater,
               );
             },
@@ -1117,12 +1202,14 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.onPickGallery,
     required this.onRemoveGalleryPhoto,
     required this.onRemovePendingGallery,
-    required this.onServicesChanged,
+    required this.onCatalogChanged,
+    required this.onPricingChanged,
     required this.horaireWeek,
     required this.horairesError,
     required this.onToggleHoraireDay,
     required this.onPickHoraireStart,
     required this.onPickHoraireEnd,
+    required this.onCapaciteChanged,
     required this.onboardingWizard,
     required this.onCompleteLater,
   });
@@ -1183,18 +1270,40 @@ class _PrestataireProfileForm extends StatelessWidget {
   final VoidCallback onPickGallery;
   final ValueChanged<PhotoRealisation> onRemoveGalleryPhoto;
   final ValueChanged<int> onRemovePendingGallery;
-  final VoidCallback onServicesChanged;
+  final VoidCallback onCatalogChanged;
+  final VoidCallback onPricingChanged;
   final List<WeeklyJourHoraire>? horaireWeek;
   final String? horairesError;
   final void Function(int index, bool enabled) onToggleHoraireDay;
   final Future<void> Function(int index) onPickHoraireStart;
   final Future<void> Function(int index) onPickHoraireEnd;
+  final void Function(int index, int capacite) onCapaciteChanged;
   final bool onboardingWizard;
   final VoidCallback onCompleteLater;
 
-  Widget _stepContent(PrestataireProfileEditSection section) {
+  String _hubStepGoal(int step) => switch (step) {
+        0 => DiscPrestaForm.hubGoalBasics,
+        1 => DiscPrestaForm.hubGoalLocation,
+        2 => DiscPrestaForm.hubGoalServices,
+        3 => DiscPrestaForm.hubGoalGallery,
+        4 => DiscPrestaForm.hubGoalComfort,
+        5 => DiscPrestaForm.hubGoalHoraires,
+        _ => DiscPrestaForm.hubGoalSubscription,
+      };
+
+  HubStepRequirement? _hubStepRequirement(int step) => switch (step) {
+        0 || 1 || 2 => HubStepRequirement.required,
+        3 || 4 || 5 => HubStepRequirement.recommended,
+        _ => HubStepRequirement.optional,
+      };
+
+  Widget _stepContent(
+    PrestataireProfileEditSection section, {
+    bool guided = false,
+  }) {
     return switch (section) {
       PrestataireProfileEditSection.vitrine => PrestataireProfileBasicsStep(
+        guidedMode: guided,
         nomController: nomController,
         nomAfficheController: nomAfficheController,
         descriptionController: descriptionController,
@@ -1226,6 +1335,7 @@ class _PrestataireProfileForm extends StatelessWidget {
         vitrineOnly: true,
       ),
       PrestataireProfileEditSection.location => PrestataireProfileBasicsStep(
+        guidedMode: guided,
         nomController: nomController,
         nomAfficheController: nomAfficheController,
         descriptionController: descriptionController,
@@ -1258,11 +1368,13 @@ class _PrestataireProfileForm extends StatelessWidget {
       ),
       PrestataireProfileEditSection.services =>
           PrestataireOnboardingServicesPanel(
+        guidedMode: guided,
         catalogSelection: catalogSelection,
         services: services,
         catalogError: servicesError,
         pricingError: pricingError,
-        onChanged: onServicesChanged,
+        onCatalogChanged: onCatalogChanged,
+        onPricingChanged: onPricingChanged,
       ),
       PrestataireProfileEditSection.gallery => PrestataireProfileGalleryStep(
         photos: galleryPhotos,
@@ -1273,6 +1385,7 @@ class _PrestataireProfileForm extends StatelessWidget {
         onPick: onPickGallery,
         onRemoveExisting: onRemoveGalleryPhoto,
         onRemovePending: onRemovePendingGallery,
+        embeddedInHub: guided,
       ),
       PrestataireProfileEditSection.clientExperience =>
         PrestataireProfileClientExperienceStep(
@@ -1283,6 +1396,7 @@ class _PrestataireProfileForm extends StatelessWidget {
           onAddCustomComfort: onAddCustomComfort,
           onAddCustomCondition: onAddCustomCondition,
           onChanged: onBasicsChanged,
+          embeddedInHub: guided,
         ),
       PrestataireProfileEditSection.horaires => horaireWeek == null
           ? const Center(child: CircularProgressIndicator())
@@ -1292,6 +1406,9 @@ class _PrestataireProfileForm extends StatelessWidget {
               onToggleDay: onToggleHoraireDay,
               onPickStart: onPickHoraireStart,
               onPickEnd: onPickHoraireEnd,
+              onCapaciteChanged: onCapaciteChanged,
+              showIntro: !guided,
+              embeddedInHub: guided,
             ),
     };
   }
@@ -1303,8 +1420,9 @@ class _PrestataireProfileForm extends StatelessWidget {
 
     if (focused != null) {
       return PrestataireFormScrollView(
+        padding: PrestataireHubLayout.pagePadding(context),
         children: [
-          _stepContent(focused),
+          _stepContent(focused, guided: false),
           const SizedBox(height: 20),
           FilledButton(
             onPressed: saving ? null : onContinue,
@@ -1335,12 +1453,8 @@ class _PrestataireProfileForm extends StatelessWidget {
       5 => DiscPrestaForm.stepHoraires,
       _ => DiscPrestaSub.onboardingTitle,
     };
-    final currentSubtitle = switch (currentStep) {
-      4 =>
-        'Décris ton confort et tes conditions pour instaurer la confiance, clarifier tes règles et augmenter les réservations confirmées.',
-      6 => DiscPrestaSub.onboardingBody,
-      _ => DiscPrestaForm.intro,
-    };
+    final stepGoal = _hubStepGoal(currentStep);
+    final stepRequirement = _hubStepRequirement(currentStep);
     final isLast = currentStep == wizardStepCount - 1;
     final isOptional = currentStep >= optionalFromStep && !isLast;
     final continueLabel = saving
@@ -1349,34 +1463,64 @@ class _PrestataireProfileForm extends StatelessWidget {
             ? DiscPrestaForm.save
             : DiscPrestaForm.onward;
 
-    final steps = _hubSteps;
+    final steps = kPrestataireHubSteps;
     final stepMeta = steps[currentStep.clamp(0, steps.length - 1)];
+    final wrapStepInSurfaceCard = !isSubscriptionStep &&
+        switch (currentSection) {
+          PrestataireProfileEditSection.gallery ||
+          PrestataireProfileEditSection.horaires =>
+            true,
+          _ => false,
+        };
+
+    Widget stepInner = _stepContent(
+      currentSection,
+      guided: onboardingWizard,
+    );
+    if (wrapStepInSurfaceCard) {
+      stepInner = PrestataireHubSurfaceCard(child: stepInner);
+    }
 
     final stepBody = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _HubHeroCard(
-          step: currentStep + 1,
-          total: wizardStepCount,
-          title: currentTitle,
-          subtitle: currentSubtitle,
+        if (onboardingWizard) ...[
+          PrestataireHubWizardProgress(
+            currentStep: currentStep,
+            totalSteps: wizardStepCount,
+            saving: saving,
+          ),
+          const SizedBox(height: 8),
+          PrestataireHubWizardStepCaption(
+            currentStep: currentStep,
+            totalSteps: wizardStepCount,
+            stepTitle: currentTitle,
+          ),
+          const SizedBox(height: PrestataireHubLayout.sectionGap),
+          PrestataireHubStepNavigator(
+            steps: steps,
+            currentStep: currentStep,
+            enabled: !saving,
+            onTap: onStepTapped,
+          ),
+          const SizedBox(height: PrestataireHubLayout.sectionGap),
+        ],
+        PrestataireHubStepFrame(
+          stepIndex: currentStep + 1,
+          stepTotal: wizardStepCount,
           icon: stepMeta.icon,
-          saving: saving,
-          progress: (currentStep + 1) / wizardStepCount,
+          title: currentTitle,
+          goal: stepGoal,
+          requirement: stepRequirement,
+          stepTip: DiscPrestaForm.hubStepTip(currentStep),
+          child: isSubscriptionStep
+              ? const PrestataireSubscriptionOnboardingPanel(
+                  compact: true,
+                  embeddedInHub: true,
+                )
+              : stepInner,
         ),
-        const SizedBox(height: 12),
-        if (onboardingWizard) _HubStepChipsRow(
-          steps: steps,
-          currentStep: currentStep,
-          enabled: !saving,
-          onTap: onStepTapped,
-        ),
-        if (onboardingWizard) const SizedBox(height: 12),
-        if (isSubscriptionStep)
-          const PrestataireSubscriptionOnboardingPanel(compact: true)
-        else
-          _HubStepSurface(child: _stepContent(currentSection)),
-        const SizedBox(height: 18),
+        const SizedBox(height: PrestataireHubLayout.blockGap),
         if (isSubscriptionStep) ...[
           TextButton(
             onPressed: saving ? null : onContinue,
@@ -1388,102 +1532,43 @@ class _PrestataireProfileForm extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: PrestataireHubLayout.actionGap),
         ],
-        FilledButton(
-          onPressed: saving ? null : onContinue,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: Text(
-            continueLabel,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            if (currentStep > 0)
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.onSurface,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                onPressed: saving ? null : onCancel,
-                child: const Text(DiscPrestaForm.back),
-              ),
-            if (isOptional)
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.onSurfaceVariant,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ).copyWith(
-                  side: WidgetStatePropertyAll(
-                    BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.24),
-                    ),
-                  ),
-                ),
-                onPressed: saving ? null : onContinue,
-                icon: const Icon(Icons.fast_forward_rounded, size: 16),
-                label: const Text(DiscPrestaForm.skipStep),
-              ),
-            if (onboardingWizard && isOptional)
-              FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  foregroundColor: theme.colorScheme.onPrimaryContainer,
-                  backgroundColor: theme.colorScheme.primaryContainer.withValues(
-                    alpha: 0.55,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: saving ? null : onCompleteLater,
-                icon: const Icon(Icons.schedule_outlined, size: 16),
-                label: const Text(DiscPrestaForm.completeLater),
-              ),
-          ],
+        PrestataireHubStepActions(
+          primaryLabel: continueLabel,
+          onPrimary: onContinue,
+          saving: saving,
+          onBack: currentStep > 0 ? onCancel : null,
+          onSkip: isOptional ? onContinue : null,
+          showSkip: isOptional,
+          onCompleteLater: onboardingWizard && isOptional ? onCompleteLater : null,
+          showCompleteLater: onboardingWizard && isOptional,
         ),
       ],
     );
+
+    final pagePad = PrestataireHubLayout.pagePadding(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 980;
         if (!wide) {
           return PrestataireFormScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: pagePad,
             children: [stepBody],
           );
         }
         return PrestataireFormScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: pagePad,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(flex: 62, child: stepBody),
-                const SizedBox(width: 14),
+                const SizedBox(width: PrestataireHubLayout.blockGap),
                 Expanded(
                   flex: 38,
-                  child: _HubRailOverview(
+                  child: PrestataireHubStepsRail(
                     steps: steps,
                     currentStep: currentStep,
                     saving: saving,
@@ -1499,382 +1584,33 @@ class _PrestataireProfileForm extends StatelessWidget {
   }
 }
 
-class _HubStepMeta {
-  const _HubStepMeta({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-}
-
-const List<_HubStepMeta> _hubSteps = [
-  _HubStepMeta(title: DiscPrestaForm.stepBasics, icon: Icons.storefront_outlined),
-  _HubStepMeta(title: DiscPrestaForm.stepLocation, icon: Icons.location_on_outlined),
-  _HubStepMeta(title: DiscPrestaForm.stepServices, icon: Icons.content_cut_rounded),
-  _HubStepMeta(title: DiscPrestaForm.stepGallery, icon: Icons.photo_library_outlined),
-  _HubStepMeta(title: DiscPrestaForm.stepComfort, icon: Icons.favorite_rounded),
-  _HubStepMeta(title: DiscPrestaForm.stepHoraires, icon: Icons.schedule_rounded),
-  _HubStepMeta(
-    title: DiscPrestaCompletion.stepSubscription,
+const List<PrestataireHubStepMeta> kPrestataireHubSteps = [
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepBasics,
+    icon: Icons.storefront_outlined,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepLocation,
+    icon: Icons.location_on_outlined,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepServices,
+    icon: Icons.content_cut_rounded,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepGallery,
+    icon: Icons.photo_library_outlined,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepComfort,
+    icon: Icons.favorite_rounded,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepHoraires,
+    icon: Icons.schedule_rounded,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepSubscription,
     icon: Icons.card_membership_outlined,
   ),
 ];
-
-class _HubHeroCard extends StatelessWidget {
-  const _HubHeroCard({
-    required this.step,
-    required this.total,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.saving,
-    required this.progress,
-  });
-
-  final int step;
-  final int total;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool saving;
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
-    final tertiary = theme.colorScheme.tertiary;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              primary.withValues(alpha: isDark ? 0.55 : 0.85),
-              theme.colorScheme.primaryContainer.withValues(
-                alpha: isDark ? 0.55 : 0.95,
-              ),
-              tertiary.withValues(alpha: isDark ? 0.22 : 0.38),
-            ],
-            stops: const [0.0, 0.55, 1.0],
-          ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.22),
-                        ),
-                      ),
-                      child: Icon(icon, color: Colors.white),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Étape $step / $total',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            title,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.4,
-                              height: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (saving)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white.withValues(alpha: 0.95),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    height: 1.35,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 7,
-                    backgroundColor: Colors.white.withValues(alpha: 0.16),
-                    color: Colors.white.withValues(alpha: 0.92),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HubStepSurface extends StatelessWidget {
-  const _HubStepSurface({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DiscoverySurfaceCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-      child: child,
-    );
-  }
-}
-
-class _HubStepChipsRow extends StatelessWidget {
-  const _HubStepChipsRow({
-    required this.steps,
-    required this.currentStep,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final List<_HubStepMeta> steps;
-  final int currentStep;
-  final bool enabled;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < steps.length; i++) ...[
-            ChoiceChip(
-              avatar: Icon(
-                steps[i].icon,
-                size: 16,
-                color: i == currentStep
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              label: Text(steps[i].title),
-              selected: i == currentStep,
-              onSelected: !enabled ? null : (_) => onTap(i),
-              labelStyle: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: i == currentStep
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              selectedColor: theme.colorScheme.primary,
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-              side: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.14),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            if (i < steps.length - 1) const SizedBox(width: 10),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _HubRailOverview extends StatelessWidget {
-  const _HubRailOverview({
-    required this.steps,
-    required this.currentStep,
-    required this.saving,
-    required this.onTap,
-  });
-
-  final List<_HubStepMeta> steps;
-  final int currentStep;
-  final bool saving;
-  final ValueChanged<int>? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
-    return DiscoverySurfaceCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.map_outlined, size: 20, color: primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Vue d’ensemble',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          for (var i = 0; i < steps.length; i++) ...[
-            _HubRailItem(
-              index: i + 1,
-              title: steps[i].title,
-              icon: steps[i].icon,
-              active: i == currentStep,
-              done: i < currentStep,
-              enabled: onTap != null && !saving,
-              onTap: () => onTap?.call(i),
-            ),
-            if (i < steps.length - 1) const SizedBox(height: 10),
-          ],
-          if (saving) ...[
-            const SizedBox(height: 12),
-            LinearProgressIndicator(minHeight: 4, color: primary),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _HubRailItem extends StatelessWidget {
-  const _HubRailItem({
-    required this.index,
-    required this.title,
-    required this.icon,
-    required this.active,
-    required this.done,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final int index;
-  final String title;
-  final IconData icon;
-  final bool active;
-  final bool done;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-    final muted = theme.colorScheme.onSurfaceVariant;
-    final color = done || active ? primary : muted;
-
-    final tile = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: active
-            ? primary.withValues(alpha: 0.10)
-            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        border: Border.all(
-          color: active
-              ? primary.withValues(alpha: 0.22)
-              : theme.colorScheme.outline.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: done || active ? primary : theme.colorScheme.surface,
-              border: Border.all(
-                color: done || active
-                    ? primary.withValues(alpha: 0.25)
-                    : theme.colorScheme.outline.withValues(alpha: 0.18),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: done
-                ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
-                : Text(
-                    '$index',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w900,
-                      color: done || active ? Colors.white : muted,
-                      height: 1,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 10),
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                color: done || active ? theme.colorScheme.onSurface : muted,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (!enabled) return tile;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: tile,
-      ),
-    );
-  }
-}

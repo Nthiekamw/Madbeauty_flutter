@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../layout/discovery_responsive.dart';
 import '../../theme/discovery_styles.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Carte surface semi-opaque sur fond brand.
 class DiscoverySurfaceCard extends StatelessWidget {
@@ -30,7 +31,7 @@ class DiscoverySurfaceCard extends StatelessWidget {
     final card = Material(
       color: surfaceColor,
       elevation: 0,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: borderRadius,
@@ -64,3 +65,4 @@ class DiscoverySurfaceCard extends StatelessWidget {
     );
   }
 }
+

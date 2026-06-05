@@ -22,3 +22,4 @@ final clientReferralDiscountPercentProvider = Provider<int?>((ref) {
         orElse: () => null,
       );
 });
+

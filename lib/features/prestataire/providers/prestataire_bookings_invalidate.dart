@@ -26,3 +26,4 @@ void invalidatePrestataireBookings(WidgetRef ref) {
 void invalidatePrestataireDashboard(WidgetRef ref) {
   invalidatePrestataireBookings(ref);
 }
+

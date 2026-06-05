@@ -1,4 +1,4 @@
-import 'app_failure.dart';
+﻿import 'app_failure.dart';
 
 class SupabaseServiceException extends AppFailure {
   const SupabaseServiceException({
@@ -17,3 +17,4 @@ class SupabaseServiceException extends AppFailure {
     return 'SupabaseServiceException[$operation]$suffix: $message';
   }
 }
+

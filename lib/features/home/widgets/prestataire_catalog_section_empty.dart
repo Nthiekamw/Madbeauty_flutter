@@ -5,7 +5,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../theme/home_styles.dart';
 
-/// État vide homogène pour les sections catalogue de l’accueil client.
+/// État vide homogène pour les sections catalogue de l'accueil client.
 class PrestataireCatalogSectionEmpty extends StatelessWidget {
   const PrestataireCatalogSectionEmpty({
     super.key,
@@ -71,3 +71,4 @@ class PrestataireCatalogSectionEmpty extends StatelessWidget {
     );
   }
 }
+

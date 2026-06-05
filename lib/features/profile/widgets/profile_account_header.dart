@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
-import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import 'profile_stats_row.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// En-tête profil : photo, nom, statistiques en bas de la carte.
 class ProfileAccountHeader extends StatelessWidget {
@@ -40,12 +40,9 @@ class ProfileAccountHeader extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
     final tertiary = theme.colorScheme.tertiary;
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
     final normalizedDisplayName = normalizeSingleLineText(displayName);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
-      child: DecoratedBox(
+    return DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: DiscoveryStyles.heroBorderRadius,
           gradient: LinearGradient(
@@ -118,7 +115,7 @@ class ProfileAccountHeader extends StatelessWidget {
                       color: primary,
                       shape: const CircleBorder(),
                       elevation: 2,
-                      shadowColor: Colors.black26,
+                      shadowColor: AppColors.scrimDark26,
                       child: InkWell(
                         onTap: onEditPhoto,
                         customBorder: const CircleBorder(),
@@ -127,7 +124,7 @@ class ProfileAccountHeader extends StatelessWidget {
                           child: Icon(
                             Icons.camera_alt_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                         ),
                       ),
@@ -155,10 +152,10 @@ class ProfileAccountHeader extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                    color: AppColors.purpleAccentBg15,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+                      color: AppColors.purpleAccentBorder35,
                     ),
                   ),
                   child: Row(
@@ -167,14 +164,14 @@ class ProfileAccountHeader extends StatelessWidget {
                       const Icon(
                         Icons.military_tech_rounded,
                         size: 18,
-                        color: Color(0xFF7C3AED),
+                        color: AppColors.ambassador,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         DiscProfile.ambassadorBadgeLabel,
                         style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF6D28D9),
+                          color: AppColors.ambassadorMid,
                         ),
                       ),
                     ],
@@ -202,8 +199,7 @@ class ProfileAccountHeader extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -287,4 +283,5 @@ class _EditChip extends StatelessWidget {
     );
   }
 }
+
 

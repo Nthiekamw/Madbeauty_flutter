@@ -7,6 +7,7 @@ import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../prestataire/providers/current_prestataire_provider.dart';
 import '../../reviews/providers/prestataire_note_moyenne_provider.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Statistiques profil (favoris synchronisés avec Supabase).
 class ProfileStatsRow extends ConsumerWidget {
@@ -29,9 +30,9 @@ class ProfileStatsRow extends ConsumerWidget {
       _ => null,
     };
     final ratingValue = prestaId == null
-        ? '—'
+        ? '–'
         : switch (ref.watch(prestataireNoteMoyenneProvider(prestaId))) {
-            AsyncData(:final value) => value?.toStringAsFixed(1) ?? '—',
+            AsyncData(:final value) => value?.toStringAsFixed(1) ?? '–',
             _ => '…',
           };
 
@@ -64,7 +65,7 @@ class ProfileStatsRow extends ConsumerWidget {
               label: DiscProfile.statRating,
               value: ratingValue,
               icon: Icons.star_rounded,
-              color: const Color(0xFFF59E0B),
+              color: AppColors.starRating,
             ),
           ),
         ],
@@ -137,3 +138,4 @@ class _StatTile extends StatelessWidget {
     );
   }
 }
+

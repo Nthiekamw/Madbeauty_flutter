@@ -7,6 +7,7 @@ import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../models/conversation_inbox_item.dart';
 import 'conversation_read_status_badge.dart';
+import '../../../shared/theme/app_colors.dart';
 
 class ConversationListTile extends StatelessWidget {
   const ConversationListTile({
@@ -42,14 +43,14 @@ class ConversationListTile extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.scrimLight05,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: onTap,
@@ -191,3 +192,4 @@ class ConversationListTile extends StatelessWidget {
     return DateFormat('d/MM', 'fr_FR').format(dt);
   }
 }
+

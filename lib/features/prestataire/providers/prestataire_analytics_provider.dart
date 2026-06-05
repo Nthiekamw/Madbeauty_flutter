@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../logic/stats_prestataire_mapper.dart';
 import '../models/prestataire_analytics_data.dart';
@@ -13,3 +13,4 @@ final prestataireAnalyticsProvider =
   final stats = await ref.watch(statsProvider(presta.id).future);
   return stats.toAnalyticsData();
 });
+

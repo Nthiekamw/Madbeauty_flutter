@@ -14,3 +14,4 @@ class PrestataireAnalyticsReservation {
   final String? paymentStatus;
   final double servicePriceEur;
 }
+

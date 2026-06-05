@@ -8,3 +8,4 @@ class StripeService {
 
   static bool get isConfigured => publishableKey.trim().isNotEmpty;
 }
+

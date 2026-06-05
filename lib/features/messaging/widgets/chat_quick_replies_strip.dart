@@ -35,3 +35,4 @@ class ChatQuickRepliesStrip extends StatelessWidget {
     );
   }
 }
+

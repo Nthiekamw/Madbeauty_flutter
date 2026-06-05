@@ -62,6 +62,14 @@
                     android:scheme="com.madbeauty.madbeauty"
                     android:host="subscription-return"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="com.madbeauty.madbeauty"
+                    android:host="client-payment-return"/>
+            </intent-filter>
             <!-- Fiche prestataire partagée (schéma custom) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

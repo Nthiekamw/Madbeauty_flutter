@@ -2,7 +2,7 @@ import 'package:geocoding/geocoding.dart';
 
 import '../../core/geo/geo_point.dart';
 
-/// Géocodage texte → coordonnées (ville, adresse).
+/// Géocodage texte â†’ coordonnées (ville, adresse).
 class GeocodingService {
   Future<GeoPoint?> geocodeAddress(String address) async {
     final query = address.trim();
@@ -52,3 +52,4 @@ class GeocodingService {
     return '$query, France';
   }
 }
+

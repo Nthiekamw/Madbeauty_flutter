@@ -17,10 +17,11 @@ final prestataireAvgResponseMinutesProvider = FutureProvider.autoDispose
       return null;
     });
 
-/// Badge « répond rapidement » si moyenne ≤ 120 minutes.
+/// Badge « répond rapidement » si moyenne â‰¤ 120 minutes.
 final prestataireRespondsQuicklyProvider = FutureProvider.autoDispose
     .family<bool, String>((ref, prestataireId) async {
       final minutes =
           await ref.watch(prestataireAvgResponseMinutesProvider(prestataireId).future);
       return minutes != null && minutes <= 120;
     });
+

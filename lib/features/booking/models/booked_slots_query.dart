@@ -1,4 +1,4 @@
-import 'booking_availability_rules.dart';
+﻿import 'booking_availability_rules.dart';
 
 class BookedSlotsQuery {
   const BookedSlotsQuery({
@@ -26,3 +26,4 @@ class BookedSlotsQuery {
   @override
   int get hashCode => Object.hash(prestataireId, serviceId, normalizedDay);
 }
+

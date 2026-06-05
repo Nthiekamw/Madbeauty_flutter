@@ -1,4 +1,4 @@
-import '../../../core/models/domain/stats/stats_prestataire.dart';
+﻿import '../../../core/models/domain/stats/stats_prestataire.dart';
 import '../models/prestataire_analytics_data.dart';
 
 extension StatsPrestataireMapper on StatsPrestataire {
@@ -45,3 +45,4 @@ extension StatsPrestataireMapper on StatsPrestataire {
     return (confirmed / denominator) * 100;
   }
 }
+

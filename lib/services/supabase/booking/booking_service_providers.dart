@@ -50,7 +50,7 @@ final bookingDetailProvider = FutureProvider.autoDispose.family<
   return svc.getById(id);
 });
 
-/// Liste des réservations client — conservée tant que le shell est monté.
+/// Liste des réservations client – conservée tant que le shell est monté.
 ///
 /// Utilise encore un sous-ensemble pour les cartes (« résumés » enrichis UI).
 final clientReservationsProvider =
@@ -74,7 +74,7 @@ final clientReservationsProvider =
       return mergeClientReservationsWithQueue(remote, queue);
     });
 
-/// Nombre de réservations « en attente » pour le badge de l’onglet Réservations.
+/// Nombre de réservations « en attente » pour le badge de l'onglet Réservations.
 final clientPendingReservationsCountProvider = FutureProvider<int>((ref) async {
   final service = ref.watch(bookingServiceProvider);
   if (service == null) return 0;
@@ -132,3 +132,4 @@ void invalidateClientReservationsFromRef(Ref ref) {
 void invalidateBookingDetail(WidgetRef ref, String bookingId) {
   ref.invalidate(bookingDetailProvider(bookingId));
 }
+

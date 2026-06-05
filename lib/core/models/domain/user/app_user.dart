@@ -11,10 +11,11 @@ abstract class AppUser with _$AppUser {
   const factory AppUser({
     required String id,
     required String email,
-    /// Ne devrait pas être exposé par l’API publique ; utile seulement pour des DTO serveur.
+    /// Ne devrait pas être exposé par l'API publique ; utile seulement pour des DTO serveur.
     String? passwordHash,
     @IsoDateTimeConverter() required DateTime createdAt,
   }) = _AppUser;
 
   factory AppUser.fromJson(Map<String, dynamic> json) => _$AppUserFromJson(json);
 }
+

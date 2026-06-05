@@ -113,3 +113,4 @@ class OfflineCacheService {
   List<PrestataireReservationItem> readPrestataireAgenda() =>
       OfflineCacheCodec.decodeAgendaItems(_read(OfflineCacheKeys.prestataireAgenda));
 }
+

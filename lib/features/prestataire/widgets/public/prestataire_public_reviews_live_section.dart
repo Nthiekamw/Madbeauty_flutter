@@ -7,8 +7,9 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../reviews/providers/review_provider.dart';
 import '../../../reviews/widgets/review_photos_row.dart';
 import 'prestataire_public_reviews_section.dart';
+import '../../../../shared/theme/app_colors.dart';
 
-/// Liste d’avis avec rechargement après nouvelle note.
+/// Liste d'avis avec rechargement après nouvelle note.
 class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
   const PrestatairePublicReviewsLiveSection({
     super.key,
@@ -132,9 +133,10 @@ class _StarRow extends StatelessWidget {
           Icon(
             i <= clamped ? Icons.star_rounded : Icons.star_outline_rounded,
             size: 18,
-            color: const Color(0xFFF59E0B),
+            color: AppColors.starRating,
           ),
       ],
     );
   }
 }
+

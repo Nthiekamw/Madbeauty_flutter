@@ -10,7 +10,7 @@ import '../../../shared/utils/text_normalizer.dart';
 import '../../prestataire/widgets/shared/prestataire_card_photo_header.dart';
 import '../theme/home_styles.dart';
 
-/// Carte compacte pour listes horizontales d’accueil (proches, mieux notés).
+/// Carte compacte pour listes horizontales d'accueil (proches, mieux notés).
 class PrestataireHomeListCard extends StatelessWidget {
   const PrestataireHomeListCard({
     super.key,
@@ -232,3 +232,4 @@ class _InfoChip extends StatelessWidget {
     );
   }
 }
+

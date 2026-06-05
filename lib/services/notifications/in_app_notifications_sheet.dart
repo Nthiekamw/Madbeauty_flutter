@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -130,7 +130,7 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                                 const SizedBox(height: 6),
                                 Text(
                                   DateFormat(
-                                    'd MMMM • HH:mm',
+                                    'd MMMM â€¢ HH:mm',
                                     'fr_FR',
                                   ).format(item.createdAt.toLocal()),
                                   style: theme.textTheme.labelSmall?.copyWith(
@@ -275,3 +275,4 @@ class NotificationBellButton extends StatelessWidget {
     );
   }
 }
+

@@ -1,10 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_assets.dart';
 import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../theme/home_styles.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// En-tête accueil client : carte compacte, avatar centré.
 class ClientHomeHeader extends StatelessWidget {
@@ -153,26 +155,36 @@ class _BrandBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.12),
+        color: AppColors.brandLogoBackground.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.auto_awesome_rounded, size: 12, color: primary),
-          const SizedBox(width: 4),
-          Text(
-            'MadBeauty',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w700,
-              color: primary,
-              fontSize: 11,
-            ),
+        border: Border.all(
+          color: AppColors.brandGold.withValues(alpha: 0.45),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.brandGoldGlow12,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Image.asset(
+        AppAssets.logo,
+        height: 22,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (_, __, ___) => Text(
+          'MadBeauty',
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontFamily: AppFonts.display,
+            fontWeight: FontWeight.w700,
+            color: AppColors.brandGoldLight,
+            fontSize: 11,
+          ),
+        ),
       ),
     );
   }
@@ -207,7 +219,7 @@ class _AvatarButton extends StatelessWidget {
     if (onTap == null) return avatar;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
@@ -216,3 +228,4 @@ class _AvatarButton extends StatelessWidget {
     );
   }
 }
+

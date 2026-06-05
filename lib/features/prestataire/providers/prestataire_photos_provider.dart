@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
@@ -9,3 +9,4 @@ final realisationPhotosProvider = FutureProvider.autoDispose
       if (service == null) return const [];
       return service.getByPrestataire(prestataireId);
     });
+

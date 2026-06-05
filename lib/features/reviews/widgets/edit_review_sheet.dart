@@ -16,6 +16,7 @@ import '../../../services/supabase/reviews/review_service.dart';
 import '../providers/review_provider.dart';
 import 'review_photo_picker.dart';
 import 'review_photos_row.dart';
+import '../../../shared/theme/app_colors.dart';
 
 Future<bool?> showEditReviewSheet(
   BuildContext context, {
@@ -170,7 +171,7 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
                 icon: Icon(
                   filled ? Icons.star_rounded : Icons.star_outline_rounded,
                   color: filled
-                      ? const Color(0xFFFFB800)
+                      ? AppColors.starReview
                       : theme.colorScheme.outline,
                   size: 44,
                 ),
@@ -185,7 +186,7 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFFFFB800),
+                  color: AppColors.starReview,
                 ),
               ),
             ),
@@ -233,3 +234,4 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
     );
   }
 }
+

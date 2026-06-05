@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/prestataire_analytics_period.dart';
 
@@ -13,3 +13,4 @@ final prestataireAnalyticsPeriodProvider =
     NotifierProvider<_AnalyticsPeriodNotifier, PrestataireAnalyticsPeriod>(
   _AnalyticsPeriodNotifier.new,
 );
+

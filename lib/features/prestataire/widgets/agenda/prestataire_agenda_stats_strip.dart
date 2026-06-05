@@ -44,3 +44,4 @@ class PrestataireAgendaStatsStrip extends StatelessWidget {
     );
   }
 }
+

@@ -13,17 +13,25 @@ import '../../providers/prestataire_analytics_period_provider.dart';
 import '../../providers/prestataire_analytics_provider.dart';
 import '../shared/prestataire_metric_tile.dart';
 import '../shared/prestataire_section_header.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 /// Bloc analytique : filtre période, revenus, occupation, réservations.
 class PrestataireAnalyticsPanel extends ConsumerWidget {
-  const PrestataireAnalyticsPanel({super.key, this.hideOuterHeader = false});
+  const PrestataireAnalyticsPanel({
+    super.key,
+    this.hideOuterHeader = false,
+    this.dashboardCompact = false,
+  });
 
   /// Masque le titre du bloc (déjà affiché par la tuile dashboard repliable).
   final bool hideOuterHeader;
 
+  /// Vue épurée intégrée au dashboard.
+  final bool dashboardCompact;
+
   static final _currency = NumberFormat.currency(
     locale: 'fr_FR',
-    symbol: '€',
+    symbol: 'â‚¬',
     decimalDigits: 0,
   );
 
@@ -32,6 +40,29 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final period = ref.watch(prestataireAnalyticsPeriodProvider);
     final analyticsAsync = ref.watch(prestataireAnalyticsProvider);
+
+    if (dashboardCompact) {
+      return analyticsAsync.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 28),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (_, __) => Text(
+          DiscPrestaAnalytics.loadErr,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.error,
+          ),
+        ),
+        data: (data) => _DashboardCompactAnalytics(
+          data: data,
+          period: period,
+          currency: _currency,
+          onPeriodSelected: (p) => ref
+              .read(prestataireAnalyticsPeriodProvider.notifier)
+              .setPeriod(p),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,39 +86,216 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-          analyticsAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (_, __) => DiscoverySurfaceCard(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  DiscPrestaAnalytics.loadErr,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
+        analyticsAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, __) => DiscoverySurfaceCard(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                DiscPrestaAnalytics.loadErr,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
                 ),
               ),
             ),
-            data: (data) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _RevenueSection(
-                  data: data,
-                  currency: _currency,
-                  period: period,
+          ),
+          data: (data) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _RevenueSection(
+                data: data,
+                currency: _currency,
+                period: period,
+              ),
+              const SizedBox(height: 12),
+              _OccupancySection(data: data, period: period),
+              const SizedBox(height: 12),
+              _ReservationsSection(data: data, period: period),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardCompactAnalytics extends StatelessWidget {
+  const _DashboardCompactAnalytics({
+    required this.data,
+    required this.period,
+    required this.currency,
+    required this.onPeriodSelected,
+  });
+
+  final PrestataireAnalyticsData data;
+  final PrestataireAnalyticsPeriod period;
+  final NumberFormat currency;
+  final ValueChanged<PrestataireAnalyticsPeriod> onPeriodSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final evolution = data.revenueChangePercent;
+    final evolutionColor = evolution == null
+        ? theme.colorScheme.onSurfaceVariant
+        : evolution >= 0
+            ? AppColors.success
+            : theme.colorScheme.error;
+    final busiestName = data.busiestWeekday != null
+        ? PrestataireAnalyticsCalculator.weekdayName(data.busiestWeekday!)
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final p in PrestataireAnalyticsPeriod.values) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(p.label),
+                    selected: period == p,
+                    onSelected: (_) => onPeriodSelected(p),
+                    showCheckmark: false,
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                _OccupancySection(data: data, period: period),
-                const SizedBox(height: 12),
-                _ReservationsSection(data: data, period: period),
-                const SizedBox(height: 8),
               ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _CompactKpi(
+                label: DiscPrestaAnalytics.revenueTitle,
+                value: currency.format(data.periodRevenueEur),
+                accent: primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactKpi(
+                label: DiscPrestaAnalytics.occupancyTitle,
+                value: '${data.occupancyPercent.toStringAsFixed(0)} %',
+                accent: theme.colorScheme.secondary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactKpi(
+                label: DiscPrestaAnalytics.conversion,
+                value: DiscPrestaAnalytics.percentValue(data.conversionPercent),
+                accent: AppColors.success,
+              ),
+            ),
+          ],
+        ),
+        if (evolution != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(
+                evolution >= 0
+                    ? Icons.trending_up_rounded
+                    : Icons.trending_down_rounded,
+                size: 16,
+                color: evolutionColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${DiscPrestaAnalytics.revenueVsPrev} · ${DiscPrestaAnalytics.evolutionPercent(evolution)}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: evolutionColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (data.chartRevenueEur.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 120,
+            child: _RevenueBarChart(
+              amounts: data.chartRevenueEur,
+              labels: data.chartLabels,
+              accent: primary,
             ),
           ),
+        ],
+        if (busiestName != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            DiscPrestaAnalytics.busiestDay(busiestName),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _CompactKpi extends StatelessWidget {
+  const _CompactKpi({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontFamily: AppFonts.display,
+                fontWeight: FontWeight.w800,
+                color: accent,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -142,7 +350,7 @@ class _RevenueSection extends StatelessWidget {
     final evolutionColor = evolution == null
         ? theme.colorScheme.onSurfaceVariant
         : evolution >= 0
-            ? const Color(0xFF10B981)
+            ? AppColors.success
             : theme.colorScheme.error;
 
     return DiscoverySurfaceCard(
@@ -583,7 +791,7 @@ class _ReservationsSection extends StatelessWidget {
                   icon: Icons.check_circle_outline_rounded,
                   label: DiscPrestaAnalytics.confirmed,
                   value: '${data.periodConfirmed}',
-                  accent: const Color(0xFF10B981),
+                  accent: AppColors.success,
                 ),
               ),
               const SizedBox(width: 8),
@@ -648,3 +856,4 @@ class _ReservationsSection extends StatelessWidget {
     );
   }
 }
+

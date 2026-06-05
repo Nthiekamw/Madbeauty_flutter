@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 Widget shellNavBadgeIcon({
   required IconData outlined,
@@ -12,3 +12,4 @@ Widget shellNavBadgeIcon({
   final label = badgeCount > 99 ? '99+' : '$badgeCount';
   return Badge(label: Text(label), child: icon);
 }
+

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 
-/// Barre de progression linéaire + libellé d’étape (wizard inscription).
+/// Barre de progression linéaire + libellé d'étape (wizard inscription).
 class RegisterWizardProgressBar extends StatelessWidget {
   const RegisterWizardProgressBar({
     super.key,
@@ -77,3 +77,4 @@ class RegisterWizardProgressBar extends StatelessWidget {
     );
   }
 }
+

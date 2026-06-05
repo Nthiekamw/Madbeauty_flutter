@@ -25,7 +25,7 @@ class OfflineSyncResult {
   bool get hasWork => syncedCount > 0 || removedCount > 0;
 }
 
-/// Rejoue la file d’actions lorsque le réseau est disponible.
+/// Rejoue la file d'actions lorsque le réseau est disponible.
 class OfflineSyncService {
   OfflineSyncService(this._ref);
 
@@ -183,3 +183,4 @@ List<ClientReservationSummary> mergeClientReservationsWithQueue(
 
   return [...pendingCreates, ...mergedRemote];
 }
+

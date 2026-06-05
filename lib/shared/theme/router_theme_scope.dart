@@ -18,7 +18,7 @@ String _themeLocationPath(GoRouter router) {
   return '/';
 }
 
-/// Reconstruit l’arbre quand la route change pour appliquer le thème client / prestataire.
+/// Reconstruit l'arbre quand la route change pour appliquer le thème client / prestataire.
 class RouterThemeScope extends StatefulWidget {
   const RouterThemeScope({
     super.key,
@@ -80,3 +80,4 @@ class _RouterThemeScopeState extends State<RouterThemeScope> {
     return widget.builder(context, area);
   }
 }
+

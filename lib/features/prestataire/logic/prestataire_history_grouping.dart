@@ -1,7 +1,7 @@
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../models/prestataire_reservation_item.dart';
 
-/// Groupe client pour l’historique prestataire.
+/// Groupe client pour l'historique prestataire.
 class PrestataireHistoryClientGroup {
   const PrestataireHistoryClientGroup({
     required this.clientKey,
@@ -66,3 +66,4 @@ List<PrestataireHistoryClientGroup> groupPrestataireHistoryByClient(
     );
   return list;
 }
+

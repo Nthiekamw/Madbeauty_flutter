@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../../services/supabase/referral/referral_service.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
@@ -201,7 +202,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                                 children: [
                                   const Icon(
                                     Icons.military_tech_rounded,
-                                    color: Color(0xFF7C3AED),
+                                    color: AppColors.ambassador,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -210,7 +211,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                                       style:
                                           theme.textTheme.titleSmall?.copyWith(
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF6D28D9),
+                                        color: AppColors.ambassadorMid,
                                       ),
                                     ),
                                   ),
@@ -251,8 +252,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF7C3AED)
-                                      .withValues(alpha: 0.1),
+                                  color: AppColors.ambassadorBg10,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
@@ -263,7 +263,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                                       style: theme.textTheme.titleSmall
                                           ?.copyWith(
                                         fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF6D28D9),
+                                        color: AppColors.ambassadorMid,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -382,3 +382,4 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
     );
   }
 }
+

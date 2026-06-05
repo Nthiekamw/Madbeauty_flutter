@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/app_strings.dart';
 import '../services/storage/local_cache_service.dart';
 import '../services/stripe/stripe_subscription_providers.dart';
+import '../shared/widgets/app/app_snack_bar.dart';
 import 'app_deep_links.dart';
 import 'app_router.dart';
 
@@ -59,6 +60,15 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
       return;
     }
 
+    final clientPaymentPath = AppDeepLinks.clientPaymentReturnPath(uri);
+    if (clientPaymentPath != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(goRouterProvider).go(clientPaymentPath);
+      });
+      return;
+    }
+
     final path = AppDeepLinks.routePathFromUri(uri);
     if (path == null) return;
 
@@ -101,8 +111,13 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
           ? DiscPrestaSub.returnSuccess
           : (result == 'cancel' ? DiscPrestaSub.returnCancel : null);
       if (message != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+        AppSnackBar.show(
+          context,
+          message: message,
+          kind: result == 'success'
+              ? AppSnackKind.success
+              : AppSnackKind.info,
+          duration: Duration(seconds: result == 'success' ? 6 : 3),
         );
       }
     });

@@ -19,3 +19,4 @@ final catalogAvailabilityIndexProvider =
 
       return Map<String, bool>.fromEntries(results);
     });
+

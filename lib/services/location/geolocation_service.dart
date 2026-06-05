@@ -1,4 +1,4 @@
-import 'package:geolocator/geolocator.dart';
+﻿import 'package:geolocator/geolocator.dart';
 
 class ClientLocation {
   const ClientLocation({required this.latitude, required this.longitude});
@@ -38,3 +38,4 @@ class GeolocationService {
     }
   }
 }
+

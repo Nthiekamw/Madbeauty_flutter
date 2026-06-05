@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Galerie horizontale de photos d'avis.
 class ReviewPhotosRow extends StatelessWidget {
@@ -38,3 +38,4 @@ class ReviewPhotosRow extends StatelessWidget {
     );
   }
 }
+

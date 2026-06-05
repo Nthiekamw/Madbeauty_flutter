@@ -43,3 +43,4 @@ final clientReviewsForCurrentClientProvider =
 void invalidateClientReviews(WidgetRef ref) {
   ref.invalidate(clientReviewsForCurrentClientProvider);
 }
+

@@ -12,6 +12,7 @@ Future<void> fcmBackgroundMessagingHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Les messages avec champ `notification` sont affichés par le système sur Android /
-  // peuvent être gérés automatiquement sur iOS. On conserve l’initialisation Firebase
+  // peuvent être gérés automatiquement sur iOS. On conserve l'initialisation Firebase
   // pour les traitements nécessitant le SDK (hooks data-only, futures extensions).
 }
+

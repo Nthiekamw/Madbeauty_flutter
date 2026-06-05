@@ -20,3 +20,4 @@ double haversineDistanceKm({
 }
 
 double _rad(double deg) => deg * math.pi / 180.0;
+

@@ -2,8 +2,12 @@
 abstract final class ShellStrings {
   ShellStrings._();
 
-  static const String splashCheckingSession = 'Vérification de la session...';
-  static const String splashWelcomeBack = 'Beauté & coiffure, à portée de main';
+  static const String splashInitializing = 'Démarrage de l’application…';
+  static const String splashCheckingSession =
+      'Vérification de la connexion…';
+  static const String splashLoadingRoles = 'Chargement de ton compte…';
+  static const String splashLoadingProfile = 'Préparation de ton espace…';
+  static const String splashAlmostReady = 'Presque prêt…';
 
   static const String signInOrSignUp = 'Connexion / inscription';
   static const String openPrestataireSpace = 'Espace prestataire';

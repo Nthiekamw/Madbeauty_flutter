@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Logo Google officiel (asset `assets/images/google_logo.png`).
 class GoogleLogo extends StatelessWidget {
@@ -24,3 +24,4 @@ class GoogleLogo extends StatelessWidget {
     );
   }
 }
+

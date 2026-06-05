@@ -1,4 +1,4 @@
-enum PrestatairesSort { rating, distance }
+﻿enum PrestatairesSort { rating, distance }
 
 class PrestatairesFilterState {
   const PrestatairesFilterState({
@@ -16,6 +16,12 @@ class PrestatairesFilterState {
 
   /// Identifiant du filtre rapide actif ([ListingQuickFilter.id]).
   final String? activeQuickFilterId;
+
+  bool get hasActiveFilters =>
+      query.trim().isNotEmpty ||
+      categoryId != null ||
+      availableOnly ||
+      (activeQuickFilterId != null && activeQuickFilterId != 'all');
 
   PrestatairesFilterState copyWith({
     String? query,
@@ -39,3 +45,4 @@ class PrestatairesFilterState {
 }
 
 const _unset = Object();
+

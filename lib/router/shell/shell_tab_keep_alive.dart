@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Conserve l’état d’un onglet du [StatefulShellRoute] (scroll, formulaires, etc.).
+/// Conserve l'état d'un onglet du [StatefulShellRoute] (scroll, formulaires, etc.).
 class ShellTabKeepAlive extends StatefulWidget {
   const ShellTabKeepAlive({super.key, required this.child});
 
@@ -21,3 +21,4 @@ class _ShellTabKeepAliveState extends State<ShellTabKeepAlive>
     return widget.child;
   }
 }
+

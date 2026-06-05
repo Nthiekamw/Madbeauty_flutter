@@ -23,3 +23,4 @@ Future<bool> enqueueIfOffline({
   AppSnackBar.info(context, ShellStrings.offlineActionQueued);
   return true;
 }
+

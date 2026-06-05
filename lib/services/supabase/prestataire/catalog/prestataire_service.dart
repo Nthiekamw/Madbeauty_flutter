@@ -65,7 +65,7 @@ class PrestataireService {
     },
   );
 
-  /// Entrées catalogue pour une liste d’ids (ex. favoris), en conservant [prestataireIds].
+  /// Entrées catalogue pour une liste d'ids (ex. favoris), en conservant [prestataireIds].
   Future<List<PrestataireCatalogEntry>> getCatalogEntriesByIds(
     List<String> prestataireIds,
   ) =>
@@ -130,6 +130,25 @@ class PrestataireService {
       return PrestataireProfile.fromJson(Map<String, dynamic>.from(response));
     },
   );
+
+  /// Crée une ligne `prestataire_profiles` si absente (rôle + upsert minimal).
+  Future<String> ensureProfileForUser(String userId) =>
+      SupabaseErrorHandler.run(
+        operation: 'prestataire.ensureProfileForUser',
+        action: () async {
+          final existing = await getByUserId(userId);
+          if (existing != null) return existing.id;
+
+          return upsert(
+            PrestataireUpsertData(
+              userId: userId,
+              nomSalon: '',
+              bio: '',
+              ville: '',
+            ),
+          );
+        },
+      );
 
   Future<PrestataireProfile?> getByUserId(String userId) =>
       SupabaseErrorHandler.run(
@@ -413,3 +432,4 @@ class PrestataireSpecialtyData {
   final Map<String, List<String>> namesByPrestataire;
   final Map<String, Set<String>> categoryIdsByPrestataire;
 }
+

@@ -29,3 +29,4 @@ class ConversationInboxItem {
   bool get hasConversationActivity =>
       (lastMessagePreview?.trim().isNotEmpty ?? false) || lastMessageAt != null;
 }
+

@@ -1,4 +1,4 @@
-/// Constantes du modèle tarifaire (voir [docs/MODELE_TARIFAIRE.md]).
+﻿/// Constantes du modèle tarifaire (voir [docs/MODELE_TARIFAIRE.md]).
 abstract final class PricingConfig {
   PricingConfig._();
 

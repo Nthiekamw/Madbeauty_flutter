@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
@@ -6,7 +6,7 @@ import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../models/prestataire_reservation_item.dart';
 
-/// Carte rendez-vous compacte (heure · client · statut).
+/// Carte rendez-vous compacte (heure Â· client Â· statut).
 class PrestataireCompactAppointmentCard extends StatelessWidget {
   const PrestataireCompactAppointmentCard({
     super.key,
@@ -193,3 +193,4 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
     );
   }
 }
+

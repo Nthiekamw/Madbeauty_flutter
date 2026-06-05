@@ -10,3 +10,4 @@ Page<void> shellTabPage({required Widget child, LocalKey? key}) {
     child: ShellTabKeepAlive(child: child),
   );
 }
+

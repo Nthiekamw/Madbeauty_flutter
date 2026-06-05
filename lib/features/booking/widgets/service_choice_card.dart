@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/theme/app_colors.dart';
 
 class ServiceChoiceCard extends StatelessWidget {
   const ServiceChoiceCard({
@@ -46,7 +47,7 @@ class ServiceChoiceCard extends StatelessWidget {
             : null,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
@@ -120,7 +121,7 @@ class ServiceChoiceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${service.prix.toStringAsFixed(0)} €',
+                    '${service.prix.toStringAsFixed(0)} â‚¬',
                     style: TextStyle(
                       fontFamily: AppFonts.display,
                       fontWeight: FontWeight.w800,
@@ -139,3 +140,4 @@ class ServiceChoiceCard extends StatelessWidget {
     );
   }
 }
+

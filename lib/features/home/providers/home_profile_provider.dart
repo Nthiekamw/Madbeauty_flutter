@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -95,3 +95,4 @@ final homeProfileSnapshotProvider = FutureProvider<HomeProfileSnapshot?>((ref) a
     return fromCache;
   }
 });
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../models/listing_catalog_layout.dart';
 
 /// Bascule grille (2 col.) / étendu (pleine largeur).
@@ -29,7 +30,7 @@ class ListingLayoutToggle extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: onPrimaryBackground
-            ? Colors.black.withValues(alpha: 0.08)
+            ? AppColors.shadowSelected08
             : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(10),
       ),
@@ -80,7 +81,7 @@ class _ToggleIcon extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: selected ? selectedBackground : Colors.transparent,
+        color: selected ? selectedBackground : AppColors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,
@@ -100,3 +101,4 @@ class _ToggleIcon extends StatelessWidget {
     );
   }
 }
+

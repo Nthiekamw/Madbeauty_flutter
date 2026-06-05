@@ -35,3 +35,4 @@ final prestataireHasOpenSlotsProvider = FutureProvider.autoDispose
 
       return false;
     });
+

@@ -12,3 +12,4 @@ Future<bool> ensureOnline(BuildContext context, WidgetRef ref) async {
   AppSnackBar.warning(context, ShellStrings.offlineActionBlocked);
   return false;
 }
+

@@ -16,6 +16,15 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    configurations.configureEach {
+        resolutionStrategy {
+            force("androidx.activity:activity:1.10.1")
+        }
+    }
+}
+
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

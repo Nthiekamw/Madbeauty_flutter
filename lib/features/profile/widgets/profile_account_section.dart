@@ -1,31 +1,61 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/stripe/stripe_service.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import 'profile_section_title.dart';
 
 class ProfileAccountSection extends ConsumerWidget {
-  const ProfileAccountSection({super.key});
+  const ProfileAccountSection({
+    super.key,
+    this.topSection,
+    this.menuPrefix,
+  });
+
+  /// Contenu optionnel au-dessus des entrées compte (ex. paiements prestataire).
+  final Widget? topSection;
+
+  /// Tuiles insérées en tête du menu compte (ex. abonnement prestataire).
+  final Widget? menuPrefix;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isGuest = ref.watch(isGuestBrowsingProvider);
+    final showPaymentMethods = StripeService.isConfigured;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const ProfileSectionTitle(title: DiscProfile.sectionAccount),
+        if (topSection != null) ...[
+          topSection!,
+          const SizedBox(height: 10),
+        ],
         DiscoverySurfaceCard(
           child: Column(
             children: [
+              if (menuPrefix != null) ...[
+                menuPrefix!,
+                _divider(context),
+              ],
               DiscoveryMenuTile(
                 icon: Icons.person_outline_rounded,
                 title: DiscProfile.actionEditAccount,
                 onTap: () => context.pushEditClientAccount(),
               ),
+              if (showPaymentMethods) ...[
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.payment_rounded,
+                  title: DiscPaymentMethods.sectionTitle,
+                  subtitle: DiscPaymentMethods.clientAccountMenuHint,
+                  onTap: () => context.pushClientPaymentMethods(),
+                ),
+              ],
               _divider(context),
               DiscoveryMenuTile(
                 icon: Icons.rate_review_outlined,
@@ -68,3 +98,4 @@ class ProfileAccountSection extends ConsumerWidget {
   }
 
 }
+

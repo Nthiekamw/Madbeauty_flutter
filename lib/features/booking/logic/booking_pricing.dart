@@ -1,4 +1,4 @@
-import '../../../core/config/pricing_config.dart';
+﻿import '../../../core/config/pricing_config.dart';
 
 /// Mode de paiement de la prestation choisi par le client.
 enum BookingPaymentModeKind {

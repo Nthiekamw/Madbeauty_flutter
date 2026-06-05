@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/admin/admin_verification_service.dart';
 import '../models/admin_verification_request.dart';
@@ -20,3 +20,4 @@ final adminVerificationRequestsProvider = FutureProvider.autoDispose
         onlyPending: filter == AdminVerificationFilter.pending,
       );
     });
+

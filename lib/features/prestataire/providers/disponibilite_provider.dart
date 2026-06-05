@@ -5,7 +5,7 @@ import '../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../features/booking/models/booking_availability_rules.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
-import 'current_prestataire_provider.dart';
+import 'resolve_prestataire_id.dart';
 
 /// Paramètre pour [creneauxDisponiblesProvider].
 typedef CreneauxDisponiblesQuery = ({
@@ -17,9 +17,9 @@ typedef CreneauxDisponiblesQuery = ({
 final prestataireHorairesProvider =
     FutureProvider.autoDispose<List<HorairePlage>>((ref) async {
       final service = ref.watch(disponibiliteServiceProvider);
-      final presta = await ref.watch(currentPrestataireProvider.future);
-      if (service == null || presta == null) return const [];
-      return service.getHoraires(presta.id);
+      final prestaId = await resolveConnectedPrestataireId(ref.container);
+      if (service == null || prestaId == null) return const [];
+      return service.getHoraires(prestaId);
     });
 
 /// Créneaux réservables pour un prestataire à une date donnée.
@@ -51,9 +51,9 @@ final bookingAvailabilityForPrestaProvider = FutureProvider.autoDispose
 final prestataireIndisponibilitesProvider =
     FutureProvider.autoDispose<List<Indisponibilite>>((ref) async {
       final service = ref.watch(disponibiliteServiceProvider);
-      final presta = await ref.watch(currentPrestataireProvider.future);
-      if (service == null || presta == null) return const [];
-      return service.listIndisponibilites(presta.id);
+      final prestaId = await resolveConnectedPrestataireId(ref.container);
+      if (service == null || prestaId == null) return const [];
+      return service.listIndisponibilites(prestaId);
     });
 
 void invalidateDisponibiliteProviders(WidgetRef ref) {
@@ -62,3 +62,4 @@ void invalidateDisponibiliteProviders(WidgetRef ref) {
   ref.invalidate(bookingAvailabilityForPrestaProvider);
   ref.invalidate(creneauxDisponiblesProvider);
 }
+

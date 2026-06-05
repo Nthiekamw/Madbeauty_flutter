@@ -31,3 +31,4 @@ final currentUserProfileProvider =
         fetchRemote: () => service.getByUserId(user.id),
       );
     });
+

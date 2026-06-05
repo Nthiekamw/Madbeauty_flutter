@@ -11,9 +11,11 @@ import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../logic/prestataire_profile_completeness.dart';
+import '../providers/disponibilite_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
+import 'prestataire_hub_wizard_navigation.dart';
 
-/// Navigation intelligente vers l’espace prestataire (devenir / hub / dashboard).
+/// Navigation intelligente vers l'espace prestataire (devenir / hub / dashboard).
 abstract final class PrestataireNavigation {
   PrestataireNavigation._();
 
@@ -33,9 +35,9 @@ abstract final class PrestataireNavigation {
     await _goDashboardOrCompleteProfile(context, ref);
   }
 
-  /// Après inscription prestataire : hub profil (choix déjà fait à l’étape 2).
+  /// Après inscription prestataire : hub profil (choix déjà fait à l'étape 2).
   ///
-  /// [container] : le widget d’inscription peut être démonté avant cette suite ;
+  /// [container] : le widget d'inscription peut être démonté avant cette suite ;
   /// ne pas utiliser le [WidgetRef] du formulaire après des `await`.
   static Future<void> afterPrestaRegistration(
     BuildContext context,
@@ -51,12 +53,9 @@ abstract final class PrestataireNavigation {
     } catch (_) {
       // On continue avec le rôle local pour ne pas bloquer le parcours.
     }
-    await PrestataireHubOnboardingDraft.markStep2Started();
     container.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
-    context.goPrestataireProfile();
-    if (!context.mounted) return;
-    context.pushPrestataireProfileEdit();
+    await PrestataireHubWizardNavigation.openWizard(context, initialStep: 0);
   }
 
   /// Après [BecomePrestataireScreen] : hub pour photo, spécialités, services.
@@ -64,15 +63,12 @@ abstract final class PrestataireNavigation {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    await PrestataireHubOnboardingDraft.markStep2Started();
     ref.invalidate(prestataireProfileFormProvider);
     if (!context.mounted) return;
-    context.goPrestataireProfile();
-    if (!context.mounted) return;
-    context.pushPrestataireProfileEdit();
+    await PrestataireHubWizardNavigation.openWizard(context, initialStep: 0);
   }
 
-  /// Bascule client → prestataire : hub si profil incomplet, sinon dashboard.
+  /// Bascule client â†’ prestataire : hub si profil incomplet, sinon dashboard.
   static Future<void> switchToPrestataireSpace(
     BuildContext context,
     WidgetRef ref,
@@ -99,8 +95,12 @@ abstract final class PrestataireNavigation {
   ) async {
     try {
       final data = await ref.read(prestataireProfileFormProvider.future);
+      final hasHoraires = ref.read(prestataireHorairesProvider).maybeWhen(
+            data: (h) => h.isNotEmpty,
+            orElse: () => false,
+          );
       if (!context.mounted) return;
-      _goFromProfileData(context, data);
+      _goFromProfileData(context, data, hasHoraires: hasHoraires);
     } catch (_) {
       if (!context.mounted) return;
       context.goPrestataireDashboard();
@@ -113,8 +113,12 @@ abstract final class PrestataireNavigation {
   ) async {
     try {
       final data = await container.read(prestataireProfileFormProvider.future);
+      final hasHoraires = container.read(prestataireHorairesProvider).maybeWhen(
+            data: (h) => h.isNotEmpty,
+            orElse: () => false,
+          );
       if (!context.mounted) return;
-      _goFromProfileData(context, data);
+      _goFromProfileData(context, data, hasHoraires: hasHoraires);
     } catch (_) {
       if (!context.mounted) return;
       context.goPrestataireDashboard();
@@ -123,14 +127,23 @@ abstract final class PrestataireNavigation {
 
   static void _goFromProfileData(
     BuildContext context,
-    PrestataireProfileFormData data,
-  ) {
+    PrestataireProfileFormData data, {
+    bool hasHoraires = false,
+  }) {
     if (data.isProfessionallyComplete) {
       unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
       context.goPrestataireDashboard();
       return;
     }
-    context.goPrestataireProfile();
-    context.pushPrestataireProfileEdit();
+    unawaited(
+      PrestataireHubWizardNavigation.openWizard(
+        context,
+        initialStep: PrestataireHubWizardNavigation.hubStepFromProfileData(
+          data,
+          hasHoraires: hasHoraires,
+        ),
+      ),
+    );
   }
 }
+

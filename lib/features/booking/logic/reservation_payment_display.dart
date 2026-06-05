@@ -1,4 +1,4 @@
-import '../../../core/config/pricing_config.dart';
+﻿import '../../../core/config/pricing_config.dart';
 import '../../../core/constants/app_strings.dart';
 
 /// Ligne affichée dans le bandeau paiement.

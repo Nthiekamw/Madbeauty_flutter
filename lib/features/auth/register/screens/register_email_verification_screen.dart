@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../providers/auth_notifier.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 class RegisterEmailVerificationScreen extends ConsumerStatefulWidget {
   const RegisterEmailVerificationScreen({
@@ -117,7 +118,7 @@ class _RegisterEmailVerificationScreenState
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.white,
                       ),
                     )
                   : const Icon(Icons.mark_email_read_outlined),
@@ -144,4 +145,5 @@ class _RegisterEmailVerificationScreenState
     );
   }
 }
+
 

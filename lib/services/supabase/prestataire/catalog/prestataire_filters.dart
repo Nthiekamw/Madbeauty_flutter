@@ -1,4 +1,4 @@
-import '../../../../core/models/domain/user/lieu_travail.dart';
+﻿import '../../../../core/models/domain/user/lieu_travail.dart';
 
 class PrestataireFilters {
   const PrestataireFilters({
@@ -49,3 +49,4 @@ class PrestataireUpsertData {
   final double? latitude;
   final double? longitude;
 }
+

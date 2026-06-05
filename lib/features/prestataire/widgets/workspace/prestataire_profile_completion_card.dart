@@ -3,16 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../navigation/prestataire_hub_wizard_navigation.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../logic/prestataire_profile_completeness.dart';
-import '../../logic/prestataire_profile_completion_progress.dart';
 import '../../models/prestataire_profile_edit_section.dart';
 import '../../providers/disponibilite_provider.dart';
 import '../../providers/prestataire_profile_form_provider.dart';
+import '../profile/overview/prestataire_profile_insets.dart';
 
-/// Carte « complétez votre profil » (style maquette) avec progression et puces.
+/// Carte compacte « complétez votre profil » (progression + raccourcis).
 class PrestataireProfileCompletionCard extends ConsumerWidget {
   const PrestataireProfileCompletionCard({super.key});
+
+  static const _topPadding = 12.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,164 +39,162 @@ class PrestataireProfileCompletionCard extends ConsumerWidget {
           data,
           hasHoraires: hasHoraires,
         );
-        final chips = prestataireCompletionChipActions(
+        final chips = prestataireProfileProgressChipActions(
           data: data,
           hasHoraires: hasHoraires,
           onChecklist: (item) => _openChecklist(context, item),
           onEnhancement: (item) => _openEnhancement(context, item),
-          onPayments: () {
-            context.goPrestataireProfile();
-          },
+          onPayments: () => context.goPrestataireProfile(),
         );
 
-        final accent = theme.colorScheme.error;
-        final chipBg = accent.withValues(alpha: 0.08);
+        const accent = AppColors.errorLight;
+
+        void openWizard() {
+          PrestataireHubWizardNavigation.openWizard(
+            context,
+            initialStep: PrestataireHubWizardNavigation.hubStepFromProfileData(
+              data,
+              hasHoraires: hasHoraires,
+            ),
+          );
+        }
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          padding: PrestataireProfileInsets.page(context).copyWith(
+            top: _topPadding,
+            bottom: 4,
+          ),
           child: Material(
-            elevation: 0,
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.12),
+            elevation: 0,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: openWizard,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accent.withValues(alpha: 0.12),
+                      accent.withValues(alpha: 0.04),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: accent.withValues(alpha: 0.45),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: chipBg,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.error_outline_rounded,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
                             color: accent,
-                            size: 22,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                DiscPrestaWorkspace.completionTitle,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontFamily: AppFonts.display,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.25,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                DiscPrestaWorkspace.completionBody,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => context.pushPrestataireProfileComplete(),
-                          icon: const Icon(Icons.chevron_right_rounded),
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              DiscPrestaWorkspace.completionProgress,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '$percent %',
-                              style: theme.textTheme.labelLarge?.copyWith(
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              DiscPrestaWorkspace.completionTitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
                                 fontWeight: FontWeight.w800,
-                                color: theme.colorScheme.primary,
+                                height: 1.2,
+                                fontSize: 14,
+                                color: accent,
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: percent / 100,
-                            minHeight: 8,
-                            backgroundColor: theme.colorScheme
-                                .surfaceContainerHighest
-                                .withValues(alpha: 0.8),
-                            color: theme.colorScheme.primary,
                           ),
-                        ),
-                        if (chips.isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final chip in chips)
-                                ActionChip(
-                                  label: Text(chip.label),
-                                  labelStyle: theme.textTheme.labelMedium
-                                      ?.copyWith(
-                                    color: accent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  backgroundColor: chipBg,
-                                  side: BorderSide(
-                                    color: accent.withValues(alpha: 0.35),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 0,
-                                  ),
-                                  onPressed: chip.onTap,
-                                ),
-                            ],
+                          Text(
+                            '$percent %',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: accent,
+                            ),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                            onPressed: openWizard,
+                            icon: Icon(
+                              Icons.chevron_right_rounded,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: percent / 100,
+                          minHeight: 5,
+                          backgroundColor: theme.colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.9),
+                          color: accent,
+                        ),
+                      ),
+                      if (chips.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 30,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: chips.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 6),
+                            itemBuilder: (context, index) {
+                              final chip = chips[index];
+                              return ActionChip(
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                label: Text(chip.label),
+                                labelStyle:
+                                    theme.textTheme.labelSmall?.copyWith(
+                                  color: accent,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                                backgroundColor:
+                                    theme.colorScheme.surface,
+                                side: BorderSide(
+                                  color: accent.withValues(alpha: 0.3),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                onPressed: chip.onTap,
+                              );
+                            },
+                          ),
+                        ),
                       ],
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

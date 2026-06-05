@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/geo/geo_point.dart';
@@ -88,3 +88,4 @@ int _compareByDistance(
   if (bInf) return -1;
   return da.compareTo(db);
 }
+

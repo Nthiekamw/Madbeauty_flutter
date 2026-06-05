@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 
 class ProfileFooterActions extends StatelessWidget {
@@ -19,43 +18,38 @@ class ProfileFooterActions extends StatelessWidget {
     final theme = Theme.of(context);
     final error = theme.colorScheme.error;
 
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hPad),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          OutlinedButton.icon(
-            onPressed: onSignOut,
-            icon: const Icon(Icons.logout_rounded, size: 20),
-            label: const Text(DiscProfile.signOut),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              foregroundColor: error,
-              side: BorderSide(
-                color: error.withValues(alpha: 0.55),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          onPressed: onSignOut,
+          icon: const Icon(Icons.logout_rounded, size: 20),
+          label: const Text(DiscProfile.signOut),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            foregroundColor: error,
+            side: BorderSide(
+              color: error.withValues(alpha: 0.55),
             ),
           ),
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: onDeleteAccount,
-            style: TextButton.styleFrom(
-              foregroundColor: error,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-            child: Text(
-              DiscProfile.deleteAccount,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w700,
-                color: error,
-              ),
+        ),
+        const SizedBox(height: 10),
+        TextButton(
+          onPressed: onDeleteAccount,
+          style: TextButton.styleFrom(
+            foregroundColor: error,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: Text(
+            DiscProfile.deleteAccount,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w700,
+              color: error,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -127,7 +127,7 @@ class LoginController extends Notifier<LoginViewState> {
     );
   }
 
-  /// `true` si la fenêtre OAuth a été lancée (afficher un SnackBar d’aide côté route).
+  /// `true` si la fenêtre OAuth a été lancée (afficher un SnackBar d'aide côté route).
   Future<bool> startGoogleSignIn() async {
     if (!AppConfig.hasSupabase) {
       state = state.copyWith(requestSupabaseSnack: true);
@@ -149,3 +149,4 @@ class LoginController extends Notifier<LoginViewState> {
     }
   }
 }
+

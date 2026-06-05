@@ -17,7 +17,7 @@ import 'package:madbeauty/core/models/domain/user/user_profile.dart';
 ///
 /// - [SupabaseDomainCodec.row] : copie défensive (réponse API ou map mutable).
 /// - [SupabaseDomainCodec.decode*] : `fromJson` explicite pour une ligne Supabase.
-/// - [toSupabaseMap] (extensions) : `toJson` + option d’omettre les clés `null` (upserts partiels).
+/// - [toSupabaseMap] (extensions) : `toJson` + option d'omettre les clés `null` (upserts partiels).
 abstract final class SupabaseDomainCodec {
   const SupabaseDomainCodec._();
 
@@ -150,3 +150,4 @@ extension MessageSupabaseMap on Message {
   Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
       SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
 }
+

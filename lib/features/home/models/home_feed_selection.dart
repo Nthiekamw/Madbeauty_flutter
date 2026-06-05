@@ -1,4 +1,4 @@
-/// Sélection active sur l’accueil (recherche ou inspiration).
+/// Sélection active sur l'accueil (recherche ou inspiration).
 enum HomeFeedSource { search, inspiration }
 
 class HomeFeedSelection {
@@ -10,3 +10,4 @@ class HomeFeedSelection {
   final String query;
   final HomeFeedSource source;
 }
+

@@ -2,12 +2,22 @@
 abstract final class DiscPrestaWorkspace {
   DiscPrestaWorkspace._();
 
-  static String greeting(String name) => 'Bonjour $name 👋';
-  static const spaceLabel = 'Espace prestataire';
+  static String greeting(String name) => 'Bonjour $name ! 👋';
+  static const spaceLabel = 'Espace prestataire 💇';
   static const refreshTooltip = 'Actualiser';
-  static const paymentsTooltip = 'Paiements & abonnement';
+  static const refreshShort = 'Actualiser';
+  static const paymentsTooltip =
+      'Abonnement MadBeauty (catalogue) — distinct de l’encaissement des prestations';
+  static const paymentsShort = 'Abonnement';
   static const notificationsTooltip = 'Notifications';
+  static const notificationsShort = 'Alertes';
   static const messagesTooltip = 'Messages';
+  static const messagesShort = 'Messages';
+  static const messagesInboxSubtitle =
+      'Échanges liés à tes réservations acceptées';
+  static const agendaSubtitle = 'Planning et demandes de réservation';
+  static const clientsSubtitle = 'Historique et fidélisation';
+  static const profileHeaderSubtitle = 'Compte, paiements et réglages pro';
 
   static const completionTitle =
       'Complétez votre profil pour recevoir des clients';

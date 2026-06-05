@@ -45,7 +45,7 @@ class DiscoveryResponsive {
 
   static const double catalogGridSpacing = 8;
 
-  /// Hauteur d’une tuile grille (alignée sur la carte compacte).
+  /// Hauteur d'une tuile grille (alignée sur la carte compacte).
   double catalogGridTileHeight() {
     final inner = (contentMaxWidth < width ? contentMaxWidth : width) -
         horizontalPadding * 2;
@@ -54,19 +54,19 @@ class DiscoveryResponsive {
   }
 
   /// Filtres rapides recherche (puces compactes).
-  double get quickFiltersStripHeight => 38;
+  double get quickFiltersStripHeight => 34;
 
-  /// Hauteur max de l’en-tête recherche (titre + barre + filtres rapides).
+  /// Hauteur max de l'en-tête recherche (titre + barre + filtres rapides).
   double listingTopMaxHeight(double screenHeight) =>
       screenHeight * (isCompact ? 0.26 : 0.28);
 
-  /// Hauteur max du panneau filtres avancés (replié ≈ 100–110 px).
+  /// Hauteur max du panneau filtres avancés (replié â‰ˆ 100—110 px).
   double listingFiltersMaxHeight(double screenHeight, {required bool expanded}) {
     if (!expanded) return 118;
     return screenHeight * (isCompact ? 0.22 : 0.26);
   }
 
-  /// Aperçu accueil : limite d’éléments scrollables (le reste via « Tout voir »).
+  /// Aperçu accueil : limite d'éléments scrollables (le reste via « Tout voir »).
   int get homeHorizontalPreviewLimit => isTablet ? 20 : 16;
 
   /// Formulaires (profil, devenir prestataire, édition compte).
@@ -84,3 +84,4 @@ class DiscoveryResponsive {
   /// Boutons Continuer / Retour du stepper empilés.
   bool get stackStepperActions => isCompact;
 }
+

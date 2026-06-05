@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'local_cache_service.dart';
 
-/// Réservations pour lesquelles l’invite à noter a déjà été affichée ou ignorée.
+/// Réservations pour lesquelles l'invite à noter a déjà été affichée ou ignorée.
 class ReviewPromptStore {
   ReviewPromptStore._();
 
@@ -35,3 +35,4 @@ class ReviewPromptStore {
     await LocalCacheService.instance.remove(_key);
   }
 }
+

@@ -4,10 +4,11 @@ abstract final class DiscClientWorkspace {
 
   static String greeting(String name) {
     final trimmed = name.trim();
-    if (trimmed.isEmpty) return 'Bonjour 👋';
-    final first = trimmed.split(RegExp(r'\s+')).first;
-    return 'Bonjour $first 👋';
+    if (trimmed.isEmpty) return 'Bonjour ! 👋';
+    return 'Bonjour $trimmed ! 👋';
   }
+
+  static const notificationsTooltip = 'Notifications';
 
   static const searchSubtitle =
       'Trouvez les meilleurs pros près de chez vous';

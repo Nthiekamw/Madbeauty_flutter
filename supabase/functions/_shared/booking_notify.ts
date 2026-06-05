@@ -1,6 +1,7 @@
+/// <reference path="../types.d.ts" />
 /** Partagé entre les fonctions de notification réservation → FCM. */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { JWT } from "npm:google-auth-library@9";
+import { JWT } from "google-auth-library";
 
 export interface WebhookPayload {
   type?: string;
@@ -65,7 +66,7 @@ function loadServiceAccount(): ServiceAccount & { project_id: string } {
       "FIREBASE_SERVICE_ACCOUNT_JSON invalide (project_id, client_email, private_key).",
     );
   }
-  return { ...parsed as ServiceAccount, project_id: projectId };
+  return { ...(parsed as unknown as ServiceAccount), project_id: projectId };
 }
 
 async function fetchAccessToken(sa: ServiceAccount): Promise<string> {

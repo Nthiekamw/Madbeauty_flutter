@@ -60,3 +60,4 @@ class AuthGoogleButton extends StatelessWidget {
     );
   }
 }
+

@@ -75,3 +75,4 @@ enum PrestataireProfileEditSection {
     horaires => Icons.schedule_outlined,
   };
 }
+

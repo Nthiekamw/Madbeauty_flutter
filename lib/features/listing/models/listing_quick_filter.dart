@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
 
-/// Filtre rapide prédéfini de l’écran recherche / catalogue.
+/// Filtre rapide prédéfini de l'écran recherche / catalogue.
 enum ListingQuickFilterKind {
   all,
   availableOnly,
@@ -33,7 +33,7 @@ class ListingQuickFilter {
   /// Pour [ListingQuickFilterKind.categoryId] (famille de service).
   final String? categoryId;
 
-  /// Filtres mis en avant — thèmes coiffure + tri + disponibilité.
+  /// Filtres mis en avant – thèmes coiffure + tri + disponibilité.
   static const List<ListingQuickFilter> featured = [
     ListingQuickFilter(
       id: 'all',
@@ -131,3 +131,4 @@ class ListingQuickFilter {
     ),
   ];
 }
+

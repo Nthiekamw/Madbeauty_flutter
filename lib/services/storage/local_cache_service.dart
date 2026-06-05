@@ -6,7 +6,7 @@ class LocalCacheService {
   static const String lastSignedInEmailKey = 'auth.last_signed_in_email';
   static const String profileSnapshotKey = 'profile.snapshot';
   static const String selectedRoleKey = 'auth.selected_role';
-  /// Espace choisi à l’inscription (conservé tant que la session est active).
+  /// Espace choisi à l'inscription (conservé tant que la session est active).
   static const String signupShellRoleKey = 'auth.signup_shell_role';
   static const String cachedServerRolesKey = 'auth.cached_server_roles';
   static const String onboardingCompletedKey = 'app.onboarding_completed';
@@ -14,15 +14,13 @@ class LocalCacheService {
   static const String profilePushNotificationsKey =
       'profile.push_notifications_enabled';
   static const String profileGeolocationKey = 'profile.geolocation_enabled';
-  static const String prestataireCompletionPhaseKey =
-      'prestataire.profile_completion_phase';
-
   /// `true` une fois que la demande de permission système (push) a été faite au moins une fois.
   static const String pushPermissionPromptedKey =
       'push.permission_prompted_v1';
 
-  /// Code parrain reçu via lien d’invitation (à appliquer après connexion).
+  /// Code parrain reçu via lien d'invitation (à appliquer après connexion).
   static const String pendingReferralCodeKey = 'referral.pending_code_v1';
+  static const String clientHomeLayoutKey = 'client.home_layout_v1';
 
   static LocalCacheService? _instance;
 
@@ -109,13 +107,10 @@ class LocalCacheService {
   Future<bool> setProfileGeolocationEnabled(bool value) =>
       _prefs.setBool(profileGeolocationKey, value);
 
-  int? get prestataireProfileCompletionPhase =>
-      _prefs.getInt(prestataireCompletionPhaseKey);
+  String? get clientHomeLayoutJson => getString(clientHomeLayoutKey);
 
-  Future<bool> setPrestataireProfileCompletionPhase(int phase) =>
-      _prefs.setInt(prestataireCompletionPhaseKey, phase);
-
-  Future<bool> clearPrestataireProfileCompletionPhase() =>
-      remove(prestataireCompletionPhaseKey);
+  Future<bool> setClientHomeLayoutJson(String value) =>
+      setString(clientHomeLayoutKey, value);
 }
+
 

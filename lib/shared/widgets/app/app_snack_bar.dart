@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_fonts.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Type visuel du message flottant.
 enum AppSnackKind {
@@ -32,7 +33,7 @@ abstract final class AppSnackBar {
       ..showSnackBar(
         SnackBar(
           elevation: 0,
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           padding: EdgeInsets.zero,
           margin: _margin,
           behavior: SnackBarBehavior.floating,
@@ -76,7 +77,7 @@ class _SnackContent extends StatelessWidget {
     final palette = _palette(theme.colorScheme, kind, isDark);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
@@ -86,7 +87,7 @@ class _SnackContent extends StatelessWidget {
           boxShadow: isDark
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
+                    color: AppColors.scrimDark35,
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -98,7 +99,7 @@ class _SnackContent extends StatelessWidget {
                     offset: const Offset(0, 6),
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: AppColors.scrimLight05,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -206,3 +207,4 @@ _SnackPalette _palette(ColorScheme cs, AppSnackKind kind, bool isDark) {
       );
   }
 }
+

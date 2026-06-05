@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../models/weekly_jour_horaire.dart';
-import '../providers/current_prestataire_provider.dart';
 import '../providers/disponibilite_provider.dart';
+import '../providers/resolve_prestataire_id.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../widgets/profile/prestataire_indisponibilites_editor.dart';
-import '../widgets/profile/prestataire_weekly_horaires_editor.dart';
+import '../widgets/profile/schedule/prestataire_indisponibilites_editor.dart';
+import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
   const PrestataireHorairesScreen({super.key});
@@ -51,17 +51,28 @@ class _PrestataireHorairesScreenState
 
   Future<void> _save() async {
     final jours = _jours;
-    if (jours == null) return;
+    if (jours == null) {
+      if (mounted) {
+        AppSnackBar.error(context, DiscPrestaHoraires.loadErr);
+      }
+      return;
+    }
 
     if (jours.hasAnyOpenDay && !jours.validatePlages()) {
       setState(() => _error = DiscPrestaHoraires.invalidPlage);
+      if (mounted) {
+        AppSnackBar.error(context, DiscPrestaHoraires.invalidPlage);
+      }
       return;
     }
 
     final service = ref.read(disponibiliteServiceProvider);
-    final presta = await ref.read(currentPrestataireProvider.future);
-    if (service == null || presta == null) {
-      setState(() => _error = DiscPrestaHoraires.saveErr);
+    final prestaId = await resolveConnectedPrestataireId(ref.container);
+    if (service == null || prestaId == null) {
+      setState(() => _error = DiscPrestaHoraires.congesProfileErr);
+      if (mounted) {
+        AppSnackBar.error(context, DiscPrestaHoraires.congesProfileErr);
+      }
       return;
     }
 
@@ -71,13 +82,16 @@ class _PrestataireHorairesScreenState
     });
 
     try {
-      await service.setHoraires(presta.id, jours.toPlages());
+      await service.setHoraires(prestaId, jours.toPlages());
       invalidateDisponibiliteProviders(ref);
       if (mounted) {
         AppSnackBar.success(context, DiscPrestaHoraires.saveOk);
       }
     } catch (_) {
-      if (mounted) setState(() => _error = DiscPrestaHoraires.saveErr);
+      if (mounted) {
+        setState(() => _error = DiscPrestaHoraires.saveErr);
+        AppSnackBar.error(context, DiscPrestaHoraires.saveErr);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -100,10 +114,19 @@ class _PrestataireHorairesScreenState
         ),
         data: (horaires) {
           if (!_hydrated) {
-            _applyHoraires(horaires);
-            _hydrated = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted || _hydrated) return;
+              setState(() {
+                _applyHoraires(horaires);
+                _hydrated = true;
+              });
+            });
+            return const Center(child: CircularProgressIndicator());
           }
-          final jours = _jours!;
+          final jours = _jours;
+          if (jours == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -115,6 +138,9 @@ class _PrestataireHorairesScreenState
                 onToggleDay: (i, v) => setState(() => jours[i].enabled = v),
                 onPickStart: (i) => _pickTime(i, true),
                 onPickEnd: (i) => _pickTime(i, false),
+                onCapaciteChanged: (i, capacite) => setState(
+                  () => jours[i].capaciteSimultanee = capacite,
+                ),
               ),
               const SizedBox(height: 28),
               const PrestataireIndisponibilitesEditor(),
@@ -136,3 +162,4 @@ class _PrestataireHorairesScreenState
     );
   }
 }
+

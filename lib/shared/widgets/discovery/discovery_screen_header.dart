@@ -96,3 +96,4 @@ class DiscoveryScreenHeader extends StatelessWidget {
     );
   }
 }
+

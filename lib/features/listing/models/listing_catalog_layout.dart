@@ -6,3 +6,4 @@ enum ListingCatalogLayout {
   /// Deux colonnes, cartes concises.
   grid,
 }
+

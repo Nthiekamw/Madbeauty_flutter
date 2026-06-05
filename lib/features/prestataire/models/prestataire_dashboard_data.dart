@@ -11,6 +11,7 @@ class PrestataireDashboardData {
   final List<PrestataireReservationItem> pending;
   final List<PrestataireReservationItem> todayConfirmed;
 
-  /// Confirmées sur les 7 prochains jours (hors liste « aujourd’hui » déjà affichée).
+  /// Confirmées sur les 7 prochains jours (hors liste « aujourd'hui » déjà affichée).
   final List<PrestataireReservationItem> weekConfirmed;
 }
+

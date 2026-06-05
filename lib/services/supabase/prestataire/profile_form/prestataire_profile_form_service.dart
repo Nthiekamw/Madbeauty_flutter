@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../../core/models/user_role.dart';
+import '../../../auth/role_service.dart';
 import '../../../../core/models/domain/catalog/service_category.dart';
 import '../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../location/geocoding_service.dart';
@@ -190,6 +192,19 @@ class PrestataireProfileFormService {
   final PhotoRealisationService? _photoRealisationService;
   final CategorieSuggestionService? _categorieSuggestionService;
 
+  /// Garantit rôle prestataire + ligne profil avant Stripe Checkout / portail.
+  Future<String> ensureProfileForBilling() => SupabaseErrorHandler.run(
+    operation: 'prestataireProfileForm.ensureProfileForBilling',
+    action: () async {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        throw StateError('Utilisateur non connecté');
+      }
+      await RoleService(_client).ensureRole(UserRole.prestataire);
+      return _prestataireService.ensureProfileForUser(user.id);
+    },
+  );
+
   Future<PrestataireProfileFormData> fetch() => SupabaseErrorHandler.run(
     operation: 'prestataireProfileForm.fetch',
     action: () async {
@@ -283,6 +298,8 @@ class PrestataireProfileFormService {
     action: () async {
       final user = _client.auth.currentUser;
       if (user == null) throw StateError('Aucun utilisateur connecté.');
+
+      await RoleService(_client).ensureRole(UserRole.prestataire);
 
       final bytes = payload.avatarBytes;
       if (bytes != null) {
@@ -407,3 +424,4 @@ class PrestataireProfileFormService {
     return parts.isEmpty ? ville.trim() : parts.join(', ');
   }
 }
+

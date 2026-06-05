@@ -249,3 +249,4 @@ bool reviewReservationIsCompleted(String statut) {
   final s = statut.trim().toLowerCase();
   return ReviewService._completedStatuts.contains(s);
 }
+

@@ -26,3 +26,4 @@ class ConversationsEmptyState extends StatelessWidget {
     );
   }
 }
+

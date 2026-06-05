@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
@@ -75,7 +75,7 @@ class PrestataireAppointmentTile extends StatelessWidget {
                         [
                           item.serviceName,
                           if (dateLabel != null) dateLabel,
-                        ].join(' · '),
+                        ].join(' Â· '),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.3,
@@ -92,3 +92,4 @@ class PrestataireAppointmentTile extends StatelessWidget {
     );
   }
 }
+

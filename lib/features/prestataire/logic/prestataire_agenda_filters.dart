@@ -65,3 +65,4 @@ Map<DateTime, List<PrestataireReservationItem>> groupReservationsByDay(
   }
   return map;
 }
+

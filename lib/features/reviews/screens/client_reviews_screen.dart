@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +15,7 @@ import '../models/client_review_list_item.dart';
 import '../providers/review_provider.dart';
 import '../widgets/edit_review_sheet.dart';
 import '../widgets/review_photos_row.dart';
+import '../../../shared/theme/app_colors.dart';
 
 class ClientReviewsScreen extends ConsumerWidget {
   const ClientReviewsScreen({super.key});
@@ -184,7 +185,7 @@ class _ClientReviewCard extends StatelessWidget {
                     filled ? Icons.star_rounded : Icons.star_outline_rounded,
                     size: 18,
                     color: filled
-                        ? const Color(0xFFFFB800)
+                        ? AppColors.starReview
                         : theme.colorScheme.outline,
                   );
                 }),
@@ -203,7 +204,7 @@ class _ClientReviewCard extends StatelessWidget {
           if (reservationDate != null) ...[
             const SizedBox(height: 4),
             Text(
-              '${formatBookingDate(reservationDate)} · ${formatBookingTime(reservationDate)}',
+              '${formatBookingDate(reservationDate)} Â· ${formatBookingTime(reservationDate)}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -256,3 +257,4 @@ class _ClientReviewCard extends StatelessWidget {
     );
   }
 }
+

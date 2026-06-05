@@ -9,7 +9,7 @@ import '../../../messaging/models/client_presta_chat_access.dart';
 import '../../../messaging/providers/client_presta_chat_access_provider.dart';
 import '../../../../router/navigation_extensions.dart';
 
-/// Bloc messagerie sous le hero (hors bouton « Contacter » dans l’en-tête).
+/// Bloc messagerie sous le hero (hors bouton « Contacter » dans l'en-tête).
 class PrestataireDetailMessagingSection extends ConsumerWidget {
   const PrestataireDetailMessagingSection({
     super.key,
@@ -213,3 +213,4 @@ class _BookFirstContent extends StatelessWidget {
     );
   }
 }
+

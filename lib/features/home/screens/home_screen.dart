@@ -1,15 +1,10 @@
-﻿import 'dart:async';
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../services/notifications/in_app_notifications_provider.dart';
-import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
@@ -19,7 +14,6 @@ import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
-import '../../../shared/widgets/layout/brand_background.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -29,14 +23,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<bool> _confirmSignOut() async {
     return await showDialog<bool>(
           context: context,
@@ -59,26 +45,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         false;
   }
 
-  void _submitHomeSearch() {
-    FocusScope.of(context).unfocus();
-    ref.read(homeFeedSelectionProvider.notifier).setSearch(
-      _searchController.text,
-    );
-  }
-
   void _pickInspiration(String topic) {
     FocusScope.of(context).unfocus();
     ref.read(homeFeedSelectionProvider.notifier).setInspiration(topic);
-  }
-
-  void _openNotifications() {
-    unawaited(showInAppNotificationsSheet(context, ref));
-  }
-
-  String? _avatarUrlFromUser(User? user) {
-    if (user == null) return null;
-    final v = user.userMetadata?['avatar_url'];
-    return v is String && v.trim().isNotEmpty ? v.trim() : null;
   }
 
   @override
@@ -92,29 +61,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _ => null,
     };
     final isGuestBrowsing = ref.watch(isGuestBrowsingProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final notificationUnread =
-        ref.watch(unreadInAppNotificationsCountProvider);
+    final theme = Theme.of(context);
 
     Widget body;
     if (currentUser != null) {
       body = _ConnectedClientHome(
-        searchController: _searchController,
-        onSubmitSearch: _submitHomeSearch,
         onExplorePick: _pickInspiration,
-        onNotificationsTap: _openNotifications,
-        notificationsUnreadCount: notificationUnread,
         profileSnapshotAsync: profileSnapshotAsync,
-        currentUser: currentUser,
-        avatarUrl: _avatarUrlFromUser(currentUser),
       );
     } else if (isGuestBrowsing) {
       body = _GuestBrowseHome(
-        searchController: _searchController,
-        onSubmitSearch: _submitHomeSearch,
         onExplorePick: _pickInspiration,
-        onNotificationsTap: _openNotifications,
-        notificationsUnreadCount: notificationUnread,
       );
     } else {
       body = _GuestFallback(
@@ -129,19 +86,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          BrandBackground(isDark: isDark),
-          SafeArea(
-            child: ClientWorkspaceShell(
-              subtitle: currentUser != null
-                  ? DiscHome.taglineDiscovery
-                  : AuthStrings.guestHomeSubtitle,
-              child: body,
-            ),
-          ),
-        ],
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: ClientWorkspaceShell(
+          subtitle: currentUser != null
+              ? DiscHome.taglineDiscovery
+              : AuthStrings.guestHomeSubtitle,
+          child: body,
+        ),
       ),
     );
   }
@@ -149,24 +101,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _ConnectedClientHome extends StatelessWidget {
   const _ConnectedClientHome({
-    required this.searchController,
-    required this.onSubmitSearch,
     required this.onExplorePick,
-    required this.onNotificationsTap,
-    required this.notificationsUnreadCount,
     required this.profileSnapshotAsync,
-    required this.currentUser,
-    required this.avatarUrl,
   });
 
-  final TextEditingController searchController;
-  final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
-  final VoidCallback onNotificationsTap;
-  final int notificationsUnreadCount;
   final AsyncValue<HomeProfileSnapshot?> profileSnapshotAsync;
-  final User currentUser;
-  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -177,8 +117,6 @@ class _ConnectedClientHome extends StatelessWidget {
     };
 
     return ClientHomeScrollContent(
-      searchController: searchController,
-      onSubmitSearch: onSubmitSearch,
       onExplorePick: onExplorePick,
       footer: clientHomeProfileCacheFooter(theme, fromCache),
     );
@@ -188,26 +126,16 @@ class _ConnectedClientHome extends StatelessWidget {
 /// Accueil client sans compte : découverte catalogue uniquement.
 class _GuestBrowseHome extends StatelessWidget {
   const _GuestBrowseHome({
-    required this.searchController,
-    required this.onSubmitSearch,
     required this.onExplorePick,
-    required this.onNotificationsTap,
-    required this.notificationsUnreadCount,
   });
 
-  final TextEditingController searchController;
-  final VoidCallback onSubmitSearch;
   final ValueChanged<String> onExplorePick;
-  final VoidCallback onNotificationsTap;
-  final int notificationsUnreadCount;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return ClientHomeScrollContent(
-      searchController: searchController,
-      onSubmitSearch: onSubmitSearch,
       onExplorePick: onExplorePick,
       footer: Text(
         AuthStrings.welcomeGuestHint,

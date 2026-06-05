@@ -16,9 +16,10 @@ class ProfileRoleSpaceSection extends StatelessWidget {
       children: [
         const ProfileSectionTitle(title: DiscProfile.roleSpaceTitle),
         DiscoverySurfaceCard(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           child: RoleSwitchSection(
             showHeader: false,
+            compact: true,
             padding: EdgeInsets.zero,
           ),
         ),

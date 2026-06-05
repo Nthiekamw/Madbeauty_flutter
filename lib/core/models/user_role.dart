@@ -1,4 +1,4 @@
-enum UserRole {
+﻿enum UserRole {
   client('client'),
   prestataire('prestataire'),
   admin('admin');
@@ -14,3 +14,4 @@ enum UserRole {
     return null;
   }
 }
+

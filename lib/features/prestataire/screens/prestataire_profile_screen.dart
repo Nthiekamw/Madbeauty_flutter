@@ -1,11 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
-import '../../../shared/layout/discovery_responsive.dart';
-import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
@@ -17,12 +15,15 @@ import '../../profile/widgets/profile_footer_actions.dart';
 import '../../profile/widgets/profile_preferences_section.dart';
 import '../../profile/widgets/profile_role_space_section.dart';
 import '../logic/prestataire_profile_completeness.dart';
+import '../navigation/prestataire_hub_wizard_navigation.dart';
+import '../providers/disponibilite_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/profile/prestataire_profile_load_error.dart';
-import '../widgets/profile/prestataire_profile_manage_menu.dart';
-import '../widgets/profile/prestataire_profile_messages_tile.dart';
-import '../widgets/profile/prestataire_profile_stats_strip.dart';
-import '../widgets/profile/prestataire_stripe_connect_tile.dart';
+import '../widgets/profile/overview/prestataire_profile_account_menu.dart';
+import '../widgets/profile/overview/prestataire_profile_insets.dart';
+import '../widgets/profile/overview/prestataire_profile_load_error.dart';
+import '../widgets/profile/overview/prestataire_profile_manage_menu.dart';
+import '../widgets/profile/overview/prestataire_profile_section.dart';
+import '../widgets/profile/overview/prestataire_profile_stats_strip.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_profile_summary_card.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -110,7 +111,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final versionAsync = ref.watch(appVersionProvider);
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
     return DiscoveryBrandScaffold(
       body: profileAsync.when(
@@ -124,17 +124,24 @@ class PrestataireProfileScreen extends ConsumerWidget {
           final salon = data.nomSalon.trim();
           final title = salon.isNotEmpty ? salon : DiscPrestaProfile.title;
           final complete = data.isProfessionallyComplete;
+          final hasHoraires = ref.watch(prestataireHorairesProvider).maybeWhen(
+                data: (h) => h.isNotEmpty,
+                orElse: () => false,
+              );
           final profession = data.description.trim().isNotEmpty
               ? data.description.trim().split('\n').first
               : DiscPrestaProfile.pageSubtitle;
 
           return PrestataireWorkspaceShell(
             onRefresh: () => _refresh(ref),
+            headerSubtitle: DiscPrestaWorkspace.profileHeaderSubtitle,
             child: RefreshIndicator(
               onRefresh: () => _refresh(ref),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 32),
+                padding: EdgeInsets.only(
+                  bottom: PrestataireProfileInsets.listBottom(context),
+                ),
                 children: [
                   const PrestataireProfileCompletionCard(),
                   PrestataireProfileSummaryCard(
@@ -144,83 +151,80 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     trailingBadge: prestataireFreePlanBadge(context),
                     onTap: () => context.pushPrestataireProfileEdit(),
                   ),
-                  if (!complete) ...[
-                    const SizedBox(height: 12),
+                  if (!complete)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: PrestataireProfileInsets.page(context)
+                          .copyWith(top: 12),
                       child: FilledButton.icon(
                         onPressed: () =>
-                            context.pushPrestataireProfileComplete(),
+                            PrestataireHubWizardNavigation.openWizard(
+                          context,
+                          initialStep: PrestataireHubWizardNavigation
+                              .hubStepFromProfileData(
+                            data,
+                            hasHoraires: hasHoraires,
+                          ),
+                        ),
                         icon: const Icon(Icons.arrow_forward_rounded),
                         label: const Text(DiscPrestaProfile.incompleteCta),
                       ),
                     ),
-                  ],
-                  if (complete) ...[
-                    const SizedBox(height: 8),
+                  if (complete)
                     PrestataireProfileStatsStrip(
                       servicesCount: data.services.length,
                       specialtiesCount: data.selectedCategoryIds.length,
                       photosCount: data.realisationPhotos.length,
                     ),
-                  ],
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      DiscPrestaWorkspace.profileMenuTitle,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: PrestataireProfileMessagesTile(),
-                  ),
-                  const SizedBox(height: 10),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: PrestataireStripeConnectTile(),
-                  ),
-                  const SizedBox(height: 10),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: PrestataireProfileManageMenu(showHeader: false),
-                  ),
-                  if (data.prestataireId != null) ...[
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: DiscoverySurfaceCard(
-                        child: DiscoveryMenuTile(
-                          icon: Icons.visibility_rounded,
-                          title: DiscPrestaProfile.publicFiche,
-                          subtitle: DiscPrestaProfile.publicFicheHint,
-                          onTap: () => context.pushPrestataireDetail(
-                            data.prestataireId!,
+                  PrestataireProfileSection(
+                    title: DiscPrestaProfile.sectionActivity,
+                    children: [
+                      const PrestataireProfileManageMenu(showHeader: true),
+                      if (data.prestataireId != null)
+                        DiscoverySurfaceCard(
+                          child: DiscoveryMenuTile(
+                            icon: Icons.visibility_rounded,
+                            title: DiscPrestaProfile.publicFiche,
+                            subtitle: DiscPrestaProfile.publicFicheHint,
+                            onTap: () => context.pushPrestataireDetail(
+                              data.prestataireId!,
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  const ProfilePreferencesSection(),
-                  const SizedBox(height: 10),
-                  const ProfileRoleSpaceSection(),
-                  const SizedBox(height: 10),
-                  const ProfileAccountSection(),
-                  const SizedBox(height: 16),
-                  ProfileFooterActions(
-                    onSignOut: () => _signOut(context, ref),
-                    onDeleteAccount: () => _confirmDeleteAccount(context, ref),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
+                    child: const ProfilePreferencesSection(),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
+                    child: const ProfileRoleSpaceSection(),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
+                    child: const ProfileAccountSection(
+                      menuPrefix: PrestataireProfileAccountMenu(),
+                    ),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context)
+                        .copyWith(top: PrestataireProfileInsets.sectionTop),
+                    child: ProfileFooterActions(
+                      onSignOut: () => _signOut(context, ref),
+                      onDeleteAccount: () =>
+                          _confirmDeleteAccount(context, ref),
+                    ),
+                  ),
                   versionAsync.when(
                     data: (version) => Padding(
-                      padding: EdgeInsets.symmetric(horizontal: hPad),
+                      padding: PrestataireProfileInsets.page(context)
+                          .copyWith(top: 12),
                       child: Text(
                         '${ShellStrings.profileVersionLabel} $version',
                         textAlign: TextAlign.center,

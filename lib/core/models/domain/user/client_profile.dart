@@ -1,4 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+﻿import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../serialization/json_converters.dart';
 
@@ -18,3 +18,4 @@ abstract class ClientProfile with _$ClientProfile {
   factory ClientProfile.fromJson(Map<String, dynamic> json) =>
       _$ClientProfileFromJson(json);
 }
+

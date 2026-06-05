@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_avatar.dart';
+import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../profile/overview/prestataire_profile_insets.dart';
 
-/// Carte résumé salon (style maquette profil).
+/// Carte résumé salon (profil prestataire).
 class PrestataireProfileSummaryCard extends StatelessWidget {
   const PrestataireProfileSummaryCard({
     super.key,
@@ -24,29 +26,32 @@ class PrestataireProfileSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Material(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.12),
-              ),
-            ),
-            padding: const EdgeInsets.all(16),
+      padding: PrestataireProfileInsets.page(context).copyWith(top: 12),
+      child: DiscoverySurfaceCard(
+        padding: const EdgeInsets.all(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
             child: Row(
               children: [
-                AppAvatar(
-                  imageUrl: avatarUrl,
-                  displayName: title,
-                  radius: 28,
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: primary.withValues(alpha: 0.25),
+                      width: 2,
+                    ),
+                  ),
+                  child: AppAvatar(
+                    imageUrl: avatarUrl,
+                    displayName: title,
+                    radius: 30,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -61,6 +66,7 @@ class PrestataireProfileSummaryCard extends StatelessWidget {
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontFamily: AppFonts.display,
                                 fontWeight: FontWeight.w900,
+                                letterSpacing: -0.2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -77,9 +83,18 @@ class PrestataireProfileSummaryCard extends StatelessWidget {
                         subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        DiscPrestaProfile.editProfileHint,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),

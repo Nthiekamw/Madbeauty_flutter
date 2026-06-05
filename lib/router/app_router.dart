@@ -32,17 +32,19 @@ import '../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../features/prestataire/screens/prestataire_horaires_screen.dart';
 import '../features/prestataire/models/prestataire_profile_edit_section.dart';
 import '../features/prestataire/screens/prestataire_hub_screen.dart';
-import '../features/prestataire/screens/prestataire_profile_completion_screen.dart';
 import '../features/prestataire/screens/prestataire_profile_screen.dart';
+import '../features/prestataire/screens/prestataire_payment_methods_screen.dart';
 import '../features/prestataire/screens/prestataire_subscription_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/favorites/screens/client_favorites_screen.dart';
 import '../features/messaging/screens/chat_screen.dart';
 import '../features/messaging/screens/conversations_inbox_screen.dart';
 import '../features/reviews/screens/client_reviews_screen.dart';
+import '../features/admin/screens/admin_content_reports_screen.dart';
 import '../features/admin/screens/admin_verification_screen.dart';
 import '../services/storage/local_cache_service.dart';
 import '../services/supabase/messaging/messaging_providers.dart';
+import '../features/profile/screens/client_payment_methods_screen.dart';
 import '../features/profile/screens/edit_client_account_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/help/screens/help_center_screen.dart';
@@ -50,6 +52,7 @@ import '../features/referral/screens/referral_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/splash/screens/startup_splash_screen.dart';
 import 'app_deep_links.dart';
+import 'prestataire_public_route.dart';
 import 'shell/client_shell_scaffold.dart';
 import 'shell/prestataire_shell_scaffold.dart';
 import 'shell/shell_route_pages.dart';
@@ -82,12 +85,14 @@ abstract final class AppRoutes {
   static const String clientProfile = '/client/profile';
   static const String chat = '/chat';
   static const String editClientAccount = '/client/profile/edit';
+  static const String clientPaymentMethods = '/client/payment-methods';
   static const String clientFavorites = '/client/favorites';
   static const String clientReviews = '/client/reviews';
   static const String clientHistory = '/client/history';
   static const String clientHelp = '/client/help';
   static const String clientReferral = '/client/referral';
   static const String adminVerifications = '/admin/verifications';
+  static const String adminReports = '/admin/reports';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -97,9 +102,9 @@ abstract final class AppRoutes {
   static const String prestataireReservationDetail =
       '/prestataire/reservations/:id';
   static const String prestataireProfileEdit = '/prestataire/profile/edit';
-  static const String prestataireProfileComplete = '/prestataire/profile/complete';
   static const String prestataireHoraires = '/prestataire/horaires';
   static const String prestataireSubscription = '/prestataire/subscription';
+  static const String prestatairePaymentMethods = '/prestataire/payment-methods';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
   static const String home = '/';
@@ -132,12 +137,14 @@ abstract final class AppRouteNames {
   static const String clientProfile = 'client-profile';
   static const String chat = 'chat';
   static const String editClientAccount = 'edit-client-account';
+  static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
   static const String clientReviews = 'client-reviews';
   static const String clientHistory = 'client-history';
   static const String clientHelp = 'client-help';
   static const String clientReferral = 'client-referral';
   static const String adminVerifications = 'admin-verifications';
+  static const String adminReports = 'admin-reports';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -147,9 +154,9 @@ abstract final class AppRouteNames {
   static const String prestataireReservationDetail =
       'prestataire-reservation-detail';
   static const String prestataireProfileEdit = 'prestataire-profile-edit';
-  static const String prestataireProfileComplete = 'prestataire-profile-complete';
   static const String prestataireHoraires = 'prestataire-horaires';
   static const String prestataireSubscription = 'prestataire-subscription';
+  static const String prestatairePaymentMethods = 'prestataire-payment-methods';
 }
 
 /// Recalcule les [redirect] sans recréer [GoRouter] (évite le double clic invité).
@@ -281,7 +288,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return preferredPath;
       }
 
-      if (location.startsWith(AppRoutes.adminVerifications) && !hasAdminRole) {
+      if ((location.startsWith(AppRoutes.adminVerifications) ||
+              location.startsWith(AppRoutes.adminReports)) &&
+          !hasAdminRole) {
         return preferredPath;
       }
 
@@ -347,6 +356,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const EditClientAccountScreen(),
       ),
       GoRoute(
+        name: AppRouteNames.clientPaymentMethods,
+        path: AppRoutes.clientPaymentMethods,
+        builder: (context, state) => const ClientPaymentMethodsScreen(),
+      ),
+      GoRoute(
         name: AppRouteNames.clientFavorites,
         path: AppRoutes.clientFavorites,
         builder: (context, state) => const ClientFavoritesScreen(),
@@ -382,6 +396,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.adminVerifications,
         path: AppRoutes.adminVerifications,
         builder: (context, state) => const AdminVerificationScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminReports,
+        path: AppRoutes.adminReports,
+        builder: (context, state) => const AdminContentReportsScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',
@@ -547,9 +566,51 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return PrestataireReservationDetailScreen(reservationId: id);
         },
       ),
+      // Routes statiques AVANT `/prestataire/:id` (sinon `subscription`, `horaires`, etc.
+      // sont pris pour un UUID fiche publique).
+      GoRoute(
+        name: AppRouteNames.prestataireHoraires,
+        path: AppRoutes.prestataireHoraires,
+        builder: (context, state) => const PrestataireHorairesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireSubscription,
+        path: AppRoutes.prestataireSubscription,
+        builder: (context, state) => const PrestataireSubscriptionScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestatairePaymentMethods,
+        path: AppRoutes.prestatairePaymentMethods,
+        builder: (context, state) => const PrestatairePaymentMethodsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireProfileEdit,
+        path: AppRoutes.prestataireProfileEdit,
+        builder: (context, state) {
+          final section = PrestataireProfileEditSection.fromQuery(
+            state.uri.queryParameters['section'],
+          );
+          final stepRaw = state.uri.queryParameters['step'];
+          final initialStep = stepRaw != null ? int.tryParse(stepRaw) : null;
+          return PrestataireHubScreen(
+            focusedSection: section,
+            initialStep: initialStep,
+          );
+        },
+      ),
       GoRoute(
         name: AppRouteNames.prestataireDetail,
         path: '${AppRoutes.prestatairePublicProfile}/:id',
+        redirect: (context, state) {
+          final id = state.pathParameters['id']?.trim() ?? '';
+          if (isPublicPrestataireId(id)) return null;
+          return switch (id) {
+            'subscription' => AppRoutes.prestataireSubscription,
+            'payment-methods' => AppRoutes.prestatairePaymentMethods,
+            'horaires' => AppRoutes.prestataireHoraires,
+            _ => AppRoutes.clientSearch,
+          };
+        },
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return PrestataireDetailScreen(prestataireId: id);
@@ -585,32 +646,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.asyncStateTest,
         path: AppRoutes.asyncStateTest,
         builder: (context, state) => const AsyncStateTestScreen(),
-      ),
-      GoRoute(
-        name: AppRouteNames.prestataireHoraires,
-        path: AppRoutes.prestataireHoraires,
-        builder: (context, state) => const PrestataireHorairesScreen(),
-      ),
-      GoRoute(
-        name: AppRouteNames.prestataireSubscription,
-        path: AppRoutes.prestataireSubscription,
-        builder: (context, state) => const PrestataireSubscriptionScreen(),
-      ),
-      GoRoute(
-        name: AppRouteNames.prestataireProfileEdit,
-        path: AppRoutes.prestataireProfileEdit,
-        builder: (context, state) {
-          final section = PrestataireProfileEditSection.fromQuery(
-            state.uri.queryParameters['section'],
-          );
-          return PrestataireHubScreen(focusedSection: section);
-        },
-      ),
-      GoRoute(
-        name: AppRouteNames.prestataireProfileComplete,
-        path: AppRoutes.prestataireProfileComplete,
-        builder: (context, state) =>
-            const PrestataireProfileCompletionScreen(),
       ),
     ],
   );

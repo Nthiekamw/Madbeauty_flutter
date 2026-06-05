@@ -1,4 +1,4 @@
-import 'package:json_annotation/json_annotation.dart';
+﻿import 'package:json_annotation/json_annotation.dart';
 
 import 'lieu_travail.dart';
 
@@ -11,3 +11,4 @@ class LieuTravailConverter implements JsonConverter<LieuTravail?, String?> {
   @override
   String? toJson(LieuTravail? object) => object?.value;
 }
+

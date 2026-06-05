@@ -22,7 +22,7 @@ class PrestataireCatalogEntry {
   /// Identifiants [categories_service.id] liés via [prestataire_specialites].
   final List<String> specialtyCategoryIds;
 
-  /// Distance depuis [origin] ; [double.infinity] si le profil n’a pas de coordonnées.
+  /// Distance depuis [origin] ; [double.infinity] si le profil n'a pas de coordonnées.
   double distanceKmFrom(GeoPoint origin) {
     final la = profile.latitude;
     final lo = profile.longitude;
@@ -67,3 +67,4 @@ class PrestataireCatalogEntry {
     return has(displayName);
   }
 }
+

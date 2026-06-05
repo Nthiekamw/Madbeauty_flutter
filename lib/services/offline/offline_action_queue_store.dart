@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../../services/storage/local_cache_service.dart';
 import 'pending_offline_action.dart';
 
-/// Persistance SharedPreferences de la file d’actions hors ligne.
+/// Persistance SharedPreferences de la file d'actions hors ligne.
 class OfflineActionQueueStore {
   OfflineActionQueueStore._();
 
@@ -74,3 +74,4 @@ List<PendingOfflineAction> compactOfflineQueue(
     return true;
   }).toList();
 }
+

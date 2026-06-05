@@ -106,3 +106,4 @@ class _ForgotPasswordRouteState extends ConsumerState<ForgotPasswordRoute> {
     );
   }
 }
+

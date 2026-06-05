@@ -1,4 +1,4 @@
-/// Configuration : `--dart-define`, ou fichier `.env` via
+﻿/// Configuration : `--dart-define`, ou fichier `.env` via
 /// `flutter run --dart-define-from-file=.env` (voir README).
 class AppConfig {
   AppConfig._();
@@ -44,3 +44,4 @@ class AppConfig {
   static String? get authEmailRedirectTo =>
       supabaseEmailRedirectUrl.isEmpty ? null : supabaseEmailRedirectUrl;
 }
+

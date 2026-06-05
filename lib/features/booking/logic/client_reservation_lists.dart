@@ -1,4 +1,4 @@
-import '../logic/client_reservation_ui_status.dart';
+﻿import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
 
 List<ClientReservationSummary> clientUpcomingReservations(
@@ -40,3 +40,4 @@ List<ClientReservationSummary> clientPastReservations(
       .toList()
     ..sort((a, b) => b.dateHeure.compareTo(a.dateHeure));
 }
+

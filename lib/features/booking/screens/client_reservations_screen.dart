@@ -9,11 +9,10 @@ import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
+import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_lists.dart';
 import '../logic/client_reservation_ui_status.dart';
@@ -147,67 +146,56 @@ class _ClientReservationsScreenState
     });
 
     if (ref.watch(isGuestBrowsingProvider)) {
-      return DiscoveryBrandScaffold(
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const DiscoveryFeatureHeader(
-              title: DiscNav.myReservationsTitle,
-              subtitle: DiscBk.reservationsSubtitle,
-              icon: Icons.calendar_month_rounded,
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: SafeArea(
+          child: ClientWorkspaceShell(
+            subtitle: DiscBk.reservationsSubtitle,
+            child: GuestAccountPrompt(
+              icon: Icons.event_outlined,
+              title: AuthStrings.guestReservationsTitle,
+              message: AuthStrings.guestReservationsBody,
             ),
-            Expanded(
-              child: GuestAccountPrompt(
-                icon: Icons.event_outlined,
-                title: AuthStrings.guestReservationsTitle,
-                message: AuthStrings.guestReservationsBody,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
 
     final reservationsAsync = ref.watch(clientReservationsProvider);
 
+    final theme = Theme.of(context);
+
     return DefaultTabController(
       length: 2,
-      child: DiscoveryBrandScaffold(
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const DiscoveryFeatureHeader(
-              title: DiscNav.myReservationsTitle,
-              subtitle: DiscBk.reservationsSubtitle,
-              icon: Icons.calendar_month_rounded,
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: SafeArea(
+          child: ClientWorkspaceShell(
+            subtitle: DiscBk.reservationsSubtitle,
+            top: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: DiscoverySurfaceCard(
                 padding: const EdgeInsets.all(5),
                 child: TabBar(
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
-                  labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  labelStyle: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
-                  unselectedLabelStyle:
-                      Theme.of(context).textTheme.labelLarge,
+                  unselectedLabelStyle: theme.textTheme.labelLarge,
                   indicator: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: theme.colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  labelColor: Theme.of(context).colorScheme.onPrimary,
-                  unselectedLabelColor:
-                      Theme.of(context).colorScheme.onSurfaceVariant,
+                  labelColor: theme.colorScheme.onPrimary,
+                  unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
                   tabs: [
                     Tab(
                       height: 40,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.upcoming_rounded, size: 18),
+                          const Icon(Icons.upcoming_rounded, size: 18),
                           const SizedBox(width: 6),
                           Text(DiscBk.tabFuture),
                         ],
@@ -218,7 +206,7 @@ class _ClientReservationsScreenState
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.history_rounded, size: 18),
+                          const Icon(Icons.history_rounded, size: 18),
                           const SizedBox(width: 6),
                           Text(DiscBk.tabPast),
                         ],
@@ -228,45 +216,42 @@ class _ClientReservationsScreenState
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: reservationsAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (_, __) => RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      DiscoveryEmptyState(
-                        icon: Icons.cloud_off_outlined,
-                        title: DiscBk.listErrTitle,
-                        body: DiscBk.listErrBody,
-                        iconColor: Theme.of(context).colorScheme.error,
-                        actionLabel: DiscList.retry,
-                        onAction: _refresh,
-                      ),
-                    ],
-                  ),
-                ),
-                data: (all) => TabBarView(
+            child: reservationsAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (_, __) => RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    _tabList(
-                      items: clientUpcomingReservations(all),
-                      emptyTitle: DiscBk.emptyFutureTitle,
-                      emptyBody: DiscBk.emptyFutureBody,
-                    ),
-                    _tabList(
-                      items: clientPastReservations(all),
-                      emptyTitle: DiscBk.emptyPastTitle,
-                      emptyBody: DiscBk.emptyPastBody,
+                    DiscoveryEmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: DiscBk.listErrTitle,
+                      body: DiscBk.listErrBody,
+                      iconColor: theme.colorScheme.error,
+                      actionLabel: DiscList.retry,
+                      onAction: _refresh,
                     ),
                   ],
                 ),
               ),
+              data: (all) => TabBarView(
+                children: [
+                  _tabList(
+                    items: clientUpcomingReservations(all),
+                    emptyTitle: DiscBk.emptyFutureTitle,
+                    emptyBody: DiscBk.emptyFutureBody,
+                  ),
+                  _tabList(
+                    items: clientPastReservations(all),
+                    emptyTitle: DiscBk.emptyPastTitle,
+                    emptyBody: DiscBk.emptyPastBody,
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

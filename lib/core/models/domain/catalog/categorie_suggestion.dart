@@ -5,7 +5,7 @@ import '../serialization/json_converters.dart';
 part 'categorie_suggestion.freezed.dart';
 part 'categorie_suggestion.g.dart';
 
-/// [SUGGESTIONS_CATEGORIE] — proposition de nouvelle catégorie de service.
+/// [SUGGESTIONS_CATEGORIE] – proposition de nouvelle catégorie de service.
 @freezed
 abstract class CategorieSuggestion with _$CategorieSuggestion {
   const factory CategorieSuggestion({
@@ -21,3 +21,4 @@ abstract class CategorieSuggestion with _$CategorieSuggestion {
   factory CategorieSuggestion.fromJson(Map<String, dynamic> json) =>
       _$CategorieSuggestionFromJson(json);
 }
+

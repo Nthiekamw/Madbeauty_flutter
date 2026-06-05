@@ -14,7 +14,7 @@ class StripeConnectException implements Exception {
   String toString() => message;
 }
 
-/// État du compte Stripe Connect d’un prestataire.
+/// État du compte Stripe Connect d'un prestataire.
 class StripeConnectStatus {
   const StripeConnectStatus({
     this.accountId,
@@ -103,7 +103,7 @@ class StripeConnectService {
     return 'Erreur serveur Stripe Connect (${e.status}).';
   }
 
-  /// Messages Stripe techniques → texte compréhensible.
+  /// Messages Stripe techniques â†’ texte compréhensible.
   static String _friendlyMessage(String server) {
     final lower = server.toLowerCase();
     if (lower.contains('signed up for connect')) {
@@ -126,3 +126,4 @@ class StripeConnectService {
     return null;
   }
 }
+

@@ -81,3 +81,4 @@ String _fromSupabase(SupabaseServiceException error) {
   if (trimmed.isNotEmpty) return trimmed;
   return DiscBk.errGenericSave;
 }
+

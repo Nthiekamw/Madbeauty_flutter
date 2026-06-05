@@ -1,6 +1,6 @@
 import '../../../core/models/domain/reviews/review.dart';
 
-/// Avis du client connecté, enrichi pour l’écran « Mes avis ».
+/// Avis du client connecté, enrichi pour l'écran « Mes avis ».
 class ClientReviewListItem {
   const ClientReviewListItem({
     required this.review,
@@ -25,3 +25,4 @@ class ClientReviewListItem {
     return remaining.inDays.clamp(0, 30);
   }
 }
+

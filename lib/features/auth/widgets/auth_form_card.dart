@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/auth_form_styles.dart';
 
@@ -42,3 +42,4 @@ class AuthFormCard extends StatelessWidget {
     );
   }
 }
+

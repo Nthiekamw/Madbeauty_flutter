@@ -9,7 +9,7 @@ class PrestataireServiceFieldSet {
     String nom = '',
     String description = '',
     this.categorieId,
-    String prix = '0',
+    String prix = '',
     String duree = '60',
   }) : nomController = TextEditingController(text: nom),
        descriptionController = TextEditingController(text: description),
@@ -22,7 +22,11 @@ class PrestataireServiceFieldSet {
       nom: data.nom,
       description: data.description,
       categorieId: data.categorieId,
-      prix: data.prix == 0 ? '0' : data.prix.toStringAsFixed(2),
+      prix: data.prix <= 0
+          ? ''
+          : (data.prix == data.prix.roundToDouble()
+              ? data.prix.toInt().toString()
+              : data.prix.toStringAsFixed(2)),
       duree: data.dureeMinutes.toString(),
     );
   }
@@ -46,3 +50,4 @@ class PrestataireServiceFieldSet {
     dureeController.dispose();
   }
 }
+

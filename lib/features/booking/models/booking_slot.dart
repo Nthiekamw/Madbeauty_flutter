@@ -1,4 +1,4 @@
-class BookingSlot {
+﻿class BookingSlot {
   const BookingSlot({required this.hour, required this.minute});
 
   factory BookingSlot.fromDateTime(DateTime value) {
@@ -30,3 +30,4 @@ class BookingSlot {
   @override
   int get hashCode => Object.hash(hour, minute);
 }
+

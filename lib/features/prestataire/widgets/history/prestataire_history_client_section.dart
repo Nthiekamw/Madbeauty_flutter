@@ -7,6 +7,7 @@ import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../logic/prestataire_history_grouping.dart';
 import '../../models/prestataire_reservation_item.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 class PrestataireHistoryClientSection extends StatelessWidget {
   const PrestataireHistoryClientSection({
@@ -35,7 +36,7 @@ class PrestataireHistoryClientSection extends StatelessWidget {
     return DiscoverySurfaceCard(
       padding: EdgeInsets.zero,
       child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
+        data: theme.copyWith(dividerColor: AppColors.transparent),
         child: ExpansionTile(
           initiallyExpanded: initiallyExpanded,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -158,3 +159,4 @@ class _HistoryReservationTile extends StatelessWidget {
     );
   }
 }
+

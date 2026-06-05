@@ -29,3 +29,4 @@ abstract final class DiscoveryStyles {
 
 /// Alias historique (accueil).
 typedef HomeStyles = DiscoveryStyles;
+

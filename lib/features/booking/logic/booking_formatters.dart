@@ -4,7 +4,7 @@ String formatBookingServiceMeta({
   required int durationMinutes,
   required double price,
 }) {
-  return '$durationMinutes min • ${price.toStringAsFixed(2)} €';
+  return '$durationMinutes min â€¢ ${price.toStringAsFixed(2)} â‚¬';
 }
 
 String formatBookingDate(DateTime day) {
@@ -41,3 +41,4 @@ String formatBookingTime(DateTime dt) {
   final m = dt.minute.toString().padLeft(2, '0');
   return '$h:$m';
 }
+

@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../../shared/utils/text_normalizer.dart';
@@ -30,7 +31,7 @@ class PrestataireSalonHero extends StatelessWidget {
     final normalizedTitle = normalizeSingleLineText(title);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: DiscoveryStyles.heroBorderRadius,
@@ -39,30 +40,47 @@ class PrestataireSalonHero extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               theme.colorScheme.primaryContainer.withValues(
-                alpha: isDark ? 0.55 : 0.88,
+                alpha: isDark ? 0.55 : 0.92,
               ),
               theme.colorScheme.surface.withValues(
-                alpha: isDark ? 0.4 : 0.82,
+                alpha: isDark ? 0.4 : 0.88,
               ),
             ],
           ),
-          border: Border.all(color: primary.withValues(alpha: 0.14)),
+          border: Border.all(color: primary.withValues(alpha: 0.16)),
           boxShadow: isDark
               ? null
               : [
                   BoxShadow(
-                    color: primary.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: primary.withValues(alpha: 0.12),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
                   ),
                 ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
+        child: ClipRRect(
+          borderRadius: DiscoveryStyles.heroBorderRadius,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
+              Container(
+                height: 3,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.brandGold,
+                      AppColors.brandGoldLight,
+                      AppColors.brandGold,
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 16, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DecoratedBox(
@@ -140,10 +158,13 @@ class PrestataireSalonHero extends StatelessWidget {
                   ),
                 ],
               ),
-              if (footer != null) ...[
-                const SizedBox(height: 14),
-                footer!,
-              ],
+                    if (footer != null) ...[
+                      const SizedBox(height: 14),
+                      footer!,
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -151,3 +172,4 @@ class PrestataireSalonHero extends StatelessWidget {
     );
   }
 }
+

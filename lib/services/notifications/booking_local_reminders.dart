@@ -98,7 +98,7 @@ class BookingLocalReminders {
       await _zoned(
         id: _dayBeforeIdBase + hash,
         scheduled: dayBefore,
-        notifTitle: 'Rappel — demain',
+        notifTitle: 'Rappel – demain',
         body: '$title demain à ${_formatTime(when)}',
       );
     }
@@ -106,7 +106,7 @@ class BookingLocalReminders {
       await _zoned(
         id: _twoHoursIdBase + hash,
         scheduled: twoHours,
-        notifTitle: 'Rappel — dans 2 h',
+        notifTitle: 'Rappel – dans 2 h',
         body: '$title à ${_formatTime(when)}',
       );
     }
@@ -154,3 +154,4 @@ class BookingLocalReminders {
     return '$h:$m';
   }
 }
+

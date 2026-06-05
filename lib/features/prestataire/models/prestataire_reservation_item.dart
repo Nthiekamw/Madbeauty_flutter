@@ -1,4 +1,4 @@
-import '../../booking/logic/reservation_payment_display.dart';
+﻿import '../../booking/logic/reservation_payment_display.dart';
 
 /// Réservation enrichie pour le tableau de bord prestataire.
 class PrestataireReservationItem {

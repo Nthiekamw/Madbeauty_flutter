@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/constants/app_area.dart';
 import 'app_colors.dart';
 import 'app_fonts.dart';
+import 'auth_form_styles.dart';
 
 class AppTheme {
   AppTheme._();
@@ -49,12 +50,12 @@ class AppTheme {
       primary: primary,
       onPrimary: onPrimary,
       secondary: AppColors.brownSecondaryLight,
-      onSecondary: Colors.white,
+      onSecondary: AppColors.white,
       surface: AppColors.lightSurface,
       onSurface: AppColors.lightOnSurface,
       onSurfaceVariant: AppColors.lightOnSurfaceVariant,
-      error: const Color(0xFFC62828),
-      onError: Colors.white,
+      error: AppColors.errorLight,
+      onError: AppColors.white,
       outline: AppColors.lightOutline,
     );
 
@@ -65,28 +66,40 @@ class AppTheme {
         surfaceContainerLowest: AppColors.lightSurfaceContainer,
         surfaceContainerLow: AppColors.lightSurfaceContainer,
         surfaceContainer: AppColors.lightSurfaceContainer,
-        surfaceContainerHigh: const Color(0xFFF0E8E2),
-        surfaceContainerHighest: const Color(0xFFE8DDD4),
+        surfaceContainerHigh: AppColors.lightSurfaceContainerHigh,
+        surfaceContainerHighest: AppColors.lightSurfaceContainerHighest,
       ),
     );
 
-    return _withTypography(
-      base.copyWith(
-        scaffoldBackgroundColor: AppColors.lightSurface,
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          backgroundColor: primary,
-          foregroundColor: onPrimary,
-          elevation: 0,
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
+    return _withFormChrome(
+      _withTypography(
+        base.copyWith(
+          scaffoldBackgroundColor: AppColors.lightSurface,
+          appBarTheme: AppBarTheme(
+            centerTitle: true,
             backgroundColor: primary,
             foregroundColor: onPrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            elevation: 0,
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: onPrimary,
+              minimumSize: const Size.fromHeight(52),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: AuthFormStyles.buttonBorderRadius,
+              ),
+              textStyle: const TextStyle(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
           ),
         ),
       ),
+      brightness: Brightness.light,
     );
   }
 
@@ -108,8 +121,8 @@ class AppTheme {
       surface: AppColors.darkSurface,
       onSurface: AppColors.darkOnSurface,
       onSurfaceVariant: AppColors.darkOnSurfaceVariant,
-      error: const Color(0xFFCF6679),
-      onError: Colors.black,
+      error: AppColors.errorDark,
+      onError: AppColors.black,
       outline: AppColors.darkOutline,
     );
 
@@ -120,29 +133,103 @@ class AppTheme {
         surfaceContainerLowest: AppColors.darkSurface,
         surfaceContainerLow: AppColors.darkSurfaceContainer,
         surfaceContainer: AppColors.darkSurfaceContainer,
-        surfaceContainerHigh: const Color(0xFF352B24),
-        surfaceContainerHighest: const Color(0xFF40352E),
+        surfaceContainerHigh: AppColors.darkSurfaceContainerHigh,
+        surfaceContainerHighest: AppColors.darkSurfaceContainerHighest,
       ),
     );
 
-    return _withTypography(
-      base.copyWith(
-        scaffoldBackgroundColor: AppColors.darkSurface,
-        cardColor: AppColors.darkSurfaceContainer,
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          backgroundColor: primary,
-          foregroundColor: onPrimary,
-          elevation: 0,
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
+    return _withFormChrome(
+      _withTypography(
+        base.copyWith(
+          scaffoldBackgroundColor: AppColors.darkSurface,
+          cardColor: AppColors.darkSurfaceContainer,
+          appBarTheme: AppBarTheme(
+            centerTitle: true,
             backgroundColor: primary,
             foregroundColor: onPrimary,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            elevation: 0,
           ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: onPrimary,
+              minimumSize: const Size.fromHeight(52),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: AuthFormStyles.buttonBorderRadius,
+              ),
+              textStyle: const TextStyle(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ),
+      brightness: Brightness.dark,
+    );
+  }
+
+  static ThemeData _withFormChrome(ThemeData theme, {required Brightness brightness}) {
+    final isDark = brightness == Brightness.dark;
+    final scheme = theme.colorScheme;
+    final fieldFill = isDark
+        ? AppColors.darkSurfaceContainerHigh
+        : AppColors.lightSurfaceContainerHigh;
+    final onField = scheme.onSurfaceVariant;
+    final border = scheme.outline;
+    final focus = scheme.primary;
+
+    return theme.copyWith(
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: fieldFill,
+        labelStyle: TextStyle(color: onField),
+        hintStyle: TextStyle(color: onField.withValues(alpha: 0.85)),
+        prefixIconColor: focus,
+        suffixIconColor: onField,
+        border: AuthFormStyles.outlineBorder(
+          border.withValues(alpha: isDark ? 0.45 : 0.5),
+        ),
+        enabledBorder: AuthFormStyles.outlineBorder(
+          border.withValues(alpha: isDark ? 0.4 : 0.45),
+        ),
+        focusedBorder: AuthFormStyles.outlineBorder(focus, width: 1.5),
+        errorBorder: AuthFormStyles.outlineBorder(
+          isDark ? AppColors.errorDark : AppColors.errorLight,
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: scheme.onSurface,
+          side: BorderSide(color: focus, width: 1.4),
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: AuthFormStyles.buttonBorderRadius,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: focus),
+      ),
+      dividerTheme: DividerThemeData(
+        color: border.withValues(alpha: 0.35),
+      ),
+      cardTheme: CardThemeData(
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.lightSurfaceContainer,
+        surfaceTintColor: AppColors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: AuthFormStyles.cardBorderRadius,
+          side: BorderSide(color: border.withValues(alpha: 0.25)),
         ),
       ),
     );
   }
 }
+

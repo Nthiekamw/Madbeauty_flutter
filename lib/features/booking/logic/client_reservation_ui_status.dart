@@ -112,3 +112,4 @@ class ChipStyleReservationStatus {
   final Color backgroundColor;
   final Color foregroundColor;
 }
+

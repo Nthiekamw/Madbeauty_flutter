@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/booking_availability_rules.dart';
 import '../models/booking_selection_state.dart';
@@ -60,3 +60,4 @@ class BookingSelectionNotifier extends Notifier<BookingSelectionState> {
     );
   }
 }
+

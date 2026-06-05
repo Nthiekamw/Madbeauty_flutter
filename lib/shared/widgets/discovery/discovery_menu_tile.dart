@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_fonts.dart';
+import '../../../shared/theme/app_colors.dart';
 
-/// Ligne d’action dans une carte profil / menu client.
+/// Ligne d'action dans une carte profil / menu client.
 class DiscoveryMenuTile extends StatelessWidget {
   const DiscoveryMenuTile({
     super.key,
@@ -31,7 +32,7 @@ class DiscoveryMenuTile extends StatelessWidget {
         : (iconColor ?? theme.colorScheme.primary);
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -88,3 +89,4 @@ class DiscoveryMenuTile extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-/// Ligne [categories_service] (filtres chips du listing).
+﻿/// Ligne [categories_service] (filtres chips du listing).
 class ServiceCategory {
   const ServiceCategory({
     required this.id,
@@ -10,3 +10,4 @@ class ServiceCategory {
   final String nom;
   final String? icone;
 }
+

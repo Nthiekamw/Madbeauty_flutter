@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Ferme le clavier au tap en dehors d’un champ (sans bloquer les enfants interactifs).
+/// Ferme le clavier au tap en dehors d'un champ (sans bloquer les enfants interactifs).
 class KeyboardDismissArea extends StatelessWidget {
   const KeyboardDismissArea({
     super.key,
@@ -24,3 +24,4 @@ class KeyboardDismissArea extends StatelessWidget {
     );
   }
 }
+

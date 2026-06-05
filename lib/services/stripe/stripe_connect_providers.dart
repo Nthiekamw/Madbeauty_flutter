@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
 import '../supabase/supabase_service.dart';
@@ -16,3 +16,4 @@ final prestataireStripeConnectProvider =
   if (service == null) return null;
   return service.syncStatus();
 });
+

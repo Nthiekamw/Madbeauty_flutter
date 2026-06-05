@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
@@ -48,6 +48,7 @@ class BookingStepOneContent extends StatelessWidget {
   final ValueChanged<DateTime> onPageChanged;
   final ValueChanged<BookingSlot> onSlotSelected;
   final VoidCallback onContinue;
+  final String? prestataireId;
 
   @override
   Widget build(BuildContext context) {
@@ -132,3 +133,4 @@ class BookingStepOneContent extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-/// Conversion jour Dart ↔ PostgreSQL `extract(dow)` (0 = dimanche).
+﻿/// Conversion jour Dart â†” PostgreSQL `extract(dow)` (0 = dimanche).
 abstract final class DisponibiliteDow {
   DisponibiliteDow._();
 
@@ -10,3 +10,4 @@ abstract final class DisponibiliteDow {
     return pgDow == 0 ? DateTime.sunday : pgDow;
   }
 }
+

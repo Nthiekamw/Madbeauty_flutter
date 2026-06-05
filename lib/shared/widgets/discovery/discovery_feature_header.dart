@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../layout/discovery_responsive.dart';
 import '../../theme/app_fonts.dart';
 
-/// En-tête d’écran (réservations, messages…) — style carte dégradée.
+/// En-tête d'écran (réservations, messages…) – style carte dégradée.
 class DiscoveryFeatureHeader extends StatelessWidget {
   const DiscoveryFeatureHeader({
     super.key,
@@ -118,3 +118,4 @@ class DiscoveryFeatureHeader extends StatelessWidget {
     );
   }
 }
+

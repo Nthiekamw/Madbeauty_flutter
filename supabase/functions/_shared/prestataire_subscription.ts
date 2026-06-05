@@ -46,6 +46,58 @@ export function tierForServiceCount(serviceCount: number): SubscriptionTier {
   return serviceCount >= 2 ? "multi" : "solo";
 }
 
+export type PrestataireBillingProfileRow = {
+  id: string;
+  stripe_billing_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: string | null;
+};
+
+/** Rôle prestataire + ligne profil (création si manquante, ex. hub sans sauvegarde). */
+export async function ensurePrestataireProfileRow(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<PrestataireBillingProfileRow> {
+  const { data: roles } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  const hasPresta = (roles ?? []).some((r) =>
+    String((r as { role?: string }).role) === "prestataire"
+  );
+  if (!hasPresta) {
+    const { error: roleErr } = await admin.from("user_roles").insert({
+      user_id: userId,
+      role: "prestataire",
+    });
+    if (roleErr && roleErr.code !== "23505") throw roleErr;
+  }
+
+  const { data: existing } = await admin
+    .from("prestataire_profiles")
+    .select(
+      "id, stripe_billing_customer_id, stripe_subscription_id, subscription_status",
+    )
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    return existing as PrestataireBillingProfileRow;
+  }
+
+  const { data: inserted, error } = await admin
+    .from("prestataire_profiles")
+    .insert({ user_id: userId })
+    .select(
+      "id, stripe_billing_customer_id, stripe_subscription_id, subscription_status",
+    )
+    .single();
+
+  if (error) throw error;
+  return inserted as PrestataireBillingProfileRow;
+}
+
 export function mapStripeSubscriptionStatus(
   status: Stripe.Subscription.Status,
 ): string {

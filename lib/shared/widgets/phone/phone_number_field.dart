@@ -35,7 +35,7 @@ class PhoneNumberField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: dense ? 96 : 120,
+          width: dense ? 108 : 132,
           child: DropdownButtonFormField<String>(
             value: dialCode,
             isExpanded: true,
@@ -59,9 +59,10 @@ class PhoneNumberField extends StatelessWidget {
                   (o) => Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      dense ? o.dialCode : '${o.flag} ${o.dialCode}',
+                      '${o.flag} ${o.dialCode}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 15),
                     ),
                   ),
                 )
@@ -70,7 +71,11 @@ class PhoneNumberField extends StatelessWidget {
                 .map(
                   (o) => DropdownMenuItem<String>(
                     value: o.dialCode,
-                    child: Text('${o.flag} ${o.dialCode}'),
+                    child: Text(
+                      '${o.flag}  ${o.label}  ${o.dialCode}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 )
                 .toList(),
@@ -118,3 +123,4 @@ class PhoneNumberField extends StatelessWidget {
     );
   }
 }
+

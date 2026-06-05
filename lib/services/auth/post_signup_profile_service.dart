@@ -76,7 +76,8 @@ class PostSignupProfileService {
           ville: ville,
         );
         final coords = await _geocoding.geocodeAddress(geoQuery);
-        await _client.from('prestataire_profiles').update({
+        await _client.from('prestataire_profiles').upsert({
+          'user_id': userId,
           'nom_salon': nomSalon.trim(),
           'ville': ville.trim(),
           if (adresse != null && adresse.trim().isNotEmpty)
@@ -98,7 +99,7 @@ class PostSignupProfileService {
             'latitude': coords.latitude,
             'longitude': coords.longitude,
           },
-        }).eq('user_id', userId);
+        }, onConflict: 'user_id');
       },
     );
   }
@@ -116,3 +117,4 @@ class PostSignupProfileService {
     return parts.isEmpty ? ville.trim() : parts.join(', ');
   }
 }
+

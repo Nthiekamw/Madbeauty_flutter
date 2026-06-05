@@ -53,7 +53,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(hPad, 6, hPad, 20),
                   sliver: SliverList.separated(
                     itemCount: entries.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final entry = entries[index];
                       final km = entry.distanceKmFrom(origin);
@@ -98,3 +98,4 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
     );
   }
 }
+

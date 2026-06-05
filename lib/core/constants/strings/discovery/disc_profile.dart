@@ -49,6 +49,18 @@ abstract final class DiscProfile {
   static const actionAdminVerifications = 'Demandes de vérification';
   static const actionAdminVerificationsHint =
       'Valider ou retirer la vérification des prestataires';
+  static const actionAdminReports = 'Signalements';
+  static const actionAdminReportsHint =
+      'Consulter et traiter les signalements utilisateurs';
+  static const adminReportsFilterPending = 'À traiter';
+  static const adminReportsFilterAll = 'Tous';
+  static const adminReportsEmpty = 'Aucun signalement pour le moment.';
+  static const adminReportsStatusPending = 'À traiter';
+  static const adminReportsStatusReviewed = 'Traité';
+  static const adminReportsMarkReviewed = 'Marquer comme traité';
+  static const adminReportsMarkedReviewed = 'Signalement marqué comme traité.';
+  static const adminReportsMarkReviewedErr =
+      'Impossible de mettre à jour ce signalement.';
 
   static const signOut = 'Se déconnecter';
   static const deleteAccount = 'Supprimer mon compte';

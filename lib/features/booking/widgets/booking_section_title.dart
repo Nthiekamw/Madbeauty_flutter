@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 
@@ -54,3 +54,4 @@ class BookingSectionTitle extends StatelessWidget {
     );
   }
 }
+

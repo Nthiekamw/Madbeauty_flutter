@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart';
+﻿import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/share_link_resolver.dart';
@@ -17,3 +17,4 @@ Future<void> shareReferralInvite(String code) async {
 Future<void> copyReferralCode(String code) async {
   await Clipboard.setData(ClipboardData(text: code));
 }
+

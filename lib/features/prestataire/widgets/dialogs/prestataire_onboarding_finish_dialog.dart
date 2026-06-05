@@ -51,7 +51,7 @@ Future<void> showPrestataireOnboardingFinishDialog({
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '• ',
+                          'â€¢ ',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.error,
                           ),
@@ -84,7 +84,7 @@ Future<void> showPrestataireOnboardingFinishDialog({
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('• '),
+                        const Text('â€¢ '),
                         Expanded(child: Text(label)),
                       ],
                     ),
@@ -116,3 +116,4 @@ Future<void> showPrestataireOnboardingFinishDialog({
     },
   );
 }
+

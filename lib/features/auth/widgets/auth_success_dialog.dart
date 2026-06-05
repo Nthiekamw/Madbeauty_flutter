@@ -64,3 +64,4 @@ abstract final class AuthSuccessDialog {
     );
   }
 }
+

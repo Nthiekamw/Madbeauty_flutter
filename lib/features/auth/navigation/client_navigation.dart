@@ -6,7 +6,7 @@ import '../../../services/storage/local_cache_service.dart';
 import '../logic/auth_role_cache.dart';
 import '../providers/my_roles_provider.dart';
 
-/// Navigation vers l’espace client.
+/// Navigation vers l'espace client.
 abstract final class ClientNavigation {
   ClientNavigation._();
 
@@ -21,3 +21,4 @@ abstract final class ClientNavigation {
     context.goHome();
   }
 }
+

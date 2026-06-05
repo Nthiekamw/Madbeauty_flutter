@@ -56,23 +56,29 @@ extension AppNavigationX on BuildContext {
         AppRouteNames.prestataireProfileEdit,
         queryParameters: {'section': section.queryValue},
       );
-  void goPrestataireProfileComplete() =>
-      goNamed(AppRouteNames.prestataireProfileComplete);
-  void pushPrestataireProfileComplete() =>
-      pushNamed(AppRouteNames.prestataireProfileComplete);
+  void pushPrestataireProfileEditAtStep(int step) => pushNamed(
+        AppRouteNames.prestataireProfileEdit,
+        queryParameters: {'step': '$step'},
+      );
+
   void pushPrestataireHoraires() => pushNamed(AppRouteNames.prestataireHoraires);
   void pushPrestataireSubscription() =>
       pushNamed(AppRouteNames.prestataireSubscription);
+  void pushPrestatairePaymentMethods() =>
+      pushNamed(AppRouteNames.prestatairePaymentMethods);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
   void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
+  void pushClientPaymentMethods() =>
+      pushNamed(AppRouteNames.clientPaymentMethods);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
   void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);
   void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
   void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
+  void pushAdminReports() => pushNamed(AppRouteNames.adminReports);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
   Future<T?> pushChat<T extends Object?>(String bookingId) => pushNamed<T>(

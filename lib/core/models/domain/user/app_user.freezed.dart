@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppUser {
 
- String get id; String get email;/// Ne devrait pas être exposé par l’API publique ; utile seulement pour des DTO serveur.
+ String get id; String get email;/// Ne devrait pas être exposé par l'API publique ; utile seulement pour des DTO serveur.
  String? get passwordHash;@IsoDateTimeConverter() DateTime get createdAt;
 /// Create a copy of AppUser
 /// with the given fields replaced by the non-null parameter values.
@@ -218,7 +218,7 @@ class _AppUser implements AppUser {
 
 @override final  String id;
 @override final  String email;
-/// Ne devrait pas être exposé par l’API publique ; utile seulement pour des DTO serveur.
+/// Ne devrait pas être exposé par l'API publique ; utile seulement pour des DTO serveur.
 @override final  String? passwordHash;
 @override@IsoDateTimeConverter() final  DateTime createdAt;
 

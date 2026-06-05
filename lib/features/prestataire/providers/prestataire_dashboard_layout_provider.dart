@@ -84,14 +84,14 @@ List<PrestataireDashboardSectionId> visiblePrestataireDashboardSections({
   for (final id in layout.order) {
     switch (id) {
       case PrestataireDashboardSectionId.hero:
-        if (profileLoaded) out.add(id);
+      case PrestataireDashboardSectionId.stats:
+        break;
       case PrestataireDashboardSectionId.analytics:
         if (profileLoaded) out.add(id);
-      case PrestataireDashboardSectionId.stats:
-        if (dashboardLoaded && dashboard != null) out.add(id);
       case PrestataireDashboardSectionId.pending:
+        if (dashboardLoaded) out.add(id);
       case PrestataireDashboardSectionId.today:
-        if (dashboardLoaded && dashboard != null) out.add(id);
+        if (dashboardLoaded) out.add(id);
       case PrestataireDashboardSectionId.week:
         if (dashboardLoaded &&
             dashboard != null &&
@@ -102,3 +102,4 @@ List<PrestataireDashboardSectionId> visiblePrestataireDashboardSections({
   }
   return out;
 }
+

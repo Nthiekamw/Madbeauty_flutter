@@ -4,7 +4,7 @@ abstract final class CoreStrings {
 
   static const String appName = 'MadBeauty';
   static const String tagline =
-      'Coiffure afro — tresses, locks, cheveux crépus & bouclés';
+      'Trouve ton pro, prends rendez-vous ou développe ton activité beauté.';
 
   static const String actionCancel = 'Annuler';
   static const String actionConfirm = 'Confirmer';

@@ -18,7 +18,7 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
   final List<PrestataireProfile> profiles;
   final GeoPoint? distanceOrigin;
 
-  /// Limite d’affichage ; le reste est accessible via « Tout voir ».
+  /// Limite d'affichage ; le reste est accessible via « Tout voir ».
   final int? limit;
 
   @override
@@ -62,3 +62,4 @@ class PrestataireHomeHorizontalListSkeleton extends StatelessWidget {
     );
   }
 }
+

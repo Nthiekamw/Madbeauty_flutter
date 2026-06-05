@@ -31,3 +31,4 @@ class TimeSlot {
   @override
   int get hashCode => Object.hash(hour, minute);
 }
+

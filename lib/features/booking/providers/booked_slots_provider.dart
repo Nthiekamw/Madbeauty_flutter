@@ -12,3 +12,4 @@ final bookedSlotsProvider = FutureProvider.autoDispose
       // dans DisponibiliteService (créneaux complets exclus en amont).
       return const {};
     });
+

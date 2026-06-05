@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/user/user_profile.dart';
@@ -169,3 +169,4 @@ class ProfileService {
         },
       );
 }
+

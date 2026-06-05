@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/strings/discovery/disc_presta_horaires.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
 
-/// État d’un jour pour l’éditeur d’horaires hebdomadaire.
+/// État d'un jour pour l'éditeur d'horaires hebdomadaire.
 class WeeklyJourHoraire {
   WeeklyJourHoraire({
     required this.jourSemaine,
@@ -85,3 +85,4 @@ extension WeeklyJourHoraireListX on List<WeeklyJourHoraire> {
 
   bool get hasAnyOpenDay => any((j) => j.enabled);
 }
+

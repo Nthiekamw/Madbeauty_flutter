@@ -7,7 +7,7 @@ import '../../../core/providers/offline_queue_providers.dart';
 import '../../../services/offline/offline_sync_service.dart';
 import '../app/app_snack_bar.dart';
 
-/// Enveloppe les shells connectés : bannières hors ligne / file d’attente + contenu.
+/// Enveloppe les shells connectés : bannières hors ligne / file d'attente + contenu.
 class OfflineShell extends ConsumerWidget {
   const OfflineShell({super.key, required this.child});
 
@@ -137,3 +137,4 @@ class _PendingSyncBanner extends StatelessWidget {
     );
   }
 }
+

@@ -4,7 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 abstract final class LoginValidators {
   LoginValidators._();
 
-  /// Retourne un message d’erreur affichable ou `null` si la valeur est valide.
+  /// Retourne un message d'erreur affichable ou `null` si la valeur est valide.
   static String? email(String trimmedValue) {
     if (trimmedValue.isEmpty) return AuthStrings.loginValidationEmailEmpty;
     final emailOk = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(trimmedValue);
@@ -34,3 +34,4 @@ abstract final class LoginValidators {
     return null;
   }
 }
+

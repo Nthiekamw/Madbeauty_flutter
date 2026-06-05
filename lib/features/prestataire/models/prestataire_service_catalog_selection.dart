@@ -1,7 +1,7 @@
 import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 
-/// Sélection catalogue (4 services + spécialités) pour l’onboarding prestataire.
+/// Sélection catalogue (4 services + spécialités) pour l'onboarding prestataire.
 class PrestataireServiceCatalogSelection {
   PrestataireServiceCatalogSelection({
     Set<PrestaMainService>? selectedMains,
@@ -83,6 +83,16 @@ class PrestataireServiceCatalogSelection {
     return true;
   }
 
+  /// Nombre de prestations (spécialités + personnalisées) sélectionnées.
+  int get specialtyCount {
+    var count = 0;
+    for (final main in selectedMains) {
+      count += specialtyIdsByMain[main]?.length ?? 0;
+      count += customSpecialtiesByMain[main]?.length ?? 0;
+    }
+    return count;
+  }
+
   Set<String> get allCategoryIds => PrestataireServiceCatalog.collectCategoryIds(
         mains: selectedMains,
         specialtyIdsByMain: specialtyIdsByMain,
@@ -151,3 +161,4 @@ class PrestataireServiceCatalogSelection {
   static String _defaultCategoryIdForMain(PrestaMainService main) =>
       PrestataireServiceCatalog.defaultCategoryId(main);
 }
+

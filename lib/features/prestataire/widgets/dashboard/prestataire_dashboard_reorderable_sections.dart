@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../logic/prestataire_profile_completeness.dart';
 import '../../models/prestataire_dashboard_data.dart';
@@ -11,103 +12,161 @@ import '../../models/prestataire_reservation_item.dart';
 import '../../providers/prestataire_dashboard_layout_provider.dart';
 import '../../providers/prestataire_profile_form_provider.dart';
 import '../analytics/prestataire_analytics_panel.dart';
-import '../profile/prestataire_completeness_badge.dart';
-import '../profile/prestataire_profile_enrichment_banner.dart';
-import '../profile/prestataire_profile_incomplete_banner.dart';
-import '../public/prestataire_salon_hero.dart';
+import '../profile/subscription/prestataire_payout_setup_hint.dart';
+import 'prestataire_dashboard_action_card.dart';
+import 'prestataire_dashboard_insets.dart';
 import 'prestataire_dashboard_layout_tile.dart';
-import 'prestataire_dashboard_stats_strip.dart';
-import 'prestataire_dashboard_subscription_banner.dart';
+import 'prestataire_dashboard_section_empty.dart';
 
 typedef PrestataireReservationTimelineBuilder = Widget Function(
   List<PrestataireReservationItem> items,
 );
 
-/// Corps du dashboard : sections repliables et réordonnables.
+/// Corps du dashboard : sections repliables.
 class PrestataireDashboardReorderableSections extends ConsumerWidget {
   const PrestataireDashboardReorderableSections({
     super.key,
     required this.profileData,
-    required this.title,
     required this.hasHoraires,
     required this.dashboardAsync,
     required this.reservationTimelineBuilder,
+    this.embedInParentScroll = false,
   });
 
   final PrestataireProfileFormData profileData;
-  final String title;
   final bool hasHoraires;
   final AsyncValue<PrestataireDashboardData> dashboardAsync;
   final PrestataireReservationTimelineBuilder reservationTimelineBuilder;
+  final bool embedInParentScroll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final layoutAsync = ref.watch(prestataireDashboardLayoutProvider);
-    final layout = layoutAsync.asData?.value ?? PrestataireDashboardLayout.defaults;
-    final layoutNotifier =
-        ref.read(prestataireDashboardLayoutProvider.notifier);
+    final tiles = _buildSectionTiles(context, ref);
+    final footer = _footerTiles(context, ref);
 
+    if (embedInParentScroll) {
+      return SliverMainAxisGroup(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 8),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([...tiles, ...footer]),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      shrinkWrap: false,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      children: [...tiles, ...footer],
+    );
+  }
+
+  List<Widget> _buildSectionTiles(BuildContext context, WidgetRef ref) {
+    final visible = _visibleSections(ref);
+    if (visible.isEmpty && !_profileComplete) {
+      final dashboard = dashboardAsync.asData?.value;
+      final dashboardLoading =
+          dashboardAsync.isLoading && dashboard == null;
+      if (dashboardLoading) {
+        return const [
+          Padding(
+            padding: EdgeInsets.all(48),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ];
+      }
+      return const [];
+    }
+
+    return [
+      for (final sectionId in visible)
+        _buildSectionTile(
+          context: context,
+          ref: ref,
+          sectionId: sectionId,
+        ),
+    ];
+  }
+
+  List<PrestataireDashboardSectionId> _visibleSections(WidgetRef ref) {
+    final layoutAsync = ref.watch(prestataireDashboardLayoutProvider);
+    final layout =
+        layoutAsync.asData?.value ?? PrestataireDashboardLayout.defaults;
     final dashboard = dashboardAsync.asData?.value;
     final dashboardLoaded = dashboardAsync.hasValue;
-    final dashboardLoading = dashboardAsync.isLoading && dashboard == null;
     final dashboardError = dashboardAsync.hasError && dashboard == null;
 
-    final visible = visiblePrestataireDashboardSections(
+    return visiblePrestataireDashboardSections(
       layout: layout,
       profileLoaded: true,
       dashboardLoaded: dashboardLoaded && !dashboardError,
       dashboard: dashboard,
     );
+  }
 
-    if (visible.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          if (dashboardLoading)
-            const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-        ],
+  bool get _profileComplete => profileData.isProfileFullyEnriched(
+        hasHoraires: hasHoraires,
       );
-    }
 
-    return ReorderableListView.builder(
-      buildDefaultDragHandles: false,
-      padding: const EdgeInsets.fromLTRB(0, 4, 0, 32),
-      itemCount: visible.length,
-      onReorder: (oldIndex, newIndex) {
-        layoutNotifier.reorderVisible(
-          visible,
-          oldIndex: oldIndex,
-          newIndex: newIndex,
-        );
-      },
-      itemBuilder: (context, index) {
-        final sectionId = visible[index];
-        final collapsed = layout.isCollapsed(sectionId);
+  Widget _buildSectionTile({
+    required BuildContext context,
+    required WidgetRef ref,
+    required PrestataireDashboardSectionId sectionId,
+  }) {
+    final theme = Theme.of(context);
+    final layoutAsync = ref.watch(prestataireDashboardLayoutProvider);
+    final layout =
+        layoutAsync.asData?.value ?? PrestataireDashboardLayout.defaults;
+    final layoutNotifier =
+        ref.read(prestataireDashboardLayoutProvider.notifier);
+    final dashboard = dashboardAsync.asData?.value;
+    final dashboardLoading = dashboardAsync.isLoading && dashboard == null;
+    final dashboardError = dashboardAsync.hasError && dashboard == null;
 
-        return PrestataireDashboardLayoutTile(
-          key: ValueKey(sectionId),
-          sectionId: sectionId,
-          index: index,
-          collapsed: collapsed,
-          onToggleCollapsed: () => layoutNotifier.toggleCollapsed(sectionId),
-          wrapInCard: sectionId != PrestataireDashboardSectionId.hero,
-          badgeCount: _badgeCount(sectionId, dashboard),
-          subtitle: _subtitle(sectionId),
-          child: _sectionChild(
-            context: context,
-            theme: theme,
-            sectionId: sectionId,
-            dashboard: dashboard,
-            dashboardLoading: dashboardLoading,
-            dashboardError: dashboardError,
-          ),
-        );
-      },
+    return PrestataireDashboardLayoutTile(
+      key: ValueKey(sectionId),
+      sectionId: sectionId,
+      collapsed: _isSectionCollapsed(
+        sectionId: sectionId,
+        layout: layout,
+        dashboard: dashboard,
+      ),
+      onToggleCollapsed: () => layoutNotifier.toggleCollapsed(sectionId),
+      badgeCount: _badgeCount(sectionId, dashboard),
+      child: _sectionChild(
+        context: context,
+        theme: theme,
+        sectionId: sectionId,
+        dashboard: dashboard,
+        dashboardLoading: dashboardLoading,
+        dashboardError: dashboardError,
+      ),
     );
+  }
+
+  List<Widget> _footerTiles(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    if (!_profileComplete) {
+      return const [SizedBox(height: 24)];
+    }
+    return [
+      PrestataireDashboardActionCard(
+        icon: Icons.card_membership_rounded,
+        title: DiscPrestaSub.dashboardBannerTitle,
+        subtitle: DiscPrestaSub.dashboardBannerBody,
+        accent: theme.colorScheme.tertiary,
+        onTap: () => context.pushPrestataireSubscription(),
+      ),
+      Padding(
+        padding: PrestataireDashboardInsets.page(context),
+        child: const PrestatairePayoutSetupHint(compact: true),
+      ),
+      const SizedBox(height: 24),
+    ];
   }
 
   int? _badgeCount(
@@ -123,13 +182,21 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
     };
   }
 
-  String? _subtitle(PrestataireDashboardSectionId id) {
-    return switch (id) {
-      PrestataireDashboardSectionId.pending => DiscPrestaDash.pendingEmpty,
-      PrestataireDashboardSectionId.today => DiscPrestaDash.todayEmpty,
-      PrestataireDashboardSectionId.week => DiscPrestaDash.weekEmpty,
-      _ => null,
-    };
+  bool _isSectionCollapsed({
+    required PrestataireDashboardSectionId sectionId,
+    required PrestataireDashboardLayout layout,
+    required PrestataireDashboardData? dashboard,
+  }) {
+    if (dashboard != null) {
+      final hasItems = switch (sectionId) {
+        PrestataireDashboardSectionId.pending => dashboard.pending.isNotEmpty,
+        PrestataireDashboardSectionId.today =>
+          dashboard.todayConfirmed.isNotEmpty,
+        _ => false,
+      };
+      if (hasItems) return false;
+    }
+    return layout.isCollapsed(sectionId);
   }
 
   Widget _sectionChild({
@@ -142,31 +209,16 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
   }) {
     switch (sectionId) {
       case PrestataireDashboardSectionId.hero:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PrestataireSalonHero(
-              title: title,
-              subtitle: profileData.isProfessionallyComplete
-                  ? DiscPrestaDash.welcome
-                  : DiscPrestaDash.profileMissing,
-              avatarUrl: profileData.avatarUrl,
-              trailing: PrestataireCompletenessBadge(
-                complete: profileData.isProfessionallyComplete,
-              ),
-            ),
-            if (!profileData.isProfessionallyComplete)
-              const PrestataireProfileIncompleteBanner(),
-            if (profileData.isProfessionallyComplete &&
-                !profileData.isProfileFullyEnriched(hasHoraires: hasHoraires))
-              const PrestataireProfileEnrichmentBanner(),
-            if (profileData.isProfessionallyComplete)
-              const PrestataireDashboardSubscriptionBanner(),
-          ],
-        );
-      case PrestataireDashboardSectionId.analytics:
-        return const PrestataireAnalyticsPanel(hideOuterHeader: true);
       case PrestataireDashboardSectionId.stats:
+        return const SizedBox.shrink();
+      case PrestataireDashboardSectionId.analytics:
+        return const PrestataireAnalyticsPanel(
+          hideOuterHeader: true,
+          dashboardCompact: true,
+        );
+      case PrestataireDashboardSectionId.pending:
+      case PrestataireDashboardSectionId.today:
+      case PrestataireDashboardSectionId.week:
         if (dashboardLoading) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -181,23 +233,6 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
             iconColor: theme.colorScheme.error,
           );
         }
-        return PrestataireDashboardStatsStrip(
-          pendingCount: dashboard.pending.length,
-          todayCount: dashboard.todayConfirmed.length,
-          weekCount: dashboard.weekConfirmed.length,
-        );
-      case PrestataireDashboardSectionId.pending:
-      case PrestataireDashboardSectionId.today:
-      case PrestataireDashboardSectionId.week:
-        if (dashboardLoading) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (dashboardError || dashboard == null) {
-          return const SizedBox.shrink();
-        }
         final items = switch (sectionId) {
           PrestataireDashboardSectionId.pending => dashboard.pending,
           PrestataireDashboardSectionId.today => dashboard.todayConfirmed,
@@ -205,35 +240,22 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
           _ => <PrestataireReservationItem>[],
         };
         if (items.isEmpty) {
-          return DiscoveryEmptyState(
-            icon: _emptyIcon(sectionId),
-            title: _emptyTitle(sectionId),
-            body: _subtitle(sectionId) ?? '',
-            iconColor: (sectionId == PrestataireDashboardSectionId.pending
-                    ? theme.colorScheme.tertiary
-                    : theme.colorScheme.primary)
-                .withValues(alpha: 0.85),
+          return PrestataireDashboardSectionEmpty(
+            icon: switch (sectionId) {
+              PrestataireDashboardSectionId.pending => Icons.inbox_outlined,
+              PrestataireDashboardSectionId.today =>
+                Icons.event_available_outlined,
+              _ => Icons.date_range_outlined,
+            },
+            message: switch (sectionId) {
+              PrestataireDashboardSectionId.pending =>
+                DiscPrestaDash.pendingEmpty,
+              PrestataireDashboardSectionId.today => DiscPrestaDash.todayEmpty,
+              _ => DiscPrestaDash.weekEmpty,
+            },
           );
         }
         return reservationTimelineBuilder(items);
     }
-  }
-
-  IconData _emptyIcon(PrestataireDashboardSectionId id) {
-    return switch (id) {
-      PrestataireDashboardSectionId.pending => Icons.inbox_rounded,
-      PrestataireDashboardSectionId.today => Icons.today_rounded,
-      PrestataireDashboardSectionId.week => Icons.date_range_rounded,
-      _ => Icons.event_busy_outlined,
-    };
-  }
-
-  String _emptyTitle(PrestataireDashboardSectionId id) {
-    return switch (id) {
-      PrestataireDashboardSectionId.pending => DiscPrestaDash.pendingEmptyTitle,
-      PrestataireDashboardSectionId.today => DiscPrestaDash.todayEmptyTitle,
-      PrestataireDashboardSectionId.week => DiscPrestaDash.weekEmptyTitle,
-      _ => '',
-    };
   }
 }

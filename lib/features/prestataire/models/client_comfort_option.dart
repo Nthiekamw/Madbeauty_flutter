@@ -92,3 +92,4 @@ class ClientComfortOption {
     return result;
   }
 }
+

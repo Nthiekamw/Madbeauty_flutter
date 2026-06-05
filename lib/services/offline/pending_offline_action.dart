@@ -1,6 +1,6 @@
 import '../../features/booking/models/client_reservation_summary.dart';
 
-/// Types d’actions rejouées à la reconnexion.
+/// Types d'actions rejouées à la reconnexion.
 enum OfflineActionType {
   bookingCreate,
   bookingCancel,
@@ -130,3 +130,4 @@ class PendingOfflineAction {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/offline_providers.dart';
 import '../../../services/offline/offline_cache_service.dart';
@@ -30,3 +30,4 @@ final prestataireDashboardProvider =
         },
       );
     });
+

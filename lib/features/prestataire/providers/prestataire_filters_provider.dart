@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../listing/models/listing_quick_filter.dart';
 import '../models/prestataires_filter_state.dart';
@@ -75,3 +75,4 @@ class PrestatairesFilterNotifier extends Notifier<PrestatairesFilterState> {
     state = const PrestatairesFilterState();
   }
 }
+

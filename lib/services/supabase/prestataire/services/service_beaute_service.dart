@@ -1,7 +1,20 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/service_beaute.dart';
+
+/// Résultat d’un retrait de services du catalogue prestataire.
+class ServiceBeauteRemoveResult {
+  const ServiceBeauteRemoveResult({
+    this.deletedCount = 0,
+    this.deactivatedCount = 0,
+  });
+
+  final int deletedCount;
+  final int deactivatedCount;
+
+  bool get archivedInsteadOfDeleted => deactivatedCount > 0;
+}
 
 class ServiceBeauteUpsertData {
   const ServiceBeauteUpsertData({
@@ -85,19 +98,46 @@ class ServiceBeauteService {
     },
   );
 
-  Future<void> deleteManyForPrestataire({
+  /// Retire du catalogue : suppression si possible, sinon `is_actif = false`
+  /// (réservations existantes — FK `reservations_service_id_fkey`).
+  Future<ServiceBeauteRemoveResult> deleteManyForPrestataire({
     required String prestataireId,
     required List<String> ids,
   }) async {
-    if (ids.isEmpty) return;
-    await SupabaseErrorHandler.run(
+    if (ids.isEmpty) return const ServiceBeauteRemoveResult();
+    return SupabaseErrorHandler.run(
       operation: 'serviceBeaute.deleteManyForPrestataire',
       action: () async {
-        await _client
-            .from('services_beaute')
-            .delete()
-            .eq('prestataire_id', prestataireId)
-            .inFilter('id', ids);
+        final refResponse = await _client
+            .from('reservations')
+            .select('service_id')
+            .inFilter('service_id', ids);
+        final referenced = (refResponse as List<dynamic>)
+            .map((row) => (row as Map<String, dynamic>)['service_id'] as String)
+            .toSet();
+
+        final toDeactivate = ids.where(referenced.contains).toList();
+        final toDelete = ids.where((id) => !referenced.contains(id)).toList();
+
+        if (toDeactivate.isNotEmpty) {
+          await _client
+              .from('services_beaute')
+              .update({'is_actif': false})
+              .eq('prestataire_id', prestataireId)
+              .inFilter('id', toDeactivate);
+        }
+        if (toDelete.isNotEmpty) {
+          await _client
+              .from('services_beaute')
+              .delete()
+              .eq('prestataire_id', prestataireId)
+              .inFilter('id', toDelete);
+        }
+
+        return ServiceBeauteRemoveResult(
+          deletedCount: toDelete.length,
+          deactivatedCount: toDeactivate.length,
+        );
       },
     );
   }
@@ -117,3 +157,4 @@ class ServiceBeauteService {
         },
       );
 }
+

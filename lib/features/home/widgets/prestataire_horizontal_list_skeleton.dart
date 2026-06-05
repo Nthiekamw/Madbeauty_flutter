@@ -111,3 +111,4 @@ class PrestataireHorizontalListSkeleton extends StatelessWidget {
     );
   }
 }
+

@@ -1,24 +1,22 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../services/notifications/in_app_notifications_provider.dart';
-import '../../../services/notifications/in_app_notifications_sheet.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
-import '../providers/current_prestataire_provider.dart';
 import '../providers/disponibilite_provider.dart';
 import '../providers/prestataire_analytics_provider.dart';
 import '../providers/prestataire_dashboard_layout_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
 import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
-import '../widgets/dashboard/prestataire_dashboard_layout_tile.dart';
+import '../providers/prestataire_dashboard_overview_provider.dart';
+import '../widgets/dashboard/prestataire_dashboard_overview_grid.dart';
 import '../widgets/dashboard/prestataire_dashboard_reorderable_sections.dart';
-import '../widgets/profile/prestataire_profile_load_error.dart';
+import '../widgets/profile/overview/prestataire_profile_load_error.dart';
+import '../widgets/workspace/prestataire_profile_completion_card.dart';
+import '../widgets/workspace/prestataire_workspace_shell.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
   const PrestataireDashboardScreen({super.key});
@@ -35,6 +33,7 @@ class _PrestataireDashboardScreenState
   Future<void> _refresh() async {
     ref.invalidate(prestataireProfileFormProvider);
     ref.invalidate(prestataireAnalyticsProvider);
+    ref.invalidate(prestataireDashboardOverviewProvider);
     ref.invalidate(prestataireDashboardProvider);
     ref.invalidate(prestataireDashboardLayoutProvider);
     await Future.wait([
@@ -59,6 +58,7 @@ class _PrestataireDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
@@ -66,79 +66,61 @@ class _PrestataireDashboardScreenState
       data: (h) => h.isNotEmpty,
       orElse: () => false,
     );
-    final currentPrestataire = switch (ref.watch(currentPrestataireProvider)) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
 
-    return DiscoveryBrandScaffold(
-      body: profileAsync.when(
-        data: (data) {
-          final currentName = currentPrestataire?.nomSalon
-              ?.replaceAll(RegExp(r'\s+'), ' ')
-              .trim();
-          final fallbackName = data.nomSalon.replaceAll(RegExp(r'\s+'), ' ').trim();
-          final title = currentName != null && currentName.isNotEmpty
-              ? currentName
-              : fallbackName.isNotEmpty
-              ? fallbackName
-              : DiscNav.prestDashboard;
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: profileAsync.when(
+          data: (data) {
+            final showProfileCard = !data.isProfileFullyEnriched(
+              hasHoraires: hasHoraires,
+            );
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DiscoveryScreenHeader(
-                title: DiscNav.prestDashboard,
-                subtitle: DiscPrestaDash.pageSubtitle,
-                action: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Consumer(
-                    builder: (ctx, ref, _) {
-                      final unread =
-                          ref.watch(unreadInAppNotificationsCountProvider);
-                      return NotificationBellButton(
-                        compact: true,
-                        unreadCount: unread,
-                        tooltip: DiscHome.notificationsTooltip,
-                        onPressed: () =>
-                            showInAppNotificationsSheet(context, ref),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const PrestataireDashboardLayoutHint(),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: PrestataireDashboardReorderableSections(
-                    profileData: data,
-                    title: title,
-                    hasHoraires: hasHoraires,
-                    dashboardAsync: dashboardAsync,
-                    reservationTimelineBuilder: (items) =>
-                        _ReservationTimeline(
-                      items: items,
-                      actingId: _actingReservationId,
-                      onAccept: (id) =>
-                          _runAction(id, () => _actions.accept(id)),
-                      onReject: (id) =>
-                          _runAction(id, () => _actions.reject(id)),
-                      onMarkDone: (id) =>
-                          _runAction(id, () => _actions.markDone(id)),
-                      onItemTap: (id) =>
-                          context.pushPrestataireReservationDetail(id),
+            return PrestataireWorkspaceShell(
+              onRefresh: _refresh,
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    if (showProfileCard)
+                      const SliverToBoxAdapter(
+                        child: PrestataireProfileCompletionCard(),
+                      ),
+                    const SliverToBoxAdapter(
+                      child: PrestataireDashboardOverviewGrid(),
                     ),
-                  ),
+                    PrestataireDashboardReorderableSections(
+                      embedInParentScroll: true,
+                      profileData: data,
+                      hasHoraires: hasHoraires,
+                      dashboardAsync: dashboardAsync,
+                      reservationTimelineBuilder: (items) =>
+                          _ReservationTimeline(
+                        items: items,
+                        actingId: _actingReservationId,
+                        onAccept: (id) =>
+                            _runAction(id, () => _actions.accept(id)),
+                        onReject: (id) =>
+                            _runAction(id, () => _actions.reject(id)),
+                        onMarkDone: (id) =>
+                            _runAction(id, () => _actions.markDone(id)),
+                        onItemTap: (id) =>
+                            context.pushPrestataireReservationDetail(id),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
-        error: (_, __) => PrestataireProfileLoadError(
-          onRetry: () => ref.invalidate(prestataireProfileFormProvider),
+            );
+          },
+          error: (_, __) => PrestataireProfileLoadError(
+            onRetry: () => ref.invalidate(prestataireProfileFormProvider),
+          ),
+          loading: () => const PrestataireWorkspaceShell(
+            child: Center(child: CircularProgressIndicator()),
+          ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }

@@ -1,4 +1,4 @@
-import '../core/config/share_link_config.dart';
+﻿import '../core/config/share_link_config.dart';
 import 'app_router.dart';
 import 'prestataire_public_route.dart';
 
@@ -11,12 +11,19 @@ abstract final class AppDeepLinks {
     'stripe-connect-return',
     'stripe-connect-refresh',
     'subscription-return',
+    'client-payment-return',
   };
 
   /// Route après retour Stripe Checkout abonnement (`subscription-return`).
   static String? subscriptionReturnPath(Uri uri) {
     if (uri.host != 'subscription-return') return null;
     return AppRoutes.prestataireSubscription;
+  }
+
+  /// Route après portail Stripe client (`client-payment-return`).
+  static String? clientPaymentReturnPath(Uri uri) {
+    if (uri.host != 'client-payment-return') return null;
+    return AppRoutes.clientPaymentMethods;
   }
 
   /// Chemin go_router (`/prestataire/:id`) ou `null` si non géré ici.

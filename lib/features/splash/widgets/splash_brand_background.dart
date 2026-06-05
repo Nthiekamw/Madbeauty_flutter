@@ -2,12 +2,16 @@
 
 import '../../../shared/widgets/layout/brand_background.dart';
 
-/// Fond splash — délègue à [BrandBackground].
+/// Fond splash : suit le mode clair / sombre du système.
 class SplashBrandBackground extends StatelessWidget {
-  const SplashBrandBackground({super.key, required this.isDark});
-
-  final bool isDark;
+  const SplashBrandBackground({super.key});
 
   @override
-  Widget build(BuildContext context) => BrandBackground(isDark: isDark);
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BrandBackground(
+      isDark: isDark,
+      variant: BrandBackgroundVariant.premium,
+    );
+  }
 }

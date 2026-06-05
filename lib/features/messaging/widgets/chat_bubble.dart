@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Bulle style iMessage / WhatsApp.
 class ChatBubble extends StatelessWidget {
@@ -25,7 +26,7 @@ class ChatBubble extends StatelessWidget {
         : (isDark
             ? theme.colorScheme.surfaceContainerHighest
             : theme.colorScheme.surfaceContainerHigh);
-    final fg = isMine ? Colors.white : theme.colorScheme.onSurface;
+    final fg = isMine ? AppColors.white : theme.colorScheme.onSurface;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -49,7 +50,9 @@ class ChatBubble extends StatelessWidget {
                 color: bg,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
+                    color: isDark
+                        ? AppColors.scrimDark20
+                        : AppColors.scrimLight08,
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -80,7 +83,7 @@ class ChatBubble extends StatelessWidget {
                     timeLabel,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isMine
-                          ? Colors.white.withValues(alpha: 0.85)
+                          ? AppColors.onPrimaryMuted85
                           : theme.colorScheme.outline,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -95,3 +98,4 @@ class ChatBubble extends StatelessWidget {
     );
   }
 }
+

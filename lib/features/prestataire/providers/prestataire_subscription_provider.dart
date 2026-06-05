@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/supabase_service.dart';
 import 'prestataire_profile_form_provider.dart';
@@ -14,7 +14,8 @@ final prestatairePublishedServiceCountProvider = FutureProvider<int>((ref) async
   final response = await SupabaseService.client
       .from('services_beaute')
       .select('id')
-      .eq('prestataire_id', prestaId);
+      .eq('prestataire_id', prestaId)
+      .eq('is_actif', true);
 
   final rows = response as List;
   if (rows.isNotEmpty) return rows.length;

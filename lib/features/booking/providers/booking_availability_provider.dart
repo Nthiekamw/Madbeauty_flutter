@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/booking_availability_rules.dart';
 import '../models/booking_slot.dart';
@@ -44,3 +44,4 @@ final bookingAvailabilityRulesProvider = Provider<BookingAvailabilityRules>((
     },
   );
 });
+

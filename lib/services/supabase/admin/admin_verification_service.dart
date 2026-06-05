@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../features/admin/models/admin_verification_request.dart';
@@ -77,3 +77,4 @@ class AdminVerificationService {
     );
   }
 }
+

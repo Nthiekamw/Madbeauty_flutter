@@ -11,6 +11,26 @@ abstract final class DiscHome {
   static const inspireSub =
       'Choisis un thème pour afficher des prestataires.';
 
+  static const nextAppointmentTitle = 'Prochain rendez-vous';
+  static const nextAppointmentSub = 'Ta prochaine visite chez un·e pro';
+  static const nextAppointmentEmptyTitle = 'Aucun rendez-vous à venir';
+  static const nextAppointmentEmptyBody =
+      'Parcours le catalogue pour réserver ta prochaine séance.';
+  static const nextAppointmentCta = 'Réserver';
+  static const nextAppointmentSeeAll = 'Mes réservations';
+
+  static const layoutOrganizeAction = 'Organiser';
+  static const layoutCustomizeTitle = 'Organiser l\'accueil';
+  static const layoutCustomizeHint =
+      'Glisse les sections pour changer leur ordre.';
+  static const layoutModalDone = 'Terminé';
+
+  static const sectionNextAppointment = 'Prochain rendez-vous';
+  static const sectionInspiration = 'Inspirations';
+  static const sectionFeed = 'Résultats';
+  static const sectionNearby = 'Prestataires proches';
+  static const sectionTopRated = 'Mieux notés';
+
   static const feedSearchSub =
       'Prestataires correspondant à votre recherche.';
   static const feedInspirationSub =

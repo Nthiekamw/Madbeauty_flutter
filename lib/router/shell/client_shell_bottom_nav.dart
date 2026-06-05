@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
 import 'shell_nav_badge_icon.dart';
+import '../../shared/theme/app_colors.dart';
 
 const _kNavLabels = [
   ShellStrings.navClientHome,
@@ -138,7 +139,7 @@ class _NavItem extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: isCompact ? 1 : 2),
         padding: EdgeInsets.symmetric(vertical: isCompact ? 6 : 8),
         decoration: BoxDecoration(
-          color: selected ? primary.withValues(alpha: 0.1) : Colors.transparent,
+          color: selected ? primary.withValues(alpha: 0.1) : AppColors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -182,3 +183,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

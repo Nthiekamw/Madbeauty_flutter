@@ -1,4 +1,4 @@
-import '../../booking/logic/client_reservation_ui_status.dart';
+﻿import '../../booking/logic/client_reservation_ui_status.dart';
 import '../models/prestataire_dashboard_data.dart';
 import '../models/prestataire_reservation_item.dart';
 
@@ -45,3 +45,4 @@ PrestataireDashboardData splitPrestataireReservations(
     weekConfirmed: week,
   );
 }
+

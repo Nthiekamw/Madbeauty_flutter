@@ -26,3 +26,4 @@ String profileRolesLabel(List<UserRole> roles) {
   if (hasClient) return ShellStrings.profileRoleClient;
   return ShellStrings.profileRoleUnknown;
 }
+

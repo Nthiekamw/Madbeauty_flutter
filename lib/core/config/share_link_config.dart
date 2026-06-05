@@ -48,3 +48,4 @@ class ShareLinkConfig {
   static bool _isSupabaseFunctionBase(String base) =>
       base.contains('/functions/v1/');
 }
+

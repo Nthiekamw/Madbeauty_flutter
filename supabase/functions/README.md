@@ -16,6 +16,34 @@ npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
 ```
 
+## Signalements (e-mail équipe)
+
+| Fonction | Déclencheur | Cible |
+|----------|-------------|--------|
+| `on_content_report_created` | `INSERT content_reports` (Database Webhook) | e-mails équipe modération |
+
+Partagé : `_shared/admin_notify.ts`
+
+### Secrets
+
+- `RESEND_API_KEY` — clé API [Resend](https://resend.com)
+- `CONTENT_REPORT_NOTIFY_EMAILS` — destinataires séparés par des virgules (ex. `equipe@madbeauty.app,support@madbeauty.app`)
+- `CONTENT_REPORT_MAIL_FROM` — expéditeur (défaut `MadBeauty <noreply@madbeauty.app>`, domaine vérifié chez Resend)
+- `CONTENT_REPORT_WEBHOOK_SECRET` — secret header `x-webhook-secret` (sinon repli sur `BOOKING_WEBHOOK_SECRET`)
+
+### Webhook Supabase
+
+Dans le dashboard : **Database → Webhooks → Create** :
+
+- Table : `content_reports`
+- Events : `INSERT`
+- Type : Supabase Edge Function → `on_content_report_created`
+- Header : `x-webhook-secret` = valeur de `CONTENT_REPORT_WEBHOOK_SECRET`
+
+```bash
+npx supabase functions deploy on_content_report_created --no-verify-jwt
+```
+
 ## Paiements Stripe + Connect
 
 | Fonction | Auth | Rôle |

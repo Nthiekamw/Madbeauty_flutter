@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/location/location_providers.dart';
 import '../../profile/providers/profile_preferences_provider.dart';
@@ -15,3 +15,4 @@ final clientLocationProvider = FutureProvider.autoDispose<ClientLocation?>((
   final service = ref.watch(geolocationServiceProvider);
   return service.getCurrentLocation();
 });
+

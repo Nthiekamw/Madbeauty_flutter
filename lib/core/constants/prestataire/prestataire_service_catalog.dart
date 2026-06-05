@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Les 4 familles de services proposées à l’inscription prestataire.
+/// Les 4 familles de services proposées à l'inscription prestataire.
 enum PrestaMainService {
   coiffure,
   manucure,
@@ -201,3 +201,4 @@ abstract final class PrestataireServiceCatalog {
     return ids;
   }
 }
+

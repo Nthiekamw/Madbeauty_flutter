@@ -60,3 +60,4 @@ class ConversationReadStatusBadge extends StatelessWidget {
     );
   }
 }
+

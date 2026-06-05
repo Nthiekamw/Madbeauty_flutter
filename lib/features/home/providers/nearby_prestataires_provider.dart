@@ -7,7 +7,7 @@ import '../../../services/offline/offline_cache_service.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
 import '../../listing/providers/client_location_provider.dart';
 
-/// Profils prestataires pour la section « proches » de l’accueil client.
+/// Profils prestataires pour la section « proches » de l'accueil client.
 final nearbyPrestatairesProvider =
     FutureProvider.autoDispose<List<PrestataireProfile>>((ref) async {
       final service = ref.watch(prestataireServiceProvider);
@@ -35,3 +35,4 @@ final nearbyPrestatairesProvider =
         },
       );
     });
+

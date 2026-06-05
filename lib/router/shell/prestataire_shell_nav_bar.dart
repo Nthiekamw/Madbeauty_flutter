@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
+import '../../shared/theme/app_colors.dart';
 
-/// Barre d’onglets prestataire (pilule active style maquette).
+/// Barre d'onglets prestataire (pilule active style maquette).
 class PrestataireShellNavBar extends StatelessWidget {
   const PrestataireShellNavBar({
     super.key,
@@ -107,7 +108,7 @@ class _NavItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Material(
-      color: selected ? primary : Colors.transparent,
+      color: selected ? primary : AppColors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -143,7 +144,7 @@ class _NavItem extends StatelessWidget {
                         child: Text(
                           badge > 9 ? '9+' : '$badge',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 8,
                             fontWeight: FontWeight.w700,
                           ),
@@ -172,3 +173,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

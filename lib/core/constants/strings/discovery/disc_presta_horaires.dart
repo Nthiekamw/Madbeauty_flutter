@@ -24,6 +24,8 @@ abstract final class DiscPrestaHoraires {
   static const congesAdded = 'Période de fermeture enregistrée.';
   static const congesRemoved = 'Période supprimée.';
   static const congesErr = 'Impossible de mettre à jour les congés.';
+  static const congesProfileErr =
+      'Profil prestataire introuvable. Enregistre ton profil puis réessaie.';
   static const congesInvalidRange = 'La date de fin doit être après le début.';
   static String congesRangeLabel(DateTime start, DateTime end) {
     final s = '${start.day.toString().padLeft(2, '0')}/'

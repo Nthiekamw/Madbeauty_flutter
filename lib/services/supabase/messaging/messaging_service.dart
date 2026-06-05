@@ -10,7 +10,7 @@ import '../../../features/messaging/models/conversation_inbox_item.dart';
 import '../profile/profile_service.dart';
 import 'message_service.dart';
 
-/// Inbox enrichie (noms, réservation) — s'appuie sur [MessageService] pour les messages.
+/// Inbox enrichie (noms, réservation) – s'appuie sur [MessageService] pour les messages.
 class MessagingService {
   MessagingService(
     this._client, {
@@ -296,7 +296,7 @@ class MessagingService {
         },
       );
 
-  /// Vérifie qu’une réservation autorise l’ouverture du chat.
+  /// Vérifie qu'une réservation autorise l'ouverture du chat.
   Future<bool> isChatOpenForBooking(String bookingId) =>
       SupabaseErrorHandler.run(
         operation: 'messaging.isChatOpenForBooking',
@@ -370,3 +370,4 @@ class _ReservationMeta {
   final DateTime? dateHeure;
   final String? serviceName;
 }
+

@@ -30,7 +30,7 @@ class FavoritePendingOp {
   }
 }
 
-/// Cache local des favoris (par [clientId]) + file d’attente sync.
+/// Cache local des favoris (par [clientId]) + file d'attente sync.
 abstract final class ClientFavoritesLocalStore {
   ClientFavoritesLocalStore._();
 
@@ -92,7 +92,7 @@ abstract final class ClientFavoritesLocalStore {
     await writePending(clientId, next);
   }
 
-  /// Déconnexion : supprime tous les favoris et files d’attente locaux.
+  /// Déconnexion : supprime tous les favoris et files d'attente locaux.
   static Future<void> purgeAll() async {
     final prefs = await SharedPreferences.getInstance();
     final toRemove = prefs.getKeys().where(
@@ -103,3 +103,4 @@ abstract final class ClientFavoritesLocalStore {
     }
   }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Sélection locale de photos pour un avis (max 3).
 class ReviewPhotoPicker extends StatefulWidget {
@@ -160,14 +161,14 @@ class _Thumb extends StatelessWidget {
           top: 4,
           right: 4,
           child: Material(
-            color: Colors.black54,
+            color: AppColors.scrimDark54,
             shape: const CircleBorder(),
             child: InkWell(
               onTap: onRemove,
               customBorder: const CircleBorder(),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child: Icon(Icons.close, size: 16, color: Colors.white),
+                child: Icon(Icons.close, size: 16, color: AppColors.white),
               ),
             ),
           ),
@@ -176,3 +177,4 @@ class _Thumb extends StatelessWidget {
     );
   }
 }
+

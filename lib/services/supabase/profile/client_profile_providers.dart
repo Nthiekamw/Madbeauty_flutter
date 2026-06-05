@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/models/domain/user/client_profile.dart';
@@ -16,3 +16,4 @@ final currentClientProfileProvider = FutureProvider<ClientProfile?>((ref) async 
   if (service == null || userId == null) return null;
   return service.getByUserId(userId);
 });
+

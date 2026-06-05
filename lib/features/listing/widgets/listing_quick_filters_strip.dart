@@ -13,23 +13,33 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
     super.key,
     this.onStyleQuerySelected,
     this.dense = true,
-    this.outlinedStyle = false,
     this.showTitle = true,
+    this.embedded = false,
   });
 
   final ValueChanged<String>? onStyleQuerySelected;
   final bool dense;
-
-  /// Puces blanches bordées (écran recherche type maquette).
-  final bool outlinedStyle;
   final bool showTitle;
+  final bool embedded;
+
+  static List<Color> _accentPalette(ColorScheme scheme) {
+    return [
+      scheme.primary,
+      scheme.secondary,
+      scheme.tertiary,
+      Color.lerp(scheme.primary, scheme.secondary, 0.5)!,
+      Color.lerp(scheme.secondary, scheme.tertiary, 0.5)!,
+      scheme.outline,
+    ];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final layout = DiscoveryResponsive.of(context);
     final filters = ref.watch(prestatairesFilterProvider);
-    final hPad = layout.horizontalPadding;
+    final hPad = embedded ? 0.0 : layout.horizontalPadding;
+    final accents = _accentPalette(theme.colorScheme);
     final activeId = filters.activeQuickFilterId ??
         (filters.query.isEmpty &&
                 filters.categoryId == null &&
@@ -38,7 +48,7 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
             : null);
 
     return Padding(
-      padding: EdgeInsets.only(top: dense ? 2 : 6),
+      padding: EdgeInsets.only(top: dense ? 0 : 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -58,27 +68,27 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                   const Spacer(),
                   if (activeId != null && activeId != 'all')
                     TextButton(
-                    onPressed: () {
-                      ref
-                          .read(prestatairesFilterProvider.notifier)
-                          .resetQuickFilters();
-                      onStyleQuerySelected?.call('');
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        ref
+                            .read(prestatairesFilterProvider.notifier)
+                            .resetQuickFilters();
+                        onStyleQuerySelected?.call('');
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Text(
+                        DiscList.quickFiltersReset,
+                        style: theme.textTheme.labelSmall,
+                      ),
                     ),
-                    child: Text(
-                      DiscList.quickFiltersReset,
-                      style: theme.textTheme.labelSmall,
-                    ),
-                  ),
                 ],
               ),
             ),
-          if (showTitle) const SizedBox(height: 6),
+          if (showTitle) const SizedBox(height: 4),
           SizedBox(
             height: layout.quickFiltersStripHeight,
             child: ListView.separated(
@@ -95,11 +105,12 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                             filters.categoryId == null &&
                             !filters.availableOnly)
                     : activeId == filter.id;
+                final accent = accents[index % accents.length];
 
                 return _QuickFilterChip(
                   filter: filter,
                   selected: selected,
-                  outlinedStyle: outlinedStyle,
+                  accentColor: accent,
                   onTap: () {
                     ref
                         .read(prestatairesFilterProvider.notifier)
@@ -124,59 +135,58 @@ class _QuickFilterChip extends StatelessWidget {
   const _QuickFilterChip({
     required this.filter,
     required this.selected,
+    required this.accentColor,
     required this.onTap,
-    this.outlinedStyle = false,
   });
 
   final ListingQuickFilter filter;
   final bool selected;
+  final Color accentColor;
   final VoidCallback onTap;
-  final bool outlinedStyle;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final fill = selected
+        ? primary
+        : accentColor.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.18 : 0.1,
+          );
+    final border = selected
+        ? primary
+        : accentColor.withValues(alpha: 0.35);
+    final fg = selected
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
 
     return Material(
-      color: selected
-          ? primary
-          : theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.55 : 0.9,
-            ),
+      color: fill,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: selected
-              ? primary
-              : theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: border, width: selected ? 1.5 : 1),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 filter.icon,
-                size: 14,
-                color: selected && !outlinedStyle
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
+                size: 13,
+                color: selected ? theme.colorScheme.onPrimary : accentColor,
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Text(
                 filter.label,
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontFamily: AppFonts.body,
                   fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  color: selected && !outlinedStyle
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onSurface,
+                  fontSize: 10,
+                  color: fg,
                 ),
               ),
             ],

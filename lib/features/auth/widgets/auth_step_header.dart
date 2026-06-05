@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 
-/// Indicateur d’étapes (inscription wizard).
+/// Indicateur d'étapes (inscription wizard).
 class AuthStepHeader extends StatelessWidget {
   const AuthStepHeader({
     super.key,
@@ -103,3 +103,4 @@ class AuthStepHeader extends StatelessWidget {
     );
   }
 }
+

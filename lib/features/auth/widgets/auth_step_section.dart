@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 
@@ -52,12 +52,13 @@ class AuthStepSection extends StatelessWidget {
                       letterSpacing: -0.2,
                     ),
                   ),
-                  if (subtitle != null && !compact) ...[
-                    const SizedBox(height: 2),
+                  if (subtitle != null) ...[
+                    SizedBox(height: compact ? 2 : 4),
                     Text(
                       subtitle!,
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontFamily: AppFonts.body,
+                        fontSize: compact ? 12 : null,
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.35,
                       ),
@@ -74,3 +75,4 @@ class AuthStepSection extends StatelessWidget {
     );
   }
 }
+

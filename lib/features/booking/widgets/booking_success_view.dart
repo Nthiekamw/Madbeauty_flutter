@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_button.dart';
 
@@ -93,7 +94,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                   child: const Icon(
                     Icons.check_rounded,
                     size: 56,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                 ),
               ],
@@ -141,7 +142,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                     _InfoBadge(
                       icon: Icons.event_available_rounded,
                       label: 'Réservé',
-                      color: const Color(0xFF10B981),
+                      color: AppColors.success,
                       theme: theme,
                     ),
                   ],
@@ -229,3 +230,4 @@ class _InfoBadge extends StatelessWidget {
     );
   }
 }
+

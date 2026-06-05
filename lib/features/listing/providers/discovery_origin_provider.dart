@@ -24,3 +24,4 @@ final discoveryUsesClientLocationProvider = Provider<bool>((ref) {
     _ => false,
   };
 });
+

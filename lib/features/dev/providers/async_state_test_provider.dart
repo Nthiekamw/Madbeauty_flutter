@@ -40,3 +40,4 @@ final asyncStateTestProvider = FutureProvider.autoDispose<List<String>>((
       throw StateError('Erreur de test simulée.');
   }
 });
+

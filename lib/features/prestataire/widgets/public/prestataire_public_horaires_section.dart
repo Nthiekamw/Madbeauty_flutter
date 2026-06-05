@@ -131,7 +131,7 @@ class _JourRow extends StatelessWidget {
           Expanded(
             child: Text(
               jour.enabled
-                  ? '${_format(jour.debut)} – ${_format(jour.fin)}'
+                  ? '${_format(jour.debut)} — ${_format(jour.fin)}'
                   : DiscPrestaHoraires.dayOff,
               textAlign: TextAlign.end,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -152,3 +152,4 @@ class _JourRow extends StatelessWidget {
     );
   }
 }
+

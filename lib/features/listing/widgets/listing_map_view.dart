@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/geo/discovery_reference.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../services/location/geolocation_service.dart';
 
 class ListingMapView extends StatefulWidget {
@@ -186,7 +187,7 @@ class _PrestataireMarker extends StatelessWidget {
     return Tooltip(
       message: entry.displayName,
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
@@ -199,7 +200,7 @@ class _PrestataireMarker extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   blurRadius: 8,
-                  color: Colors.black.withValues(alpha: 0.22),
+                  color: AppColors.scrimDark22,
                   offset: const Offset(0, 3),
                 ),
               ],
@@ -226,7 +227,7 @@ class _ClientMarker extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             blurRadius: 8,
-            color: Colors.black.withValues(alpha: 0.2),
+            color: AppColors.scrimDark20,
             offset: const Offset(0, 3),
           ),
         ],
@@ -286,7 +287,7 @@ class _PrestataireMapCard extends StatelessWidget {
                         ),
                       if (note != null)
                         Text(
-                          '★ ${note.toStringAsFixed(1)}',
+                          'â˜… ${note.toStringAsFixed(1)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w700,
@@ -370,3 +371,4 @@ class _MapEmptyState extends StatelessWidget {
     );
   }
 }
+

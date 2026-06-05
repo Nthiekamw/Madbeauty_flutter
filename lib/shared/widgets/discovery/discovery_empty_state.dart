@@ -89,3 +89,4 @@ class DiscoveryEmptyState extends StatelessWidget {
     );
   }
 }
+

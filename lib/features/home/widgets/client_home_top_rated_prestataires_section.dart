@@ -46,3 +46,4 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
     );
   }
 }
+

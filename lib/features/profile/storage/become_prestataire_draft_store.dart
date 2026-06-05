@@ -44,3 +44,4 @@ class BecomePrestataireDraftStore {
 
   Future<void> clear() => LocalCacheService.instance.remove(_key);
 }
+

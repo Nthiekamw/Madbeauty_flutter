@@ -12,3 +12,4 @@ final messagesProvider = StreamProvider.autoDispose
   if (service == null) return const Stream.empty();
   return service.getMessages(bookingId);
 });
+

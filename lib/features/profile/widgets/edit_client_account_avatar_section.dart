@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
+import '../../../shared/theme/app_colors.dart';
 
 class EditClientAccountAvatarSection extends StatelessWidget {
   const EditClientAccountAvatarSection({
@@ -45,7 +46,7 @@ class EditClientAccountAvatarSection extends StatelessWidget {
             if (loading)
               const Positioned.fill(
                 child: ColoredBox(
-                  color: Colors.black26,
+                  color: AppColors.scrimDark26,
                   child: Center(
                     child: SizedBox(
                       width: 28,
@@ -67,7 +68,7 @@ class EditClientAccountAvatarSection extends StatelessWidget {
                     child: Icon(
                       Icons.camera_alt_rounded,
                       size: 18,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
@@ -128,3 +129,4 @@ class _AvatarPreview extends StatelessWidget {
     );
   }
 }
+

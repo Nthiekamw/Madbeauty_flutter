@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
 
-/// Message d’erreur formulaire auth.
+/// Message d'erreur formulaire auth.
 class AuthErrorBanner extends StatelessWidget {
   const AuthErrorBanner({super.key, required this.message});
 
@@ -46,3 +46,4 @@ class AuthErrorBanner extends StatelessWidget {
     );
   }
 }
+

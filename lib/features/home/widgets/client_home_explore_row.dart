@@ -4,6 +4,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../theme/home_styles.dart';
 import 'client_home_section_header.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Grille de catégories visuelles vers la recherche / listing.
 class ClientHomeExploreRow extends StatelessWidget {
@@ -46,14 +47,12 @@ class ClientHomeExploreRow extends StatelessWidget {
           title: DiscHome.inspireTitle,
           subtitle: DiscHome.inspireSub,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, constraints) {
-            // 3 colonnes avec espacement, hauteur calculée proportionnellement
-            const spacing = 10.0;
+            const spacing = 8.0;
             final tileW = (constraints.maxWidth - spacing * 2) / 3;
-            // Un peu plus haut pour éviter le "bottom overflow" sur petits écrans.
-            final tileH = tileW * 0.98;
+            final tileH = tileW * 0.72;
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
@@ -100,14 +99,14 @@ class _ExploreTile extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final tileHeight = constraints.maxHeight;
-        final compact = tileHeight < 110;
-        final circleSize = compact ? 38.0 : 44.0;
-        final iconSize = compact ? 19.0 : 22.0;
-        final verticalGap = compact ? 6.0 : 8.0;
-        final contentPadding = compact ? 10.0 : 12.0;
+        final compact = tileHeight < 88;
+        final circleSize = compact ? 28.0 : 32.0;
+        final iconSize = compact ? 15.0 : 17.0;
+        final verticalGap = compact ? 4.0 : 6.0;
+        final contentPadding = compact ? 6.0 : 8.0;
 
         return Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           child: InkWell(
             onTap: onTap,
             borderRadius: HomeStyles.cardBorderRadius,
@@ -153,11 +152,11 @@ class _ExploreTile extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium?.copyWith(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           fontFamily: AppFonts.body,
                           fontWeight: FontWeight.w700,
-                          height: 1.2,
-                          fontSize: compact ? 11 : null,
+                          height: 1.15,
+                          fontSize: compact ? 10 : 11,
                         ),
                       ),
                     ),
@@ -171,3 +170,4 @@ class _ExploreTile extends StatelessWidget {
     );
   }
 }
+

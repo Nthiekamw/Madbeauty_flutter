@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
@@ -139,3 +139,4 @@ class _SlotChip extends StatelessWidget {
     );
   }
 }
+

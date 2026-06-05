@@ -45,3 +45,4 @@ class GuestAccountPrompt extends StatelessWidget {
     );
   }
 }
+

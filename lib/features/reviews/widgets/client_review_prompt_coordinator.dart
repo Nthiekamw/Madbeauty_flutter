@@ -16,7 +16,7 @@ import '../providers/prestataire_note_moyenne_provider.dart';
 import '../providers/review_provider.dart';
 import 'create_review_sheet.dart';
 
-/// Affiche automatiquement l’écran de notation après une prestation terminée.
+/// Affiche automatiquement l'écran de notation après une prestation terminée.
 class ClientReviewPromptCoordinator extends ConsumerStatefulWidget {
   const ClientReviewPromptCoordinator({super.key, required this.child});
 
@@ -148,3 +148,4 @@ class _ClientReviewPromptCoordinatorState
     return widget.child;
   }
 }
+

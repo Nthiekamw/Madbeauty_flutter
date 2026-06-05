@@ -1,4 +1,4 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+﻿import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 
 class ConnectivityService {
@@ -32,3 +32,4 @@ class ConnectivityService {
   bool _isOnline(List<ConnectivityResult> results) =>
       !results.contains(ConnectivityResult.none);
 }
+

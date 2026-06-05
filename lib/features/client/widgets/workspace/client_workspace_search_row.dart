@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
-/// Barre de recherche + bouton filtres (maquette recherche).
+import '../../../../shared/layout/discovery_responsive.dart';
+
+/// Barre de recherche + bouton filtres (écran Recherche).
 class ClientWorkspaceSearchRow extends StatelessWidget {
   const ClientWorkspaceSearchRow({
     super.key,
@@ -10,6 +12,7 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
     this.onClear,
     this.onFilterTap,
     this.onSubmitted,
+    this.filtersActive = false,
   });
 
   final TextEditingController controller;
@@ -17,56 +20,77 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
   final VoidCallback? onClear;
   final VoidCallback? onFilterTap;
   final ValueChanged<String>? onSubmitted;
+  final bool filtersActive;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+    const fieldHeight = 50.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: DiscClientWorkspace.searchHint,
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.7),
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: controller.text.isEmpty
-                    ? null
-                    : IconButton(
-                        onPressed: onClear,
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: theme.brightness == Brightness.light
+                    ? [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.07),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                onSubmitted: onSubmitted,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: DiscClientWorkspace.searchHint,
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.65),
                   ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.15),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: primary.withValues(alpha: 0.75),
                   ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: primary, width: 1.5),
+                  suffixIcon: controller.text.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: onClear,
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: primary, width: 1.5),
+                  ),
                 ),
               ),
             ),
@@ -74,18 +98,42 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
           const SizedBox(width: 10),
           Material(
             color: primary,
-            borderRadius: BorderRadius.circular(14),
+            elevation: theme.brightness == Brightness.light ? 2 : 0,
+            shadowColor: primary.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(16),
             child: InkWell(
               onTap: onFilterTap,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               child: Tooltip(
                 message: DiscClientWorkspace.filterTooltip,
                 child: SizedBox(
-                  width: 52,
-                  height: 52,
-                  child: Icon(
-                    Icons.tune_rounded,
-                    color: theme.colorScheme.onPrimary,
+                  width: fieldHeight,
+                  height: fieldHeight,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.tune_rounded,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                      if (filtersActive)
+                        Positioned(
+                          top: 11,
+                          right: 11,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.colorScheme.onPrimary,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

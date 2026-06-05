@@ -4,8 +4,8 @@ import 'firebase_options.dart';
 
 /// True sur Android/iOS hors Web, avec un [DefaultFirebaseOptions] non placeholder.
 ///
-/// Séparé de `firebase_options.dart` pour ne pas perdre ces garde-fous lors d’un
-/// `flutterfire configure` (le fichier régénéré n’expose pas cette logique).
+/// Séparé de `firebase_options.dart` pour ne pas perdre ces garde-fous lors d'un
+/// `flutterfire configure` (le fichier régénéré n'expose pas cette logique).
 bool isFirebaseConfiguredForPush() {
   if (kIsWeb) return false;
   switch (defaultTargetPlatform) {
@@ -26,3 +26,4 @@ bool isFirebaseConfiguredForPush() {
     return false;
   }
 }
+

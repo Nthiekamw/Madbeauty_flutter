@@ -1,4 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+﻿import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'categorie_service.freezed.dart';
 part 'categorie_service.g.dart';
@@ -15,3 +15,4 @@ abstract class CategorieService with _$CategorieService {
   factory CategorieService.fromJson(Map<String, dynamic> json) =>
       _$CategorieServiceFromJson(json);
 }
+

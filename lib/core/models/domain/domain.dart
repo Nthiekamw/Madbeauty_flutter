@@ -1,12 +1,12 @@
-/// Modèles de données métier MadBeauty (schéma ER) — Freezed, JSON, Supabase.
+/// Modèles de données métier MadBeauty (schéma ER) – Freezed, JSON, Supabase.
 ///
 /// Arborescence :
-/// - [serialization] — convertisseurs JSON + codec lignes Supabase
-/// - [user] — comptes & profils utilisateur
-/// - [catalog] — catégories, services, spécialités, portfolio
-/// - [booking] — réservations & favoris
-/// - [reviews] — avis
-/// - [messaging] — conversations & messages
+/// - [serialization] – convertisseurs JSON + codec lignes Supabase
+/// - [user] – comptes & profils utilisateur
+/// - [catalog] – catégories, services, spécialités, portfolio
+/// - [booking] – réservations & favoris
+/// - [reviews] – avis
+/// - [messaging] – conversations & messages
 library;
 
 export 'booking/favori.dart';
@@ -25,3 +25,4 @@ export 'user/app_user.dart';
 export 'user/client_profile.dart';
 export 'user/prestataire_profile.dart';
 export 'user/user_profile.dart';
+

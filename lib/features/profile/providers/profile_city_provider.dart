@@ -15,14 +15,15 @@ final profileCityLabelProvider = FutureProvider.autoDispose<String>((ref) async 
   }
 
   final prefs = ref.watch(profilePreferencesProvider);
-  if (!prefs.geolocationEnabled) return '—';
+  if (!prefs.geolocationEnabled) return '–';
 
   final location = await ref.watch(clientLocationProvider.future);
-  if (location == null) return '—';
+  if (location == null) return '–';
 
   final geocoding = ref.watch(geocodingServiceProvider);
   return await geocoding.reverseGeocodeCity(
         GeoPoint(latitude: location.latitude, longitude: location.longitude),
       ) ??
-      '—';
+      '–';
 });
+

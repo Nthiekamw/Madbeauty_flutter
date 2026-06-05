@@ -118,8 +118,10 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return DiscoveryBrandScaffold(
-      body: agendaAsync.when(
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
           child: Center(child: CircularProgressIndicator()),
         ),
@@ -149,6 +151,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
 
           return PrestataireWorkspaceShell(
             onRefresh: _reload,
+            headerSubtitle: DiscPrestaWorkspace.agendaSubtitle,
             child: RefreshIndicator(
               onRefresh: _reload,
               child: CustomScrollView(
@@ -242,7 +245,9 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
             ),
           );
         },
+        ),
       ),
     );
   }
 }
+

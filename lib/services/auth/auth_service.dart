@@ -10,7 +10,7 @@ import '../supabase/supabase_service.dart';
 /// Nécessite [SupabaseService.initialize] après configuration (`SUPABASE_URL`, etc.).
 ///
 /// Les appels qui peuvent échouer côté Supabase lèvent [AppFailure] (jamais
-/// [AuthException] directement) pour que l’UI reste sur un seul type d’erreur.
+/// [AuthException] directement) pour que l'UI reste sur un seul type d'erreur.
 class AuthService {
   AuthService(this._client);
 
@@ -158,3 +158,4 @@ class AuthService {
         ),
       );
 }
+

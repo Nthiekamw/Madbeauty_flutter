@@ -1,4 +1,4 @@
-import '../../core/models/domain/catalog/prestataire_catalog_entry.dart';
+﻿import '../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../core/models/domain/catalog/service_category.dart';
 import '../../core/models/domain/user/prestataire_profile.dart';
 import '../../core/models/domain/user/user_profile.dart';

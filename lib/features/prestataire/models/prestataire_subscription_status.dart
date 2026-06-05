@@ -1,4 +1,4 @@
-/// État d’abonnement prestataire (Stripe Billing, colonnes `prestataire_profiles`).
+﻿/// État d’abonnement prestataire (Stripe Billing, colonnes `prestataire_profiles`).
 class PrestataireSubscriptionStatus {
   const PrestataireSubscriptionStatus({
     required this.status,

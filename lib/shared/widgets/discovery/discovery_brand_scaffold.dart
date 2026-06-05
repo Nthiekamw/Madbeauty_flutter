@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../layout/brand_background.dart';
 
-/// Corps d’écran client avec fond brand (sans AppBar).
+/// Corps d'écran client avec fond brand (sans AppBar).
 class DiscoveryBrandScaffold extends StatelessWidget {
   const DiscoveryBrandScaffold({
     super.key,
@@ -26,3 +26,4 @@ class DiscoveryBrandScaffold extends StatelessWidget {
     );
   }
 }
+

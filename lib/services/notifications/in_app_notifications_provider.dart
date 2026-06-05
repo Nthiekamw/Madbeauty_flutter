@@ -136,3 +136,4 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
     );
   }
 }
+

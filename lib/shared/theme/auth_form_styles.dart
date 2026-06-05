@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Rayons et formes communs aux formulaires auth.
 abstract final class AuthFormStyles {
@@ -48,3 +48,4 @@ abstract final class AuthFormStyles {
     );
   }
 }
+

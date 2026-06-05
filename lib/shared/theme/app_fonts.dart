@@ -11,3 +11,4 @@ abstract final class AppFonts {
   /// Accroches / logo wordmark (usage ponctuel).
   static const String brand = 'Bungee';
 }
+

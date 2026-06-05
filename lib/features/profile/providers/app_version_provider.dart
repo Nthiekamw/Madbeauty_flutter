@@ -6,3 +6,4 @@ final appVersionProvider = FutureProvider<String>((ref) async {
   final info = await PackageInfo.fromPlatform();
   return '${info.version} (${info.buildNumber})';
 });
+

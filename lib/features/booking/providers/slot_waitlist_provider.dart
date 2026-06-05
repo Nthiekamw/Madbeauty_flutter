@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/booking/slot_waitlist_service.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
@@ -28,3 +28,4 @@ final slotWaitlistActiveProvider = FutureProvider.autoDispose
         day: query.day,
       );
     });
+

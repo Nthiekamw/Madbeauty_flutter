@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 
 /// Onglets segmentés (style maquette : pilule active marron).
@@ -38,7 +39,7 @@ class PrestataireSegmentedTabs<T> extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: Material(
-                  color: tab == selected ? primary : Colors.transparent,
+                  color: tab == selected ? primary : AppColors.transparent,
                   borderRadius: BorderRadius.circular(10),
                   child: InkWell(
                     onTap: () => onSelected(tab),
@@ -66,3 +67,4 @@ class PrestataireSegmentedTabs<T> extends StatelessWidget {
     );
   }
 }
+

@@ -21,3 +21,4 @@ final topRatedPrestatairesProvider =
         fetchRemote: () => service.getBestRated(),
       );
     });
+

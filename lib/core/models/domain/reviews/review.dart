@@ -35,3 +35,4 @@ abstract class Review with _$Review {
         createdAt: avis.createdAt,
       );
 }
+

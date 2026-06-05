@@ -197,3 +197,4 @@ class _PreferenceToggle extends StatelessWidget {
     );
   }
 }
+

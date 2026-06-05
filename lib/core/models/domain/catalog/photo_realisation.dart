@@ -1,4 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+﻿import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../serialization/json_converters.dart';
 
@@ -20,3 +20,4 @@ abstract class PhotoRealisation with _$PhotoRealisation {
   factory PhotoRealisation.fromJson(Map<String, dynamic> json) =>
       _$PhotoRealisationFromJson(json);
 }
+

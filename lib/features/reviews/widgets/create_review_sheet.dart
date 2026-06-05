@@ -13,6 +13,7 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../providers/prestataire_note_moyenne_provider.dart';
 import '../providers/review_provider.dart';
 import 'review_photo_picker.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Bottom sheet : note (1–5) + commentaire optionnel.
 Future<bool?> showCreateReviewSheet(
@@ -186,7 +187,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
                   icon: Icon(
                     filled ? Icons.star_rounded : Icons.star_outline_rounded,
                     color: filled
-                        ? const Color(0xFFFFB800)
+                        ? AppColors.starReview
                         : theme.colorScheme.outline,
                     size: 44,
                   ),
@@ -202,7 +203,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFFFFB800),
+                  color: AppColors.starReview,
                 ),
               ),
             ),
@@ -239,3 +240,4 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
     );
   }
 }
+

@@ -28,29 +28,47 @@ class PrestataireMetricTile extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withValues(alpha: isDark ? 0.22 : 0.14),
-            theme.colorScheme.surface.withValues(alpha: isDark ? 0.55 : 0.92),
+            accent.withValues(alpha: isDark ? 0.28 : 0.16),
+            theme.colorScheme.surface.withValues(alpha: isDark ? 0.5 : 0.95),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: accent),
-            const SizedBox(height: 8),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: accent),
+            ),
+            const SizedBox(height: 10),
             Text(
               value,
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 height: 1,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 1,
@@ -58,7 +76,7 @@ class PrestataireMetricTile extends StatelessWidget {
               style: theme.textTheme.labelSmall?.copyWith(
                 fontFamily: AppFonts.body,
                 color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -73,7 +91,7 @@ class PrestataireMetricStrip extends StatelessWidget {
   const PrestataireMetricStrip({
     super.key,
     required this.metrics,
-    this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 0),
+    this.padding = EdgeInsets.zero,
   });
 
   final List<PrestataireMetricTile> metrics;
@@ -96,3 +114,4 @@ class PrestataireMetricStrip extends StatelessWidget {
     );
   }
 }
+

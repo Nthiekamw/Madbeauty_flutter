@@ -48,3 +48,4 @@ class BookingAvailabilityRules {
 DateTime bookingDateOnly(DateTime value) {
   return DateTime(value.year, value.month, value.day);
 }
+

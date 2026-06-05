@@ -1,6 +1,6 @@
 import '../../router/prestataire_public_route.dart';
 
-/// Espace métier actuel : détermine la couleur d’accent (client = vert, prestataire = bleu).
+/// Espace métier actuel : détermine la couleur d'accent (client = vert, prestataire = bleu).
 enum AppArea {
   client,
   prestataire,
@@ -16,3 +16,4 @@ AppArea appAreaFromPath(String path) {
   }
   return AppArea.client;
 }
+

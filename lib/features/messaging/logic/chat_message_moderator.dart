@@ -9,7 +9,7 @@ enum ChatMessageViolationType {
   externalContact,
 }
 
-/// Résultat de l’analyse d’un message avant envoi.
+/// Résultat de l'analyse d'un message avant envoi.
 class ChatMessageModerationResult {
   const ChatMessageModerationResult({required this.violations});
 
@@ -104,12 +104,12 @@ abstract final class ChatMessageModerator {
     return ChatMessageModerationResult(violations: violations);
   }
 
-  /// Masque le contenu sensible à l’affichage (bulles reçues / anciennes).
+  /// Masque le contenu sensible à l'affichage (bulles reçues / anciennes).
   static String sanitizeForDisplay(String text) {
     if (text.trim().isEmpty) return text;
 
     var out = text;
-    out = out.replaceAllMapped(_emailPattern, (_) => '•••@•••.••');
+    out = out.replaceAllMapped(_emailPattern, (_) => 'â€¢â€¢â€¢@â€¢â€¢â€¢.â€¢â€¢');
     out = out.replaceAllMapped(
       _urlPattern,
       (_) => 'lien masqué',
@@ -148,7 +148,8 @@ abstract final class ChatMessageModerator {
   static String _maskPhoneLikeSequences(String text) {
     return text.replaceAllMapped(
       RegExp(r'(?:\+33|0033|0)\s*[1-9](?:[\s.\-]?\d{2}){4}|\d{10,}'),
-      (_) => '•• •• •• •• ••',
+      (_) => 'â€¢â€¢ â€¢â€¢ â€¢â€¢ â€¢â€¢ â€¢â€¢',
     );
   }
 }
+

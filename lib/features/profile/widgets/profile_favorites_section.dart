@@ -37,3 +37,4 @@ class ProfileFavoritesSection extends ConsumerWidget {
     );
   }
 }
+

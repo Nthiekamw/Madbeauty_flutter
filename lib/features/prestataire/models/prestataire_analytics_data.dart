@@ -54,3 +54,4 @@ class PrestataireAnalyticsData {
     conversionPercent: null,
   );
 }
+

@@ -247,10 +247,13 @@ where user_id = '<user_id>';
 
 ### Vérifier les logs si ça bloque
 
-```bash
-npx supabase functions logs create_prestataire_subscription_checkout --tail
-npx supabase functions logs stripe_webhook --tail
-```
+Le CLI Supabase (v2.104+) n’expose plus `supabase functions logs`. Utilise le **Dashboard** :
+
+1. [Dashboard](https://supabase.com/dashboard/project/vjjasrdoyguqkftfhaei/functions) → **Edge Functions**
+2. Ouvre `create_prestataire_subscription_checkout` ou `stripe_webhook`
+3. Onglet **Logs** ou **Invocations** (erreurs Stripe, `console.error`, statut HTTP)
+
+En local : `npx supabase functions serve` affiche les `console.log` dans le terminal.
 
 | Symptôme | Cause fréquente |
 |----------|-----------------|

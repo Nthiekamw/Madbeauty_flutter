@@ -20,3 +20,4 @@ abstract final class LieuTravailDisplay {
         LieuTravail.both => Icons.swap_horiz_outlined,
       };
 }
+

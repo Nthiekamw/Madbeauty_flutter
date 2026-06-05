@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../providers/prestataire_open_slots_provider.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 /// Pastille « Dispo » / « Non dispo » selon les créneaux réservables.
 class PrestataireAvailabilityBadge extends ConsumerWidget {
@@ -47,9 +48,9 @@ class _AvailabilityChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bg = available
-        ? const Color(0xFF1B5E20)
+        ? AppColors.availableBadgeDark
         : theme.colorScheme.onSurface.withValues(alpha: 0.72);
-    final fg = Colors.white;
+    final fg = AppColors.white;
     final label = available ? DiscHome.badgeDispo : DiscHome.badgeNonDispo;
 
     return DecoratedBox(
@@ -58,7 +59,7 @@ class _AvailabilityChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 10 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: AppColors.scrimDark18,
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -76,7 +77,7 @@ class _AvailabilityChip extends StatelessWidget {
               width: compact ? 6 : 7,
               height: compact ? 6 : 7,
               decoration: BoxDecoration(
-                color: available ? const Color(0xFF69F0AE) : const Color(0xFFB0BEC5),
+                color: available ? AppColors.availableDot : AppColors.unavailableDot,
                 shape: BoxShape.circle,
               ),
             ),
@@ -97,3 +98,4 @@ class _AvailabilityChip extends StatelessWidget {
     );
   }
 }
+

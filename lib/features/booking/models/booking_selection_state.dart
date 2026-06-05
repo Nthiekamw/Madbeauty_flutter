@@ -1,4 +1,4 @@
-import 'booking_slot.dart';
+﻿import 'booking_slot.dart';
 
 class BookingSelectionState {
   const BookingSelectionState({
@@ -33,3 +33,4 @@ class BookingSelectionState {
 }
 
 const _unset = Object();
+

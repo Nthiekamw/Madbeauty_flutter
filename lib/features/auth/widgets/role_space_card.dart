@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Carte sélectionnable pour basculer client / prestataire.
 class RoleSpaceCard extends StatelessWidget {
@@ -13,6 +14,7 @@ class RoleSpaceCard extends StatelessWidget {
     required this.subtitle,
     required this.isActive,
     required this.onTap,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -20,22 +22,25 @@ class RoleSpaceCard extends StatelessWidget {
   final String subtitle;
   final bool isActive;
   final VoidCallback? onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
+    final pad = compact ? 10.0 : 14.0;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: DiscoveryStyles.cardBorderRadius,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(14),
+          height: compact ? 108 : null,
+          padding: EdgeInsets.all(pad),
           decoration: BoxDecoration(
             borderRadius: DiscoveryStyles.cardBorderRadius,
             gradient: isActive
@@ -78,7 +83,7 @@ class RoleSpaceCard extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    size: 22,
+                    size: compact ? 18 : 22,
                     color: isActive
                         ? theme.colorScheme.onPrimary
                         : primary,
@@ -86,9 +91,9 @@ class RoleSpaceCard extends StatelessWidget {
                   const Spacer(),
                   if (isActive)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 6 : 8,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.onPrimary.withValues(
@@ -101,35 +106,42 @@ class RoleSpaceCard extends StatelessWidget {
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontFamily: AppFonts.body,
                           fontWeight: FontWeight.w800,
-                          fontSize: 10,
+                          fontSize: 9,
                           color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: compact ? 6 : 10),
               Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w800,
+                  fontSize: compact ? 13 : null,
                   color: isActive ? theme.colorScheme.onPrimary : null,
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: AppFonts.body,
-                  color: isActive
-                      ? theme.colorScheme.onPrimary.withValues(alpha: 0.88)
-                      : theme.colorScheme.onSurfaceVariant,
-                  height: 1.25,
+              Expanded(
+                child: Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    fontSize: compact ? 11 : null,
+                    color: isActive
+                        ? theme.colorScheme.onPrimary.withValues(alpha: 0.88)
+                        : theme.colorScheme.onSurfaceVariant,
+                    height: 1.2,
+                  ),
                 ),
               ),
-              if (!isActive && onTap != null) ...[
-                const SizedBox(height: 10),
+              if (!isActive && onTap != null)
                 Row(
                   children: [
                     Text(
@@ -137,14 +149,13 @@ class RoleSpaceCard extends StatelessWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontFamily: AppFonts.body,
                         fontWeight: FontWeight.w700,
+                        fontSize: compact ? 10 : null,
                         color: primary,
                       ),
                     ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.arrow_forward_rounded, size: 14, color: primary),
+                    Icon(Icons.arrow_forward_rounded, size: 12, color: primary),
                   ],
                 ),
-              ],
             ],
           ),
         ),

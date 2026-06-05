@@ -11,12 +11,10 @@ class PrestataireDashboardLayout {
   final Set<PrestataireDashboardSectionId> collapsed;
 
   static const defaultOrder = <PrestataireDashboardSectionId>[
-    PrestataireDashboardSectionId.hero,
-    PrestataireDashboardSectionId.analytics,
-    PrestataireDashboardSectionId.stats,
     PrestataireDashboardSectionId.pending,
     PrestataireDashboardSectionId.today,
     PrestataireDashboardSectionId.week,
+    PrestataireDashboardSectionId.analytics,
   ];
 
   static final defaults = PrestataireDashboardLayout(
@@ -107,3 +105,4 @@ class PrestataireDashboardLayout {
     );
   }
 }
+

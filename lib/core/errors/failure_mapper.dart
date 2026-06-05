@@ -37,3 +37,4 @@ abstract final class FailureMapper {
   static AppFailure fromUnknown(Object error) =>
       AppFailure(CoreStrings.errorUnexpected, cause: error);
 }
+

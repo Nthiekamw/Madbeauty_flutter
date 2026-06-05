@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_providers.dart';
 import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
@@ -17,3 +17,4 @@ final prestataireProfileFormProvider =
       if (service == null) return PrestataireProfileFormData.empty;
       return service.fetch();
     });
+

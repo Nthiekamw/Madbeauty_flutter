@@ -63,3 +63,4 @@ class NullableDecimalConverter implements JsonConverter<double?, Object?> {
   @override
   Object? toJson(double? object) => object;
 }
+

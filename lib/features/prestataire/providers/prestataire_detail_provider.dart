@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
@@ -66,3 +66,4 @@ final prestataireDetailProvider = FutureProvider.autoDispose
         reviews: const [],
       );
     });
+

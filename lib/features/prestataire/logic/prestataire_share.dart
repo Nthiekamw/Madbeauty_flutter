@@ -1,4 +1,4 @@
-import 'package:share_plus/share_plus.dart';
+﻿import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/share_link_resolver.dart';
 import '../../../core/constants/strings/discovery/disc_presta_detail.dart';
@@ -18,3 +18,4 @@ Future<void> sharePrestataireProfile({
     ),
   );
 }
+

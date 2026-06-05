@@ -10,7 +10,7 @@ import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
 import 'prestataire_home_horizontal_list.dart';
 
-/// Zone résultats (recherche ou inspiration) sur l’accueil client.
+/// Zone résultats (recherche ou inspiration) sur l'accueil client.
 class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
   const ClientHomeFeedPrestatairesSection({super.key});
 
@@ -65,3 +65,4 @@ class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
     );
   }
 }
+

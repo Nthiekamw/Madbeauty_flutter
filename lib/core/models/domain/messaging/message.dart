@@ -5,7 +5,7 @@ import '../serialization/json_converters.dart';
 part 'message.freezed.dart';
 part 'message.g.dart';
 
-/// [MESSAGES] — lié à une réservation ([bookingId]).
+/// [MESSAGES] – lié à une réservation ([bookingId]).
 @freezed
 abstract class Message with _$Message {
   const factory Message({
@@ -26,3 +26,4 @@ extension MessageCompat on Message {
   /// Alias historique (conversation_id supprimé du modèle).
   String get contenu => content;
 }
+

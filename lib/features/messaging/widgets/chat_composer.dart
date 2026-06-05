@@ -6,6 +6,7 @@ import '../logic/chat_message_moderator.dart';
 import '../logic/chat_message_templates.dart';
 import 'chat_moderation_banner.dart';
 import 'chat_quick_replies_strip.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Champ de saisie + bouton Envoyer (bas de l'écran chat).
 class ChatComposer extends StatefulWidget {
@@ -184,7 +185,7 @@ class _GradientSendButton extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(22),
             onTap: enabled ? onPressed : null,
@@ -196,7 +197,7 @@ class _GradientSendButton extends StatelessWidget {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.white,
                       ),
                     )
                   : Row(
@@ -205,7 +206,7 @@ class _GradientSendButton extends StatelessWidget {
                         const Icon(
                           Icons.send_rounded,
                           size: 18,
-                          color: Colors.white,
+                          color: AppColors.white,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -213,7 +214,7 @@ class _GradientSendButton extends StatelessWidget {
                           style: theme.textTheme.labelLarge?.copyWith(
                             fontFamily: AppFonts.body,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                         ),
                       ],
@@ -225,3 +226,4 @@ class _GradientSendButton extends StatelessWidget {
     );
   }
 }
+

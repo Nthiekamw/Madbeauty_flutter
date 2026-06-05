@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   ensurePrestataireBillingCustomer,
+  ensurePrestataireProfileRow,
   subscriptionCancelUrl,
   subscriptionPriceId,
   subscriptionSuccessUrl,
@@ -51,19 +52,8 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const stripe = stripeClient();
 
-    const { data: prestataire } = await admin
-      .from("prestataire_profiles")
-      .select(
-        "id, stripe_billing_customer_id, stripe_subscription_id, subscription_status",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!prestataire?.id) {
-      return jsonResponse({ error: "Profil prestataire introuvable" }, 404);
-    }
-
-    const prestataireId = prestataire.id as string;
+    const prestataire = await ensurePrestataireProfileRow(admin, user.id);
+    const prestataireId = prestataire.id;
     const currentStatus = String(prestataire.subscription_status ?? "none");
     if (ACTIVE_STATUSES.has(currentStatus)) {
       return jsonResponse({

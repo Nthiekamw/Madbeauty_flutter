@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
 import 'shell_nav_badge_icon.dart';
+import '../../shared/theme/app_colors.dart';
 
 const _kNavLabels = [
   ShellStrings.navClientHome,
@@ -26,7 +27,7 @@ const _kNavFilled = [
   Icons.person_rounded,
 ];
 
-/// Barre d’onglets client (pilule active, style maquette).
+/// Barre d'onglets client (pilule active, style maquette).
 class ClientShellNavBar extends StatelessWidget {
   const ClientShellNavBar({
     super.key,
@@ -75,7 +76,7 @@ class ClientShellNavBar extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Material(
-                    color: selected ? primary : Colors.transparent,
+                    color: selected ? primary : AppColors.transparent,
                     borderRadius: BorderRadius.circular(14),
                     child: InkWell(
                       onTap: () => onTap(index),
@@ -99,19 +100,21 @@ class ClientShellNavBar extends StatelessWidget {
                                 badgeCount: badgeCount,
                               ),
                             ),
-                            if (selected) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                _kNavLabels[index],
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontFamily: AppFonts.body,
-                                  fontWeight: FontWeight.w700,
-                                  color: onPrimary,
-                                ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _kNavLabels[index],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontFamily: AppFonts.body,
+                                fontWeight:
+                                    selected ? FontWeight.w700 : FontWeight.w500,
+                                fontSize: 10,
+                                color: selected
+                                    ? onPrimary
+                                    : theme.colorScheme.onSurfaceVariant,
                               ),
-                            ],
+                            ),
                           ],
                         ),
                       ),
@@ -126,3 +129,4 @@ class ClientShellNavBar extends StatelessWidget {
     );
   }
 }
+

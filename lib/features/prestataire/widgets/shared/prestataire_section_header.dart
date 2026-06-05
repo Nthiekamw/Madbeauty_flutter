@@ -67,8 +67,15 @@ class PrestataireSectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(12),
+              color: accent,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Text(
               '$badgeCount',
@@ -83,3 +90,4 @@ class PrestataireSectionHeader extends StatelessWidget {
     );
   }
 }
+

@@ -4,6 +4,10 @@ abstract final class DiscList {
 
   static const searchSubtitle =
       'Filtre par salon, ville ou type de prestation.';
+  static const categoriesLabel = 'Catégories';
+  static const filtersQuickLabel = 'Filtres rapides';
+  static const resultsFilteredTitle = 'Résultats';
+  static const resultsDiscoverTitle = 'À découvrir';
   static const quickFiltersTitle = 'Explorer par style';
   static const quickFiltersSub =
       'Les mêmes univers que sur l’accueil : tresses, locks, coupe…';
@@ -21,8 +25,10 @@ abstract final class DiscList {
   static const chipAll = 'Tout';
   static const modeList = 'Liste';
   static const modeMap = 'Carte';
+  static const layoutSectionTitle = 'Format des cartes';
   static const layoutExpanded = 'Étendu';
   static const layoutGrid = 'Grille';
+  static const filtersDone = 'Terminé';
   static const layoutExpandedHint =
       'Cartes pleine largeur avec plus de détails';
   static const layoutGridHint = 'Deux colonnes, aperçu rapide';

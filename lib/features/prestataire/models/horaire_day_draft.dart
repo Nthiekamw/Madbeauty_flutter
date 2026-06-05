@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'weekly_jour_horaire.dart';
 
-/// Jour d’horaire sérialisable pour le brouillon local du hub.
+/// Jour d'horaire sérialisable pour le brouillon local du hub.
 class HoraireDayDraft {
   const HoraireDayDraft({
     required this.jourSemaine,
@@ -75,3 +75,4 @@ List<WeeklyJourHoraire> weeklyHorairesFromDrafts(List<HoraireDayDraft> drafts) {
     return draft?.toWeekly() ?? template;
   }).toList();
 }
+

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_avatar.dart';
 
-/// Carrousel auto-défilant pour les photos de réalisations d’un prestataire.
+/// Carrousel auto-défilant pour les photos de réalisations d'un prestataire.
 class PrestataireRealisationCarousel extends StatefulWidget {
   const PrestataireRealisationCarousel({
     super.key,
@@ -131,28 +131,32 @@ class _PrestataireRealisationCarouselState
               },
             ),
             Positioned(
-              left: 0,
-              right: 0,
+              left: 8,
+              right: 8,
               bottom: 8,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_urls.length, (i) {
-                  final active = i == _pageIndex;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                    width: active ? 14 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: active
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onPrimary.withValues(
-                              alpha: 0.45,
-                            ),
-                    ),
-                  );
-                }),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(_urls.length, (i) {
+                    final active = i == _pageIndex;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                      width: active ? 14 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        color: active
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onPrimary.withValues(
+                                alpha: 0.45,
+                              ),
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ],
@@ -267,3 +271,4 @@ class _FallbackMedia extends StatelessWidget {
     );
   }
 }
+

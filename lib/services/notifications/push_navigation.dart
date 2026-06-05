@@ -1,4 +1,4 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
+﻿import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
@@ -63,3 +63,4 @@ Map<String, String>? _bookingQueryParams(Map<String, dynamic> data) {
     if (dateJour != null && dateJour.length >= 10) 'date': dateJour,
   };
 }
+

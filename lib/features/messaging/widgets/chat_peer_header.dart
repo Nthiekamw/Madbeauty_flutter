@@ -3,6 +3,7 @@
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// En-tête chat : avatar + nom (+ sous-titre réservation).
 class ChatPeerHeader extends StatelessWidget {
@@ -37,11 +38,11 @@ class ChatPeerHeader extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: onLightGradient
-                ? Colors.white.withValues(alpha: 0.22)
+                ? AppColors.onPrimarySurface22
                 : primary.withValues(alpha: 0.1),
             border: Border.all(
               color: onLightGradient
-                  ? Colors.white.withValues(alpha: 0.55)
+                  ? AppColors.onPrimarySurface55
                   : primary.withValues(alpha: 0.25),
               width: 2,
             ),
@@ -104,3 +105,4 @@ class ChatPeerHeader extends StatelessWidget {
     );
   }
 }
+

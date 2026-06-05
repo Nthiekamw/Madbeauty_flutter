@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../supabase_service.dart';
@@ -9,3 +9,4 @@ final categorieSuggestionServiceProvider =
       if (!AppConfig.hasSupabase) return null;
       return CategorieSuggestionService(SupabaseService.client);
     });
+

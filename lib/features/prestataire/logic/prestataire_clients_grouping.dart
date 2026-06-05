@@ -2,7 +2,7 @@ import '../../booking/logic/booking_formatters.dart';
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../models/prestataire_reservation_item.dart';
 
-/// Fiche client agrégée pour l’onglet Clients.
+/// Fiche client agrégée pour l'onglet Clients.
 class PrestataireClientSummary {
   const PrestataireClientSummary({
     required this.clientKey,
@@ -60,3 +60,4 @@ List<PrestataireClientSummary> listPrestataireClientSummaries(
 }
 
 String formatClientLastVisit(DateTime date) => formatBookingDate(date);
+

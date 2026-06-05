@@ -1,4 +1,4 @@
-/// Notification affichée dans l’application (liste locale persistée).
+/// Notification affichée dans l'application (liste locale persistée).
 class InAppNotification {
   const InAppNotification({
     required this.id,
@@ -73,3 +73,4 @@ class InAppNotification {
     );
   }
 }
+

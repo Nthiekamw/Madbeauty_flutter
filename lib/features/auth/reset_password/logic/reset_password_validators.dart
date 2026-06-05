@@ -1,4 +1,4 @@
-import '../../../../core/constants/app_strings.dart';
+﻿import '../../../../core/constants/app_strings.dart';
 
 abstract final class ResetPasswordValidators {
   ResetPasswordValidators._();
@@ -16,3 +16,4 @@ abstract final class ResetPasswordValidators {
     return null;
   }
 }
+

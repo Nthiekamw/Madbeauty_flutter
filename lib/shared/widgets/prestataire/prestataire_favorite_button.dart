@@ -6,8 +6,9 @@ import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import '../app/app_snack_bar.dart';
+import '../../../shared/theme/app_colors.dart';
 
-/// Cœur favori avec animation scale + changement de couleur.
+/// CÅ“ur favori avec animation scale + changement de couleur.
 class PrestataireFavoriteButton extends ConsumerStatefulWidget {
   const PrestataireFavoriteButton({
     super.key,
@@ -36,7 +37,7 @@ enum PrestataireFavoriteButtonStyle {
 class _PrestataireFavoriteButtonState
     extends ConsumerState<PrestataireFavoriteButton>
     with SingleTickerProviderStateMixin {
-  static const _favoriteColor = Color(0xFFE11D48);
+  static const _favoriteColor = AppColors.favorite;
 
   late final AnimationController _pulse;
   late final Animation<double> _scale;
@@ -105,13 +106,14 @@ class _PrestataireFavoriteButtonState
 
     switch (widget.style) {
       case PrestataireFavoriteButtonStyle.overlay:
-        iconColor = isFavorite ? _favoriteColor : Colors.white;
-        backgroundColor = Colors.black.withValues(alpha: 0.38);
-        borderColor = Colors.white.withValues(alpha: isFavorite ? 0.5 : 0.28);
+        iconColor = isFavorite ? _favoriteColor : AppColors.white;
+        backgroundColor = AppColors.scrimDark38;
+        borderColor =
+            isFavorite ? AppColors.onPrimarySurface50 : AppColors.onPrimarySurface28;
       case PrestataireFavoriteButtonStyle.hero:
-        iconColor = isFavorite ? _favoriteColor : Colors.white;
-        backgroundColor = Colors.white.withValues(alpha: 0.18);
-        borderColor = Colors.white.withValues(alpha: 0.45);
+        iconColor = isFavorite ? _favoriteColor : AppColors.white;
+        backgroundColor = AppColors.onPrimarySurface18;
+        borderColor = AppColors.onPrimarySurface45;
     }
 
     return ScaleTransition(
@@ -160,3 +162,4 @@ class _PrestataireFavoriteButtonState
     );
   }
 }
+

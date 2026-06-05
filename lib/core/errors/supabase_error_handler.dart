@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_strings.dart';
@@ -117,3 +117,4 @@ abstract final class SupabaseErrorHandler {
     }
   }
 }
+

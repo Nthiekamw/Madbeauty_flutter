@@ -2,7 +2,7 @@
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
-import '../../../shared/widgets/layout/brand_background.dart';
+import '../../../shared/widgets/layout/auth_brand_background.dart';
 import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 import 'auth_marketing_logo.dart';
 
@@ -38,16 +38,16 @@ class AuthFormScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final headerCompact = compact || keyboardOpen;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          BrandBackground(isDark: isDark),
+          const AuthBrandBackground(),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,7 +107,6 @@ class AuthFormScaffold extends StatelessWidget {
                 if (bottomBar != null)
                   _AuthFormBottomBar(
                     theme: theme,
-                    isDark: isDark,
                     headerCompact: headerCompact,
                     child: bottomBar!,
                   ),
@@ -185,13 +184,11 @@ class _AuthFormHeader extends StatelessWidget {
 class _AuthFormBottomBar extends StatelessWidget {
   const _AuthFormBottomBar({
     required this.theme,
-    required this.isDark,
     required this.headerCompact,
     required this.child,
   });
 
   final ThemeData theme;
-  final bool isDark;
   final bool headerCompact;
   final Widget child;
 
@@ -199,9 +196,7 @@ class _AuthFormBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: isDark ? 0.94 : 0.98,
-        ),
+        color: theme.colorScheme.surface.withValues(alpha: 0.96),
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AuthFormStyles.cardRadius),
         ),

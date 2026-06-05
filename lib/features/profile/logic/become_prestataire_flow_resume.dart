@@ -25,13 +25,6 @@ abstract final class BecomePrestataireFlowResume {
 
   /// Reprise après redémarrage : brouillon local ou profil prestataire incomplet.
   static String? pathAfterAuthBootstrap() {
-    final completionPhase =
-        LocalCacheService.instance.prestataireProfileCompletionPhase;
-    if (LocalCacheService.instance.selectedRole == 'prestataire' &&
-        completionPhase != null) {
-      return AppRoutes.prestataireProfileComplete;
-    }
-
     final draftPath = pathIfPending();
     if (draftPath != null) return draftPath;
 
@@ -42,3 +35,4 @@ abstract final class BecomePrestataireFlowResume {
     return null;
   }
 }
+

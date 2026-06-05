@@ -12,7 +12,6 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/offline/offline_actions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
-import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -31,6 +30,7 @@ import '../widgets/profile_account_section.dart';
 import '../widgets/profile_admin_section.dart';
 import '../widgets/profile_footer_actions.dart';
 import '../widgets/profile_my_info_section.dart';
+import '../widgets/profile_page_insets.dart';
 import '../widgets/profile_preferences_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -277,67 +277,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         .watch(myReferralInfoProvider)
         .maybeWhen(data: (i) => i?.isAmbassador ?? false, orElse: () => false);
 
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
-
     return DiscoveryBrandScaffold(
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
           DiscoveryConstrainedBody(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-          if (loadingProfile)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else
-            ProfileAccountHeader(
-              profile: profile,
-              displayName: displayName,
-              email: email,
-              avatarBytes: _avatarPreviewBytes,
-              photoLoading: _savingPhoto,
-              showAmbassadorBadge: isAmbassador,
-              onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
-              onEditName: _savingName ? null : () => _editName(profile),
-            ),
-          if (_savingName)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: hPad),
-              child: const LinearProgressIndicator(minHeight: 2),
-            ),
-          const SizedBox(height: 20),
-          ProfileMyInfoSection(email: email, phone: phone),
-          const SizedBox(height: 16),
-          const ProfilePreferencesSection(),
-          const SizedBox(height: 16),
-          const ProfileRoleSpaceSection(),
-          const SizedBox(height: 16),
-          const ProfileAdminSection(),
-          const ProfileAccountSection(),
-          const SizedBox(height: 20),
-          ProfileFooterActions(
-            onSignOut: _signOut,
-            onDeleteAccount: _confirmDeleteAccount,
-          ),
-          const SizedBox(height: 20),
-          versionAsync.when(
-            data: (version) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: hPad),
-              child: Text(
-                '${ShellStrings.profileVersionLabel} $version',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            child: Padding(
+              padding: ProfilePageInsets.page(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (loadingProfile)
+                    const Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    ProfileAccountHeader(
+                      profile: profile,
+                      displayName: displayName,
+                      email: email,
+                      avatarBytes: _avatarPreviewBytes,
+                      photoLoading: _savingPhoto,
+                      showAmbassadorBadge: isAmbassador,
+                      onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
+                      onEditName: _savingName ? null : () => _editName(profile),
+                    ),
+                  if (_savingName) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  if (!loadingProfile) ...[
+                    const SizedBox(height: ProfilePageInsets.sectionGap),
+                    ProfileMyInfoSection(email: email, phone: phone),
+                  ],
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfilePreferencesSection(),
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfileRoleSpaceSection(),
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfileAdminSection(),
+                  const ProfileAccountSection(),
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  ProfileFooterActions(
+                    onSignOut: _signOut,
+                    onDeleteAccount: _confirmDeleteAccount,
+                  ),
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  versionAsync.when(
+                    data: (version) => Text(
+                      '${ShellStrings.profileVersionLabel} $version',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    loading: () => const SizedBox(height: 8),
+                    error: (_, __) => const SizedBox(height: 8),
+                  ),
+                ],
               ),
-            ),
-            loading: () => const SizedBox(height: 8),
-            error: (_, __) => const SizedBox(height: 8),
-          ),
-              ],
             ),
           ),
         ],
@@ -345,3 +344,4 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+

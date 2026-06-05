@@ -114,8 +114,8 @@ class DisponibiliteService {
         action: () async {
           await _client.from('indisponibilites').insert({
             'prestataire_id': prestataireId,
-            'date_debut': dateDebut.toUtc().toIso8601String(),
-            'date_fin': dateFin.toUtc().toIso8601String(),
+            'date_debut': _toIsoUtc(dateDebut),
+            'date_fin': _toIsoUtc(dateFin),
           });
         },
       );
@@ -356,6 +356,15 @@ class DisponibiliteService {
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m:00';
   }
+
+  /// Dates calendaires (congés) stockées en UTC minuit pour éviter les décalages.
+  String _toIsoUtc(DateTime value) {
+    final utc = value.isUtc
+        ? value
+        : DateTime.utc(value.year, value.month, value.day, value.hour,
+            value.minute, value.second, value.millisecond, value.microsecond);
+    return utc.toIso8601String();
+  }
 }
 
 class _CapacityOverrideRange {
@@ -369,3 +378,4 @@ class _CapacityOverrideRange {
   final int endMinutes;
   final int capacity;
 }
+

@@ -54,4 +54,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Requis par image_picker (PickVisualMedia / pickMultiImage).
+    implementation("androidx.activity:activity:1.10.1")
 }

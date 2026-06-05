@@ -219,7 +219,7 @@ abstract final class PrestataireAnalyticsCalculator {
     return ((current - previous) / previous) * 100;
   }
 
-  /// Réservations actives par jour de semaine (lun–dim).
+  /// Réservations actives par jour de semaine (lun—dim).
   static List<double> _weekdayHeatmap(
     List<PrestataireAnalyticsReservation> rows,
   ) {
@@ -306,3 +306,4 @@ abstract final class PrestataireAnalyticsCalculator {
     };
   }
 }
+

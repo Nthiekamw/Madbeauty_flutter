@@ -1,4 +1,4 @@
-/// État UI du flux connexion (messages d’erreur, signaux pour la route hôte).
+/// État UI du flux connexion (messages d'erreur, signaux pour la route hôte).
 class LoginViewState {
   const LoginViewState({
     this.emailError,
@@ -38,3 +38,4 @@ class LoginViewState {
     );
   }
 }
+

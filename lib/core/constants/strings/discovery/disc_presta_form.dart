@@ -10,12 +10,80 @@ abstract final class DiscPrestaForm {
   static const stepGallery = 'Réalisations';
   static const stepComfort = 'Confort & conditions';
   static const stepHoraires = 'Horaires';
+  static const stepSubscription = 'Abonnement';
+  static const hubBadgeRequired = 'Obligatoire';
+  static const hubBadgeRecommended = 'Recommandé';
+  static const hubBadgeOptional = 'Optionnel';
+  static const hubSectionIdentity = 'Photo & identité';
+  static const hubSectionIdentityHint = 'Photo et noms affichés sur ta fiche';
+  static const hubSectionPresentation = 'Présentation';
+  static const hubSectionPresentationHint = 'Description et expérience';
+  static const hubSectionLocation = 'Lieu & adresse';
+  static const hubSectionLocationHint = 'Où les clientes te trouvent';
+  static const hubSectionCatalog = '1. Prestations proposées';
+  static const hubSectionCatalogHint = 'Sélectionne au moins une catégorie';
+  static const hubSectionPricing = '2. Tarifs & durées';
+  static const hubSectionPricingHint = 'Renseigne chaque service ajouté';
+  static const hubGalleryHint =
+      'Ajoute jusqu’à 10 photos de tes meilleures prestations '
+      '(JPEG, PNG ou WebP) pour valoriser ton savoir-faire et rassurer les clientes.';
+  static const hubGalleryPick = 'Ajouter des photos';
+  static const hubGalleryEmpty = 'Aucune photo pour l’instant.';
+  static const hubGalleryUploading = 'Envoi des photos…';
   static const skipStep = 'Passer';
   static const completeLater = 'Configurer plus tard';
   static const completeLaterSaved =
       'Brouillon enregistré. Tu pourras reprendre la complétion de ton profil à tout moment.';
+  static const completeLaterNeedsCore =
+      'Complète au minimum la vitrine, l’adresse et tes services pour enregistrer ton profil. '
+      'Ton brouillon local est conservé.';
   static String hubWizardProgressLabel(int current, int total) =>
       'Étape $current sur $total';
+  static const hubGoalBasics =
+      'Photo, nom du salon et nom affiché : ce que les clientes voient en premier.';
+  static const hubGoalLocation =
+      'Adresse, ville et lieu de travail pour te trouver sur la carte.';
+  static const hubGoalServices =
+      'Choisis tes prestations puis indique prix et durée pour chaque service.';
+  static const hubGoalGallery =
+      'Ajoute des photos de tes réalisations pour inspirer confiance.';
+  static const hubGoalComfort =
+      'Précise ton confort et tes conditions pour rassurer les clientes.';
+  static const hubGoalHoraires =
+      'Indique tes créneaux habituels pour recevoir des réservations.';
+  static const hubGoalSubscription =
+      'Active ton abonnement pour publier tes services dans le catalogue.';
+  static const hubSectionWorkPlace = 'Où travailles-tu ?';
+  static const hubSectionWorkPlaceHint =
+      'Les clientes savent si tu les reçois chez toi, à domicile ou les deux.';
+  static const hubSectionAddress = 'Adresse & localisation';
+  static const hubSectionAddressHint = 'Ville, code postal et rue pour te trouver sur la carte.';
+  static const hubTipBasics =
+      'Une photo nette et un nom de salon clair augmentent les réservations.';
+  static const hubTipLocation =
+      'Vérifie l’adresse : elle sert à afficher ta fiche sur la carte.';
+  static const hubTipServices =
+      'Commence par 2–3 prestations bien définies, tu pourras en ajouter plus tard.';
+  static const hubTipGallery =
+      '3 à 5 photos suffisent pour démarrer. Tu peux passer cette étape et revenir plus tard.';
+  static const hubTipComfort =
+      'Ces détails rassurent les clientes (accès, ambiance, conditions).';
+  static const hubTipHoraires =
+      'Active au moins un jour avec des horaires cohérents pour recevoir des demandes.';
+  static const hubTipSubscription =
+      'L’abonnement peut être activé plus tard : ton profil est enregistré à chaque étape.';
+  static String hubStepTip(int stepIndex) => switch (stepIndex) {
+        0 => hubTipBasics,
+        1 => hubTipLocation,
+        2 => hubTipServices,
+        3 => hubTipGallery,
+        4 => hubTipComfort,
+        5 => hubTipHoraires,
+        _ => hubTipSubscription,
+      };
+  static const hubAvatarPickHint = 'Choisis une photo ou une illustration ci-dessous.';
+  static const hubServicesProgressLabel = 'Prestations configurées';
+  static const hubHorairesOpenDays = 'Jours ouverts cette semaine';
   static const onboardingFinishCompleteTitle = 'Profil enregistré';
   static const onboardingFinishIncompleteTitle =
       'Profil enregistré — encore à compléter';
@@ -92,6 +160,8 @@ abstract final class DiscPrestaForm {
       'Indique le prix et la durée pour chaque prestation proposée.';
   static const pricingEmptyHint =
       'Sélectionne d’abord tes services et spécialités ci-dessus.';
+  static const pricingEmptySpecialtyHint =
+      'Choisis au moins une spécialité pour chaque activité — les tarifs apparaîtront ici.';
   static const reqPricing =
       'Renseigne un prix valide (≥ 1 €) et une durée pour chaque prestation.';
   static const svcAdd = 'Ajouter un service';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/prestataire_subscription_config.dart';
@@ -7,7 +7,7 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../providers/prestataire_subscription_provider.dart';
-import '../widgets/profile/prestataire_subscription_checkout_section.dart';
+import '../widgets/profile/subscription/prestataire_subscription_checkout_section.dart';
 
 /// Grille d’abonnement + paiement Stripe Checkout.
 class PrestataireSubscriptionScreen extends ConsumerWidget {

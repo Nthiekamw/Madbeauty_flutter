@@ -17,3 +17,4 @@ bool reservationStatutIsPending(String rawStatut) {
   return status == ClientReservationUiStatus.pending ||
       status == ClientReservationUiStatus.syncPending;
 }
+

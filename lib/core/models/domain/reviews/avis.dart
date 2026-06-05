@@ -1,4 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+﻿import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../serialization/json_converters.dart';
 
@@ -21,3 +21,4 @@ abstract class Avis with _$Avis {
 
   factory Avis.fromJson(Map<String, dynamic> json) => _$AvisFromJson(json);
 }
+

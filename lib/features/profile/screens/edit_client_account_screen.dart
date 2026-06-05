@@ -322,3 +322,4 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     );
   }
 }
+

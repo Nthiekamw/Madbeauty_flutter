@@ -1,4 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+﻿import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../serialization/json_converters.dart';
 
@@ -19,3 +19,4 @@ abstract class Conversation with _$Conversation {
   factory Conversation.fromJson(Map<String, dynamic> json) =>
       _$ConversationFromJson(json);
 }
+

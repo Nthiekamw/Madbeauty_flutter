@@ -122,3 +122,4 @@ class PrestataireReservationActions {
     AppSnackBar.show(context, message: message, kind: kind);
   }
 }
+

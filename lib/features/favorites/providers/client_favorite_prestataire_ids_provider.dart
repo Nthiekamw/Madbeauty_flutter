@@ -208,3 +208,4 @@ class ClientFavoritePrestataireIdsNotifier extends AsyncNotifier<Set<String>> {
     await ClientFavoritesLocalStore.writePending(clientId, remaining);
   }
 }
+

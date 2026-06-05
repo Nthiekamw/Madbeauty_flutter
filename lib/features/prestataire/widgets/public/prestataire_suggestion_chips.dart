@@ -64,3 +64,4 @@ class PrestataireSuggestionChips extends StatelessWidget {
     );
   }
 }
+

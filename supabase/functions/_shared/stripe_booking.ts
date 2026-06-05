@@ -137,6 +137,24 @@ export async function activeReservationsAtSlot(
   return count;
 }
 
+function connectRedirectFunctionBase(): string {
+  const explicit = Deno.env.get("STRIPE_CONNECT_REDIRECT_BASE_URL")?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+  if (supabaseUrl) {
+    return `${supabaseUrl.replace(/\/$/, "")}/functions/v1/stripe_connect_redirect`;
+  }
+  throw new Error(
+    "SUPABASE_URL ou STRIPE_CONNECT_REDIRECT_BASE_URL requis pour les URLs de retour",
+  );
+}
+
+export function clientPaymentReturnUrl(): string {
+  const fromEnv = Deno.env.get("STRIPE_CLIENT_PAYMENT_RETURN_URL")?.trim();
+  if (fromEnv) return fromEnv;
+  return `${connectRedirectFunctionBase()}?to=client_payment_return`;
+}
+
 export async function ensureStripeCustomer(
   admin: SupabaseClient,
   stripe: Stripe,

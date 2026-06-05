@@ -33,3 +33,4 @@ final class StripePaymentGenericException extends StripePaymentException {
   const StripePaymentGenericException([String? detail])
       : super(detail ?? 'Erreur paiement', code: 'generic');
 }
+

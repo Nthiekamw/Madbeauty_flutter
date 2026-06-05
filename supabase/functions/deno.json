@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.unstable"],
+    "strict": true
+  },
+  "imports": {
+    "google-auth-library": "npm:google-auth-library@9.15.1"
+  }
+}

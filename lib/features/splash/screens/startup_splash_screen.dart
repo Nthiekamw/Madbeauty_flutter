@@ -1,24 +1,29 @@
+﻿import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../features/auth/logic/auth_role_cache.dart';
 import '../../../features/auth/navigation/post_auth_navigation.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
-import '../../../features/prestataire/providers/current_prestataire_provider.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
+import '../../../features/prestataire/providers/current_prestataire_provider.dart';
 import '../../../features/prestataire/providers/prestataire_profile_form_provider.dart';
 import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/brand/brand_logo.dart';
+import '../splash_config.dart';
 import '../widgets/splash_brand_background.dart';
+import '../widgets/splash_style.dart';
 
-/// Splash minimum 2 s puis onboarding / bienvenue ou application si déjà connecté.
+/// Splash : animation de marque, bootstrap auth / rôles, puis navigation.
 class StartupSplashScreen extends ConsumerStatefulWidget {
   const StartupSplashScreen({super.key});
 
@@ -30,18 +35,21 @@ class StartupSplashScreen extends ConsumerStatefulWidget {
 class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _intro;
+  late final DateTime _displayStartedAt;
+  String _statusText = ShellStrings.splashInitializing;
 
   @override
   void initState() {
     super.initState();
+    _displayStartedAt = DateTime.now();
     _intro = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: SplashConfig.introAnimationDuration,
     )..forward();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final container = ProviderScope.containerOf(context);
-      _boot(container);
+      unawaited(_boot(container));
     });
   }
 
@@ -51,11 +59,38 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     super.dispose();
   }
 
-  Future<void> _boot(ProviderContainer container) async {
-    final minSplash = Future<void>.delayed(const Duration(seconds: 2));
-    final authReady = container.read(authNotifierProvider.future);
+  void _setStatus(String text) {
+    if (!mounted || _statusText == text) return;
+    setState(() => _statusText = text);
+  }
 
-    await Future.wait<void>([minSplash, authReady]);
+  Future<void> _waitMinDisplay() async {
+    final elapsed = DateTime.now().difference(_displayStartedAt);
+    final remaining = SplashConfig.minDisplayDuration - elapsed;
+    if (remaining > Duration.zero) {
+      _setStatus(ShellStrings.splashAlmostReady);
+      await Future<void>.delayed(remaining);
+    }
+  }
+
+  Future<void> _navigate(FutureOr<void> Function() action) async {
+    await _waitMinDisplay();
+    if (!mounted) return;
+    await action();
+  }
+
+  Future<void> _go(String route) => _navigate(() => context.go(route));
+
+  Future<void> _boot(ProviderContainer container) async {
+    _setStatus(ShellStrings.splashCheckingSession);
+
+    try {
+      await container.read(authNotifierProvider.future);
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('Splash: auth init – $e\n$st');
+      }
+    }
 
     if (!mounted) return;
 
@@ -68,8 +103,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     final registerDraft = RegisterWizardDraftStore.instance.hasDraft;
 
     if (registerDraft) {
-      if (!mounted) return;
-      context.go(AppRoutes.register);
+      await _go(AppRoutes.register);
       return;
     }
 
@@ -78,60 +112,87 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       if (BecomePrestataireFlowResume.needsPrestataireRole) {
         await LocalCacheService.instance.setSelectedRole('prestataire');
       }
-      if (!mounted) return;
-      context.go(becomeResume);
+      await _go(becomeResume);
       return;
     }
 
     if (user != null) {
-      try {
-        final roles = await container.read(myRolesProvider.future);
-        await AuthRoleCache.persistServerRoles(roles);
-
-        final prestaProfile =
-            await container.read(currentPrestataireProvider.future);
-        if (prestaProfile != null) {
-          await LocalCacheService.instance.setSelectedRole('prestataire');
-          await LocalCacheService.instance.setSignupShellRole('prestataire');
-        }
-      } catch (_) {
-        // PostAuthNavigation reprendra avec le cache local.
-      }
-
-      if (LocalCacheService.instance.selectedRole == 'prestataire') {
-        try {
-          final profile =
-              await container.read(prestataireProfileFormProvider.future);
-          if (!profile.isProfessionallyComplete) {
-            if (!mounted) return;
-            context.go(AppRoutes.prestataireProfileEdit);
-            return;
-          }
-        } catch (_) {
-          // PostAuthNavigation reprendra.
-        }
-      }
-      if (!mounted) return;
-      await PostAuthNavigation.navigateWithContainer(context, container);
+      final navigatedAway = await _bootstrapAuthenticated(container);
+      if (!mounted || navigatedAway) return;
+      await _navigate(
+        () => PostAuthNavigation.navigateWithContainer(context, container),
+      );
       return;
     }
 
     if (!mounted) return;
 
     if (!cache.onboardingCompleted) {
-      context.go(AppRoutes.onboarding);
+      await _go(AppRoutes.onboarding);
     } else {
-      context.go(AppRoutes.welcome);
+      await _go(AppRoutes.welcome);
     }
+  }
+
+  /// `true` si une navigation a déjà été déclenchée (ex. profil incomplet).
+  Future<bool> _bootstrapAuthenticated(ProviderContainer container) async {
+    _setStatus(ShellStrings.splashLoadingRoles);
+
+    try {
+      final roles = await container
+          .read(myRolesProvider.future)
+          .timeout(SplashConfig.bootstrapTimeout);
+      await AuthRoleCache.persistServerRoles(roles);
+
+      _setStatus(ShellStrings.splashLoadingProfile);
+
+      final prestaProfile = await container
+          .read(currentPrestataireProvider.future)
+          .timeout(SplashConfig.bootstrapTimeout);
+      if (prestaProfile != null) {
+        await LocalCacheService.instance.setSelectedRole('prestataire');
+        await LocalCacheService.instance.setSignupShellRole('prestataire');
+      }
+    } on TimeoutException {
+      if (kDebugMode) {
+        debugPrint('Splash: bootstrap timeout – cache local');
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('Splash: bootstrap – $e\n$st');
+      }
+    }
+
+    if (LocalCacheService.instance.selectedRole != 'prestataire') {
+      return false;
+    }
+
+    _setStatus(ShellStrings.splashLoadingProfile);
+    try {
+      final profile = await container
+          .read(prestataireProfileFormProvider.future)
+          .timeout(SplashConfig.bootstrapTimeout);
+      if (!profile.isProfessionallyComplete) {
+        if (!mounted) return true;
+        await _go(AppRoutes.prestataireProfileEdit);
+        return true;
+      }
+    } on TimeoutException {
+      if (kDebugMode) {
+        debugPrint('Splash: profil prestataire timeout');
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('Splash: profil prestataire – $e\n$st');
+      }
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final style = SplashStyle.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
-    final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
-
     final fade = CurvedAnimation(parent: _intro, curve: Curves.easeOut);
     final slide = Tween<Offset>(
       begin: const Offset(0, 0.06),
@@ -139,31 +200,35 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     ).animate(CurvedAnimation(parent: _intro, curve: Curves.easeOutCubic));
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          SplashBrandBackground(isDark: isDark),
+          const SplashBrandBackground(),
           SafeArea(
             child: Column(
               children: [
-                const Spacer(flex: 3),
+                const Spacer(flex: 2),
                 FadeTransition(
                   opacity: fade,
                   child: SlideTransition(
                     position: slide,
-                    child: const _SplashBrandMark(),
+                    child: _SplashBrandMark(style: style),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
                 FadeTransition(
                   opacity: fade,
-                  child: Text(
-                    CoreStrings.tagline,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontFamily: AppFonts.body,
-                      color: onSurfaceVariant,
-                      height: 1.45,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      CoreStrings.tagline,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontFamily: AppFonts.body,
+                        color: style.taglineColor,
+                        height: 1.45,
+                      ),
                     ),
                   ),
                 ),
@@ -171,9 +236,9 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
                 FadeTransition(
                   opacity: fade,
                   child: _SplashLoadingFooter(
-                    statusText: ShellStrings.splashCheckingSession,
-                    indicatorColor: primary,
-                    textColor: onSurfaceVariant,
+                    statusText: _statusText,
+                    indicatorColor: style.indicatorColor,
+                    textColor: style.statusColor,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -187,38 +252,25 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
 }
 
 class _SplashBrandMark extends StatelessWidget {
-  const _SplashBrandMark();
+  const _SplashBrandMark({required this.style});
+
+  final SplashStyle style;
 
   @override
   Widget build(BuildContext context) {
-    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final logoWidth = (screenWidth * SplashConfig.logoWidthFraction)
+        .clamp(SplashConfig.logoMinWidth, SplashConfig.logoMaxWidth);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset(
-          AppAssets.logo,
-          width: 300,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (_, __, ___) => Icon(
-            Icons.image_not_supported_outlined,
-            size: 64,
-            color: onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          ShellStrings.splashWelcomeBack,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w500,
-                color: onSurfaceVariant,
-                letterSpacing: 0.2,
-              ),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: BrandLogo(
+        width: logoWidth,
+        showGlow: true,
+        glowColor: style.glowColor,
+        glowBlurRadius: style.isDark ? 56 : 44,
+        glowSpreadRadius: style.isDark ? 14 : 10,
+      ),
     );
   }
 }
@@ -236,30 +288,40 @@ class _SplashLoadingFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: indicatorColor,
+    return Semantics(
+      label: statusText,
+      liveRegion: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: indicatorColor,
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            statusText,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontFamily: AppFonts.body,
-                  color: textColor,
-                  letterSpacing: 0.15,
-                ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: Text(
+                statusText,
+                key: ValueKey<String>(statusText),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: AppFonts.body,
+                      color: textColor,
+                      letterSpacing: 0.15,
+                    ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

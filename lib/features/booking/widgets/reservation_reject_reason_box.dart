@@ -41,3 +41,4 @@ class ReservationRejectReasonBox extends StatelessWidget {
     );
   }
 }
+

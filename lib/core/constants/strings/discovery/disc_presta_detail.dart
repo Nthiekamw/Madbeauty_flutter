@@ -27,6 +27,15 @@ abstract final class DiscPrestaDetail {
   static const reviewsTitle = 'Avis clients';
   static const actionBook = 'Réserver un service';
   static const actionBookSvc = 'Réserver';
+  static const fromPrice = 'À partir de';
+  static const statRating = 'Note';
+  static const statServices = 'Services';
+  static const statResponse = 'Réponse';
+  static const navServices = 'Services';
+  static const navGallery = 'Galerie';
+  static const navAbout = 'Infos';
+  static const navReviews = 'Avis';
+  static const aboutTitle = 'À propos';
   static const ownProfileBookHint =
       'C’est ton profil professionnel : tu peux le consulter, mais pas réserver tes propres services.';
   static const share = 'Partager';

@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery/discovery_screen_header.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
+import '../../prestataire/widgets/workspace/prestataire_profile_completion_card.dart';
+import '../../prestataire/widgets/workspace/prestataire_workspace_shell.dart';
+import '../models/conversation_inbox_item.dart';
 import '../widgets/conversation_list_tile.dart';
 import '../widgets/conversations_empty_state.dart';
 
@@ -39,13 +41,16 @@ class _ConversationsInboxScreenState
     final isGuest = ref.watch(isGuestBrowsingProvider);
 
     if (user == null || isGuest) {
-      return DiscoveryBrandScaffold(
-        body: ClientWorkspaceShell(
-          subtitle: DiscChat.inboxTitle,
-          child: GuestAccountPrompt(
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: SafeArea(
+          child: ClientWorkspaceShell(
+            subtitle: DiscChat.inboxTitle,
+            child: GuestAccountPrompt(
             icon: Icons.chat_bubble_outline_rounded,
             title: DiscChat.inboxTitle,
             message: DiscChat.loginRequired,
+            ),
           ),
         ),
       );
@@ -55,74 +60,160 @@ class _ConversationsInboxScreenState
     final totalUnread =
         ref.watch(messagingUnreadCountProvider(widget.role)).value ?? 0;
 
-    final chatSubtitle = totalUnread > 0
+    final headerSubtitle = totalUnread > 0
         ? DiscChat.unreadCountLabel(totalUnread)
-        : DiscChat.emptyBodyClient;
-
-    final inboxBody = inboxAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => _scrollableEmpty(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            DiscChat.loadError,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          ),
-        ),
-      ),
-      data: (items) {
-        if (items.isEmpty) {
-          return _scrollableEmpty(
-            child: ConversationsEmptyState(role: widget.role),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => _refreshInbox(),
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: ConversationListTile(
-                  item: item,
-                  onTap: () => _openChat(item.conversation.reservationId),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
+        : (widget.role == MessagingInboxRole.prestataire
+            ? DiscPrestaWorkspace.messagesInboxSubtitle
+            : DiscChat.emptyBodyClient);
 
     if (widget.role == MessagingInboxRole.client) {
-      return DiscoveryBrandScaffold(
-        body: ClientWorkspaceShell(
-          subtitle: chatSubtitle,
-          child: inboxBody,
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: SafeArea(
+          child: ClientWorkspaceShell(
+            subtitle: headerSubtitle,
+            child: _buildInboxSlivers(context, theme, inboxAsync),
+          ),
         ),
       );
     }
 
-    return DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DiscoveryScreenHeader(
-            title: DiscChat.inboxTitle,
-            subtitle: totalUnread > 0
-                ? DiscChat.unreadCountLabel(totalUnread)
-                : null,
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: PrestataireWorkspaceShell(
+          onRefresh: _refreshInbox,
+          headerSubtitle: headerSubtitle,
+          showMessagesAction: false,
+          child: RefreshIndicator(
+            onRefresh: _refreshInbox,
+            child: _buildInboxSlivers(context, theme, inboxAsync),
           ),
-          Expanded(child: inboxBody),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildInboxSlivers(
+    BuildContext context,
+    ThemeData theme,
+    AsyncValue<List<ConversationInboxItem>> inboxAsync,
+  ) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        if (widget.role == MessagingInboxRole.prestataire)
+          const SliverToBoxAdapter(
+            child: PrestataireProfileCompletionCard(),
+          ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              widget.role == MessagingInboxRole.prestataire ? 4 : 16,
+              20,
+              8,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.forum_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DiscChat.inboxTitle,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontFamily: AppFonts.display,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.role == MessagingInboxRole.prestataire
+                            ? DiscPrestaWorkspace.messagesInboxSubtitle
+                            : DiscChat.profileShortcutHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ...inboxAsync.when(
+          loading: () => [
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+          error: (_, __) => [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  DiscChat.loadError,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          data: (items) {
+            if (items.isEmpty) {
+              return [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: ConversationsEmptyState(role: widget.role),
+                ),
+              ];
+            }
+
+            return [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                sliver: SliverList.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return ConversationListTile(
+                      item: item,
+                      onTap: () =>
+                          _openChat(item.conversation.reservationId),
+                    );
+                  },
+                ),
+              ),
+            ];
+          },
+        ),
+      ],
     );
   }
 
@@ -137,22 +228,5 @@ class _ConversationsInboxScreenState
     if (!mounted) return;
     ref.invalidate(conversationsInboxProvider(widget.role));
     ref.invalidate(messagingUnreadCountProvider(widget.role));
-  }
-
-  Widget _scrollableEmpty({required Widget child}) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RefreshIndicator(
-          onRefresh: () => _refreshInbox(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(child: child),
-            ),
-          ),
-        );
-      },
-    );
   }
 }

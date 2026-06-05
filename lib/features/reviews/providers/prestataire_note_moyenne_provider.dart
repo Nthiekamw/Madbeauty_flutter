@@ -69,3 +69,4 @@ final prestataireNoteMoyenneProvider = StreamProvider.autoDispose
 
   return controller.stream;
 });
+

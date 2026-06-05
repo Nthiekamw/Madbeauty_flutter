@@ -16,3 +16,4 @@ class Indisponibilite {
     return !dateDebut.isAfter(start) && !dateFin.isBefore(end);
   }
 }
+

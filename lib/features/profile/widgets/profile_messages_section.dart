@@ -7,7 +7,7 @@ import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import 'profile_section_title.dart';
 
-/// Raccourci profil → onglet Messages.
+/// Raccourci profil ? onglet Messages.
 class ProfileMessagesSection extends ConsumerWidget {
   const ProfileMessagesSection({super.key});
 
@@ -36,3 +36,4 @@ class ProfileMessagesSection extends ConsumerWidget {
     );
   }
 }
+

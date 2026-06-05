@@ -4,14 +4,30 @@ abstract final class DiscPrestaDash {
 
   static const pageSubtitle =
       'Demandes en attente, rendez-vous du jour et de la semaine.';
-  static const layoutCustomizeTitle = 'Sections personnalisables';
+  static const quickAgenda = 'Agenda';
+  static const quickHoraires = 'Horaires';
+  static const quickClients = 'Clients';
+  static const quickProfil = 'Profil';
+  static const layoutCustomizeTitle = 'Personnalise ton tableau de bord';
   static const layoutCustomizeHint =
-      'Maintiens l’icône ⋮⋮ puis glisse pour réordonner. Utilise la flèche pour replier une section.';
+      'Maintiens ⋮⋮ puis glisse pour changer l’ordre des sections.';
+  static const layoutOrganizeAction = 'Organiser';
+  static const layoutModalDone = 'Terminé';
+  static const layoutCustomizeEmpty =
+      'Les sections apparaîtront ici une fois le tableau de bord chargé.';
+  static const layoutHintDismiss = 'Compris';
   static const layoutDragHint = 'Glisser pour déplacer';
   static const layoutCollapse = 'Replier la section';
   static const layoutExpand = 'Déplier la section';
   static const sectionHero = 'Mon salon';
   static const sectionStats = 'Aperçu rapide';
+  static const overviewTitle = 'Aperçu';
+  static const overviewToday = 'Rendez-vous aujourd\'hui';
+  static const overviewClientsMonth = 'Clients ce mois';
+  static const overviewRevenueMonth = 'Revenus ce mois';
+  static const overviewRevenueTotal = 'Revenus totaux';
+  static const overviewVsYesterday = 'vs hier';
+  static const overviewVsLastMonth = 'vs mois dernier';
   static const welcome =
       'Ton profil est prêt à être visible par les clients.';
   static const profileMissing =

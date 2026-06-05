@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Export d’une réservation vers le calendrier (Google Calendar via URL).
+/// Export d'une réservation vers le calendrier (Google Calendar via URL).
 abstract final class ReservationCalendarExport {
   ReservationCalendarExport._();
 
@@ -53,3 +53,4 @@ abstract final class ReservationCalendarExport {
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
+

@@ -5,7 +5,7 @@ import '../../../services/supabase/prestataire/catalog/prestataire_catalog_provi
 import '../../../services/supabase/prestataire/catalog/prestataire_filters.dart';
 import '../models/home_feed_selection.dart';
 
-/// Thème ou requête affichée dans la zone résultats de l’accueil.
+/// Thème ou requête affichée dans la zone résultats de l'accueil.
 final homeFeedSelectionProvider =
     NotifierProvider<HomeFeedSelectionNotifier, HomeFeedSelection?>(
       HomeFeedSelectionNotifier.new,
@@ -36,7 +36,7 @@ class HomeFeedSelectionNotifier extends Notifier<HomeFeedSelection?> {
   void clear() => state = null;
 }
 
-/// Prestataires filtrés pour la zone résultats de l’accueil.
+/// Prestataires filtrés pour la zone résultats de l'accueil.
 final homeFeedPrestatairesProvider =
     FutureProvider.autoDispose<List<PrestataireProfile>>((ref) async {
       final selection = ref.watch(homeFeedSelectionProvider);
@@ -50,3 +50,4 @@ final homeFeedPrestatairesProvider =
       );
       return entries.map((e) => e.profile).toList();
     });
+

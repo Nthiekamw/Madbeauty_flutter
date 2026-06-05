@@ -15,5 +15,6 @@ final currentPrestataireProvider =
       return service.getByUserId(user.id);
     });
 
-/// Alias conservé avec l’orthographe demandée côté fonctionnalité.
+/// Alias conservé avec l'orthographe demandée côté fonctionnalité.
 final currentPrestatiaireProvider = currentPrestataireProvider;
+

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/reviews/avis.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_colors.dart';
 
-/// Liste d’avis clients (fiche publique).
+/// Liste d'avis clients (fiche publique).
 class PrestatairePublicReviewsSection extends StatelessWidget {
   const PrestatairePublicReviewsSection({
     super.key,
@@ -152,9 +153,10 @@ class _StarRating extends StatelessWidget {
           Icon(
             i <= clamped ? Icons.star_rounded : Icons.star_outline_rounded,
             size: 18,
-            color: const Color(0xFFF59E0B),
+            color: AppColors.starRating,
           ),
       ],
     );
   }
 }
+

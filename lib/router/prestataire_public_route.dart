@@ -1,4 +1,4 @@
-/// Fiche publique `/prestataire/:uuid` (hors espace pro `/prestataire/dashboard`, etc.).
+﻿/// Fiche publique `/prestataire/:uuid` (hors espace pro `/prestataire/dashboard`, etc.).
 final _uuidPattern = RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
   caseSensitive: false,
@@ -12,6 +12,7 @@ const prestataireShellSegments = {
   'profile',
   'horaires',
   'reservations',
+  'subscription',
 };
 
 bool isPublicPrestataireId(String? value) {
@@ -27,3 +28,4 @@ bool isPublicPrestataireProfilePath(String location) {
   final id = location.substring(prefix.length).split('/').first;
   return isPublicPrestataireId(id);
 }
+

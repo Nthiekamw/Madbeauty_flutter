@@ -4,7 +4,11 @@ abstract final class DiscStripeConnect {
 
   static const sectionTitle = 'Recevoir mes paiements';
   static const sectionSubtitle =
-      'Connecte ton compte bancaire via Stripe pour être payé après chaque prestation.';
+      'Encaissement des prestations : connecte ton compte bancaire (Stripe Connect). '
+      'Ce n’est pas l’abonnement MadBeauty.';
+  static const distinctionNote =
+      'Abonnement = publier sur le catalogue · Recevoir mes paiements = être payé par tes clientes après réservation.';
+  static const chipLabel = 'Encaisser les prestations';
   static const statusNotStarted = 'Non configuré';
   static const statusPending = 'Inscription en cours';
   static const statusComplete = 'Compte actif';

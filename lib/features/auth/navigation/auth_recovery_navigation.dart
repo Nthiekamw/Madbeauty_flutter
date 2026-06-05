@@ -17,3 +17,4 @@ void listenPasswordRecoveryNavigation(WidgetRef ref) {
     router.go(AppRoutes.resetPassword);
   });
 }
+

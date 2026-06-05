@@ -1,4 +1,4 @@
-class RegisterViewState {
+﻿class RegisterViewState {
   const RegisterViewState({
     this.nameError,
     this.emailError,
@@ -38,3 +38,4 @@ class RegisterViewState {
     );
   }
 }
+

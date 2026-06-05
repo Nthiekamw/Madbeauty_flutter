@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_colors.dart';
 import 'client_workspace_header.dart';
 
-/// Zone de contenu sous l’en-tête client (fond surface, coins arrondis).
+/// Coque client : bandeau marron + panneau blanc (contraste net avec le fond crème).
 class ClientWorkspaceShell extends StatelessWidget {
   const ClientWorkspaceShell({
     super.key,
@@ -26,27 +27,38 @@ class ClientWorkspaceShell extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         header ?? ClientWorkspaceHeader(subtitle: subtitle),
-        if (top != null) top!,
         Expanded(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
+          child: Transform.translate(
+            offset: const Offset(0, -12),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.workspacePanel,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.08),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
-              child: child,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (top != null) top!,
+                    Expanded(child: child),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -54,3 +66,4 @@ class ClientWorkspaceShell extends StatelessWidget {
     );
   }
 }
+

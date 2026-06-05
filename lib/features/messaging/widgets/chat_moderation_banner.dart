@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../logic/chat_message_moderator.dart';
 
-/// Bandeau d’avertissement sous le champ de saisie (style Leboncoin).
+/// Bandeau d'avertissement sous le champ de saisie (style Leboncoin).
 class ChatModerationBanner extends StatelessWidget {
   const ChatModerationBanner({
     super.key,
@@ -52,3 +52,4 @@ class ChatModerationBanner extends StatelessWidget {
     );
   }
 }
+

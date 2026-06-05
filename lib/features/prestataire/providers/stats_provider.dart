@@ -22,3 +22,4 @@ final statsProvider = FutureProvider.autoDispose
 void invalidatePrestataireStats(WidgetRef ref, String prestataireId) {
   ref.invalidate(statsProvider(prestataireId));
 }
+

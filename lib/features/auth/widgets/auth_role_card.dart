@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/auth_form_styles.dart';
+import '../../../shared/theme/app_colors.dart';
 
-/// Carte sélectionnable Client / Prestataire (inscription ou choix d’espace).
+/// Carte sélectionnable Client / Prestataire (inscription ou choix d'espace).
 class AuthRoleCard extends StatelessWidget {
   const AuthRoleCard({
     super.key,
@@ -59,7 +60,7 @@ class AuthRoleCard extends StatelessWidget {
             : null,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: interactive ? onTap : null,
           borderRadius: BorderRadius.circular(AuthFormStyles.chipRadius),
@@ -137,3 +138,4 @@ class AuthRoleCard extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-class HomeProfileSnapshot {
+﻿class HomeProfileSnapshot {
   const HomeProfileSnapshot({
     required this.email,
     required this.displayName,
@@ -27,3 +27,4 @@ class HomeProfileSnapshot {
     );
   }
 }
+

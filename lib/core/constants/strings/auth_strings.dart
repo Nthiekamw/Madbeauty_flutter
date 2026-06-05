@@ -110,17 +110,20 @@ abstract final class AuthStrings {
       'Ton e-mail n’est pas encore confirmé. Vérifie ta boîte mail et clique sur le lien de confirmation.';
 
   static const String onboardingSkip = 'Passer';
+  static const String onboardingBack = 'Retour';
   static const String onboardingCtaNext = 'Suivant';
   static const String onboardingCtaEnd = 'C’est parti';
-  static const String onboardingPage1Title = 'MadBeauty près de toi';
+  static String onboardingStep(int current, int total) =>
+      'Étape $current sur $total';
+  static const String onboardingPage1Title = 'Bienvenue sur MadBeauty';
   static const String onboardingPage1Body =
-      'Découvre des professionnels de la beauté autour de toi et réserve en quelques gestes.';
-  static const String onboardingPage2Title = 'Réservation simple';
+      'En quelques étapes, découvre comment réserver tes soins ou gérer ton activité, en client comme en professionnel.';
+  static const String onboardingPage2Title = 'Côté client';
   static const String onboardingPage2Body =
-      'Choisis ton service, une date et un créneau : ta demande part directement au prestataire.';
-  static const String onboardingPage3Title = 'Un compte, deux espaces';
+      'Trouve un pro près de toi, choisis ton service et réserve un créneau en quelques gestes.';
+  static const String onboardingPage3Title = 'Côté prestataire';
   static const String onboardingPage3Body =
-      'Passe du mode client au mode pro quand tu veux — tout reste dans la même app.';
+      'Agenda, demandes et profil : pilote ton activité beauté depuis le même compte.';
 
   static const String welcomeTitle = 'Bienvenue';
   static const String welcomeSubtitle =
@@ -185,6 +188,11 @@ abstract final class AuthStrings {
       'Choisis comment tu veux utiliser MadBeauty.';
   static const String registerValidationPrestaRequired =
       'Indique au minimum le nom de ton salon et ta ville.';
+  static const String registerValidationSalonEmpty =
+      'Indique le nom de ton salon ou de ton activité.';
+  static const String registerValidationVilleEmpty = 'Indique ta ville.';
+  static const String registerValidationPhoneInvalid =
+      'Numéro de téléphone invalide.';
   static const String registerWizardBack = 'Retour';
   static const String registerFieldPhoneHint = 'Ex. 6 12 34 56 78';
   static const String registerFieldPasswordHint = '8 caractères minimum';
@@ -205,12 +213,12 @@ abstract final class AuthStrings {
   static const String registerChoosePrestaHint =
       'Gérer mon salon, mes services et mes réservations.';
   static const String registerFieldAdresse = 'Adresse (optionnel)';
-  static const String registerFieldSalon = 'Nom du salon / activité';
+  static const String registerFieldSalon = 'Nom du salon / activité *';
   static const String registerFieldSalonAdresse = 'Adresse du salon';
   static const String registerFieldPostalCode = 'Code postal';
   static const String registerFieldDisplayName = 'Nom affiché';
   static const String registerFieldDescriptionPresta = 'Description courte';
-  static const String registerFieldVille = 'Ville';
+  static const String registerFieldVille = 'Ville *';
   static const String registerFieldBioPresta = 'Présentation (optionnel)';
   static const String registerWizardSubmit = 'Créer mon compte';
   static const String registerWizardNext = 'Continuer';

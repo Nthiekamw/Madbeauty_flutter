@@ -10,6 +10,8 @@ abstract final class DiscPrestaProfile {
   static const incompleteBody =
       'Complète ton salon : photo, bio, adresse, spécialités et services pour apparaître dans le catalogue.';
   static const incompleteCta = 'Compléter mon profil';
+  static const editProfileHint = 'Modifier ma vitrine';
+  static const sectionActivity = 'Mon activité';
   static const sectionPro = 'Gérer mon activité';
   static const sectionProHint =
       'Modifie chaque partie de ta vitrine séparément.';

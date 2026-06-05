@@ -89,3 +89,4 @@ class ListingVerticalSkeleton extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../services/supabase/supabase_service.dart';
@@ -23,3 +23,4 @@ final prestataireAcceptsOnlinePaymentProvider =
 /// Paiement Stripe obligatoire pour ce prestataire ?
 bool bookingRequiresOnlinePayment(bool prestataireAcceptsOnline) =>
     BookingPaymentFlow.isPaymentAvailable && prestataireAcceptsOnline;
+

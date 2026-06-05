@@ -71,3 +71,4 @@ abstract class StatsPrestataire with _$StatsPrestataire {
     weekdayHeatmap: [0, 0, 0, 0, 0, 0, 0],
   );
 }
+

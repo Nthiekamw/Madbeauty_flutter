@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import 'chat_peer_header.dart';
+import '../../../shared/theme/app_colors.dart';
 
 /// Barre supérieure du chat (dégradé + interlocuteur).
 class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -31,9 +32,9 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
-      foregroundColor: Colors.white,
-      backgroundColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
+      foregroundColor: AppColors.white,
+      backgroundColor: AppColors.transparent,
+      surfaceTintColor: AppColors.transparent,
       flexibleSpace: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -58,7 +59,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                 IconButton(
                   onPressed: () => Navigator.maybePop(context),
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                  color: Colors.white,
+                  color: AppColors.white,
                   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                 ),
                 Expanded(
@@ -66,8 +67,8 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     displayName: displayName,
                     avatarUrl: avatarUrl,
                     subtitle: subtitle,
-                    titleColor: Colors.white,
-                    subtitleColor: Colors.white.withValues(alpha: 0.88),
+                    titleColor: AppColors.white,
+                    subtitleColor: AppColors.onPrimaryMuted88,
                     onLightGradient: true,
                   ),
                 ),
@@ -75,7 +76,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   IconButton(
                     onPressed: onReport,
                     icon: const Icon(Icons.flag_outlined, size: 22),
-                    color: Colors.white,
+                    color: AppColors.white,
                     tooltip: DiscReport.action,
                   ),
               ],
@@ -86,3 +87,4 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
+

@@ -14,7 +14,7 @@ import '../../features/favorites/providers/client_favorite_prestataire_ids_provi
 import 'in_app_notifications_provider.dart';
 import 'push_navigation.dart';
 
-/// À chaque événement d’auth : FCM dans [user_profiles] + liste locale des notifs push.
+/// À chaque événement d'auth : FCM dans [user_profiles] + liste locale des notifs push.
 class BookingPushCoordinator extends ConsumerStatefulWidget {
   const BookingPushCoordinator({super.key, required this.child});
 
@@ -89,3 +89,4 @@ class _BookingPushCoordinatorState
     return widget.child;
   }
 }
+

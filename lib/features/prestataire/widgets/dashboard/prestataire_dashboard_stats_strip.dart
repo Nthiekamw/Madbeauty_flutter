@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../shared/prestataire_metric_tile.dart';
@@ -43,3 +43,4 @@ class PrestataireDashboardStatsStrip extends StatelessWidget {
     );
   }
 }
+

@@ -23,15 +23,26 @@ class ProfileAdminSection extends ConsumerWidget {
       children: [
         const ProfileSectionTitle(title: DiscProfile.sectionAdmin),
         DiscoverySurfaceCard(
-          child: DiscoveryMenuTile(
-            icon: Icons.admin_panel_settings_outlined,
-            title: DiscProfile.actionAdminVerifications,
-            subtitle: DiscProfile.actionAdminVerificationsHint,
-            onTap: () => context.pushAdminVerifications(),
+          child: Column(
+            children: [
+              DiscoveryMenuTile(
+                icon: Icons.admin_panel_settings_outlined,
+                title: DiscProfile.actionAdminVerifications,
+                subtitle: DiscProfile.actionAdminVerificationsHint,
+                onTap: () => context.pushAdminVerifications(),
+              ),
+              const Divider(height: 1),
+              DiscoveryMenuTile(
+                icon: Icons.flag_outlined,
+                title: DiscProfile.actionAdminReports,
+                subtitle: DiscProfile.actionAdminReportsHint,
+                onTap: () => context.pushAdminReports(),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
       ],
     );
   }
 }
+

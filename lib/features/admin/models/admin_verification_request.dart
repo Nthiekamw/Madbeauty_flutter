@@ -1,4 +1,4 @@
-class AdminVerificationRequest {
+﻿class AdminVerificationRequest {
   const AdminVerificationRequest({
     required this.prestataireId,
     required this.userId,
@@ -17,3 +17,4 @@ class AdminVerificationRequest {
   final bool isVerified;
   final DateTime? verifiedAt;
 }
+

@@ -9,11 +9,11 @@ import '../../prestataire/models/weekly_jour_horaire.dart';
 import 'become_prestataire_hub_draft.dart';
 import '../storage/become_prestataire_draft_store.dart';
 
-/// Sauvegarde / restauration du hub prestataire pendant l’onboarding.
+/// Sauvegarde / restauration du hub prestataire pendant l'onboarding.
 abstract final class PrestataireHubOnboardingDraft {
   PrestataireHubOnboardingDraft._();
 
-  static const maxHubStepIndex = 5;
+  static const maxHubStepIndex = 6;
 
   static bool get isActive {
     final draft = BecomePrestataireDraftStore.instance.read();
@@ -27,6 +27,40 @@ abstract final class PrestataireHubOnboardingDraft {
     if (current == null) return;
     await BecomePrestataireDraftStore.instance.save(
       current.copyWith(step2Started: true),
+    );
+  }
+
+  /// Reprise ou entrée wizard : positionne l’étape courante dans le brouillon hub.
+  static Future<void> seedCurrentStep(int step) async {
+    final current = BecomePrestataireDraftStore.instance.read();
+    if (current == null) return;
+    final clamped = step.clamp(0, maxHubStepIndex);
+    final existing = current.hub;
+    final hub = existing == null
+        ? BecomePrestataireHubDraft(currentStep: clamped)
+        : BecomePrestataireHubDraft(
+            currentStep: clamped,
+            nomSalon: existing.nomSalon,
+            nomAffiche: existing.nomAffiche,
+            bio: existing.bio,
+            description: existing.description,
+            experienceProfessionnelle: existing.experienceProfessionnelle,
+            anneesExperience: existing.anneesExperience,
+            ville: existing.ville,
+            codePostal: existing.codePostal,
+            adresse: existing.adresse,
+            lieuTravail: existing.lieuTravail,
+            avatarUrl: existing.avatarUrl,
+            suggestionCategorieNom: existing.suggestionCategorieNom,
+            suggestionCategorieDescription:
+                existing.suggestionCategorieDescription,
+            confortClient: existing.confortClient,
+            conditionsService: existing.conditionsService,
+            services: existing.services,
+            horaires: existing.horaires,
+          );
+    await BecomePrestataireDraftStore.instance.save(
+      current.copyWith(step2Started: true, hub: hub),
     );
   }
 
@@ -100,7 +134,7 @@ abstract final class PrestataireHubOnboardingDraft {
     return BecomePrestataireDraftStore.instance.read()?.hub;
   }
 
-  /// Reprend les champs saisis à l’inscription (étape 3) si le hub n’a pas encore de brouillon.
+  /// Reprend les champs saisis à l'inscription (étape 3) si le hub n'a pas encore de brouillon.
   static void seedBasicsFromBecomeDraft({
     required TextEditingController nomController,
     required TextEditingController villeController,
@@ -204,3 +238,4 @@ class HubOnboardingDraftDebouncer {
 
   void dispose() => _timer?.cancel();
 }
+

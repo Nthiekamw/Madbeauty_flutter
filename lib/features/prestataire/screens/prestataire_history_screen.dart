@@ -39,8 +39,10 @@ class _PrestataireHistoryScreenState
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return DiscoveryBrandScaffold(
-      body: agendaAsync.when(
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
           child: Center(child: CircularProgressIndicator()),
         ),
@@ -72,6 +74,7 @@ class _PrestataireHistoryScreenState
 
           return PrestataireWorkspaceShell(
             onRefresh: _reload,
+            headerSubtitle: DiscPrestaWorkspace.clientsSubtitle,
             child: RefreshIndicator(
               onRefresh: _reload,
               child: CustomScrollView(
@@ -183,7 +186,9 @@ class _PrestataireHistoryScreenState
             ),
           );
         },
+        ),
       ),
     );
   }
 }
+

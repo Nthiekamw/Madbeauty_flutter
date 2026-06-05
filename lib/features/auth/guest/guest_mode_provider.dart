@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../providers/auth_notifier.dart';
 
-/// Mode « continuer sans compte » — **session en cours uniquement** (non mémorisé
-/// au redémarrage de l’app, pour ne pas écraser la connexion / bienvenue).
+/// Mode « continuer sans compte » – **session en cours uniquement** (non mémorisé
+/// au redémarrage de l'app, pour ne pas écraser la connexion / bienvenue).
 final guestModeProvider = NotifierProvider<GuestModeNotifier, bool>(
   GuestModeNotifier.new,
 );
@@ -52,7 +52,7 @@ class GuestModeNotifier extends Notifier<bool> {
     }
   }
 
-  /// Active la navigation invitée pour cette session d’app seulement.
+  /// Active la navigation invitée pour cette session d'app seulement.
   void enable() {
     state = true;
   }
@@ -62,3 +62,4 @@ class GuestModeNotifier extends Notifier<bool> {
     state = false;
   }
 }
+

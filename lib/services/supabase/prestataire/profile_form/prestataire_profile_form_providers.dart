@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../location/location_providers.dart';
 import '../../profile/profile_providers.dart';
@@ -35,3 +35,4 @@ final prestataireProfileFormServiceProvider =
             ref.watch(categorieSuggestionServiceProvider),
       );
     });
+

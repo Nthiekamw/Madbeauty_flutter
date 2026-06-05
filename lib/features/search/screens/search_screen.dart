@@ -11,3 +11,4 @@ class SearchScreen extends StatelessWidget {
     return const ListingScreen();
   }
 }
+

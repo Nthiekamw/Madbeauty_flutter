@@ -5,10 +5,11 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../router/app_router.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/theme/app_fonts.dart';
-import '../../../../shared/widgets/layout/brand_background.dart';
+import '../../../../shared/theme/auth_form_styles.dart';
+import '../../../../shared/widgets/layout/auth_brand_background.dart';
 import '../../widgets/onboarding_page_content.dart';
 
-/// Tour d’horizon du projet (3 pages) avant l’écran Bienvenue.
+/// Tour d'horizon (3 pages) avant l'écran Bienvenue.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -20,19 +21,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   int _index = 0;
 
+  static const _pageCount = 3;
+
   static const _slides = [
     OnboardingSlide(
-      icon: Icons.near_me_outlined,
+      showLogo: true,
       title: AuthStrings.onboardingPage1Title,
       body: AuthStrings.onboardingPage1Body,
     ),
     OnboardingSlide(
-      icon: Icons.event_available_outlined,
+      icon: Icons.calendar_month_outlined,
       title: AuthStrings.onboardingPage2Title,
       body: AuthStrings.onboardingPage2Body,
     ),
     OnboardingSlide(
-      icon: Icons.swap_horiz_rounded,
+      icon: Icons.storefront_outlined,
       title: AuthStrings.onboardingPage3Title,
       body: AuthStrings.onboardingPage3Body,
     ),
@@ -51,9 +54,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _next() {
-    if (_index < _slides.length - 1) {
+    if (_index < _pageCount - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 360),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutCubic,
       );
     } else {
@@ -61,94 +64,144 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  void _back() {
+    if (_index <= 0) return;
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
+    final progress = (_index + 1) / _pageCount;
+    final isLast = _index == _pageCount - 1;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          BrandBackground(isDark: isDark),
+          const AuthBrandBackground(),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 16, 0),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _finish,
-                      style: TextButton.styleFrom(
-                        foregroundColor: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      child: Text(
-                        AuthStrings.onboardingSkip,
-                        style: TextStyle(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+                  child: Row(
+                    children: [
+                      Text(
+                        AuthStrings.onboardingStep(_index + 1, _pageCount),
+                        style: theme.textTheme.labelLarge?.copyWith(
                           fontFamily: AppFonts.body,
                           fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _finish,
+                        child: Text(
+                          AuthStrings.onboardingSkip,
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      backgroundColor:
+                          theme.colorScheme.outline.withValues(alpha: 0.2),
+                      color: primary,
                     ),
                   ),
                 ),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: _slides.length,
+                    itemCount: _pageCount,
                     onPageChanged: (i) => setState(() => _index = i),
                     itemBuilder: (context, i) =>
                         OnboardingPageContent(slide: _slides[i]),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_slides.length, (i) {
-                    final active = i == _index;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 280),
-                      curve: Curves.easeOut,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: active ? 28 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: active
-                            ? primary
-                            : theme.colorScheme.outline.withValues(
-                                alpha: 0.35,
-                              ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    );
-                  }),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_pageCount, (i) {
+                      final active = i == _index;
+                      return Semantics(
+                        label: 'Page ${i + 1} sur $_pageCount',
+                        selected: active,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOutCubic,
+                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                          width: active ? 32 : 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: active
+                                ? primary
+                                : theme.colorScheme.outline
+                                    .withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
                   child: FilledButton(
                     onPressed: _next,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
+                      minimumSize: const Size.fromHeight(54),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AuthFormStyles.buttonBorderRadius,
                       ),
                     ),
                     child: Text(
-                      _index == _slides.length - 1
+                      isLast
                           ? AuthStrings.onboardingCtaEnd
                           : AuthStrings.onboardingCtaNext,
-                      style: const TextStyle(
-                        fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
                     ),
                   ),
                 ),
+                if (_index > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Center(
+                      child: TextButton.icon(
+                        onPressed: _back,
+                        icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                        label: Text(
+                          AuthStrings.onboardingBack,
+                          style: const TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 16),
               ],
             ),
           ),

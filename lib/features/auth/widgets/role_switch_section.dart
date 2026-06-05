@@ -16,18 +16,20 @@ import '../providers/my_roles_provider.dart';
 import 'become_prestataire_cta_card.dart';
 import 'role_space_card.dart';
 
-/// Bascule client ↔ prestataire avec cartes visuelles.
+/// Bascule client â†” prestataire avec cartes visuelles.
 class RoleSwitchSection extends ConsumerWidget {
   const RoleSwitchSection({
     super.key,
     this.sectionTitle,
     this.padding = const EdgeInsets.symmetric(horizontal: 0),
     this.showHeader = true,
+    this.compact = false,
   });
 
   final String? sectionTitle;
   final EdgeInsetsGeometry padding;
   final bool showHeader;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,7 +59,7 @@ class RoleSwitchSection extends ConsumerWidget {
           final hasClient = hasClientByRole || hasClientByProfile;
 
           /// Même logique que le profil prestataire : évite une zone vide si
-          /// `user_roles` n’a pas encore (ou pas) la ligne « client ».
+          /// `user_roles` n'a pas encore (ou pas) la ligne « client ».
           final awaitingClientProfile = !hasClientByRole &&
               !hasPresta &&
               clientProfileAsync.isLoading;
@@ -88,15 +90,17 @@ class RoleSwitchSection extends ConsumerWidget {
                 const SizedBox(height: 6),
               ],
               if (hasClient && hasPresta) ...[
-                Text(
-                  DiscProfile.roleSpaceDualHint,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
+                if (!compact)
+                  Text(
+                    DiscProfile.roleSpaceDualHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                if (!compact) const SizedBox(height: 10),
                 _RoleSpaceCards(
+                  compact: compact,
                   stackVertically:
                       DiscoveryResponsive.of(context).stackRoleSpaceCards,
                   activeRole: activeRole,
@@ -136,7 +140,7 @@ class RoleSwitchSection extends ConsumerWidget {
     );
   }
 
-  /// Espace affiché (route), pas seulement le cache — évite un switch inversé.
+  /// Espace affiché (route), pas seulement le cache – évite un switch inversé.
   static String _activeRoleFromContext(BuildContext context) {
     final path = GoRouterState.of(context).uri.path;
     return switch (appAreaFromPath(path)) {
@@ -148,12 +152,14 @@ class RoleSwitchSection extends ConsumerWidget {
 
 class _RoleSpaceCards extends StatelessWidget {
   const _RoleSpaceCards({
+    required this.compact,
     required this.stackVertically,
     required this.activeRole,
     required this.onClientTap,
     required this.onPrestaTap,
   });
 
+  final bool compact;
   final bool stackVertically;
   final String activeRole;
   final VoidCallback? onClientTap;
@@ -162,6 +168,7 @@ class _RoleSpaceCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clientCard = RoleSpaceCard(
+      compact: compact,
       icon: Icons.person_rounded,
       title: DiscProfile.roleClientTitle,
       subtitle: DiscProfile.roleClientSub,
@@ -169,6 +176,7 @@ class _RoleSpaceCards extends StatelessWidget {
       onTap: onClientTap,
     );
     final prestaCard = RoleSpaceCard(
+      compact: compact,
       icon: Icons.storefront_rounded,
       title: DiscProfile.rolePrestaTitle,
       subtitle: DiscProfile.rolePrestaSub,
@@ -180,18 +188,22 @@ class _RoleSpaceCards extends StatelessWidget {
       return Column(
         children: [
           clientCard,
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           prestaCard,
         ],
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: clientCard),
-        const SizedBox(width: 10),
-        Expanded(child: prestaCard),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: clientCard),
+          SizedBox(width: compact ? 8 : 10),
+          Expanded(child: prestaCard),
+        ],
+      ),
     );
   }
 }
+

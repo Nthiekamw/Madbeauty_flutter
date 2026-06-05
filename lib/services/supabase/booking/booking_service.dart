@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';

@@ -1,21 +1,45 @@
 /// Indicatifs téléphone proposés dans les formulaires.
 class PhoneDialOption {
-  const PhoneDialOption({required this.flag, required this.dialCode});
+  const PhoneDialOption({
+    required this.isoCode,
+    required this.dialCode,
+    required this.label,
+  });
 
-  final String flag;
+  /// Code pays ISO 3166-1 alpha-2 (ex. FR).
+  final String isoCode;
   final String dialCode;
+
+  /// Libellé lisible (ex. France).
+  final String label;
+
+  /// Drapeau régional généré depuis [isoCode] (évite les soucis d'encodage fichier).
+  String get flag => PhoneNumberUtils.countryFlag(isoCode);
 }
 
 abstract final class PhoneNumberUtils {
   PhoneNumberUtils._();
 
   static const dialOptions = <PhoneDialOption>[
-    PhoneDialOption(flag: '🇫🇷', dialCode: '+33'),
-    PhoneDialOption(flag: '🇧🇪', dialCode: '+32'),
-    PhoneDialOption(flag: '🇨🇭', dialCode: '+41'),
-    PhoneDialOption(flag: '🇩🇪', dialCode: '+49'),
-    PhoneDialOption(flag: '🇬🇧', dialCode: '+44'),
+    PhoneDialOption(isoCode: 'FR', dialCode: '+33', label: 'France'),
+    PhoneDialOption(isoCode: 'BE', dialCode: '+32', label: 'Belgique'),
+    PhoneDialOption(isoCode: 'CH', dialCode: '+41', label: 'Suisse'),
+    PhoneDialOption(isoCode: 'DE', dialCode: '+49', label: 'Allemagne'),
+    PhoneDialOption(isoCode: 'GB', dialCode: '+44', label: 'Royaume-Uni'),
   ];
+
+  /// Construit l'emoji drapeau à partir d'un code pays à 2 lettres (FR → 🇫🇷).
+  static String countryFlag(String iso3166Alpha2) {
+    final upper = iso3166Alpha2.toUpperCase();
+    if (upper.length != 2) return '';
+    final a = upper.codeUnitAt(0);
+    final b = upper.codeUnitAt(1);
+    if (a < 65 || a > 90 || b < 65 || b > 90) return '';
+    return String.fromCharCodes([
+      0x1F1E6 + (a - 65),
+      0x1F1E6 + (b - 65),
+    ]);
+  }
 
   /// Retire le 0 initial (ex. 0612345678 → 612345678).
   static String stripLeadingZero(String input) {

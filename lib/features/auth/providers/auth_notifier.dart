@@ -39,8 +39,8 @@ final roleServiceProvider = Provider<RoleService>((ref) {
 /// Flux [AuthState] de Supabase : `initialSession`, `signedIn`, `signedOut`,
 /// `tokenRefreshed`, `userUpdated`, `passwordRecovery`, etc.
 ///
-/// À utiliser quand l’UI a besoin de l’événement brut (ex. recovery).
-/// L’utilisateur courant dérivé reste sur [authNotifierProvider].
+/// À utiliser quand l'UI a besoin de l'événement brut (ex. recovery).
+/// L'utilisateur courant dérivé reste sur [authNotifierProvider].
 final authStateStreamProvider = StreamProvider<AuthState>((ref) {
   if (!AppConfig.hasSupabase) {
     return Stream<AuthState>.value(
@@ -51,7 +51,7 @@ final authStateStreamProvider = StreamProvider<AuthState>((ref) {
   return auth.onAuthStateChange;
 });
 
-/// État d’authentification : [User] connecté ou `null`.
+/// État d'authentification : [User] connecté ou `null`.
 ///
 /// Synchronisé sur [authStateStreamProvider] (donc sur `onAuthStateChange`)
 /// et expose connexion / déconnexion.
@@ -252,3 +252,4 @@ class AuthNotifier extends AsyncNotifier<User?> {
     });
   }
 }
+

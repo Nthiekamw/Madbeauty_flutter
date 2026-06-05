@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../../../../services/storage/local_cache_service.dart';
 import '../logic/register_wizard_draft.dart';
 
-/// Persistance SharedPreferences du brouillon d’inscription.
+/// Persistance SharedPreferences du brouillon d'inscription.
 class RegisterWizardDraftStore {
   RegisterWizardDraftStore._();
 
@@ -38,3 +38,4 @@ class RegisterWizardDraftStore {
 
   Future<void> clear() => LocalCacheService.instance.remove(_key);
 }
+

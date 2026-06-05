@@ -5,9 +5,9 @@ import 'share_link_config.dart';
 abstract final class ShareLinkResolver {
   ShareLinkResolver._();
 
-  /// `SHARE_BASE_URL=custom` → schéma app uniquement.
-  /// `SHARE_BASE_URL` HTTPS → `{base}/prestataire/:id` (futur site).
-  /// Vide + Supabase → Edge Function (sans site web).
+  /// `SHARE_BASE_URL=custom` â†’ schéma app uniquement.
+  /// `SHARE_BASE_URL` HTTPS â†’ `{base}/prestataire/:id` (futur site).
+  /// Vide + Supabase â†’ Edge Function (sans site web).
   static String prestataireProfileUrl(String prestataireId) {
     final explicit = ShareLinkConfig.httpsBaseUrl.trim().toLowerCase();
     if (explicit == 'custom') {
@@ -29,3 +29,4 @@ abstract final class ShareLinkResolver {
   static String inviteUrl(String referralCode) =>
       ShareLinkConfig.inviteCustomUrl(referralCode);
 }
+

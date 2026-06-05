@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
@@ -17,3 +17,4 @@ final clientPrestaChatAccessProvider = FutureProvider.autoDispose
     prestataireId: prestataireId,
   );
 });
+

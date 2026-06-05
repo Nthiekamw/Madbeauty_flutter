@@ -124,3 +124,4 @@ class _BannerPage extends StatelessWidget {
     );
   }
 }
+

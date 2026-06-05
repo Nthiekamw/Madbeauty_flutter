@@ -79,18 +79,23 @@ dev_dependencies:
   json_serializable: ^6.11.2
   flutter_launcher_icons: ^0.14.4
 
-# Icône d’installation (Android, iOS, web, desktop) — générée depuis assets/images/logo.png
+# Corrige pickMultiImage (patch Java dans android/apply_plugin_patches.gradle.kts).
+# 0.8.13+19 exige Dart 3.12 — incompatible avec Flutter 3.32 / Dart 3.8.
+dependency_overrides:
+  image_picker_android: 0.8.13+1
+
+# Icône d’installation — foreground carré (logo agrandi) + fond or pour le contraste Android.
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/images/logo.png
+  image_path: assets/images/logo_adaptive_foreground.png
   remove_alpha_ios: true
-  adaptive_icon_background: "#4A3328"
-  adaptive_icon_foreground: assets/images/logo.png
+  adaptive_icon_background: "#C9A962"
+  adaptive_icon_foreground: assets/images/logo_adaptive_foreground.png
   web:
     generate: true
     image_path: assets/images/logo.png
-    background_color: "#4A3328"
+    background_color: "#0A0A0A"
     theme_color: "#4A3328"
   windows:
     generate: true

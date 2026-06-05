@@ -1,4 +1,4 @@
-/// État messagerie client ↔ prestataire (fiche publique, navigation).
+/// État messagerie client â†” prestataire (fiche publique, navigation).
 enum ClientPrestaChatAccessKind {
   /// Aucune réservation (ou uniquement annulées).
   noBooking,
@@ -6,7 +6,7 @@ enum ClientPrestaChatAccessKind {
   /// Réservation en attente de réponse du prestataire.
   awaitingPrestaResponse,
 
-  /// Réservation confirmée ou terminée — chat autorisé.
+  /// Réservation confirmée ou terminée – chat autorisé.
   ready,
 }
 
@@ -33,3 +33,4 @@ class ClientPrestaChatAccess {
         bookingId: bookingId,
       );
 }
+

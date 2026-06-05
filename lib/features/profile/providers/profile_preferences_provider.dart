@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -69,3 +69,4 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
     return true;
   }
 }
+

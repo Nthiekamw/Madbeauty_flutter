@@ -41,7 +41,7 @@ class ListingCatalogViewState {
   /// Erreur du premier chargement : pas de lignes affichées.
   final String? errorMessage;
 
-  /// Échec du pull-to-refresh alors qu’une liste est déjà affichée.
+  /// Échec du pull-to-refresh alors qu'une liste est déjà affichée.
   final String? refreshError;
 
   /// Erreur sur « Voir plus » : la liste déjà chargée reste visible.
@@ -106,7 +106,7 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
     return ListingCatalogViewState.initial;
   }
 
-  /// À appeler une fois au montage de l’écran (voir [ListingScreen]).
+  /// À appeler une fois au montage de l'écran (voir [ListingScreen]).
   void loadInitialIfNeeded() {
     if (_started) return;
     _started = true;
@@ -292,3 +292,4 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
     }
   }
 }
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Avatar rond : image réseau optionnelle, sinon initiales dérivées du nom ou de l’e-mail.
+/// Avatar rond : image réseau optionnelle, sinon initiales dérivées du nom ou de l'e-mail.
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
     super.key,
@@ -104,3 +104,4 @@ class AppAvatar extends StatelessWidget {
     );
   }
 }
+

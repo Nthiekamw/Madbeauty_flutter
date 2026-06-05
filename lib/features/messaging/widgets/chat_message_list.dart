@@ -96,3 +96,4 @@ class ChatMessageList extends StatelessWidget {
     return DateFormat('EEEE d MMMM', 'fr_FR').format(dt);
   }
 }
+

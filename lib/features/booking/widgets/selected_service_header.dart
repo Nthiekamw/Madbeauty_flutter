@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/domain/catalog/service_beaute.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../logic/booking_formatters.dart';
 
@@ -51,14 +52,14 @@ class SelectedServiceHeader extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.onPrimarySurface20,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: AppColors.onPrimarySurface30,
                 ),
               ),
               child: const Icon(Icons.content_cut_rounded,
-                  size: 24, color: Colors.white),
+                  size: 24, color: AppColors.white),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -71,7 +72,7 @@ class SelectedServiceHeader extends StatelessWidget {
                       fontFamily: AppFonts.body,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.75),
+                      color: AppColors.onPrimaryMuted75,
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -84,7 +85,7 @@ class SelectedServiceHeader extends StatelessWidget {
                       fontFamily: AppFonts.display,
                       fontWeight: FontWeight.w800,
                       fontSize: 17,
-                      color: Colors.white,
+                      color: AppColors.white,
                       height: 1.15,
                     ),
                   ),
@@ -98,7 +99,7 @@ class SelectedServiceHeader extends StatelessWidget {
                       fontFamily: AppFonts.body,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: AppColors.onPrimaryMuted80,
                     ),
                   ),
                 ],
@@ -107,19 +108,19 @@ class SelectedServiceHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.onPrimarySurface20,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: AppColors.onPrimarySurface30,
                 ),
               ),
               child: Text(
-                '${service.prix.toStringAsFixed(0)} €',
+                '${service.prix.toStringAsFixed(0)} â‚¬',
                 style: const TextStyle(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
             ),
@@ -129,3 +130,4 @@ class SelectedServiceHeader extends StatelessWidget {
     );
   }
 }
+

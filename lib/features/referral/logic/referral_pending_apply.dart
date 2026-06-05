@@ -5,7 +5,7 @@ import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../../services/supabase/referral/referral_service.dart';
 
-/// Applique un code parrain stocké après ouverture d’un lien d’invitation.
+/// Applique un code parrain stocké après ouverture d'un lien d'invitation.
 Future<ApplyReferralResult?> applyPendingReferralCode(WidgetRef ref) async {
   final pending = LocalCacheService.instance.pendingReferralCode?.trim();
   if (pending == null || pending.isEmpty) return null;
@@ -38,3 +38,4 @@ String messageForApplyResult(ApplyReferralResult result) {
       return DiscReferral.loadErr;
   }
 }
+
