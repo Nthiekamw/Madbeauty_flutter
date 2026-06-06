@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_content_report.dart';
+import '../providers/admin_pending_counts_provider.dart';
 import '../providers/admin_content_reports_provider.dart';
+import '../widgets/admin_screen_scaffold.dart';
 
 class AdminContentReportsScreen extends ConsumerStatefulWidget {
   const AdminContentReportsScreen({super.key});
@@ -26,12 +28,15 @@ class _AdminContentReportsScreenState
     final theme = Theme.of(context);
     final reportsAsync = ref.watch(adminContentReportsProvider(_filter));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(DiscProfile.actionAdminReports),
-      ),
+    return AdminScreenScaffold(
+      title: DiscProfile.actionAdminReports,
       body: Column(
         children: [
+          const AdminScreenIntroBanner(
+            icon: Icons.flag_outlined,
+            title: DiscProfile.adminReportsIntroTitle,
+            body: DiscProfile.adminReportsIntroBody,
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: SegmentedButton<AdminContentReportFilter>(
@@ -79,7 +84,7 @@ class _AdminContentReportsScreenState
                         item: item,
                         dateFormat: _dateFormat,
                         busy: _busyIds.contains(item.id),
-                        onMarkReviewed: () => _markReviewed(item),
+                        onModerate: (action) => _moderate(item, action),
                       );
                     },
                   ),
@@ -105,17 +110,18 @@ class _AdminContentReportsScreenState
     );
   }
 
-  Future<void> _markReviewed(AdminContentReport item) async {
+  Future<void> _moderate(AdminContentReport item, String action) async {
     final service = ref.read(adminContentReportsServiceProvider);
     if (service == null) return;
     setState(() => _busyIds.add(item.id));
     try {
-      await service.markReviewed(reportId: item.id);
+      await service.moderateReport(reportId: item.id, action: action);
       ref.invalidate(adminContentReportsProvider(_filter));
+      ref.invalidate(adminPendingReportsCountProvider);
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: DiscProfile.adminReportsMarkedReviewed,
+          message: DiscProfile.adminReportsModerated,
           kind: AppSnackKind.success,
         );
       }
@@ -123,7 +129,7 @@ class _AdminContentReportsScreenState
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: DiscProfile.adminReportsMarkReviewedErr,
+          message: DiscProfile.adminReportsModerateErr,
           kind: AppSnackKind.error,
         );
       }
@@ -138,13 +144,13 @@ class _ReportCard extends StatelessWidget {
     required this.item,
     required this.dateFormat,
     required this.busy,
-    required this.onMarkReviewed,
+    required this.onModerate,
   });
 
   final AdminContentReport item;
   final DateFormat dateFormat;
   final bool busy;
-  final VoidCallback onMarkReviewed;
+  final ValueChanged<String> onModerate;
 
   @override
   Widget build(BuildContext context) {
@@ -207,20 +213,44 @@ class _ReportCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (item.actionTaken != null) ...[
+              const SizedBox(height: 8),
+              Text('Action : ${item.actionTaken}'),
+            ],
             if (!item.isReviewed) ...[
               const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton(
-                  onPressed: busy ? null : onMarkReviewed,
-                  child: busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(DiscProfile.adminReportsMarkReviewed),
-                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (item.targetType == 'prestataire_profile')
+                    FilledButton(
+                      onPressed: busy
+                          ? null
+                          : () => onModerate('hide_prestataire'),
+                      child: const Text(DiscProfile.adminReportsModerateHide),
+                    ),
+                  if (item.targetType == 'conversation')
+                    FilledButton(
+                      onPressed: busy
+                          ? null
+                          : () => onModerate('suspend_conversation'),
+                      child:
+                          const Text(DiscProfile.adminReportsModerateSuspend),
+                    ),
+                  if (item.targetType == 'message')
+                    FilledButton(
+                      onPressed: busy
+                          ? null
+                          : () => onModerate('delete_message'),
+                      child:
+                          const Text(DiscProfile.adminReportsModerateDelete),
+                    ),
+                  OutlinedButton(
+                    onPressed: busy ? null : () => onModerate('dismiss'),
+                    child: const Text(DiscProfile.adminReportsModerateDismiss),
+                  ),
+                ],
               ),
             ],
           ],

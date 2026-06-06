@@ -44,6 +44,25 @@ Dans le dashboard : **Database → Webhooks → Create** :
 npx supabase functions deploy on_content_report_created --no-verify-jwt
 ```
 
+## Vérifications prestataire (e-mail équipe)
+
+| Fonction | Déclencheur | Cible |
+|----------|-------------|--------|
+| `on_verification_requested` | `INSERT prestataire_verification_events` où `action = requested` | e-mails équipe |
+
+Réutilise les secrets Resend / destinataires des signalements (`CONTENT_REPORT_NOTIFY_EMAILS` ou `ADMIN_NOTIFY_EMAILS`).
+
+### Webhook Supabase
+
+- Table : `prestataire_verification_events`
+- Events : `INSERT`
+- Type : Edge Function → `on_verification_requested`
+- Header : `x-webhook-secret` = `CONTENT_REPORT_WEBHOOK_SECRET`
+
+```bash
+npx supabase functions deploy on_verification_requested --no-verify-jwt
+```
+
 ## Paiements Stripe + Connect
 
 | Fonction | Auth | Rôle |

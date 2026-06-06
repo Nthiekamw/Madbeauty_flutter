@@ -11,6 +11,8 @@ class AdminContentReport {
     this.details,
     required this.createdAt,
     this.reviewedAt,
+    this.actionTaken,
+    this.actionNote,
   });
 
   final String id;
@@ -24,6 +26,8 @@ class AdminContentReport {
   final String? details;
   final DateTime createdAt;
   final DateTime? reviewedAt;
+  final String? actionTaken;
+  final String? actionNote;
 
   bool get isReviewed => reviewedAt != null;
 

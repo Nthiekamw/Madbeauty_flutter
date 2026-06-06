@@ -130,7 +130,7 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                                 const SizedBox(height: 6),
                                 Text(
                                   DateFormat(
-                                    'd MMMM â€¢ HH:mm',
+                                    "d MMMM '·' HH:mm",
                                     'fr_FR',
                                   ).format(item.createdAt.toLocal()),
                                   style: theme.textTheme.labelSmall?.copyWith(

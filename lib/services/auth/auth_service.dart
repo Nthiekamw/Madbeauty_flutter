@@ -39,11 +39,18 @@ class AuthService {
     }
   }
 
+  static String normalizeEmail(String email) => email.trim().toLowerCase();
+
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,
   }) =>
-      _runAuth(() => _auth.signInWithPassword(email: email, password: password));
+      _runAuth(
+        () => _auth.signInWithPassword(
+          email: normalizeEmail(email),
+          password: password,
+        ),
+      );
 
   /// OTP e-mail : le template Supabase doit inclure `{{ .Token }}` (pas seulement le lien).
   Future<void> signInWithOtpEmail({
@@ -105,7 +112,7 @@ class AuthService {
   }) =>
       _runAuth(
         () => _auth.signUp(
-          email: email,
+          email: normalizeEmail(email),
           password: password,
           data: data,
           emailRedirectTo: emailRedirectTo,
@@ -155,6 +162,21 @@ class AuthService {
           scopes: scopes,
           authScreenLaunchMode: authScreenLaunchMode,
           queryParams: queryParams,
+        ),
+      );
+
+  /// Après vérification téléphone Firebase : échange le jeton contre une session Supabase.
+  Future<AuthResponse> signInWithFirebaseIdToken({
+    required String idToken,
+    String? accessToken,
+    String? nonce,
+  }) =>
+      _runAuth(
+        () => _auth.signInWithIdToken(
+          provider: const OAuthProvider('firebase'),
+          idToken: idToken,
+          accessToken: accessToken,
+          nonce: nonce,
         ),
       );
 }

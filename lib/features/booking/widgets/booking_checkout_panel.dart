@@ -2,6 +2,7 @@
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/currency_format.dart';
 import '../logic/booking_pricing.dart';
 
 /// Choix du mode de paiement + détail des montants (récap réservation).
@@ -64,7 +65,8 @@ class BookingCheckoutPanel extends StatelessWidget {
     );
   }
 
-  static String _formatEur(double value) => '${value.toStringAsFixed(2)} €';
+  static String _formatEur(double value) =>
+      CurrencyFormat.eur(value, decimals: true);
 }
 
 class _ModeTile extends StatelessWidget {
@@ -233,7 +235,7 @@ class _AmountCard extends StatelessWidget {
     bool bold = false,
     bool muted = false,
   }) {
-    final value = '${(cents / 100).toStringAsFixed(2)} €';
+    final value = CurrencyFormat.eurCents(cents);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(

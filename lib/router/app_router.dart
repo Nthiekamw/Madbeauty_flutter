@@ -13,7 +13,10 @@ import '../features/auth/providers/my_roles_provider.dart';
 import '../features/auth/providers/password_recovery_provider.dart'
     show isPasswordRecoveryActiveProvider;
 import '../features/auth/register/routes/register_route.dart';
+import '../features/auth/phone_otp/models/phone_otp_flow.dart';
+import '../features/auth/phone_otp/routes/phone_otp_verification_route.dart';
 import '../features/auth/register/screens/register_email_verification_screen.dart';
+import '../shared/utils/phone_number_utils.dart';
 import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../features/auth/reset_password/routes/reset_password_route.dart';
 import '../features/auth/role/screens/role_choice_screen.dart';
@@ -40,8 +43,15 @@ import '../features/favorites/screens/client_favorites_screen.dart';
 import '../features/messaging/screens/chat_screen.dart';
 import '../features/messaging/screens/conversations_inbox_screen.dart';
 import '../features/reviews/screens/client_reviews_screen.dart';
+import '../features/admin/screens/admin_audit_screen.dart';
 import '../features/admin/screens/admin_content_reports_screen.dart';
+import '../features/admin/screens/admin_home_screen.dart';
+import '../features/admin/screens/admin_profile_screen.dart';
+import '../features/admin/screens/admin_reservations_screen.dart';
+import '../features/admin/screens/admin_users_screen.dart';
 import '../features/admin/screens/admin_verification_screen.dart';
+import 'admin_route_policy.dart';
+import 'shell/admin_shell_scaffold.dart';
 import '../services/storage/local_cache_service.dart';
 import '../services/supabase/messaging/messaging_providers.dart';
 import '../features/profile/screens/client_payment_methods_screen.dart';
@@ -64,6 +74,7 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String registerVerifyEmail = '/register/verify-email';
+  static const String verifyPhone = '/verify-phone';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
   static const String role = '/role';
@@ -91,8 +102,13 @@ abstract final class AppRoutes {
   static const String clientHistory = '/client/history';
   static const String clientHelp = '/client/help';
   static const String clientReferral = '/client/referral';
+  static const String adminHome = '/admin/home';
   static const String adminVerifications = '/admin/verifications';
   static const String adminReports = '/admin/reports';
+  static const String adminProfile = '/admin/profile';
+  static const String adminUsers = '/admin/users';
+  static const String adminReservations = '/admin/reservations';
+  static const String adminAudit = '/admin/audit';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -120,6 +136,7 @@ abstract final class AppRouteNames {
   static const String login = 'login';
   static const String register = 'register';
   static const String registerVerifyEmail = 'register-verify-email';
+  static const String verifyPhone = 'verify-phone';
   static const String forgotPassword = 'forgot-password';
   static const String resetPassword = 'reset-password';
   static const String role = 'role';
@@ -143,8 +160,13 @@ abstract final class AppRouteNames {
   static const String clientHistory = 'client-history';
   static const String clientHelp = 'client-help';
   static const String clientReferral = 'client-referral';
+  static const String adminHome = 'admin-home';
   static const String adminVerifications = 'admin-verifications';
   static const String adminReports = 'admin-reports';
+  static const String adminProfile = 'admin-profile';
+  static const String adminUsers = 'admin-users';
+  static const String adminReservations = 'admin-reservations';
+  static const String adminAudit = 'admin-audit';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -187,8 +209,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AsyncData(:final value) => value,
         _ => null,
       };
+      final hasSession = ref.read(authServiceProvider).currentSession != null;
+      final isAuthenticated = hasSession && user != null;
 
       final location = state.matchedLocation;
+      final registerDraft = RegisterWizardDraftStore.instance.read();
+      final registerWizardOngoing =
+          registerDraft != null && registerDraft.isActive;
       final publicRoutes = <String>{
         AppRoutes.splash,
         AppRoutes.onboarding,
@@ -196,6 +223,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.registerVerifyEmail,
+        AppRoutes.verifyPhone,
         AppRoutes.forgotPassword,
         AppRoutes.resetPassword,
         if (kDebugMode) AppRoutes.asyncStateTest,
@@ -205,17 +233,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.registerVerifyEmail,
+        AppRoutes.verifyPhone,
         AppRoutes.forgotPassword,
       };
 
       final preferredPath = AuthRoleCache.preferredAuthenticatedPath();
       final effectiveRole = AuthRoleCache.preferredAuthenticatedRole();
-      final hasAdminRole = ref
-          .read(myRolesProvider)
-          .maybeWhen(
-            data: (roles) => roles.any((r) => r.value == 'admin'),
-            orElse: () => false,
-          );
+      final cachedServerRoles = LocalCacheService.instance.cachedServerRoles;
+      final hasCachedAdminRole =
+          AuthRoleCache.hasAdminAmong(cachedServerRoles);
+      final hasAdminRole = hasCachedAdminRole ||
+          ref.read(myRolesProvider).maybeWhen(
+                data: (roles) => roles.any((r) => r.value == 'admin'),
+                orElse: () => false,
+              );
 
       String? legacyRedirect() {
         return switch (location) {
@@ -235,10 +266,39 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final sharedProfile = AppDeepLinks.legacyListingRedirect(location);
       if (sharedProfile != null) return sharedProfile;
 
+      if (registerWizardOngoing) {
+        if (location == AppRoutes.register ||
+            location == AppRoutes.registerVerifyEmail ||
+            location == AppRoutes.verifyPhone) {
+          return null;
+        }
+        if (registerDraft.pendingEmailVerification && !isAuthenticated) {
+          return '${AppRoutes.registerVerifyEmail}?email=${Uri.encodeComponent(registerDraft.email.trim())}';
+        }
+        if (registerDraft.pendingPhoneVerification && !isAuthenticated) {
+          final phone = PhoneNumberUtils.toE164(
+            dialCode: registerDraft.phoneDialCode,
+            local: registerDraft.phone,
+          );
+          return '${AppRoutes.verifyPhone}?flow=register&phone=${Uri.encodeComponent(phone)}';
+        }
+        if (isAuthenticated) {
+          final resume =
+              registerDraft.step == 2 || registerDraft.signedUpViaOAuth;
+          return resume
+              ? '${AppRoutes.register}?resume=1'
+              : AppRoutes.register;
+        }
+        return AppRoutes.register;
+      }
+
       if (auth.isLoading) {
-        // Ne pas interrompre l’inscription : signUp met auth en loading et
-        // sinon le splash relance PostAuthNavigation avant ensureRole(prestataire).
-        if (location == AppRoutes.register) return null;
+        // Ne pas interrompre l’inscription pendant le bootstrap auth.
+        if (location == AppRoutes.register ||
+            location == AppRoutes.registerVerifyEmail ||
+            location == AppRoutes.verifyPhone) {
+          return null;
+        }
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
 
@@ -254,10 +314,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      final registerDraftPending =
-          RegisterWizardDraftStore.instance.hasDraft;
-
-      if (user == null) {
+      if (!isAuthenticated) {
         if (guestMode) {
           if (GuestRoutePolicy.requiresAccount(location)) {
             return location == AppRoutes.bookingConfirmation
@@ -270,15 +327,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.welcome;
       }
 
-      final registerWizardOngoing = registerDraftPending ||
-          (RegisterWizardDraftStore.instance.read()?.signedUpViaOAuth ?? false);
-
-      if (location == AppRoutes.register && registerWizardOngoing) {
+      // Le splash exécute PostAuthNavigation après sync des rôles serveur.
+      if (location == AppRoutes.splash) {
         return null;
       }
 
-      // Le splash exécute PostAuthNavigation après sync des rôles serveur.
-      if (location == AppRoutes.splash) {
+      // Laisser la route login terminer (dialogue + PostAuthNavigation).
+      if (location == AppRoutes.login) {
+        return null;
+      }
+
+      if (hasAdminRole) {
+        if (location == AppRoutes.role) {
+          return AppRoutes.adminHome;
+        }
+        if (AdminRoutePolicy.shouldRedirectAdminAway(location)) {
+          return AppRoutes.adminHome;
+        }
+        if (!AdminRoutePolicy.isAdminShellPath(location) &&
+            !isPublicPrestataireProfilePath(location)) {
+          return AppRoutes.adminHome;
+        }
+        return null;
+      }
+
+      if (location == AppRoutes.role) {
         return null;
       }
 
@@ -288,9 +361,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return preferredPath;
       }
 
-      if ((location.startsWith(AppRoutes.adminVerifications) ||
-              location.startsWith(AppRoutes.adminReports)) &&
-          !hasAdminRole) {
+      if (AdminRoutePolicy.isAdminShellPath(location)) {
         return preferredPath;
       }
 
@@ -328,6 +399,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final email = state.uri.queryParameters['email'] ?? '';
           return RegisterEmailVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.verifyPhone,
+        path: AppRoutes.verifyPhone,
+        builder: (context, state) {
+          final flow = PhoneOtpFlowX.fromQuery(state.uri.queryParameters['flow']) ??
+              PhoneOtpFlow.login;
+          final phone = state.uri.queryParameters['phone'] ?? '';
+          return PhoneOtpVerificationRoute(flow: flow, phoneE164: phone);
         },
       ),
       GoRoute(
@@ -392,15 +473,76 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return const ReferralScreen();
         },
       ),
-      GoRoute(
-        name: AppRouteNames.adminVerifications,
-        path: AppRoutes.adminVerifications,
-        builder: (context, state) => const AdminVerificationScreen(),
+      StatefulShellRoute.indexedStack(
+        restorationScopeId: 'admin-shell',
+        builder: (context, state, navigationShell) => AdminShellScaffold(
+          navigationShell: navigationShell,
+        ),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.adminHome,
+                path: AppRoutes.adminHome,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const AdminHomeScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.adminVerifications,
+                path: AppRoutes.adminVerifications,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const AdminVerificationScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.adminReports,
+                path: AppRoutes.adminReports,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const AdminContentReportsScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.adminProfile,
+                path: AppRoutes.adminProfile,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const AdminProfileScreen(),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
-        name: AppRouteNames.adminReports,
-        path: AppRoutes.adminReports,
-        builder: (context, state) => const AdminContentReportsScreen(),
+        name: AppRouteNames.adminUsers,
+        path: AppRoutes.adminUsers,
+        builder: (context, state) => const AdminUsersScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminReservations,
+        path: AppRoutes.adminReservations,
+        builder: (context, state) => const AdminReservationsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminAudit,
+        path: AppRoutes.adminAudit,
+        builder: (context, state) => const AdminAuditScreen(),
       ),
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'client-shell',

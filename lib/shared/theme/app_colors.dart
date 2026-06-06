@@ -96,6 +96,13 @@ class AppColors {
   static const Color ambassadorDark = Color(0xFF5B21B6);
   static const Color ambassadorBg10 = Color(0x1A7C3AED);
   static const Color ambassadorBorder25 = Color(0x407C3AED);
+
+  /// Badge et back-office administrateur (or / bronze).
+  static const Color adminAccent = brandGold;
+  static const Color adminAccentMid = Color(0xFFB8944A);
+  static const Color adminAccentDark = brandGoldDark;
+  static const Color adminBg12 = brandGoldGlow12;
+  static const Color adminBorder30 = Color(0x4DC9A962);
   static const Color purpleAccent = Color(0xFF8B5CF6);
   static const Color purpleAccentBg15 = Color(0x268B5CF6);
   static const Color purpleAccentBorder35 = Color(0x598B5CF6);

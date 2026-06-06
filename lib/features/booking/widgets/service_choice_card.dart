@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/utils/currency_format.dart';
 
 class ServiceChoiceCard extends StatelessWidget {
   const ServiceChoiceCard({
@@ -121,9 +122,9 @@ class ServiceChoiceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${service.prix.toStringAsFixed(0)} â‚¬',
+                    CurrencyFormat.eur(service.prix),
                     style: TextStyle(
-                      fontFamily: AppFonts.display,
+                      fontFamily: AppFonts.body,
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
                       color: selected

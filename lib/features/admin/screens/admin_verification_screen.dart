@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_verification_request.dart';
+import '../providers/admin_pending_counts_provider.dart';
 import '../providers/admin_verification_provider.dart';
+import '../widgets/admin_screen_scaffold.dart';
+import '../../../core/constants/app_strings.dart';
 
 class AdminVerificationScreen extends ConsumerStatefulWidget {
   const AdminVerificationScreen({super.key});
@@ -22,12 +25,15 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
     final theme = Theme.of(context);
     final requestsAsync = ref.watch(adminVerificationRequestsProvider(_filter));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Demandes de vérification'),
-      ),
+    return AdminScreenScaffold(
+      title: DiscProfile.actionAdminVerifications,
       body: Column(
         children: [
+          const AdminScreenIntroBanner(
+            icon: Icons.verified_user_outlined,
+            title: DiscProfile.adminVerificationsIntroTitle,
+            body: DiscProfile.adminVerificationsIntroBody,
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: SegmentedButton<AdminVerificationFilter>(
@@ -108,6 +114,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
     try {
       await service.approve(prestataireId: item.prestataireId);
       ref.invalidate(adminVerificationRequestsProvider(_filter));
+      ref.invalidate(adminPendingVerificationsCountProvider);
       if (mounted) {
         AppSnackBar.show(
           context,
@@ -135,6 +142,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
     try {
       await service.revoke(prestataireId: item.prestataireId);
       ref.invalidate(adminVerificationRequestsProvider(_filter));
+      ref.invalidate(adminPendingVerificationsCountProvider);
       if (mounted) {
         AppSnackBar.show(
           context,
@@ -192,6 +200,13 @@ class _RequestCard extends StatelessWidget {
             if (ville != null && ville.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text('Ville: $ville'),
+            ],
+            if (item.verificationRequestedAt != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Demandé le ${item.verificationRequestedAt!.toLocal()}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
             const SizedBox(height: 8),
             Row(

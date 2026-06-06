@@ -10,12 +10,13 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/supabase_service_exception.dart';
 import '../../../../core/models/user_role.dart';
-import '../../../../router/app_router.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../profile/logic/become_prestataire_draft.dart';
 import '../../../profile/storage/become_prestataire_draft_store.dart';
+import '../../phone_otp/models/phone_otp_flow.dart';
+import '../../phone_otp/providers/phone_otp_verification_controller.dart';
 import '../../../../services/auth/post_signup_profile_service.dart';
 import '../../../../services/auth/role_service.dart';
 import '../../../../services/offline/offline_actions.dart';
@@ -29,6 +30,7 @@ import '../../../../shared/widgets/phone/phone_number_field.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';
+import '../../widgets/auth_credential_method_toggle.dart';
 import '../../widgets/auth_error_banner.dart';
 import '../../widgets/auth_success_dialog.dart';
 import '../../widgets/auth_form_card.dart';
@@ -102,6 +104,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   bool _phoneRequiredOnExtras = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _usePhoneSignUp = false;
+  bool _signedUpViaPhone = false;
+  bool _pendingPhoneVerification = false;
 
   @override
   void initState() {
@@ -115,6 +120,11 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     _attachAutosave();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       exitGuestMode(ref);
+      final phoneVerified =
+          GoRouterState.of(context).uri.queryParameters['phoneVerified'] == '1';
+      if (phoneVerified) {
+        AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
+      }
       final hasSession =
           ref.read(authServiceProvider).currentSession?.user != null;
       if (widget.autoResumeFinalize &&
@@ -146,8 +156,13 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     _phoneDialCode = draft.phoneDialCode;
     _roleChoice = draft.role;
     _signedUpViaOAuth = draft.signedUpViaOAuth;
+    _signedUpViaPhone = draft.signedUpViaPhone;
     _phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     _pendingEmailVerification = draft.pendingEmailVerification;
+    _pendingPhoneVerification = draft.pendingPhoneVerification;
+    if (draft.signedUpViaPhone) {
+      _usePhoneSignUp = true;
+    }
   }
 
   void _attachAutosave() {
@@ -191,15 +206,31 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         ville: _ville.text,
         bio: _bio.text,
         signedUpViaOAuth: _signedUpViaOAuth,
+        signedUpViaPhone: _signedUpViaPhone,
         phoneRequiredOnExtras: _phoneRequiredOnExtras,
         pendingEmailVerification: _pendingEmailVerification,
+        pendingPhoneVerification: _pendingPhoneVerification,
         role: _roleChoice,
       );
 
-  Future<void> _persistDraft({bool? pendingEmailVerification}) async {
+  Future<void> _persistDraft({
+    bool? pendingEmailVerification,
+    bool? pendingPhoneVerification,
+    bool? signedUpViaPhone,
+    int? step,
+  }) async {
     if (!_persistDraftOnDispose) return;
     if (pendingEmailVerification != null) {
       _pendingEmailVerification = pendingEmailVerification;
+    }
+    if (pendingPhoneVerification != null) {
+      _pendingPhoneVerification = pendingPhoneVerification;
+    }
+    if (signedUpViaPhone != null) {
+      _signedUpViaPhone = signedUpViaPhone;
+    }
+    if (step != null) {
+      _step = step.clamp(0, 2);
     }
     await RegisterWizardDraftStore.instance.save(_currentDraft());
   }
@@ -233,6 +264,17 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   }
 
   bool get _isPresta => _roleChoice == UserRole.prestataire;
+
+  String _stepPrimaryLabel() {
+    if (_step >= 2) return AuthStrings.registerWizardSubmit;
+    if (_step == 0 &&
+        _usePhoneSignUp &&
+        !_signedUpViaOAuth &&
+        !_signedUpViaPhone) {
+      return AuthStrings.loginActionSendOtp;
+    }
+    return AuthStrings.registerWizardNext;
+  }
 
   void _hydrateFromOAuthUser(User user) {
     final meta = user.userMetadata;
@@ -336,6 +378,110 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     _villeError = null;
   }
 
+  void _setUsePhoneSignUp(bool usePhone) {
+    if (_signedUpViaOAuth || _signedUpViaPhone) return;
+    setState(() {
+      _usePhoneSignUp = usePhone;
+      _pendingPhoneVerification = false;
+      if (!usePhone) {
+        _phone.clear();
+        _phoneError = null;
+      }
+      _error = null;
+      _clearFieldErrors();
+    });
+  }
+
+  String get _phoneE164 => PhoneNumberUtils.toE164(
+        dialCode: _phoneDialCode,
+        local: _phone.text,
+      );
+
+  Future<void> _updatePhoneSignupMetadata() async {
+    final prenom = _prenom.text.trim();
+    final nom = _nom.text.trim();
+    final phone = PhoneNumberUtils.toStored(
+      dialCode: _phoneDialCode,
+      local: _phone.text,
+    );
+    await ref.read(authServiceProvider).updateUser(
+          UserAttributes(
+            data: <String, dynamic>{
+              'full_name': '$prenom $nom'.trim(),
+              if (prenom.isNotEmpty) 'prenom': prenom,
+              if (nom.isNotEmpty) 'nom': nom,
+              if (phone.isNotEmpty) 'phone': phone,
+            },
+          ),
+        );
+  }
+
+  Future<void> _sendRegisterPhoneOtp() async {
+    if (!await ensureOnline(context, ref)) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final pending = await ref.read(authNotifierProvider.notifier).sendPhoneOtp(
+            phoneE164: _phoneE164,
+            shouldCreateUser: true,
+          );
+      if (!mounted) return;
+
+      if (pending.autoVerified) {
+        await _updatePhoneSignupMetadata();
+        if (!mounted) return;
+        setState(() {
+          _signedUpViaPhone = true;
+          _pendingPhoneVerification = false;
+          _loading = false;
+          _step = 1;
+        });
+        AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
+        unawaited(_persistDraft(
+          signedUpViaPhone: true,
+          pendingPhoneVerification: false,
+          step: 1,
+        ));
+        return;
+      }
+
+      ref.read(phoneOtpVerificationControllerProvider.notifier).beginSession(
+            flow: PhoneOtpFlow.register,
+            phoneE164: _phoneE164,
+            pending: pending,
+          );
+      setState(() {
+        _loading = false;
+        _pendingPhoneVerification = true;
+      });
+      await _persistDraft(pendingPhoneVerification: true);
+      if (!mounted) return;
+      AppSnackBar.info(context, AuthStrings.loginOtpSentSms);
+      context.pushVerifyPhone(
+        flow: PhoneOtpFlow.register.queryValue,
+        phone: _phoneE164,
+      );
+    } on AppFailure catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = e.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = CoreStrings.errorUnexpected;
+        });
+      }
+    }
+  }
+
   void _goToPreviousStep() {
     if (_step == 0) return;
     FocusScope.of(context).unfocus();
@@ -354,7 +500,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     final nErr =
         _nom.text.trim().isEmpty ? AuthStrings.registerValidationNomEmpty : null;
     String? phErr;
-    if (!_signedUpViaOAuth || !_phoneRequiredOnExtras) {
+    final requirePhoneOnStep0 =
+        _usePhoneSignUp || (_signedUpViaOAuth && !_phoneRequiredOnExtras);
+    if (requirePhoneOnStep0) {
       phErr = RegisterValidators.phoneLocal(
         _phone.text,
         dialCode: _phoneDialCode,
@@ -363,7 +511,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     String? emailErr;
     String? pwErr;
     String? confirmErr;
-    if (!_signedUpViaOAuth) {
+    if (!_signedUpViaOAuth && !_usePhoneSignUp) {
       emailErr = RegisterValidators.email(_email.text.trim());
       pwErr = RegisterValidators.password(_password.text);
       confirmErr = _password.text != _confirm.text
@@ -427,6 +575,10 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     if (_step == 0) {
       if (!_validateStep0()) return;
+      if (_usePhoneSignUp && !_signedUpViaOAuth && !_signedUpViaPhone) {
+        unawaited(_sendRegisterPhoneOtp());
+        return;
+      }
       setState(() {
         _step = 1;
         _error = null;
@@ -484,7 +636,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     required User session,
     required String prenom,
     required String nom,
-    required String phone,
+    String? phone,
     required ProviderContainer providerContainer,
   }) async {
     final uid = session.id;
@@ -586,14 +738,15 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       final prenom = _prenom.text.trim();
       final nom = _nom.text.trim();
       final email = _email.text.trim();
-      final phone = PhoneNumberUtils.toStored(
+      final phoneStored = PhoneNumberUtils.toStored(
         dialCode: _phoneDialCode,
         local: _phone.text,
       );
+      final phone = phoneStored.isEmpty ? null : phoneStored;
 
       var sessionUser = _activeSessionUser(providerContainer);
 
-      if (!_signedUpViaOAuth) {
+      if (!_signedUpViaOAuth && !_signedUpViaPhone) {
         final hasActiveSession = sessionUser != null &&
             sessionUser.email?.trim().toLowerCase() == email.toLowerCase();
 
@@ -611,19 +764,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
           if (!mounted) return;
 
-          final authState = providerContainer.read(authNotifierProvider);
-
-          if (authState.hasError) {
-            final err = authState.error;
-            setState(() {
-              _loading = false;
-              _error = err is AppFailure
-                  ? err.message
-                  : CoreStrings.errorUnexpected;
-            });
-            return;
-          }
-
           sessionUser = _activeSessionUser(providerContainer);
         }
 
@@ -631,10 +771,16 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           await _persistDraft(pendingEmailVerification: true);
           if (!mounted) return;
           setState(() => _loading = false);
-          await context.pushNamed(
-            AppRouteNames.registerVerifyEmail,
-            queryParameters: {'email': email},
-          );
+          context.goRegisterVerifyEmail(email);
+          return;
+        }
+      } else if (_signedUpViaPhone) {
+        sessionUser ??= _activeSessionUser(providerContainer);
+        if (sessionUser == null) {
+          setState(() {
+            _loading = false;
+            _error = AuthStrings.authPhoneOtpSessionExpired;
+          });
           return;
         }
       } else {
@@ -659,6 +805,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       debugPrint(
         '[RegisterWizard] submit AppFailure: ${e.message} cause=${e.cause}',
       );
+      _pendingEmailVerification = false;
+      unawaited(_persistDraft(pendingEmailVerification: false));
       if (mounted) {
         setState(() {
           _loading = false;
@@ -668,6 +816,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     } catch (e, st) {
       debugPrint('[RegisterWizard] submit unexpected: $e');
       debugPrintStack(stackTrace: st);
+      _pendingEmailVerification = false;
+      unawaited(_persistDraft(pendingEmailVerification: false));
       if (mounted) {
         setState(() {
           _loading = false;
@@ -747,9 +897,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         showBack: _step > 0,
         isLoading: _loading,
         enabled: formEnabled,
-        primaryLabel: _step < 2
-            ? AuthStrings.registerWizardNext
-            : AuthStrings.registerWizardSubmit,
+        primaryLabel: _stepPrimaryLabel(),
         onBack: _goToPreviousStep,
         onPrimary: _loading
             ? null
@@ -776,6 +924,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                   _step = 0;
                   _roleChoice = null;
                   _signedUpViaOAuth = false;
+                  _signedUpViaPhone = false;
+                  _usePhoneSignUp = false;
+                  _pendingPhoneVerification = false;
                   _phoneRequiredOnExtras = false;
                   _pendingEmailVerification = false;
                   _error = null;
@@ -852,13 +1003,25 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     required Color onSurfaceVariant,
   }) {
     final showPhoneHere = !_signedUpViaOAuth || !_phoneRequiredOnExtras;
+    final showPhoneField =
+        (_usePhoneSignUp && !_signedUpViaPhone) ||
+        (_signedUpViaOAuth && showPhoneHere);
 
     return AuthFormCard(
       compact: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!_signedUpViaOAuth) ...[
+          if (!_signedUpViaOAuth && !_signedUpViaPhone) ...[
+            AuthCredentialMethodToggle(
+              emailLabel: AuthStrings.loginPasswordTabEmail,
+              phoneLabel: AuthStrings.loginPasswordTabPhone,
+              isPhoneSelected: _usePhoneSignUp,
+              enabled: formEnabled,
+              compact: true,
+              onChanged: _setUsePhoneSignUp,
+            ),
+            const SizedBox(height: _sectionGap),
             AuthStepSection(
               compact: true,
               title: AuthStrings.registerSectionQuick,
@@ -872,6 +1035,10 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
             ),
             const SizedBox(height: _sectionGap),
             const AuthOrDivider(compact: true),
+            const SizedBox(height: _sectionGap),
+          ],
+          if (_signedUpViaPhone) ...[
+            const _PhoneVerifiedBanner(),
             const SizedBox(height: _sectionGap),
           ],
           AuthStepSection(
@@ -904,14 +1071,19 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           const SizedBox(height: _sectionGap),
           AuthStepSection(
             compact: true,
-            title: AuthStrings.registerSectionContact,
-            icon: Icons.contact_phone_outlined,
+            title: _usePhoneSignUp
+                ? AuthStrings.registerSectionContact
+                : AuthStrings.loginFieldEmail,
+            icon: _usePhoneSignUp
+                ? Icons.contact_phone_outlined
+                : Icons.mail_outline_rounded,
             child: Column(
               children: [
-                if (showPhoneHere) ...[
+                if (showPhoneField) ...[
                   PhoneNumberField(
                     dense: true,
-                    enabled: formEnabled,
+                    enabled: formEnabled &&
+                        !(_usePhoneSignUp && _signedUpViaPhone),
                     localController: _phone,
                     dialCode: _phoneDialCode,
                     errorText: _phoneError,
@@ -923,25 +1095,27 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
                   ),
                   const SizedBox(height: _fieldGap),
                 ],
-                AppTextField(
-                  dense: true,
-                  controller: _email,
-                  onChanged: (_) => setState(() => _emailError = null),
-                  enabled: formEnabled && !_signedUpViaOAuth,
-                  label: AuthStrings.loginFieldEmail,
-                  errorText: _emailError,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [
-                    AutofillHints.email,
-                    AutofillHints.username,
-                  ],
-                  prefixIcon: Icon(
-                    Icons.mail_outline,
-                    color: onSurfaceVariant,
+                if (!_usePhoneSignUp || _signedUpViaOAuth) ...[
+                  AppTextField(
+                    dense: true,
+                    controller: _email,
+                    onChanged: (_) => setState(() => _emailError = null),
+                    enabled: formEnabled && !_signedUpViaOAuth,
+                    label: AuthStrings.loginFieldEmail,
+                    errorText: _emailError,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [
+                      AutofillHints.email,
+                      AutofillHints.username,
+                    ],
+                    prefixIcon: Icon(
+                      Icons.mail_outline,
+                      color: onSurfaceVariant,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -949,7 +1123,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
             const SizedBox(height: _sectionGap),
             const _GoogleConnectedBanner(),
           ],
-          if (!_signedUpViaOAuth) ...[
+          if (!_signedUpViaOAuth && !_usePhoneSignUp) ...[
             const SizedBox(height: _sectionGap),
             AuthStepSection(
               compact: true,
@@ -1285,6 +1459,45 @@ class _PrestaSubscriptionRegisterHint extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: onSurfaceVariant,
                 height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhoneVerifiedBanner extends StatelessWidget {
+  const _PhoneVerifiedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.phone_android_outlined,
+            size: 20,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              AuthStrings.registerPhoneVerified,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
           ),

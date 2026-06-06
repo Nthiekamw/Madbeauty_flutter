@@ -25,6 +25,7 @@ class PrestataireService {
       final profilesRes = await _client
           .from('prestataire_profiles')
           .select()
+          .eq('is_hidden', false)
           .order('created_at', ascending: false)
           .range(filters.offset, to);
 

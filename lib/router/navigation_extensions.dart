@@ -34,6 +34,25 @@ extension AppNavigationX on BuildContext {
   void goRegister() => goNamed(AppRouteNames.register);
   void goRegisterResume() =>
       goNamed(AppRouteNames.register, queryParameters: {'resume': '1'});
+  void goRegisterVerifyEmail(String email) => goNamed(
+        AppRouteNames.registerVerifyEmail,
+        queryParameters: {'email': email.trim()},
+      );
+  void pushVerifyPhone({
+    required String flow,
+    required String phone,
+  }) =>
+      pushNamed(
+        AppRouteNames.verifyPhone,
+        queryParameters: {
+          'flow': flow,
+          'phone': phone.trim(),
+        },
+      );
+  void goRegisterPhoneVerified() => goNamed(
+        AppRouteNames.register,
+        queryParameters: {'phoneVerified': '1'},
+      );
   void goRoleChoice() => goNamed(AppRouteNames.role);
   void goPrestataire() => goNamed(AppRouteNames.prestataireProfile);
   void goPrestataireDashboard() =>
@@ -77,8 +96,15 @@ extension AppNavigationX on BuildContext {
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
   void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);
   void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
+  void goAdminHome() => goNamed(AppRouteNames.adminHome);
+  void goAdminVerifications() => goNamed(AppRouteNames.adminVerifications);
+  void goAdminReports() => goNamed(AppRouteNames.adminReports);
+  void goAdminProfile() => goNamed(AppRouteNames.adminProfile);
   void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
   void pushAdminReports() => pushNamed(AppRouteNames.adminReports);
+  void pushAdminUsers() => pushNamed(AppRouteNames.adminUsers);
+  void pushAdminReservations() => pushNamed(AppRouteNames.adminReservations);
+  void pushAdminAudit() => pushNamed(AppRouteNames.adminAudit);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
   Future<T?> pushChat<T extends Object?>(String bookingId) => pushNamed<T>(

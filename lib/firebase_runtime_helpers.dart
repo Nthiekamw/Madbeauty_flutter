@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import 'firebase_options.dart';
@@ -25,5 +26,12 @@ bool isFirebaseConfiguredForPush() {
   } catch (_) {
     return false;
   }
+}
+
+/// Initialise Firebase une seule fois (auth téléphone, FCM, etc.).
+Future<void> ensureFirebaseInitialized() async {
+  if (!isFirebaseConfiguredForPush()) return;
+  if (Firebase.apps.isNotEmpty) return;
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 

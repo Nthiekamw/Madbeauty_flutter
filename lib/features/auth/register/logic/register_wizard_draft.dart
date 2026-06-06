@@ -21,6 +21,8 @@ class RegisterWizardDraft {
     required this.signedUpViaOAuth,
     required this.phoneRequiredOnExtras,
     this.pendingEmailVerification = false,
+    this.pendingPhoneVerification = false,
+    this.signedUpViaPhone = false,
     this.role,
   });
 
@@ -44,6 +46,12 @@ class RegisterWizardDraft {
 
   /// Compte créé, en attente de confirmation e-mail (ne pas afficher « brouillon repris »).
   final bool pendingEmailVerification;
+
+  /// SMS envoyé, code non encore validé.
+  final bool pendingPhoneVerification;
+
+  /// Compte créé et numéro vérifié par SMS.
+  final bool signedUpViaPhone;
   final UserRole? role;
 
   /// Brouillon actif tant que le wizard n'est pas terminé (y compris après Google).
@@ -62,7 +70,7 @@ class RegisterWizardDraft {
 
   /// Afficher la bannière « reprise » (cold start / retour app).
   bool get showResumeBanner =>
-      isActive && !pendingEmailVerification;
+      isActive && !pendingEmailVerification && !pendingPhoneVerification;
 
   Map<String, dynamic> toJson() => {
         'step': step,
@@ -83,13 +91,15 @@ class RegisterWizardDraft {
         'signedUpViaOAuth': signedUpViaOAuth,
         'phoneRequiredOnExtras': phoneRequiredOnExtras,
         'pendingEmailVerification': pendingEmailVerification,
+        'pendingPhoneVerification': pendingPhoneVerification,
+        'signedUpViaPhone': signedUpViaPhone,
         'role': role?.name,
-        'v': 2,
+        'v': 3,
       };
 
   static RegisterWizardDraft? fromJson(Map<String, dynamic> json) {
     final version = json['v'];
-    if (version != 1 && version != 2) return null;
+    if (version != 1 && version != 2 && version != 3) return null;
     final step = json['step'];
     if (step is! int || step < 0 || step > 2) return null;
 
@@ -121,6 +131,9 @@ class RegisterWizardDraft {
       phoneRequiredOnExtras: json['phoneRequiredOnExtras'] as bool? ?? false,
       pendingEmailVerification:
           json['pendingEmailVerification'] as bool? ?? false,
+      pendingPhoneVerification:
+          json['pendingPhoneVerification'] as bool? ?? false,
+      signedUpViaPhone: json['signedUpViaPhone'] as bool? ?? false,
       role: role,
     );
   }

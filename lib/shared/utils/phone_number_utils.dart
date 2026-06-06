@@ -60,6 +60,19 @@ abstract final class PhoneNumberUtils {
     return '$dialCode $normalized';
   }
 
+  /// Format E.164 sans espace (ex. `+33612345678`) pour OTP SMS / Firebase.
+  static String toE164({required String dialCode, required String local}) {
+    final normalized = normalizeLocalInput(local);
+    if (normalized.isEmpty) return '';
+    return '$dialCode$normalized';
+  }
+
+  /// E.164 depuis un numéro stocké (`+33 612…` ou `+33612…`).
+  static String storedToE164(String? stored) {
+    if (stored == null || stored.trim().isEmpty) return '';
+    return stored.replaceAll(RegExp(r'\s'), '');
+  }
+
   /// Parse un numéro en base (indicatif + local sans 0).
   static ({String dialCode, String local}) parseStored(String? stored) {
     if (stored == null || stored.trim().isEmpty) {

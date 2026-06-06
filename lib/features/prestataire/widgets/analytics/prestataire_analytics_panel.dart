@@ -31,7 +31,7 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
 
   static final _currency = NumberFormat.currency(
     locale: 'fr_FR',
-    symbol: 'â‚¬',
+    symbol: '€',
     decimalDigits: 0,
   );
 

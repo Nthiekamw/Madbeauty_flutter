@@ -11,8 +11,11 @@ import '../../../../router/app_router.dart';
 import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../guest/guest_mode_provider.dart';
+import '../../phone_otp/models/phone_otp_flow.dart';
 import '../../providers/auth_notifier.dart';
 import '../../widgets/auth_success_dialog.dart';
+import '../../../../shared/utils/phone_number_utils.dart';
+import '../models/login_credential_method.dart';
 import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
@@ -29,6 +32,8 @@ class LoginRoute extends ConsumerStatefulWidget {
 class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  String _phoneDialCode = '+33';
   bool _googleSignInPending = false;
   bool _welcomeHandled = false;
 
@@ -44,15 +49,22 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitPassword() async {
+  String get _phoneE164 => PhoneNumberUtils.toE164(
+        dialCode: _phoneDialCode,
+        local: _phoneController.text,
+      );
+
+  Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     try {
       await ref.read(loginControllerProvider.notifier).submit(
             rawEmail: _emailController.text,
             rawPassword: _passwordController.text,
+            rawPhoneE164: _phoneE164,
           );
     } on AppFailure catch (e) {
       if (!mounted) return;
@@ -72,6 +84,12 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       _googleSignInPending = true;
       AppSnackBar.info(context, AuthStrings.loginGoogleStarted);
     }
+  }
+
+  void _onCredentialMethodChanged(bool isPhone) {
+    ref.read(loginControllerProvider.notifier).setCredentialMethod(
+          isPhone ? LoginCredentialMethod.phone : LoginCredentialMethod.email,
+        );
   }
 
   Future<void> _completeLoginWithWelcome() async {
@@ -96,9 +114,22 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }
+      if (next.infoMessage != null &&
+          previous?.infoMessage != next.infoMessage) {
+        AppSnackBar.info(context, next.infoMessage!);
+        ref.read(loginControllerProvider.notifier).acknowledgeInfoMessage();
+      }
       if (next.submitError != null && previous?.submitError != next.submitError) {
         AppSnackBar.error(context, next.submitError!);
         ref.read(loginControllerProvider.notifier).acknowledgeSubmitError();
+      }
+      if (next.shouldNavigateToPhoneOtp &&
+          previous?.shouldNavigateToPhoneOtp != next.shouldNavigateToPhoneOtp) {
+        ref.read(loginControllerProvider.notifier).acknowledgePhoneOtpNavigation();
+        context.pushVerifyPhone(
+          flow: PhoneOtpFlow.login.queryValue,
+          phone: _phoneE164,
+        );
       }
       if (next.shouldPopRoute) {
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
@@ -129,24 +160,31 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
 
     return LoginPage(
       showSupabaseConfigCard: !AppConfig.hasSupabase,
+      credentialMethod: loginUi.credentialMethod,
       emailController: _emailController,
       passwordController: _passwordController,
+      phoneController: _phoneController,
+      phoneDialCode: _phoneDialCode,
+      onPhoneDialCodeChanged: (code) => setState(() => _phoneDialCode = code),
       emailError: loginUi.emailError,
       passwordError: loginUi.passwordError,
+      phoneError: loginUi.phoneError,
       submitError: null,
+      infoMessage: loginUi.infoMessage,
       isLoading: isLoading,
       formEnabled: formEnabled,
       onBack: () =>
           context.canPop() ? context.pop() : context.goNamed(AppRouteNames.welcome),
-      onSubmitPassword: _submitPassword,
+      onSubmit: _submit,
       onOpenRegister: context.pushRegister,
-      onPasswordFieldSubmitted: _submitPassword,
+      onPasswordFieldSubmitted: _submit,
       onEmailChanged: ref.read(loginControllerProvider.notifier).onEmailChanged,
       onPasswordChanged:
           ref.read(loginControllerProvider.notifier).onPasswordChanged,
+      onPhoneChanged: ref.read(loginControllerProvider.notifier).onPhoneChanged,
+      onCredentialMethodChanged: _onCredentialMethodChanged,
       onGoogle: _google,
       onForgotPassword: context.pushForgotPassword,
     );
   }
 }
-

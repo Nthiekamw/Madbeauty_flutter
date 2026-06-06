@@ -1,10 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../services/auth/auth_service.dart';
+import '../../../core/errors/app_failure.dart';
+import '../../../core/errors/failure_mapper.dart';
+import '../../../services/auth/phone_auth_service.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -24,6 +28,10 @@ final authServiceProvider = Provider<AuthService>((ref) {
     );
   }
   return AuthService.fromEnv();
+});
+
+final phoneAuthServiceProvider = Provider<PhoneAuthService>((ref) {
+  return PhoneAuthService(ref.watch(authServiceProvider));
 });
 
 final roleServiceProvider = Provider<RoleService>((ref) {
@@ -183,24 +191,37 @@ class AuthNotifier extends AsyncNotifier<User?> {
     String? phone,
   }) async {
     if (!ref.read(authSupabaseEnabledProvider)) return;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final previousUser = switch (state) {
+      AsyncData(:final value) => value,
+      _ => _auth.currentSession?.user ?? _auth.currentUser,
+    };
+    try {
       final meta = <String, dynamic>{
         'full_name': displayName,
         if ((prenom ?? '').trim().isNotEmpty) 'prenom': prenom!.trim(),
         if ((nom ?? '').trim().isNotEmpty) 'nom': nom!.trim(),
         if ((phone ?? '').trim().isNotEmpty) 'phone': phone!.trim(),
       };
-      final response = await _auth.signUp(
+      await _auth.signUp(
         email: email,
         password: password,
         data: meta,
         emailRedirectTo: AppConfig.authEmailRedirectTo,
       );
-      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
-      await _cacheCurrentEmail(user);
-      return user;
-    });
+      // Sans session active (confirmation e-mail requise), ne pas exposer
+      // response.user au routeur : sinon redirection hors du wizard d'inscription.
+      final sessionUser = _auth.currentSession?.user;
+      if (sessionUser != null) {
+        await _cacheCurrentEmail(sessionUser);
+        state = AsyncData(sessionUser);
+      } else {
+        state = AsyncData(previousUser);
+      }
+    } catch (_) {
+      // Échec d'inscription : ne pas bloquer le splash avec un état auth en erreur.
+      state = AsyncData(previousUser);
+      rethrow;
+    }
   }
 
   Future<void> verifyOtpEmailSignIn({
@@ -229,6 +250,51 @@ class AuthNotifier extends AsyncNotifier<User?> {
       await _cacheCurrentEmail(user);
       return user;
     });
+  }
+
+  /// Envoie un OTP SMS (Firebase si configuré, sinon Supabase).
+  Future<PhoneOtpPending> sendPhoneOtp({
+    required String phoneE164,
+    bool shouldCreateUser = true,
+  }) async {
+    if (!ref.read(authSupabaseEnabledProvider)) {
+      throw StateError('Supabase non configuré');
+    }
+    return ref.read(phoneAuthServiceProvider).sendOtp(
+          phoneE164: phoneE164,
+          shouldCreateUser: shouldCreateUser,
+        );
+  }
+
+  /// Vérifie l’OTP et ouvre une session Supabase.
+  Future<User?> verifyPhoneOtpAndSignIn({
+    required PhoneOtpPending pending,
+    required String token,
+  }) async {
+    if (!ref.read(authSupabaseEnabledProvider)) return null;
+    final previousUser = switch (state) {
+      AsyncData(:final value) => value,
+      _ => _auth.currentSession?.user ?? _auth.currentUser,
+    };
+    try {
+      final response = await ref.read(phoneAuthServiceProvider).verifyOtp(
+            pending: pending,
+            code: token,
+          );
+      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
+      await _cacheCurrentEmail(user);
+      state = AsyncData(user);
+      return user;
+    } on AppFailure {
+      state = AsyncData(previousUser);
+      rethrow;
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('verifyPhoneOtpAndSignIn: $e\n$st');
+      }
+      state = AsyncData(previousUser);
+      throw FailureMapper.fromUnknown(e);
+    }
   }
 
   /// Ouvre le navigateur / onglet OAuth ; la session arrive via deep link (PKCE).

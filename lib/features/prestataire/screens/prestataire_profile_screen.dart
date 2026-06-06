@@ -24,6 +24,7 @@ import '../widgets/profile/overview/prestataire_profile_load_error.dart';
 import '../widgets/profile/overview/prestataire_profile_manage_menu.dart';
 import '../widgets/profile/overview/prestataire_profile_section.dart';
 import '../widgets/profile/overview/prestataire_profile_stats_strip.dart';
+import '../widgets/prestataire_verification_request_card.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_profile_summary_card.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -169,12 +170,18 @@ class PrestataireProfileScreen extends ConsumerWidget {
                         label: const Text(DiscPrestaProfile.incompleteCta),
                       ),
                     ),
-                  if (complete)
+                  if (complete) ...[
+                    Padding(
+                      padding: PrestataireProfileInsets.page(context)
+                          .copyWith(top: 12),
+                      child: const PrestataireVerificationRequestCard(),
+                    ),
                     PrestataireProfileStatsStrip(
                       servicesCount: data.services.length,
                       specialtiesCount: data.selectedCategoryIds.length,
                       photosCount: data.realisationPhotos.length,
                     ),
+                  ],
                   PrestataireProfileSection(
                     title: DiscPrestaProfile.sectionActivity,
                     children: [

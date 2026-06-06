@@ -84,26 +84,41 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
   Future<void> _boot(ProviderContainer container) async {
     _setStatus(ShellStrings.splashCheckingSession);
 
-    try {
-      await container.read(authNotifierProvider.future);
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('Splash: auth init – $e\n$st');
+    final authSnapshot = container.read(authNotifierProvider);
+    if (authSnapshot.isLoading) {
+      try {
+        await container.read(authNotifierProvider.future);
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('Splash: auth init – $e\n$st');
+        }
       }
     }
 
     if (!mounted) return;
 
-    final authSnapshot = container.read(authNotifierProvider);
-    final user = switch (authSnapshot) {
+    final authAfterWait = container.read(authNotifierProvider);
+    final user = switch (authAfterWait) {
       AsyncData(:final value) => value,
       _ => null,
     };
     final cache = LocalCacheService.instance;
-    final registerDraft = RegisterWizardDraftStore.instance.hasDraft;
+    final registerDraftStore = RegisterWizardDraftStore.instance;
+    final registerDraft = registerDraftStore.read();
+    final hasSession =
+        container.read(authServiceProvider).currentSession != null;
 
-    if (registerDraft) {
-      await _go(AppRoutes.register);
+    if (registerDraft != null && registerDraft.isActive) {
+      if (registerDraft.pendingEmailVerification && !hasSession) {
+        final email = Uri.encodeComponent(registerDraft.email.trim());
+        await _go('${AppRoutes.registerVerifyEmail}?email=$email');
+        return;
+      }
+      if (!hasSession) {
+        await _go(AppRoutes.register);
+        return;
+      }
+      await _go('${AppRoutes.register}?resume=1');
       return;
     }
 

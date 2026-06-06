@@ -4,7 +4,7 @@ abstract final class AuthStrings {
 
   static const String loginTitle = 'Connexion';
   static String get loginDescription =>
-      'Connecte-toi avec ton e-mail et ton mot de passe, ou avec Google.';
+      'Choisis E-mail ou Téléphone juste en dessous, puis remplis le formulaire.';
   static const String loginActionOpenRegister = 'Créer un compte';
 
   static const String loginMethodPassword = 'Mot de passe';
@@ -81,7 +81,7 @@ abstract final class AuthStrings {
 
   static const String registerTitle = 'Inscription';
   static const String registerDescription =
-      'Crée ton compte avec ton nom, ton e-mail et ton mot de passe.';
+      'Crée ton compte avec ton nom, ton e-mail ou ton téléphone.';
   static const String registerFieldName = 'Nom';
   static const String registerActionSubmit = 'Créer mon compte';
   static const String registerActionBackToLogin = 'J’ai déjà un compte';
@@ -108,6 +108,17 @@ abstract final class AuthStrings {
 
   static const String authEmailNotConfirmed =
       'Ton e-mail n’est pas encore confirmé. Vérifie ta boîte mail et clique sur le lien de confirmation.';
+  static const String authEmailAddressInvalid =
+      'Cette adresse e-mail n’est pas acceptée. Utilise une adresse réelle '
+      '(Gmail, Outlook, etc.) — certains domaines de test sont refusés par Supabase.';
+  static const String authEmailAddressNotAuthorized =
+      'Impossible d’envoyer l’e-mail de confirmation à cette adresse avec la '
+      'configuration actuelle. Utilise une autre adresse ou configure un SMTP '
+      'personnalisé dans Supabase.';
+  static const String authEmailRateLimitExceeded =
+      'Trop de tentatives d’inscription ou d’e-mails envoyés. Attends quelques '
+      'minutes avant de réessayer, ou consulte ta boîte mail si tu as déjà reçu '
+      'le lien de confirmation.';
 
   static const String onboardingSkip = 'Passer';
   static const String onboardingBack = 'Retour';
@@ -260,10 +271,42 @@ abstract final class AuthStrings {
 
   static const String loginPasswordTabEmail = 'E-mail';
   static const String loginPasswordTabPhone = 'Téléphone';
-  static const String loginPasswordPhoneSoon =
-      'La connexion avec le téléphone et le mot de passe arrive bientôt. Utilise pour l’instant l’e-mail de ton compte.';
-  static const String loginMethodOtpLater =
-      'Connexion par code (e-mail / SMS) — à venir';
+  static const String authCredentialMethodLabel = 'Méthode de connexion';
+  static const String registerCredentialMethodLabel = 'Méthode d’inscription';
+  static const String authPhoneOtpInvalid =
+      'Code incorrect ou expiré. Demande un nouveau code.';
+  static const String authPhoneOtpSessionExpired =
+      'La vérification a expiré. Renvoie un code.';
+  static const String authPhoneFirebaseTokenMissing =
+      'Connexion Firebase incomplète. Réessaie.';
+  static const String authPhoneFirebaseAppNotConfigured =
+      'SMS Firebase non configuré sur cet appareil (empreinte SHA manquante dans '
+      'la console Firebase). L’app utilise le SMS Supabase si disponible.';
+  static const String authPhoneSupabaseLinkFailed =
+      'Le code SMS est valide mais la session n’a pas pu s’ouvrir. '
+      'Active le fournisseur Firebase dans Supabase (Auth → Providers) ou '
+      'utilise uniquement le SMS Supabase.';
+  static const String authPhoneOtpAlreadyUsed =
+      'Ce code a déjà été utilisé ou a expiré. Appuie sur « Envoyer le code » '
+      'pour en recevoir un nouveau.';
+  static const String authPhoneRateLimitExceeded =
+      'Trop de SMS envoyés. Réessaie dans quelques minutes.';
+  static const String authPhoneProviderUnsupported =
+      'L’envoi de SMS n’est pas encore activé sur le projet. '
+      'Dans Supabase : Authentication → Providers → active « Phone », '
+      'puis configure un fournisseur SMS (Twilio, MessageBird, etc.).';
+  static const String authPhoneOtpHint =
+      'Un code à 6 chiffres t’a été envoyé par SMS.';
+  static const String phoneOtpVerifyTitle = 'Vérifie ton numéro';
+  static String phoneOtpVerifySubtitle(String phone) =>
+      phone.trim().isEmpty
+          ? 'Saisis le code reçu par SMS'
+          : 'Code envoyé au ${phone.trim()}';
+  static const String phoneOtpVerifyBody =
+      'Saisis le code à 6 chiffres reçu par SMS. Tu peux demander un nouveau code si besoin.';
+  static const String phoneOtpVerifyResendLabel = 'Renvoyer le code';
+  static const String registerPhoneVerified =
+      'Numéro vérifié. Tu peux passer à l’étape suivante.';
 
   static const String profileBecomePresta = 'Devenir prestataire';
   static const String profileSwitchToPresta = 'Espace prestataire';

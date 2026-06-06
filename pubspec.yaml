@@ -63,6 +63,7 @@ dependencies:
   app_links: ^6.4.1
   share_plus: ^11.0.0
   timezone: ^0.10.0
+  firebase_auth: ^5.7.0
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +93,8 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   adaptive_icon_background: "#C9A962"
   adaptive_icon_foreground: assets/images/logo_adaptive_foreground.png
+  # Moins de marge = logo plus grand sur l’écran d’accueil (défaut 16).
+  adaptive_icon_foreground_inset: 4
   web:
     generate: true
     image_path: assets/images/logo.png

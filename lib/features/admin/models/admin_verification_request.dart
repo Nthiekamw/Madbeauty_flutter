@@ -7,6 +7,7 @@
     required this.ville,
     required this.isVerified,
     this.verifiedAt,
+    this.verificationRequestedAt,
   });
 
   final String prestataireId;
@@ -16,5 +17,6 @@
   final String? ville;
   final bool isVerified;
   final DateTime? verifiedAt;
+  final DateTime? verificationRequestedAt;
 }
 

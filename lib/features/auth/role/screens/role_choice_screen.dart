@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,8 +28,41 @@ class RoleChoiceScreen extends ConsumerStatefulWidget {
 class _RoleChoiceScreenState extends ConsumerState<RoleChoiceScreen> {
   UserRole? _pendingRole;
   String? _error;
+  bool _redirectingAdmin = false;
 
-  bool get _isBusy => _pendingRole != null;
+  bool get _isBusy => _pendingRole != null || _redirectingAdmin;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_redirectAdminIfNeeded());
+    });
+  }
+
+  Future<void> _redirectAdminIfNeeded() async {
+    if (!mounted || _redirectingAdmin) return;
+    if (AuthRoleCache.hasAdminAmong(
+      LocalCacheService.instance.cachedServerRoles,
+    )) {
+      _redirectingAdmin = true;
+      context.goAdminHome();
+      return;
+    }
+    if (!ref.read(authSupabaseEnabledProvider)) return;
+    _redirectingAdmin = true;
+    try {
+      final roles = await ref.read(myRolesProvider.future);
+      await AuthRoleCache.persistServerRoles(roles);
+      if (!mounted) return;
+      if (roles.contains(UserRole.admin)) {
+        await LocalCacheService.instance.setSelectedRole('admin');
+        context.goAdminHome();
+      }
+    } finally {
+      if (mounted) setState(() => _redirectingAdmin = false);
+    }
+  }
 
   Future<void> _selectRole(UserRole role) async {
     if (_isBusy) return;

@@ -16,6 +16,7 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
         invalidateBookingDetail,
         invalidateClientReservations;
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -305,10 +306,10 @@ class _BookingConfirmationScreenState
               _PriceHighlight(
                 label: DiscBk.recapPrice,
                 value: breakdown != null && breakdown.hasReferralDiscount
-                    ? '${(breakdown.servicePriceCents / 100).toStringAsFixed(2)} €'
-                    : '${widget.price.toStringAsFixed(2)} €',
+                    ? CurrencyFormat.eurCents(breakdown.servicePriceCents)
+                    : CurrencyFormat.eur(widget.price, decimals: true),
                 originalValue: breakdown != null && breakdown.hasReferralDiscount
-                    ? '${widget.price.toStringAsFixed(2)} €'
+                    ? CurrencyFormat.eur(widget.price, decimals: true)
                     : null,
                 meta: formatBookingServiceMeta(
                   durationMinutes: widget.durationMinutes,
@@ -540,7 +541,7 @@ class _BookingConfirmationScreenState
       if (breakdown.requiresInAppPayment) {
         return DiscPay.recapCtaPayAmount.replaceFirst(
           '%s',
-          '${breakdown.totalChargeEur.toStringAsFixed(2)} €',
+          CurrencyFormat.eur(breakdown.totalChargeEur, decimals: true),
         );
       }
       return DiscPay.recapCtaOnSite;

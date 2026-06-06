@@ -1,5 +1,6 @@
 ﻿import '../../../core/config/pricing_config.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/utils/currency_format.dart';
 
 /// Ligne affichée dans le bandeau paiement.
 class ReservationPaymentLine {
@@ -217,4 +218,4 @@ class ReservationPaymentDisplay {
   }
 }
 
-String formatCentsEur(int cents) => '${(cents / 100).toStringAsFixed(2)} €';
+String formatCentsEur(int cents) => CurrencyFormat.eurCents(cents);

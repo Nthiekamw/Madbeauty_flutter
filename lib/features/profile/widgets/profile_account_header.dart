@@ -23,6 +23,7 @@ class ProfileAccountHeader extends StatelessWidget {
     this.onEditPhoto,
     this.photoLoading = false,
     this.showAmbassadorBadge = false,
+    this.showAdminBadge = false,
   });
 
   final String displayName;
@@ -33,6 +34,7 @@ class ProfileAccountHeader extends StatelessWidget {
   final VoidCallback? onEditPhoto;
   final bool photoLoading;
   final bool showAmbassadorBadge;
+  final bool showAdminBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -144,38 +146,16 @@ class ProfileAccountHeader extends StatelessWidget {
                   letterSpacing: -0.4,
                 ),
               ),
-              if (showAmbassadorBadge) ...[
+              if (showAdminBadge || showAmbassadorBadge) ...[
                 const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.purpleAccentBg15,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.purpleAccentBorder35,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.military_tech_rounded,
-                        size: 18,
-                        color: AppColors.ambassador,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DiscProfile.ambassadorBadgeLabel,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ambassadorMid,
-                        ),
-                      ),
-                    ],
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (showAdminBadge) const _AdminRoleBadge(),
+                    if (showAmbassadorBadge) const _AmbassadorRoleBadge(),
+                  ],
                 ),
               ],
               if (onEditName != null) ...[
@@ -232,6 +212,78 @@ class _ProfileAvatar extends StatelessWidget {
       imageUrl: imageUrl,
       displayName: displayName,
       email: email.isNotEmpty ? email : null,
+    );
+  }
+}
+
+class _AdminRoleBadge extends StatelessWidget {
+  const _AdminRoleBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.adminBg12,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.adminBorder30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.shield_rounded,
+            size: 18,
+            color: AppColors.adminAccentMid,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            DiscProfile.adminBadgeLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.adminAccentDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmbassadorRoleBadge extends StatelessWidget {
+  const _AmbassadorRoleBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.purpleAccentBg15,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.purpleAccentBorder35),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.military_tech_rounded,
+            size: 18,
+            color: AppColors.ambassador,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            DiscProfile.ambassadorBadgeLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.ambassadorMid,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

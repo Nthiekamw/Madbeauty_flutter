@@ -16,6 +16,10 @@ class AuthFormScaffold extends StatelessWidget {
     this.subtitle,
     this.isBackEnabled = true,
     this.showLogo = true,
+    this.logoWidth = 200,
+    this.showLogoTagline = true,
+    this.showTitle = true,
+    this.centerTitle = false,
     this.scrollable = true,
     this.bottomBar,
     this.headerAccessory,
@@ -27,6 +31,10 @@ class AuthFormScaffold extends StatelessWidget {
   final VoidCallback onBack;
   final bool isBackEnabled;
   final bool showLogo;
+  final double logoWidth;
+  final bool showLogoTagline;
+  final bool showTitle;
+  final bool centerTitle;
   final bool scrollable;
   final Widget child;
   final Widget? bottomBar;
@@ -67,17 +75,25 @@ class AuthFormScaffold extends StatelessWidget {
                   ),
                 ),
                 if (showLogo && !headerCompact) ...[
-                  const Center(child: AuthMarketingLogo(width: 200)),
+                  Center(
+                    child: AuthMarketingLogo(
+                      width: logoWidth,
+                      showTagline: showLogoTagline,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                 ],
-                _AuthFormHeader(
-                  theme: theme,
-                  title: title,
-                  subtitle: subtitle,
-                  headerAccessory: headerAccessory,
-                  headerCompact: headerCompact,
-                  hideSubtitle: keyboardOpen,
-                ),
+                if (showTitle || subtitle != null || headerAccessory != null)
+                  _AuthFormHeader(
+                    theme: theme,
+                    title: title,
+                    subtitle: subtitle,
+                    headerAccessory: headerAccessory,
+                    headerCompact: headerCompact,
+                    hideSubtitle: keyboardOpen,
+                    showTitle: showTitle,
+                    centerTitle: centerTitle,
+                  ),
                 SizedBox(
                   height: headerAccessory != null
                       ? (headerCompact ? 8 : 12)
@@ -127,6 +143,8 @@ class _AuthFormHeader extends StatelessWidget {
     required this.headerAccessory,
     required this.headerCompact,
     required this.hideSubtitle,
+    required this.showTitle,
+    required this.centerTitle,
   });
 
   final ThemeData theme;
@@ -135,28 +153,34 @@ class _AuthFormHeader extends StatelessWidget {
   final Widget? headerAccessory;
   final bool headerCompact;
   final bool hideSubtitle;
+  final bool showTitle;
+  final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(24, headerCompact ? 0 : 4, 24, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            centerTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: (headerCompact
-                    ? theme.textTheme.titleLarge
-                    : theme.textTheme.headlineSmall)
-                ?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-              height: 1.12,
+          if (showTitle) ...[
+            Text(
+              title,
+              textAlign: centerTitle ? TextAlign.center : TextAlign.start,
+              style: (headerCompact
+                      ? theme.textTheme.titleLarge
+                      : theme.textTheme.headlineSmall)
+                  ?.copyWith(
+                fontFamily: AppFonts.display,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                height: 1.12,
+              ),
             ),
-          ),
+          ],
           if (subtitle != null && !hideSubtitle) ...[
-            SizedBox(height: headerCompact ? 4 : 8),
+            if (showTitle) SizedBox(height: headerCompact ? 4 : 8),
             Text(
               subtitle!,
               maxLines: headerCompact ? 2 : null,

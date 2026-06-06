@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/utils/currency_format.dart';
 import '../logic/booking_formatters.dart';
 
 class SelectedServiceHeader extends StatelessWidget {
@@ -115,9 +116,9 @@ class SelectedServiceHeader extends StatelessWidget {
                 ),
               ),
               child: Text(
-                '${service.prix.toStringAsFixed(0)} â‚¬',
+                CurrencyFormat.eur(service.prix),
                 style: const TextStyle(
-                  fontFamily: AppFonts.display,
+                  fontFamily: AppFonts.body,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                   color: AppColors.white,

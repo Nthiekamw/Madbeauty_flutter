@@ -37,6 +37,10 @@ abstract final class AuthRoleCache {
     required List<String> serverRoleValues,
     String? cachedRole,
   }) {
+    if (serverRoleValues.contains('admin')) {
+      return 'admin';
+    }
+
     final signupIntent = LocalCacheService.instance.signupShellRole;
 
     if (serverRoleValues.isEmpty) {
@@ -81,18 +85,29 @@ abstract final class AuthRoleCache {
     return null;
   }
 
+  static bool hasAdminAmong(List<String> serverRoleValues) =>
+      serverRoleValues.contains('admin');
+
   /// Chemin shell pour un utilisateur connecté (sync, pour [GoRouter.redirect]).
   static String preferredAuthenticatedPath() {
     final resume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
     if (resume != null) return resume;
 
+    final cachedRoles = LocalCacheService.instance.cachedServerRoles;
+    if (hasAdminAmong(cachedRoles)) {
+      return AppRoutes.adminHome;
+    }
+
     final effective = resolveEffectiveRole(
-      serverRoleValues: LocalCacheService.instance.cachedServerRoles,
+      serverRoleValues: cachedRoles,
       cachedRole: LocalCacheService.instance.selectedRole,
     );
     return switch (effective) {
+      'admin' => AppRoutes.adminHome,
       'prestataire' => AppRoutes.prestataireDashboard,
       'client' => AppRoutes.clientHome,
+      // Rôles pas encore synchronisés après login : repasser par le splash.
+      null when cachedRoles.isEmpty => AppRoutes.splash,
       _ => AppRoutes.role,
     };
   }

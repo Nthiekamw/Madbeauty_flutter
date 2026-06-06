@@ -21,6 +21,19 @@ class ProfileService {
         },
       );
 
+  Future<bool> isUserBanned(String userId) => SupabaseErrorHandler.run(
+        operation: 'profile.isUserBanned',
+        action: () async {
+          final response = await _client
+              .from('user_profiles')
+              .select('is_banned')
+              .eq('user_id', userId)
+              .maybeSingle();
+          if (response == null) return false;
+          return response['is_banned'] as bool? ?? false;
+        },
+      );
+
   Future<UserProfile?> getByUserId(String userId) => SupabaseErrorHandler.run(
         operation: 'profile.getByUserId',
         action: () async {

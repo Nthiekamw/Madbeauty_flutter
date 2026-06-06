@@ -1,10 +1,11 @@
+import '../../../shared/utils/currency_format.dart';
 import '../models/booking_slot.dart';
 
 String formatBookingServiceMeta({
   required int durationMinutes,
   required double price,
 }) {
-  return '$durationMinutes min â€¢ ${price.toStringAsFixed(2)} â‚¬';
+  return '$durationMinutes min · ${CurrencyFormat.eur(price, decimals: true)}';
 }
 
 String formatBookingDate(DateTime day) {

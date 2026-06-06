@@ -14,6 +14,7 @@ void main() {
       await container.read(loginControllerProvider.notifier).submit(
             rawEmail: 'invalid-email',
             rawPassword: '',
+            rawPhoneE164: '',
           );
 
       final state = container.read(loginControllerProvider);
@@ -30,6 +31,7 @@ void main() {
       await container.read(loginControllerProvider.notifier).submit(
             rawEmail: 'user@madbeauty.app',
             rawPassword: 'password123',
+            rawPhoneE164: '+33612345678',
           );
 
       final state = container.read(loginControllerProvider);

@@ -30,7 +30,10 @@ export function verifyReportWebhookSecret(req: Request): boolean {
 }
 
 function parseNotifyEmails(): string[] {
-  const raw = Deno.env.get("CONTENT_REPORT_NOTIFY_EMAILS") ?? "";
+  const raw =
+    Deno.env.get("CONTENT_REPORT_NOTIFY_EMAILS") ??
+      Deno.env.get("ADMIN_NOTIFY_EMAILS") ??
+      "";
   return raw
     .split(",")
     .map((e) => e.trim())
@@ -104,6 +107,76 @@ export async function sendContentReportEmail(
       from,
       to: recipients,
       subject: `[MadBeauty] Nouveau signalement — ${targetLabel}`,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend ${res.status}: ${body}`);
+  }
+
+  return { sent: true };
+}
+
+export interface VerificationRequestEmailInput {
+  eventId: string;
+  prestataireId: string;
+  nomSalon?: string | null;
+  ville?: string | null;
+  displayName?: string | null;
+  actorUserId: string;
+  createdAt?: string | null;
+}
+
+export async function sendVerificationRequestEmail(
+  input: VerificationRequestEmailInput,
+): Promise<{ sent: boolean; reason?: string }> {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  const recipients = parseNotifyEmails();
+  if (!apiKey) {
+    console.warn("RESEND_API_KEY manquant — e-mail vérification ignoré.");
+    return { sent: false, reason: "no_resend_key" };
+  }
+  if (recipients.length === 0) {
+    console.warn(
+      "CONTENT_REPORT_NOTIFY_EMAILS / ADMIN_NOTIFY_EMAILS vide — e-mail vérification ignoré.",
+    );
+    return { sent: false, reason: "no_recipients" };
+  }
+
+  const from = Deno.env.get("CONTENT_REPORT_MAIL_FROM") ??
+    "MadBeauty <noreply@madbeauty.app>";
+  const created = input.createdAt
+    ? new Date(input.createdAt).toLocaleString("fr-FR", {
+      timeZone: "Europe/Paris",
+    })
+    : "—";
+  const salon = (input.nomSalon ?? "").trim() || "—";
+  const ville = (input.ville ?? "").trim() || "—";
+  const name = (input.displayName ?? "").trim() || "—";
+
+  const html = `
+    <h2>Demande de vérification prestataire</h2>
+    <p><strong>Date :</strong> ${escapeHtml(created)}</p>
+    <p><strong>Salon :</strong> ${escapeHtml(salon)}</p>
+    <p><strong>Ville :</strong> ${escapeHtml(ville)}</p>
+    <p><strong>Contact :</strong> ${escapeHtml(name)}</p>
+    <p><strong>Prestataire ID :</strong> ${escapeHtml(input.prestataireId)}</p>
+    <p><strong>User ID :</strong> ${escapeHtml(input.actorUserId)}</p>
+    <p style="color:#666;font-size:12px;">Ouvre l’onglet Vérifications du back-office admin pour traiter cette demande.</p>
+  `.trim();
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: recipients,
+      subject: `[MadBeauty] Demande de vérification — ${salon}`,
       html,
     }),
   });

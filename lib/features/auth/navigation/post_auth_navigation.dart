@@ -7,9 +7,13 @@ import '../../../services/storage/local_cache_service.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../../profile/logic/become_prestataire_flow_resume.dart';
 import '../../prestataire/providers/current_prestataire_provider.dart';
+import '../../../core/models/user_role.dart';
 import '../logic/auth_role_cache.dart';
+import '../providers/auth_notifier.dart';
 import '../providers/my_roles_provider.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
+import '../../../services/supabase/profile/profile_service.dart';
+import '../../../services/supabase/supabase_service.dart';
 
 /// Destination après connexion, inscription ou splash (rôles serveur + cache).
 abstract final class PostAuthNavigation {
@@ -39,9 +43,17 @@ abstract final class PostAuthNavigation {
   static Future<void> navigate(BuildContext context, WidgetRef ref) async {
     if (!context.mounted) return;
 
+    if (await _redirectIfBanned(context, ref)) return;
+
     final roles = await ref.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
     if (!context.mounted) return;
+
+    if (roles.any((r) => r == UserRole.admin)) {
+      await LocalCacheService.instance.setSelectedRole('admin');
+      context.goAdminHome();
+      return;
+    }
 
     if (roles.isEmpty) {
       final inferredRole = await _inferRoleFromProfiles(ref);
@@ -93,7 +105,9 @@ abstract final class PostAuthNavigation {
     await LocalCacheService.instance.setSelectedRole(effective);
     if (!context.mounted) return;
 
-    if (effective == 'prestataire') {
+    if (effective == 'admin') {
+      context.goAdminHome();
+    } else if (effective == 'prestataire') {
       await PrestataireNavigation.switchToPrestataireSpace(context, ref);
     } else {
       context.goHome();
@@ -106,6 +120,8 @@ abstract final class PostAuthNavigation {
     ProviderContainer container,
   ) async {
     if (!context.mounted) return;
+
+    if (await _redirectIfBannedWithContainer(context, container)) return;
 
     final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
     if (becomeResume != null) {
@@ -120,6 +136,12 @@ abstract final class PostAuthNavigation {
     final roles = await container.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
     if (!context.mounted) return;
+
+    if (roles.any((r) => r == UserRole.admin)) {
+      await LocalCacheService.instance.setSelectedRole('admin');
+      context.goAdminHome();
+      return;
+    }
 
     if (roles.isEmpty) {
       final inferredRole = await _inferRoleFromProfilesWithContainer(container);
@@ -180,7 +202,9 @@ abstract final class PostAuthNavigation {
     await LocalCacheService.instance.setSelectedRole(effective);
     if (!context.mounted) return;
 
-    if (effective == 'prestataire') {
+    if (effective == 'admin') {
+      context.goAdminHome();
+    } else if (effective == 'prestataire') {
       await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
         context,
         container,
@@ -188,6 +212,34 @@ abstract final class PostAuthNavigation {
     } else {
       context.goHome();
     }
+  }
+
+  static Future<bool> _redirectIfBanned(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final user = ref.read(authNotifierProvider).value;
+    if (user == null) return false;
+    final banned = await ProfileService(SupabaseService.client)
+        .isUserBanned(user.id);
+    if (!banned) return false;
+    await ref.read(authNotifierProvider.notifier).signOut();
+    if (context.mounted) context.goWelcome();
+    return true;
+  }
+
+  static Future<bool> _redirectIfBannedWithContainer(
+    BuildContext context,
+    ProviderContainer container,
+  ) async {
+    final user = container.read(authNotifierProvider).value;
+    if (user == null) return false;
+    final banned = await ProfileService(SupabaseService.client)
+        .isUserBanned(user.id);
+    if (!banned) return false;
+    await container.read(authNotifierProvider.notifier).signOut();
+    if (context.mounted) context.goWelcome();
+    return true;
   }
 
   static Future<String?> _inferRoleFromProfiles(WidgetRef ref) async {

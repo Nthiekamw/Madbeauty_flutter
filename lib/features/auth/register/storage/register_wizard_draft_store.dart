@@ -11,7 +11,14 @@ class RegisterWizardDraftStore {
 
   static RegisterWizardDraftStore get instance => RegisterWizardDraftStore._();
 
-  bool get hasDraft => read() != null;
+  bool get hasDraft {
+    final draft = read();
+    return draft != null && draft.isActive;
+  }
+
+  /// Brouillon en attente de confirmation e-mail après signUp.
+  bool get pendingEmailVerification =>
+      read()?.pendingEmailVerification ?? false;
 
   RegisterWizardDraft? read() {
     final raw = LocalCacheService.instance.getString(_key);

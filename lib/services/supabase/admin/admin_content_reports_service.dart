@@ -35,12 +35,27 @@ class AdminContentReportsService {
   }
 
   Future<void> markReviewed({required String reportId}) async {
+    await moderateReport(
+      reportId: reportId,
+      action: 'dismiss',
+    );
+  }
+
+  Future<void> moderateReport({
+    required String reportId,
+    required String action,
+    String? note,
+  }) async {
     await SupabaseErrorHandler.run(
-      operation: 'adminContentReports.markReviewed',
+      operation: 'adminContentReports.moderateReport',
       action: () async {
         await _client.rpc(
-          'admin_mark_content_report_reviewed',
-          params: {'p_report_id': reportId},
+          'admin_moderate_content_report',
+          params: {
+            'p_report_id': reportId,
+            'p_action': action,
+            'p_note': note,
+          },
         );
       },
     );
@@ -61,6 +76,8 @@ class AdminContentReportsService {
           DateTime.tryParse((row['created_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       reviewedAt: DateTime.tryParse((row['reviewed_at'] as String?) ?? ''),
+      actionTaken: row['action_taken'] as String?,
+      actionNote: row['action_note'] as String?,
     );
   }
 }

@@ -18,6 +18,8 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../auth/providers/my_roles_provider.dart';
+import '../../../core/models/user_role.dart';
 import '../widgets/profile_role_space_section.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';
@@ -276,6 +278,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isAmbassador = ref
         .watch(myReferralInfoProvider)
         .maybeWhen(data: (i) => i?.isAmbassador ?? false, orElse: () => false);
+    final isAdmin = ref
+        .watch(myRolesProvider)
+        .maybeWhen(
+          data: (roles) => roles.contains(UserRole.admin),
+          orElse: () => false,
+        );
 
     return DiscoveryBrandScaffold(
       body: ListView(
@@ -300,6 +308,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       avatarBytes: _avatarPreviewBytes,
                       photoLoading: _savingPhoto,
                       showAmbassadorBadge: isAmbassador,
+                      showAdminBadge: isAdmin,
                       onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
                       onEditName: _savingName ? null : () => _editName(profile),
                     ),

@@ -72,71 +72,79 @@ class _OverviewGridBody extends StatelessWidget {
 
   final PrestataireDashboardOverviewData data;
 
+  static const double _spacing = 10;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _OverviewCard(
-                icon: Icons.calendar_today_rounded,
-                value: '${data.todayAppointments}',
-                label: DiscPrestaDash.overviewToday,
-                trend: formatOverviewTrend(
-                  percent: null,
-                  delta: data.todayVsYesterdayDelta,
-                  vsLabel: DiscPrestaDash.overviewVsYesterday,
-                ),
-                positiveTrend: (data.todayVsYesterdayDelta ?? 0) >= 0,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _OverviewCard(
-                icon: Icons.people_outline_rounded,
-                value: '${data.clientsThisMonth}',
-                label: DiscPrestaDash.overviewClientsMonth,
-                trend: formatOverviewTrend(
-                  percent: data.clientsChangePercent,
-                  vsLabel: DiscPrestaDash.overviewVsLastMonth,
-                ),
-                positiveTrend: (data.clientsChangePercent ?? 0) >= 0,
-              ),
-            ),
-          ],
+    final cards = <_OverviewCard>[
+      _OverviewCard(
+        icon: Icons.calendar_today_rounded,
+        value: '${data.todayAppointments}',
+        label: DiscPrestaDash.overviewToday,
+        trend: formatOverviewTrend(
+          percent: null,
+          delta: data.todayVsYesterdayDelta,
+          vsLabel: DiscPrestaDash.overviewVsYesterday,
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _OverviewCard(
-                icon: Icons.account_balance_wallet_outlined,
-                value: formatOverviewCurrency(data.monthRevenueEur),
-                label: DiscPrestaDash.overviewRevenueMonth,
-                trend: formatOverviewTrend(
-                  percent: data.monthRevenueChangePercent,
-                  vsLabel: DiscPrestaDash.overviewVsLastMonth,
-                ),
-                positiveTrend: (data.monthRevenueChangePercent ?? 0) >= 0,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _OverviewCard(
-                icon: Icons.trending_up_rounded,
-                value: formatOverviewCurrency(data.totalRevenueEur),
-                label: DiscPrestaDash.overviewRevenueTotal,
-                trend: formatOverviewTrend(
-                  percent: data.totalRevenueChangePercent,
-                  vsLabel: DiscPrestaDash.overviewVsLastMonth,
-                ),
-                positiveTrend: (data.totalRevenueChangePercent ?? 0) >= 0,
-              ),
-            ),
-          ],
+        positiveTrend: (data.todayVsYesterdayDelta ?? 0) >= 0,
+      ),
+      _OverviewCard(
+        icon: Icons.people_outline_rounded,
+        value: '${data.clientsThisMonth}',
+        label: DiscPrestaDash.overviewClientsMonth,
+        trend: formatOverviewTrend(
+          percent: data.clientsChangePercent,
+          vsLabel: DiscPrestaDash.overviewVsLastMonth,
         ),
-      ],
+        positiveTrend: (data.clientsChangePercent ?? 0) >= 0,
+      ),
+      _OverviewCard(
+        icon: Icons.account_balance_wallet_outlined,
+        value: formatOverviewCurrency(data.monthRevenueEur),
+        label: DiscPrestaDash.overviewRevenueMonth,
+        trend: formatOverviewTrend(
+          percent: data.monthRevenueChangePercent,
+          vsLabel: DiscPrestaDash.overviewVsLastMonth,
+        ),
+        positiveTrend: (data.monthRevenueChangePercent ?? 0) >= 0,
+      ),
+      _OverviewCard(
+        icon: Icons.trending_up_rounded,
+        value: formatOverviewCurrency(data.totalRevenueEur),
+        label: DiscPrestaDash.overviewRevenueTotal,
+        trend: formatOverviewTrend(
+          percent: data.totalRevenueChangePercent,
+          vsLabel: DiscPrestaDash.overviewVsLastMonth,
+        ),
+        positiveTrend: (data.totalRevenueChangePercent ?? 0) >= 0,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = (constraints.maxWidth - _spacing) / 2;
+        final cardHeight = cardWidth / _OverviewCard.aspectRatio;
+
+        return Column(
+          children: [
+            for (var row = 0; row < 2; row++) ...[
+              if (row > 0) const SizedBox(height: _spacing),
+              Row(
+                children: [
+                  for (var col = 0; col < 2; col++) ...[
+                    if (col > 0) const SizedBox(width: _spacing),
+                    SizedBox(
+                      width: cardWidth,
+                      height: cardHeight,
+                      child: cards[row * 2 + col],
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -149,6 +157,9 @@ class _OverviewCard extends StatelessWidget {
     required this.trend,
     required this.positiveTrend,
   });
+
+  /// Ratio largeur/hauteur identique pour les 4 cartes de la grille.
+  static const double aspectRatio = 1.12;
 
   final IconData icon;
   final String value;
@@ -180,85 +191,96 @@ class _OverviewCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: AppColors.brandBrown,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: AppColors.white, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        label,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.25,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (trend.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.brandGold.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      positiveTrend
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded,
-                      size: 14,
-                      color: positiveTrend
-                          ? AppColors.success
-                          : theme.colorScheme.error,
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: AppColors.brandBrown,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        trend,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                    child: Icon(icon, color: AppColors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        Text(
+                          label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.25,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
+            SizedBox(
+              height: 30,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: trend.isEmpty
+                    ? const SizedBox.shrink()
+                    : Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandGold.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              positiveTrend
+                                  ? Icons.arrow_upward_rounded
+                                  : Icons.arrow_downward_rounded,
+                              size: 14,
+                              color: positiveTrend
+                                  ? AppColors.success
+                                  : theme.colorScheme.error,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                trend,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
           ],
         ),
       ),

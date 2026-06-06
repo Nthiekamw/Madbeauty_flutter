@@ -35,6 +35,9 @@ class AdminVerificationService {
             ville: row['ville'] as String?,
             isVerified: row['is_verified'] as bool? ?? false,
             verifiedAt: DateTime.tryParse((row['verified_at'] as String?) ?? ''),
+            verificationRequestedAt: DateTime.tryParse(
+              (row['verification_requested_at'] as String?) ?? '',
+            ),
           );
         }).toList();
       },
