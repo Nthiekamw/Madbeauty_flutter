@@ -8,6 +8,7 @@ import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/location/geolocation_service.dart';
+import '../screens/listing_map_fullscreen_screen.dart';
 
 class ListingMapView extends StatefulWidget {
   const ListingMapView({
@@ -15,11 +16,15 @@ class ListingMapView extends StatefulWidget {
     required this.entries,
     this.clientLocation,
     this.locationLoading = false,
+    this.borderRadius = const BorderRadius.all(Radius.circular(18)),
+    this.showFullscreenButton = true,
   });
 
   final List<PrestataireCatalogEntry> entries;
   final ClientLocation? clientLocation;
   final bool locationLoading;
+  final BorderRadius borderRadius;
+  final bool showFullscreenButton;
 
   @override
   State<ListingMapView> createState() => _ListingMapViewState();
@@ -62,9 +67,8 @@ class _ListingMapViewState extends State<ListingMapView> {
 
     final center = _centerFor(geoEntries, widget.clientLocation);
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: Stack(
+    final mapStack = Stack(
+        fit: StackFit.expand,
         children: [
           FlutterMap(
             mapController: _mapController,
@@ -121,6 +125,16 @@ class _ListingMapViewState extends State<ListingMapView> {
               ),
             ],
           ),
+          if (widget.showFullscreenButton)
+            Positioned(
+              top: 12,
+              left: 12,
+              child: ListingMapOverlayButton(
+                icon: Icons.open_in_full_rounded,
+                tooltip: DiscList.mapExpandHint,
+                onTap: () => _openFullscreen(context),
+              ),
+            ),
           if (widget.locationLoading)
             Positioned(
               top: 12,
@@ -135,6 +149,27 @@ class _ListingMapViewState extends State<ListingMapView> {
               child: _PrestataireMapCard(entry: _selectedEntry!),
             ),
         ],
+      );
+
+    if (widget.borderRadius == BorderRadius.zero) {
+      return mapStack;
+    }
+
+    return ClipRRect(
+      borderRadius: widget.borderRadius,
+      child: mapStack,
+    );
+  }
+
+  void _openFullscreen(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (context) => ListingMapFullscreenScreen(
+          entries: widget.entries,
+          clientLocation: widget.clientLocation,
+          locationLoading: widget.locationLoading,
+        ),
       ),
     );
   }
@@ -304,6 +339,46 @@ class _PrestataireMapCard extends StatelessWidget {
               child: const Text(DiscList.mapOpenDetail),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ListingMapOverlayButton extends StatelessWidget {
+  const ListingMapOverlayButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: theme.colorScheme.surface.withValues(alpha: 0.94),
+        elevation: 3,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(
+              icon,
+              size: 22,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
         ),
       ),
     );

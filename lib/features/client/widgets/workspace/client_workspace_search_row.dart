@@ -2,6 +2,7 @@
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../../shared/theme/app_colors.dart';
 
 /// Barre de recherche + bouton filtres (écran Recherche).
 class ClientWorkspaceSearchRow extends StatelessWidget {
@@ -13,6 +14,7 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
     this.onFilterTap,
     this.onSubmitted,
     this.filtersActive = false,
+    this.compact = false,
   });
 
   final TextEditingController controller;
@@ -21,16 +23,18 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
   final VoidCallback? onFilterTap;
   final ValueChanged<String>? onSubmitted;
   final bool filtersActive;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
-    const fieldHeight = 50.0;
+    final fieldHeight = compact ? 44.0 : 50.0;
+    final fontSize = compact ? 13.0 : null;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 6),
+      padding: EdgeInsets.fromLTRB(hPad, compact ? 2 : 4, hPad, compact ? 4 : 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -53,14 +57,19 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
                 onChanged: onChanged,
                 onSubmitted: onSubmitted,
                 textInputAction: TextInputAction.search,
+                style: fontSize != null
+                    ? theme.textTheme.bodyMedium?.copyWith(fontSize: fontSize)
+                    : null,
                 decoration: InputDecoration(
                   hintText: DiscClientWorkspace.searchHint,
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant
                         .withValues(alpha: 0.65),
+                    fontSize: fontSize,
                   ),
                   prefixIcon: Icon(
-                    Icons.search_rounded,
+                    compact ? Icons.search_rounded : Icons.storefront_outlined,
+                    size: compact ? 20 : 24,
                     color: primary.withValues(alpha: 0.75),
                   ),
                   suffixIcon: controller.text.isEmpty
@@ -73,8 +82,11 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
                           ),
                         ),
                   filled: true,
-                  fillColor: theme.colorScheme.surface,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  fillColor: AppColors.cardSurfaceFor(theme.brightness),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: compact ? 10 : 13,
+                  ),
+                  isDense: compact,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(

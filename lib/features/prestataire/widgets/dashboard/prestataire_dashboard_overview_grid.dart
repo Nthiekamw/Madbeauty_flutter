@@ -122,24 +122,20 @@ class _OverviewGridBody extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - _spacing) / 2;
-        final cardHeight = cardWidth / _OverviewCard.aspectRatio;
-
         return Column(
           children: [
             for (var row = 0; row < 2; row++) ...[
               if (row > 0) const SizedBox(height: _spacing),
-              Row(
-                children: [
-                  for (var col = 0; col < 2; col++) ...[
-                    if (col > 0) const SizedBox(width: _spacing),
-                    SizedBox(
-                      width: cardWidth,
-                      height: cardHeight,
-                      child: cards[row * 2 + col],
-                    ),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var col = 0; col < 2; col++) ...[
+                      if (col > 0) const SizedBox(width: _spacing),
+                      Expanded(child: cards[row * 2 + col]),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ],
@@ -157,9 +153,6 @@ class _OverviewCard extends StatelessWidget {
     required this.trend,
     required this.positiveTrend,
   });
-
-  /// Ratio largeur/hauteur identique pour les 4 cartes de la grille.
-  static const double aspectRatio = 1.12;
 
   final IconData icon;
   final String value;
@@ -187,100 +180,99 @@ class _OverviewCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: AppColors.brandBrown,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: AppColors.white, size: 22),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontFamily: AppFonts.display,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          label,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.25,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  child: Icon(
+                    icon,
+                    color: theme.colorScheme.onPrimary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w900,
+                      height: 1.05,
+                      letterSpacing: -0.5,
+                      fontSize: 22,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              softWrap: true,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.3,
+                fontWeight: FontWeight.w600,
+                fontSize: 12.5,
               ),
             ),
-            SizedBox(
-              height: 30,
-              child: Align(
+            if (trend.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Align(
                 alignment: Alignment.centerLeft,
-                child: trend.isEmpty
-                    ? const SizedBox.shrink()
-                    : Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandGold.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              positiveTrend
-                                  ? Icons.arrow_upward_rounded
-                                  : Icons.arrow_downward_rounded,
-                              size: 14,
-                              color: positiveTrend
-                                  ? AppColors.success
-                                  : theme.colorScheme.error,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                trend,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandGold.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        positiveTrend
+                            ? Icons.arrow_upward_rounded
+                            : Icons.arrow_downward_rounded,
+                        size: 13,
+                        color: positiveTrend
+                            ? AppColors.success
+                            : theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          trend,
+                          softWrap: true,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10.5,
+                            height: 1.2,
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

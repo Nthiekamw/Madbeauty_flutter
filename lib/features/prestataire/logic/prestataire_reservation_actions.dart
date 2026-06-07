@@ -8,6 +8,8 @@ import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../providers/prestataire_bookings_invalidate.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../models/prestataire_reservation_item.dart';
+import 'prestataire_reservation_completion.dart';
 import '../widgets/dialogs/reject_reservation_dialog.dart';
 
 /// Actions réservation (accepter, refuser, terminer) partagées dashboard / agenda.
@@ -86,7 +88,12 @@ class PrestataireReservationActions {
     return false;
   }
 
-  Future<bool> markDone(String reservationId) async {
+  Future<bool> markDone(PrestataireReservationItem item) async {
+    if (!prestataireCanMarkReservationDone(item)) {
+      _snack(DiscPrestaAgenda.markDoneTooEarly);
+      return false;
+    }
+
     final booking = ref.read(bookingServiceProvider);
     if (booking == null) {
       _snack(DiscPrestaDash.actionErr);
@@ -97,7 +104,7 @@ class PrestataireReservationActions {
       context: context,
       action: PendingOfflineAction.create(
         type: OfflineActionType.bookingMarkDone,
-        payload: {'reservationId': reservationId},
+        payload: {'reservationId': item.id},
       ),
     )) {
       invalidatePrestataireBookings(ref);
@@ -105,7 +112,7 @@ class PrestataireReservationActions {
     }
 
     try {
-      await booking.markAsDone(reservationId);
+      await booking.markAsDone(item.id);
       invalidatePrestataireBookings(ref);
       _snack(DiscPrestaDash.actionOk, kind: AppSnackKind.success);
       return true;

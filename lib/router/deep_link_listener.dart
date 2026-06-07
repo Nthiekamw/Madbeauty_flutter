@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../core/constants/app_strings.dart';
+import '../services/auth/auth_deep_link_handler.dart';
 import '../services/storage/local_cache_service.dart';
 import '../services/stripe/stripe_subscription_providers.dart';
 import '../shared/widgets/app/app_snack_bar.dart';
@@ -38,7 +38,12 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   Future<void> _handleInitialLink() async {
     try {
       final uri = await _appLinks.getInitialLink();
-      if (uri != null) _navigateFromUri(uri);
+      if (uri == null) return;
+      if (AuthDeepLinkHandler.isAuthCallbackUri(uri)) {
+        await _handleAuthCallback(uri);
+        return;
+      }
+      _navigateFromUri(uri);
     } catch (e, st) {
       debugPrint('DeepLinkListener initial: $e\n$st');
     }
@@ -54,6 +59,11 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   }
 
   void _navigateFromUri(Uri uri) {
+    if (AppDeepLinks.isAuthCallbackUri(uri)) {
+      unawaited(_handleAuthCallback(uri));
+      return;
+    }
+
     final subscriptionPath = AppDeepLinks.subscriptionReturnPath(uri);
     if (subscriptionPath != null) {
       _goSubscriptionReturn(subscriptionPath, uri);
@@ -89,6 +99,10 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
       if (router.state.matchedLocation == base) return;
       router.go(path);
     });
+  }
+
+  Future<void> _handleAuthCallback(Uri uri) async {
+    await AuthDeepLinkHandler.handle(uri);
   }
 
   void _goSubscriptionReturn(String path, Uri uri) {

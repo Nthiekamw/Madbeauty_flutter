@@ -10,19 +10,21 @@ class DiscoverySurfaceCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.symmetric(vertical: 4),
+    this.includeHorizontalMargin = true,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final bool includeHorizontalMargin;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final surfaceColor = theme.colorScheme.surface.withValues(
-      alpha: isDark ? 0.92 : 0.98,
-    );
+    final surfaceColor = isDark
+        ? theme.colorScheme.surfaceContainerHigh
+        : theme.colorScheme.surface.withValues(alpha: 0.98);
     final borderRadius = DiscoveryStyles.cardBorderRadius;
     final borderSide = BorderSide(
       color: theme.colorScheme.outline.withValues(alpha: 0.12),
@@ -45,23 +47,27 @@ class DiscoverySurfaceCard extends StatelessWidget {
 
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
+    final cardWithShadow = isDark
+        ? card
+        : DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: card,
+          );
+
+    if (!includeHorizontalMargin) return cardWithShadow;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
-      child: isDark
-          ? card
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: card,
-            ),
+      child: cardWithShadow,
     );
   }
 }

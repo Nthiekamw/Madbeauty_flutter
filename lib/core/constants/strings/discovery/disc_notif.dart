@@ -11,4 +11,22 @@ abstract final class DiscNotif {
   static const emptyBody =
       'Quand vous recevez des alertes (réservations, confirmations…), '
       'elles apparaîtront ici. Activez aussi les notifications du téléphone pour ne rien manquer.';
+  static const syncErr =
+      'Impossible de charger l’historique des alertes. Réessaie.';
+
+  static const bookingPendingTitle = 'Nouvelle demande de réservation';
+  static const bookingConfirmedTitle = 'Réservation confirmée';
+  static const bookingCancelledTitle = 'Réservation annulée';
+  static const bookingDoneTitle = 'Prestation terminée';
+
+  static const clientPendingTitle = 'Demande envoyée';
+  static const clientConfirmedTitle = 'Réservation confirmée';
+  static const clientCancelledTitle = 'Réservation annulée';
+  static const clientDoneTitle = 'Prestation terminée';
+
+  static String bookingBody({
+    required String clientOrSalon,
+    required String service,
+  }) =>
+      '$clientOrSalon · $service';
 }

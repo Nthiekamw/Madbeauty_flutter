@@ -46,7 +46,7 @@ class ListingSearchHeader extends StatelessWidget {
           DiscoveryScreenHeader(
             compact: true,
             title: DiscNav.searchTitle,
-            icon: Icons.search_rounded,
+            icon: Icons.storefront_rounded,
             action: layout.isCompact ? null : toggle,
           ),
           Padding(

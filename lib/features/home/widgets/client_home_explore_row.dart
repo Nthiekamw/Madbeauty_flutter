@@ -1,44 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/theme/app_fonts.dart';
-import '../theme/home_styles.dart';
-import 'client_home_section_header.dart';
+import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
+import '../providers/home_feed_provider.dart';
+import 'client_home_section_header.dart';
 
-/// Grille de catégories visuelles vers la recherche / listing.
-class ClientHomeExploreRow extends StatelessWidget {
-  const ClientHomeExploreRow({
-    super.key,
-    required this.onPick,
-  });
+/// Filtres horizontaux par service (Inspirations).
+class ClientHomeExploreRow extends ConsumerWidget {
+  const ClientHomeExploreRow({super.key});
 
-  final ValueChanged<String> onPick;
-
-  static const List<({String label, IconData icon})> _topics = [
-    (label: 'Tresses', icon: Icons.waves_rounded),
-    (label: 'Locks', icon: Icons.all_inclusive_rounded),
-    (label: 'Coiffure afro', icon: Icons.face_retouching_natural_outlined),
-    (label: 'Coupe', icon: Icons.content_cut_rounded),
-    (label: 'Entretien', icon: Icons.spa_outlined),
-    (label: 'Coloration', icon: Icons.palette_outlined),
-  ];
-
-  /// Accents dérivés du [ColorScheme] client (marron / tons chauds).
-  static List<Color> _accentPalette(ColorScheme scheme) {
-    return [
-      scheme.primary,
-      scheme.secondary,
-      scheme.tertiary,
-      Color.lerp(scheme.primary, scheme.secondary, 0.5)!,
-      Color.lerp(scheme.secondary, scheme.tertiary, 0.5)!,
-      scheme.outline,
-    ];
-  }
+  static const _chipHeight = 40.0;
 
   @override
-  Widget build(BuildContext context) {
-    final accents = _accentPalette(Theme.of(context).colorScheme);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selection = ref.watch(homeFeedSelectionProvider);
+    final selectedAll = selection?.allServices ?? true;
+    final selectedMain = selection?.mainService;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,126 +28,92 @@ class ClientHomeExploreRow extends StatelessWidget {
           subtitle: DiscHome.inspireSub,
         ),
         const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const spacing = 8.0;
-            final tileW = (constraints.maxWidth - spacing * 2) / 3;
-            final tileH = tileW * 0.72;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: _topics.asMap().entries.map((entry) {
-                final topic = entry.value;
-                final accent = accents[entry.key % accents.length];
-                return SizedBox(
-                  width: tileW,
-                  height: tileH,
-                  child: _ExploreTile(
-                    label: topic.label,
-                    icon: topic.icon,
-                    accentColor: accent,
-                    onTap: () => onPick(topic.label),
-                  ),
+        SizedBox(
+          height: _chipHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: 1 + PrestaMainService.values.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _ServiceFilterChip(
+                  label: DiscHome.filterAll,
+                  icon: Icons.grid_view_rounded,
+                  selected: selectedAll,
+                  onTap: () => ref
+                      .read(homeFeedSelectionProvider.notifier)
+                      .setMainServiceFilter(allServices: true),
                 );
-              }).toList(),
-            );
-          },
+              }
+              final service = PrestaMainService.values[index - 1];
+              return _ServiceFilterChip(
+                label: PrestataireServiceCatalog.label(service),
+                icon: PrestataireServiceCatalog.icon(service),
+                selected: !selectedAll && selectedMain == service,
+                onTap: () => ref
+                    .read(homeFeedSelectionProvider.notifier)
+                    .setMainServiceFilter(mainService: service),
+              );
+            },
+          ),
         ),
       ],
     );
   }
 }
 
-class _ExploreTile extends StatelessWidget {
-  const _ExploreTile({
+class _ServiceFilterChip extends StatelessWidget {
+  const _ServiceFilterChip({
     required this.label,
     required this.icon,
-    required this.accentColor,
+    required this.selected,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
-  final Color accentColor;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fill = selected
+        ? Theme.of(context).colorScheme.primary
+        : (isDark
+            ? AppColors.darkSurfaceContainerHigh
+            : AppColors.filterChipInactive);
+    final fg = selected
+        ? Theme.of(context).colorScheme.onPrimary
+        : (isDark
+            ? AppColors.darkOnSurface
+            : AppColors.filterChipInactiveText);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final tileHeight = constraints.maxHeight;
-        final compact = tileHeight < 88;
-        final circleSize = compact ? 28.0 : 32.0;
-        final iconSize = compact ? 15.0 : 17.0;
-        final verticalGap = compact ? 4.0 : 6.0;
-        final contentPadding = compact ? 6.0 : 8.0;
-
-        return Material(
-          color: AppColors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: HomeStyles.cardBorderRadius,
-            child: Ink(
-              decoration: BoxDecoration(
-                borderRadius: HomeStyles.cardBorderRadius,
-                color: theme.colorScheme.surface.withValues(
-                  alpha: isDark ? 0.85 : 0.95,
-                ),
-                border: Border.all(
-                  color: accentColor.withValues(alpha: 0.2),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: isDark ? 0.08 : 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(contentPadding),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: circleSize,
-                      height: circleSize,
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Icon(icon, size: iconSize, color: accentColor),
+    return Material(
+      color: fill,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontFamily: AppFonts.body,
+                      fontWeight: FontWeight.w600,
+                      color: fg,
                     ),
-                    SizedBox(height: verticalGap),
-                    Flexible(
-                      child: Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w700,
-                          height: 1.15,
-                          fontSize: compact ? 10 : 11,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
-

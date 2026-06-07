@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'in_app_notification.dart';
+import 'in_app_notifications_sync.dart';
 
 const _prefsKey = 'in_app_notifications.v1';
 const _maxItems = 50;
@@ -17,6 +18,12 @@ final inAppNotificationsProvider =
 
 final unreadInAppNotificationsCountProvider = Provider<int>((ref) {
   return ref.watch(inAppNotificationsProvider).where((e) => !e.read).length;
+});
+
+/// Synchronise la boîte de notifications depuis les réservations Supabase.
+final inAppNotificationsSyncProvider = FutureProvider.autoDispose<void>((ref) async {
+  final synced = await fetchActivityNotifications(ref);
+  await ref.read(inAppNotificationsProvider.notifier).mergeSynced(synced);
 });
 
 class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
@@ -85,6 +92,30 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
 
   Future<void> dismiss(String id) async {
     state = state.where((e) => e.id != id).toList();
+    await _persist();
+  }
+
+  /// Fusionne les alertes issues de l'activité Supabase (réservations).
+  Future<void> mergeSynced(List<InAppNotification> incoming) async {
+    await _hydrateOnce();
+    if (incoming.isEmpty) return;
+
+    final byId = <String, InAppNotification>{
+      for (final n in state) n.id: n,
+    };
+    for (final n in incoming) {
+      final existing = byId[n.id];
+      byId[n.id] = existing == null
+          ? n
+          : n.copyWith(read: existing.read || n.read);
+    }
+
+    var next = byId.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (next.length > _maxItems) {
+      next = next.sublist(0, _maxItems);
+    }
+    state = next;
     await _persist();
   }
 

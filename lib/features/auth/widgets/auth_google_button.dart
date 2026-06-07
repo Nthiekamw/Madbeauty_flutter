@@ -11,18 +11,22 @@ class AuthGoogleButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.enabled = true,
+    this.isLoading = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool enabled;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final active = enabled && !isLoading;
+
     return OutlinedButton(
-      onPressed: enabled ? onPressed : null,
+      onPressed: active ? onPressed : null,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(
@@ -39,10 +43,20 @@ class AuthGoogleButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Opacity(
-            opacity: enabled ? 1 : 0.45,
-            child: const GoogleLogo(size: 22),
-          ),
+          if (isLoading)
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: theme.colorScheme.primary,
+              ),
+            )
+          else
+            Opacity(
+              opacity: active ? 1 : 0.45,
+              child: const GoogleLogo(size: 22),
+            ),
           const SizedBox(width: 12),
           Text(
             label,
@@ -51,7 +65,7 @@ class AuthGoogleButton extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: 15,
               color: theme.colorScheme.onSurface.withValues(
-                alpha: enabled ? 1 : 0.45,
+                alpha: active ? 1 : 0.45,
               ),
             ),
           ),

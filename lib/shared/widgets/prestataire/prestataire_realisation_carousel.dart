@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/app_avatar.dart';
@@ -36,8 +37,10 @@ class _PrestataireRealisationCarouselState
   Timer? _autoTimer;
   int _pageIndex = 0;
 
-  List<String> get _urls =>
-      widget.photoUrls.map((u) => u.trim()).where((u) => u.isNotEmpty).toList();
+  List<String> get _urls => _normalizeUrls(widget.photoUrls);
+
+  static List<String> _normalizeUrls(List<String> raw) =>
+      raw.map((u) => u.trim()).where((u) => u.isNotEmpty).toList();
 
   @override
   void initState() {
@@ -49,31 +52,46 @@ class _PrestataireRealisationCarouselState
   @override
   void didUpdateWidget(covariant PrestataireRealisationCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.photoUrls != widget.photoUrls) {
-      _pageIndex = 0;
-      _pageController?.dispose();
-      _initController();
-      _scheduleAutoAdvance();
-    }
+    if (listEquals(_normalizeUrls(oldWidget.photoUrls), _urls)) return;
+
+    _stopAutoAdvance();
+    _pageIndex = 0;
+    _disposeController();
+    _initController();
+    _scheduleAutoAdvance();
   }
 
   void _initController() {
     if (_urls.length > 1) {
       _pageController = PageController();
-    } else {
-      _pageController?.dispose();
-      _pageController = null;
     }
   }
 
-  void _scheduleAutoAdvance() {
+  void _stopAutoAdvance() {
     _autoTimer?.cancel();
     _autoTimer = null;
+  }
+
+  void _disposeController() {
+    _pageController?.dispose();
+    _pageController = null;
+  }
+
+  void _scheduleAutoAdvance() {
+    _stopAutoAdvance();
     if (_urls.length <= 1) return;
+
     _autoTimer = Timer.periodic(widget.autoAdvanceInterval, (_) {
-      if (!mounted || _pageController == null) return;
-      final next = (_pageIndex + 1) % _urls.length;
-      _pageController!.animateToPage(
+      if (!mounted) return;
+
+      final urls = _urls;
+      final controller = _pageController;
+      if (urls.length <= 1 || controller == null || !controller.hasClients) {
+        return;
+      }
+
+      final next = (_pageIndex + 1) % urls.length;
+      controller.animateToPage(
         next,
         duration: const Duration(milliseconds: 450),
         curve: Curves.easeInOut,
@@ -83,15 +101,23 @@ class _PrestataireRealisationCarouselState
 
   @override
   void dispose() {
-    _autoTimer?.cancel();
-    _pageController?.dispose();
+    _stopAutoAdvance();
+    _disposeController();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = Size(widget.width ?? double.infinity, widget.height);
+    return _buildCarousel(context, theme, widget.width);
+  }
+
+  Widget _buildCarousel(
+    BuildContext context,
+    ThemeData theme,
+    double? width,
+  ) {
+    final size = Size(width ?? 0, widget.height);
 
     if (_urls.isEmpty) {
       return _FallbackMedia(
@@ -113,8 +139,8 @@ class _PrestataireRealisationCarouselState
     return ClipRRect(
       borderRadius: widget.borderRadius,
       child: SizedBox(
-        width: size.width,
-        height: size.height,
+        width: width,
+        height: widget.height,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -184,7 +210,7 @@ class _PhotoFrame extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
       child: SizedBox(
-        width: size.width,
+        width: size.width > 0 ? size.width : null,
         height: size.height,
         child: Image.network(
           url,
@@ -247,7 +273,7 @@ class _FallbackMedia extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
       child: SizedBox(
-        width: size.width,
+        width: size.width > 0 ? size.width : null,
         height: size.height,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -271,4 +297,3 @@ class _FallbackMedia extends StatelessWidget {
     );
   }
 }
-

@@ -165,6 +165,21 @@ class AuthService {
         ),
       );
 
+  /// Google natif : échange l’id_token Google contre une session Supabase.
+  Future<AuthResponse> signInWithGoogleIdToken({
+    required String idToken,
+    String? accessToken,
+    String? nonce,
+  }) =>
+      _runAuth(
+        () => _auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: accessToken,
+          nonce: nonce,
+        ),
+      );
+
   /// Après vérification téléphone Firebase : échange le jeton contre une session Supabase.
   Future<AuthResponse> signInWithFirebaseIdToken({
     required String idToken,

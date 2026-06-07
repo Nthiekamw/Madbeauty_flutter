@@ -6,12 +6,14 @@ class ClientHomeLayout {
 
   final List<ClientHomeSectionId> order;
 
+  static const layoutVersion = 3;
+
   static const defaultOrder = <ClientHomeSectionId>[
-    ClientHomeSectionId.nextAppointment,
     ClientHomeSectionId.inspiration,
     ClientHomeSectionId.feed,
     ClientHomeSectionId.nearby,
     ClientHomeSectionId.topRated,
+    ClientHomeSectionId.nextAppointment,
   ];
 
   static final defaults = ClientHomeLayout(
@@ -20,6 +22,9 @@ class ClientHomeLayout {
 
   factory ClientHomeLayout.fromJson(Map<String, dynamic>? json) {
     if (json == null || json.isEmpty) return defaults;
+
+    final version = json['version'] as int? ?? 1;
+    if (version != layoutVersion) return defaults;
 
     final rawOrder = json['order'];
     final order = <ClientHomeSectionId>[];
@@ -37,6 +42,7 @@ class ClientHomeLayout {
   }
 
   Map<String, dynamic> toJson() => {
+        'version': layoutVersion,
         'order': order.map((e) => e.storageKey).toList(),
       };
 

@@ -338,7 +338,7 @@ class PhoneOtpVerificationController extends Notifier<PhoneOtpVerificationState>
     if (draft == null) return;
 
     final updated = RegisterWizardDraft(
-      step: 1,
+      step: draft.step,
       prenom: draft.prenom,
       nom: draft.nom,
       phone: draft.phone,
@@ -354,6 +354,7 @@ class PhoneOtpVerificationController extends Notifier<PhoneOtpVerificationState>
       ville: draft.ville,
       bio: draft.bio,
       signedUpViaOAuth: draft.signedUpViaOAuth,
+      pendingGoogleSignIn: draft.pendingGoogleSignIn,
       signedUpViaPhone: true,
       phoneRequiredOnExtras: draft.phoneRequiredOnExtras,
       pendingEmailVerification: draft.pendingEmailVerification,

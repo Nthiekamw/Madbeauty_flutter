@@ -6,7 +6,9 @@ import '../../../../shared/theme/discovery_styles.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../../booking/widgets/reservation_payment_summary_card.dart';
+import '../../logic/prestataire_reservation_completion.dart';
 import '../../models/prestataire_reservation_item.dart';
+import '../shared/prestataire_client_identity_row.dart';
 
 class PrestataireAgendaReservationCard extends StatelessWidget {
   const PrestataireAgendaReservationCard({
@@ -28,20 +30,16 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
   final bool busy;
   final bool showTimelineConnector;
 
-  String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final status = clientReservationUiStatusFromStatut(item.statut);
     final chip = chipColorsForReservationStatus(theme.colorScheme, status);
+    final canMarkDone = status == ClientReservationUiStatus.confirmed &&
+        prestataireCanMarkReservationDone(item);
+    final showMarkDoneHint = status == ClientReservationUiStatus.confirmed &&
+        !canMarkDone;
     final timeLabel = formatBookingTime(item.dateHeure);
     final accent = chip.foregroundColor;
 
@@ -136,51 +134,15 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                           padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor:
-                                    theme.colorScheme.primary.withValues(
-                                  alpha: 0.14,
-                                ),
-                                child: Text(
-                                  _initials(item.clientName),
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    fontFamily: AppFonts.display,
-                                    fontWeight: FontWeight.w800,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.clientName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        fontFamily: AppFonts.display,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.serviceName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
+                                child: PrestataireClientIdentityRow(
+                                  clientName: item.clientName,
+                                  serviceName: item.serviceName,
+                                  clientAvatarUrl: item.clientAvatarUrl,
+                                  avatarRadius: 20,
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -285,8 +247,7 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                                 ],
                               ),
                             ],
-                            if (status ==
-                                ClientReservationUiStatus.confirmed)
+                            if (canMarkDone)
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton.tonal(
@@ -294,6 +255,14 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                                   child: Text(
                                     busy ? '…' : DiscPrestaAgenda.markDone,
                                   ),
+                                ),
+                              ),
+                            if (showMarkDoneHint)
+                              Text(
+                                DiscPrestaAgenda.markDonePendingHint,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
                           ],

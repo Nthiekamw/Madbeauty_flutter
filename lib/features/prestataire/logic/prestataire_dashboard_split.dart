@@ -1,4 +1,5 @@
-﻿import '../../booking/logic/client_reservation_ui_status.dart';
+﻿import 'prestataire_reservation_completion.dart';
+import '../../booking/logic/client_reservation_ui_status.dart';
 import '../models/prestataire_dashboard_data.dart';
 import '../models/prestataire_reservation_item.dart';
 
@@ -23,6 +24,7 @@ PrestataireDashboardData splitPrestataireReservations(
   final pending = <PrestataireReservationItem>[];
   final today = <PrestataireReservationItem>[];
   final week = <PrestataireReservationItem>[];
+  final needsCompletion = <PrestataireReservationItem>[];
 
   for (final item in items) {
     final status = clientReservationUiStatusFromStatut(item.statut);
@@ -32,6 +34,11 @@ PrestataireDashboardData splitPrestataireReservations(
     }
     if (status != ClientReservationUiStatus.confirmed) continue;
 
+    if (prestataireCanMarkReservationDone(item, now: clock)) {
+      needsCompletion.add(item);
+      continue;
+    }
+
     if (_isSameDay(item.dateHeure, clock)) {
       today.add(item);
     } else if (_isWithinWeek(item.dateHeure, clock)) {
@@ -39,10 +46,13 @@ PrestataireDashboardData splitPrestataireReservations(
     }
   }
 
+  needsCompletion.sort((a, b) => a.dateHeure.compareTo(b.dateHeure));
+
   return PrestataireDashboardData(
     pending: pending,
     todayConfirmed: today,
     weekConfirmed: week,
+    needsCompletion: needsCompletion,
   );
 }
 

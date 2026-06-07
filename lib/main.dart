@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'services/auth/google_auth_service.dart';
 import 'services/notifications/booking_local_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
 import 'services/storage/local_cache_service.dart';
@@ -26,6 +27,10 @@ Future<void> main() async {
 
   if (AppConfig.hasSupabase) {
     await SupabaseService.initialize();
+  }
+
+  if (!kIsWeb) {
+    await GoogleAuthService.warmUp();
   }
 
   if (!kIsWeb && StripeService.isConfigured) {

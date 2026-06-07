@@ -21,15 +21,15 @@ abstract final class PrestataireHubWizardNavigation {
       return switch (missing.first) {
         PrestaCompletionChecklistItem.basics => 0,
         PrestaCompletionChecklistItem.services => 2,
-        PrestaCompletionChecklistItem.gallery => 3,
+        PrestaCompletionChecklistItem.gallery => 4,
       };
     }
     final enhancements = data.missingEnhancements(hasHoraires: hasHoraires);
     if (enhancements.isNotEmpty) {
       return switch (enhancements.first) {
-        PrestaProfileEnhancementItem.clientExperience => 4,
-        PrestaProfileEnhancementItem.gallery => 3,
-        PrestaProfileEnhancementItem.horaires => 5,
+        PrestaProfileEnhancementItem.horaires => 3,
+        PrestaProfileEnhancementItem.gallery => 4,
+        PrestaProfileEnhancementItem.clientExperience => 5,
       };
     }
     return 6;

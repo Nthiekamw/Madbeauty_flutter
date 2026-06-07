@@ -36,7 +36,7 @@ class PrestataireDashboardLayoutTile extends StatelessWidget {
         onTap: onToggleCollapsed,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -68,10 +68,15 @@ class PrestataireDashboardLayoutTile extends StatelessWidget {
       ),
     );
 
+    const innerHorizontal = 16.0;
+
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        header,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: innerHorizontal),
+          child: header,
+        ),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeInOut,
@@ -80,7 +85,12 @@ class PrestataireDashboardLayoutTile extends StatelessWidget {
           child: collapsed
               ? const SizedBox(width: double.infinity)
               : Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.fromLTRB(
+                    innerHorizontal,
+                    14,
+                    innerHorizontal,
+                    4,
+                  ),
                   child: child,
                 ),
         ),
@@ -90,7 +100,8 @@ class PrestataireDashboardLayoutTile extends StatelessWidget {
     return Padding(
       padding: PrestataireDashboardInsets.section(context),
       child: DiscoverySurfaceCard(
-        padding: const EdgeInsets.fromLTRB(0, 10, 0, 12),
+        includeHorizontalMargin: false,
+        padding: const EdgeInsets.fromLTRB(0, 12, 0, 14),
         child: body,
       ),
     );

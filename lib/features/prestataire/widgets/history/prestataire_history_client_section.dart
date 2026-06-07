@@ -5,6 +5,7 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
+import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../logic/prestataire_history_grouping.dart';
 import '../../models/prestataire_reservation_item.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -21,17 +22,12 @@ class PrestataireHistoryClientSection extends StatelessWidget {
   final void Function(String reservationId) onReservationTap;
   final bool initiallyExpanded;
 
-  String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final latest = group.reservations.isNotEmpty
+        ? group.reservations.first
+        : null;
 
     return DiscoverySurfaceCard(
       padding: EdgeInsets.zero,
@@ -41,16 +37,10 @@ class PrestataireHistoryClientSection extends StatelessWidget {
           initiallyExpanded: initiallyExpanded,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-            child: Text(
-              _initials(group.clientName),
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.primary,
-              ),
-            ),
+          leading: AppAvatar(
+            imageUrl: latest?.clientAvatarUrl,
+            displayName: group.clientName,
+            radius: 20,
           ),
           title: Text(
             group.clientName,
@@ -60,7 +50,10 @@ class PrestataireHistoryClientSection extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            DiscPrestaClients.clientReservationCount(group.reservations.length),
+            latest?.serviceName ??
+                DiscPrestaClients.clientReservationCount(
+                  group.reservations.length,
+                ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

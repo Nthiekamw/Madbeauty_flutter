@@ -6,6 +6,7 @@ class PrestataireDashboardData {
     required this.pending,
     required this.todayConfirmed,
     required this.weekConfirmed,
+    this.needsCompletion = const [],
   });
 
   final List<PrestataireReservationItem> pending;
@@ -13,5 +14,8 @@ class PrestataireDashboardData {
 
   /// Confirmées sur les 7 prochains jours (hors liste « aujourd'hui » déjà affichée).
   final List<PrestataireReservationItem> weekConfirmed;
+
+  /// Confirmées dont le créneau est passé — à marquer terminées.
+  final List<PrestataireReservationItem> needsCompletion;
 }
 

@@ -40,6 +40,7 @@ import '../features/prestataire/screens/prestataire_payment_methods_screen.dart'
 import '../features/prestataire/screens/prestataire_subscription_screen.dart';
 import '../features/profile/screens/become_prestataire_screen.dart';
 import '../features/favorites/screens/client_favorites_screen.dart';
+import '../features/listing/screens/all_prestataires_screen.dart';
 import '../features/messaging/screens/chat_screen.dart';
 import '../features/messaging/screens/conversations_inbox_screen.dart';
 import '../features/reviews/screens/client_reviews_screen.dart';
@@ -98,6 +99,7 @@ abstract final class AppRoutes {
   static const String editClientAccount = '/client/profile/edit';
   static const String clientPaymentMethods = '/client/payment-methods';
   static const String clientFavorites = '/client/favorites';
+  static const String clientAllPrestataires = '/client/prestataires';
   static const String clientReviews = '/client/reviews';
   static const String clientHistory = '/client/history';
   static const String clientHelp = '/client/help';
@@ -156,6 +158,7 @@ abstract final class AppRouteNames {
   static const String editClientAccount = 'edit-client-account';
   static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
+  static const String clientAllPrestataires = 'client-all-prestataires';
   static const String clientReviews = 'client-reviews';
   static const String clientHistory = 'client-history';
   static const String clientHelp = 'client-help';
@@ -283,11 +286,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return '${AppRoutes.verifyPhone}?flow=register&phone=${Uri.encodeComponent(phone)}';
         }
         if (isAuthenticated) {
-          final resume =
-              registerDraft.step == 2 || registerDraft.signedUpViaOAuth;
-          return resume
-              ? '${AppRoutes.register}?resume=1'
-              : AppRoutes.register;
+          if (location == AppRoutes.register) return null;
+          if (registerDraft.step == 2) {
+            return '${AppRoutes.register}?resume=1';
+          }
+          return AppRoutes.register;
         }
         return AppRoutes.register;
       }
@@ -334,6 +337,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       // Laisser la route login terminer (dialogue + PostAuthNavigation).
       if (location == AppRoutes.login) {
+        return null;
+      }
+
+      // Inscription en cours : ne pas expulser vers l'accueil après Google OAuth.
+      if (location == AppRoutes.register ||
+          location == AppRoutes.registerVerifyEmail ||
+          location == AppRoutes.verifyPhone) {
         return null;
       }
 
@@ -445,6 +455,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRouteNames.clientFavorites,
         path: AppRoutes.clientFavorites,
         builder: (context, state) => const ClientFavoritesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientAllPrestataires,
+        path: AppRoutes.clientAllPrestataires,
+        builder: (context, state) => const AllPrestatairesScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientReviews,

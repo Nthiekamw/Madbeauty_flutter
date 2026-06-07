@@ -97,6 +97,9 @@ class PrestataireService {
           final specialtyData = await getSpecialtyDataForPrestataires(
             ordered.map((p) => p.id).toList(),
           );
+          final reviewCounts = await _reviewCountsForPrestataires(
+            ordered.map((p) => p.id).toList(),
+          );
           final userProfiles = await _profileService.getByUserIds(
             ordered.map((p) => p.userId).toList(),
           );
@@ -114,6 +117,7 @@ class PrestataireService {
               specialtyCategoryIds: List<String>.from(
                 specialtyData.categoryIdsByPrestataire[p.id] ?? const <String>{},
               ),
+              reviewCount: reviewCounts[p.id],
             );
           }).toList();
         },
@@ -421,6 +425,24 @@ class PrestataireService {
             (s) => s.toLowerCase().contains(q),
           );
     }).toList();
+  }
+
+  Future<Map<String, int>> _reviewCountsForPrestataires(
+    List<String> prestataireIds,
+  ) async {
+    if (prestataireIds.isEmpty) return {};
+    final response = await _client
+        .from('avis')
+        .select('prestataire_id')
+        .inFilter('prestataire_id', prestataireIds);
+    final counts = <String, int>{};
+    for (final raw in response as List<dynamic>) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      final id = row['prestataire_id'] as String?;
+      if (id == null || id.isEmpty) continue;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
   }
 }
 

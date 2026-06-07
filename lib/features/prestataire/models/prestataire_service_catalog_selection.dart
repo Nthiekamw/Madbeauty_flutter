@@ -99,6 +99,28 @@ class PrestataireServiceCatalogSelection {
         customSpecialtiesByMain: customSpecialtiesByMain,
       );
 
+  /// Retire une spécialité catalogue et nettoie la prestation si vide.
+  void removeCatalogSpecialty(PrestaMainService main, String specialtyId) {
+    specialtyIdsByMain[main]?.remove(specialtyId);
+    _cleanupMainIfEmpty(main);
+  }
+
+  /// Retire une spécialité personnalisée et nettoie la prestation si vide.
+  void removeCustomSpecialty(PrestaMainService main, String label) {
+    customSpecialtiesByMain[main]?.remove(label);
+    _cleanupMainIfEmpty(main);
+  }
+
+  void _cleanupMainIfEmpty(PrestaMainService main) {
+    final specs = specialtyIdsByMain[main] ?? const {};
+    final custom = customSpecialtiesByMain[main] ?? const [];
+    if (specs.isEmpty && custom.isEmpty) {
+      selectedMains.remove(main);
+      specialtyIdsByMain.remove(main);
+      customSpecialtiesByMain.remove(main);
+    }
+  }
+
   List<String> get allCustomLabels => [
         for (final main in selectedMains)
           ...customSpecialtiesByMain[main] ?? const [],

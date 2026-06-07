@@ -108,65 +108,78 @@ class ClientReservationCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          prestataireLabel,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontFamily: AppFonts.display,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.spa_outlined,
-                              size: 14,
-                              color: primary,
+                            Expanded(
+                              child: Text(
+                                prestataireLabel,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontFamily: AppFonts.display,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: chipStyle.backgroundColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _statusIcon(uiStatus),
+                                    size: 14,
+                                    color: chipStyle.foregroundColor,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    clientReservationStatusLabel(uiStatus),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontFamily: AppFonts.body,
+                                      color: chipStyle.foregroundColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Icon(
+                                Icons.spa_outlined,
+                                size: 14,
+                                color: primary,
+                              ),
                             ),
                             const SizedBox(width: 5),
                             Expanded(
                               child: Text(
                                 serviceLabel,
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontFamily: AppFonts.body,
                                   fontWeight: FontWeight.w600,
                                   color: primary,
+                                  height: 1.25,
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: chipStyle.backgroundColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _statusIcon(uiStatus),
-                          size: 14,
-                          color: chipStyle.foregroundColor,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          clientReservationStatusLabel(uiStatus),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontFamily: AppFonts.body,
-                            color: chipStyle.foregroundColor,
-                            fontWeight: FontWeight.w700,
-                          ),
                         ),
                       ],
                     ),

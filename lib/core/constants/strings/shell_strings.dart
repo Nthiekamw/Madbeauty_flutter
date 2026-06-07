@@ -69,7 +69,7 @@ abstract final class ShellStrings {
       '(ou la configuration « MadBeauty (avec .env) » dans VS Code).';
 
   static const String navClientHome = 'Accueil';
-  static const String navClientSearch = 'Recherche';
+  static const String navClientSearch = 'Catalogue';
   static const String navClientReservations = 'Réservations';
   static const String navClientMessages = 'Chat';
   static const String navClientProfile = 'Profil';

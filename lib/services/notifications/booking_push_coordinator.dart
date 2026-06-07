@@ -73,6 +73,8 @@ class _BookingPushCoordinatorState
           profileService: profileSvc,
         );
         if (uid != null) {
+          ref.invalidate(inAppNotificationsSyncProvider);
+          unawaited(ref.read(inAppNotificationsSyncProvider.future));
           unawaited(applyPendingReferralCode(ref));
         }
       },

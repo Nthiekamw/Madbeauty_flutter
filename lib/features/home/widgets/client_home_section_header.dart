@@ -34,6 +34,7 @@ class ClientHomeSectionHeader extends StatelessWidget {
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               if (subtitle != null) ...[

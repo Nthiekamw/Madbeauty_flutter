@@ -1,106 +1,58 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/app_strings.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../firebase_runtime_helpers.dart';
 import 'auth_service.dart';
 
-/// Session OTP en cours (Firebase ou Supabase).
+/// Session OTP Firebase en cours.
 class PhoneOtpPending {
   const PhoneOtpPending({
     required this.phoneE164,
-    required this.viaFirebase,
     this.firebaseVerificationId,
     this.autoVerified = false,
   });
 
   final String phoneE164;
-  final bool viaFirebase;
   final String? firebaseVerificationId;
 
   /// Vérification automatique (Android) : session déjà ouverte, pas de code à saisir.
   final bool autoVerified;
 }
 
-/// Envoi / vérification OTP téléphone.
-///
-/// Par défaut **Supabase OTP** (session directe). Firebase n’est utilisé que si
-/// [kUseFirebasePhoneOtp] est activé et que l’envoi réussit sans erreur de config.
+/// OTP téléphone **uniquement via Firebase** (SMS natif + jeton échangé contre une session Supabase).
 class PhoneAuthService {
   PhoneAuthService(this._auth);
 
-  /// Bascule à `true` seulement quand SHA Firebase + provider Firebase dans
-  /// Supabase sont configurés.
-  static const bool kUseFirebasePhoneOtp = false;
-
   final AuthService _auth;
-
-  bool get _canTryFirebase =>
-      kUseFirebasePhoneOtp && isFirebaseConfiguredForPush();
 
   Future<PhoneOtpPending> sendOtp({
     required String phoneE164,
     bool shouldCreateUser = true,
   }) async {
-    if (_canTryFirebase) {
-      try {
-        return await _sendFirebaseOtp(phoneE164);
-      } on AppFailure catch (e) {
-        if (FailureMapper.isFirebasePhoneSetupFailure(e)) {
-          if (kDebugMode) {
-            debugPrint(
-              'PhoneAuthService: Firebase SMS indisponible (${e.cause}), '
-              'bascule Supabase OTP.',
-            );
-          }
-          return _sendSupabaseOtp(
-            phoneE164: phoneE164,
-            shouldCreateUser: shouldCreateUser,
-          );
-        }
-        rethrow;
-      }
+    if (!isFirebaseConfiguredForPush()) {
+      throw AppFailure(AuthStrings.authPhoneFirebaseAppNotConfigured);
     }
-    return _sendSupabaseOtp(
-      phoneE164: phoneE164,
-      shouldCreateUser: shouldCreateUser,
-    );
-  }
-
-  Future<PhoneOtpPending> _sendSupabaseOtp({
-    required String phoneE164,
-    required bool shouldCreateUser,
-  }) async {
-    await _auth.signInWithOtpPhone(
-      phone: phoneE164,
-      shouldCreateUser: shouldCreateUser,
-    );
-    return PhoneOtpPending(phoneE164: phoneE164, viaFirebase: false);
+    return _sendFirebaseOtp(phoneE164);
   }
 
   Future<AuthResponse> verifyOtp({
     required PhoneOtpPending pending,
     required String code,
   }) async {
-    final token = code.trim();
-    if (pending.viaFirebase) {
-      final verificationId = pending.firebaseVerificationId;
-      if (verificationId == null || verificationId.isEmpty) {
-        throw AppFailure(
-          FailureMapper.firebasePhoneSessionExpiredMessage,
-        );
-      }
-      final credential = fb.PhoneAuthProvider.credential(
-        verificationId: verificationId,
-        smsCode: token,
-      );
-      return _signInWithFirebaseCredential(credential);
+    final verificationId = pending.firebaseVerificationId;
+    if (verificationId == null || verificationId.isEmpty) {
+      throw AppFailure(FailureMapper.firebasePhoneSessionExpiredMessage);
     }
-    return _auth.verifyOtpSmsSignIn(phone: pending.phoneE164, token: token);
+    final credential = fb.PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: code.trim(),
+    );
+    return _signInWithFirebaseCredential(credential);
   }
 
   Future<PhoneOtpPending> _sendFirebaseOtp(String phoneE164) async {
@@ -146,7 +98,6 @@ class PhoneAuthService {
       await _signInWithFirebaseCredential(auto);
       return PhoneOtpPending(
         phoneE164: phoneE164,
-        viaFirebase: true,
         firebaseVerificationId: verificationId,
         autoVerified: true,
       );
@@ -154,14 +105,11 @@ class PhoneAuthService {
 
     final verId = verificationId;
     if (verId == null || verId.isEmpty) {
-      throw AppFailure(
-        FailureMapper.firebasePhoneSessionExpiredMessage,
-      );
+      throw AppFailure(FailureMapper.firebasePhoneSessionExpiredMessage);
     }
 
     return PhoneOtpPending(
       phoneE164: phoneE164,
-      viaFirebase: true,
       firebaseVerificationId: verId,
     );
   }

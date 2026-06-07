@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
@@ -38,6 +39,44 @@ class MessagingService {
           if (row == null) return null;
           return SupabaseDomainCodec.conversation(
             Map<String, dynamic>.from(row),
+          );
+        },
+      );
+
+  /// En-tête chat (nom + avatar interlocuteur) même hors liste inbox.
+  Future<ConversationInboxItem?> resolveInboxItemForBooking({
+    required String bookingId,
+    required String currentUserId,
+    required bool peerIsPrestataire,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'messaging.resolveInboxItemForBooking',
+        action: () async {
+          final conv = await getByBookingId(bookingId);
+          if (conv == null) return null;
+
+          final lastByBooking =
+              await _messageService.latestMessageByBookingIds([bookingId]);
+          final unreadByBooking = await _messageService.unreadCountByBookingIds(
+            [bookingId],
+            currentUserId: currentUserId,
+          );
+          final reservationMeta = await _reservationMetaById([bookingId]);
+
+          final peerId =
+              peerIsPrestataire ? conv.prestataireId : conv.clientId;
+          final peerInfo = peerIsPrestataire
+              ? await _prestatairePeerInfoById([peerId])
+              : await _clientPeerInfoById([peerId]);
+
+          return _toInboxItem(
+            conv: conv,
+            currentUserId: currentUserId,
+            peer: peerInfo[peerId],
+            peerIsPrestataire: peerIsPrestataire,
+            last: lastByBooking[bookingId],
+            unread: unreadByBooking[bookingId] ?? 0,
+            reservation: reservationMeta[bookingId],
           );
         },
       );
@@ -106,18 +145,19 @@ class MessagingService {
               ? conversations.map((c) => c.prestataireId).toSet().toList()
               : conversations.map((c) => c.clientId).toSet().toList();
 
-          final peerNames = peerIsPrestataire
-              ? await _prestataireDisplayNames(peerIds)
-              : await _clientDisplayNames(peerIds);
+          final peerInfo = peerIsPrestataire
+              ? await _prestatairePeerInfoById(peerIds)
+              : await _clientPeerInfoById(peerIds);
 
           return [
             for (final conv in conversations)
               _toInboxItem(
                 conv: conv,
                 currentUserId: currentUserId,
-                peerName: peerNames[peerIsPrestataire
+                peer: peerInfo[peerIsPrestataire
                     ? conv.prestataireId
                     : conv.clientId],
+                peerIsPrestataire: peerIsPrestataire,
                 last: lastByBooking[conv.reservationId],
                 unread: unreadByBooking[conv.reservationId] ?? 0,
                 reservation: reservationMeta[conv.reservationId],
@@ -129,16 +169,22 @@ class MessagingService {
   ConversationInboxItem _toInboxItem({
     required Conversation conv,
     required String currentUserId,
-    required String? peerName,
+    required _PeerInboxInfo? peer,
+    required bool peerIsPrestataire,
     required Message? last,
     required int unread,
     required _ReservationMeta? reservation,
   }) {
+    final fallbackName = peerIsPrestataire
+        ? DiscBk.unknownPresta
+        : DiscPrestaDash.unknownClient;
+
     return ConversationInboxItem(
       conversation: conv,
-      peerDisplayName: peerName?.trim().isNotEmpty == true
-          ? peerName!.trim()
-          : 'MadBeauty',
+      peerDisplayName: peer?.displayName.trim().isNotEmpty == true
+          ? peer!.displayName.trim()
+          : fallbackName,
+      peerAvatarUrl: peer?.avatarUrl,
       lastMessagePreview: last?.content,
       lastMessageAt: last?.createdAt ?? conv.lastMessageAt,
       unreadCount: unread,
@@ -195,7 +241,7 @@ class MessagingService {
     };
   }
 
-  Future<Map<String, String>> _prestataireDisplayNames(
+  Future<Map<String, _PeerInboxInfo>> _prestatairePeerInfoById(
     List<String> prestataireIds,
   ) async {
     if (prestataireIds.isEmpty) return {};
@@ -223,18 +269,31 @@ class MessagingService {
     }
 
     final profiles = await _profileService.getByUserIds(userIds);
+    final avatarByPresta = <String, String?>{};
+
     for (final raw in response as List<dynamic>) {
       final m = Map<String, dynamic>.from(raw as Map);
       final id = m['id'] as String;
-      if (labelByPresta.containsKey(id)) continue;
       final uid = m['user_id'] as String?;
       final p = uid != null ? profiles[uid] : null;
-      final parts = [p?.prenom, p?.nom].whereType<String>().map((s) => s.trim());
-      final name = parts.where((s) => s.isNotEmpty).join(' ');
-      if (name.isNotEmpty) labelByPresta[id] = name;
+
+      if (!labelByPresta.containsKey(id)) {
+        final parts =
+            [p?.prenom, p?.nom].whereType<String>().map((s) => s.trim());
+        final name = parts.where((s) => s.isNotEmpty).join(' ');
+        if (name.isNotEmpty) labelByPresta[id] = name;
+      }
+
+      avatarByPresta[id] = _normalizeAvatarUrl(p?.avatarUrl);
     }
 
-    return labelByPresta;
+    return {
+      for (final id in prestataireIds)
+        id: _PeerInboxInfo(
+          displayName: labelByPresta[id] ?? DiscBk.unknownPresta,
+          avatarUrl: avatarByPresta[id],
+        ),
+    };
   }
 
   /// Dernière réservation pour laquelle le chat est autorisé (confirmée / terminée).
@@ -312,7 +371,7 @@ class MessagingService {
         },
       );
 
-  Future<Map<String, String>> _clientDisplayNames(
+  Future<Map<String, _PeerInboxInfo>> _clientPeerInfoById(
     List<String> clientIds,
   ) async {
     if (clientIds.isEmpty) return {};
@@ -332,15 +391,25 @@ class MessagingService {
         await _profileService.getByUserIds(userIdByClient.values.toList());
 
     return {
-      for (final entry in userIdByClient.entries)
-        entry.key: () {
-          final p = profiles[entry.value];
+      for (final id in clientIds)
+        id: () {
+          final userId = userIdByClient[id];
+          final p = userId != null ? profiles[userId] : null;
           final parts =
               [p?.prenom, p?.nom].whereType<String>().map((s) => s.trim());
           final name = parts.where((s) => s.isNotEmpty).join(' ');
-          return name.isNotEmpty ? name : 'Cliente';
+          return _PeerInboxInfo(
+            displayName: name.isNotEmpty ? name : DiscPrestaDash.unknownClient,
+            avatarUrl: _normalizeAvatarUrl(p?.avatarUrl),
+          );
         }(),
     };
+  }
+
+  String? _normalizeAvatarUrl(String? url) {
+    final trimmed = url?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
   }
 
   Future<int> countUnreadForClient(
@@ -369,5 +438,15 @@ class _ReservationMeta {
 
   final DateTime? dateHeure;
   final String? serviceName;
+}
+
+class _PeerInboxInfo {
+  const _PeerInboxInfo({
+    required this.displayName,
+    this.avatarUrl,
+  });
+
+  final String displayName;
+  final String? avatarUrl;
 }
 

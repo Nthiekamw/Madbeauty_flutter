@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../router/navigation_extensions.dart';
+import '../../../core/constants/app_strings.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
@@ -10,12 +11,15 @@ import '../providers/prestataire_analytics_provider.dart';
 import '../providers/prestataire_dashboard_layout_provider.dart';
 import '../providers/prestataire_dashboard_provider.dart';
 import '../providers/prestataire_profile_form_provider.dart';
+import '../../booking/logic/client_reservation_ui_status.dart';
 import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
+import '../widgets/dashboard/prestataire_pending_request_card.dart';
 import '../providers/prestataire_dashboard_overview_provider.dart';
 import '../widgets/dashboard/prestataire_dashboard_overview_grid.dart';
 import '../widgets/dashboard/prestataire_dashboard_reorderable_sections.dart';
 import '../widgets/profile/overview/prestataire_profile_load_error.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
 
 class PrestataireDashboardScreen extends ConsumerStatefulWidget {
@@ -58,7 +62,6 @@ class _PrestataireDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);
@@ -67,10 +70,8 @@ class _PrestataireDashboardScreenState
       orElse: () => false,
     );
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: profileAsync.when(
+    return PrestataireBrandScaffold(
+      body: profileAsync.when(
           data: (data) {
             final showProfileCard = !data.isProfileFullyEnriched(
               hasHoraires: hasHoraires,
@@ -86,6 +87,16 @@ class _PrestataireDashboardScreenState
                     if (showProfileCard)
                       const SliverToBoxAdapter(
                         child: PrestataireProfileCompletionCard(),
+                      ),
+                    if (dashboardAsync.maybeWhen(
+                      data: (data) => data.needsCompletion.isNotEmpty,
+                      orElse: () => false,
+                    ))
+                      SliverToBoxAdapter(
+                        child: _CompletionReminderBanner(
+                          count: dashboardAsync.value!.needsCompletion.length,
+                          onOpenAgenda: context.goPrestataireAgenda,
+                        ),
                       ),
                     const SliverToBoxAdapter(
                       child: PrestataireDashboardOverviewGrid(),
@@ -103,8 +114,13 @@ class _PrestataireDashboardScreenState
                             _runAction(id, () => _actions.accept(id)),
                         onReject: (id) =>
                             _runAction(id, () => _actions.reject(id)),
-                        onMarkDone: (id) =>
-                            _runAction(id, () => _actions.markDone(id)),
+                        onMarkDone: (id) {
+                          final target = items.firstWhere((e) => e.id == id);
+                          _runAction(
+                            id,
+                            () => _actions.markDone(target),
+                          );
+                        },
                         onItemTap: (id) =>
                             context.pushPrestataireReservationDetail(id),
                       ),
@@ -121,7 +137,6 @@ class _PrestataireDashboardScreenState
             child: Center(child: CircularProgressIndicator()),
           ),
         ),
-      ),
     );
   }
 }
@@ -149,10 +164,23 @@ class _ReservationTimeline extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 4),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = items[index];
         final busy = actingId == item.id;
+        final isPending =
+            clientReservationUiStatusFromStatut(item.statut) ==
+                ClientReservationUiStatus.pending;
+
+        if (isPending) {
+          return PrestatairePendingRequestCard(
+            item: item,
+            busy: busy,
+            onAccept: busy ? null : () => onAccept(item.id),
+            onReject: busy ? null : () => onReject(item.id),
+          );
+        }
+
         return PrestataireAgendaReservationCard(
           item: item,
           busy: busy,
@@ -163,6 +191,70 @@ class _ReservationTimeline extends StatelessWidget {
           onMarkDone: busy ? null : () => onMarkDone(item.id),
         );
       },
+    );
+  }
+}
+
+class _CompletionReminderBanner extends StatelessWidget {
+  const _CompletionReminderBanner({
+    required this.count,
+    required this.onOpenAgenda,
+  });
+
+  final int count;
+  final VoidCallback onOpenAgenda;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Material(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onOpenAgenda,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.task_alt_rounded,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DiscPrestaAgenda.completionReminderTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DiscPrestaAgenda.completionReminderBody(count),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

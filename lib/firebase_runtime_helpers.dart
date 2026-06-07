@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
@@ -31,7 +32,26 @@ bool isFirebaseConfiguredForPush() {
 /// Initialise Firebase une seule fois (auth téléphone, FCM, etc.).
 Future<void> ensureFirebaseInitialized() async {
   if (!isFirebaseConfiguredForPush()) return;
-  if (Firebase.apps.isNotEmpty) return;
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+  await _configureFirebasePhoneAuthIfNeeded();
+}
+
+bool _firebasePhoneAuthConfigured = false;
+
+/// Évite Play Integrity en dev (erreur 17028) : flux reCAPTCHA web à la place.
+Future<void> _configureFirebasePhoneAuthIfNeeded() async {
+  if (_firebasePhoneAuthConfigured || kIsWeb) return;
+  if (defaultTargetPlatform != TargetPlatform.android) return;
+  _firebasePhoneAuthConfigured = true;
+  if (kDebugMode) {
+    await fb.FirebaseAuth.instance.setSettings(forceRecaptchaFlow: true);
+    debugPrint(
+      '[FirebaseAuth] forceRecaptchaFlow=true (debug Android, évite Play Integrity)',
+    );
+  }
 }
 

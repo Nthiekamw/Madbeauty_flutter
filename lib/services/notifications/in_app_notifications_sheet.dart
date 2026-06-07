@@ -8,6 +8,7 @@ import 'in_app_notifications_provider.dart';
 import 'push_navigation.dart';
 
 Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
+  ref.invalidate(inAppNotificationsSyncProvider);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -16,136 +17,157 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
     builder: (ctx) {
       return Consumer(
         builder: (context, ref, _) {
+          final syncAsync = ref.watch(inAppNotificationsSyncProvider);
           final items = ref.watch(inAppNotificationsProvider);
           final unreadCount = ref.watch(unreadInAppNotificationsCountProvider);
           final theme = Theme.of(context);
-          final maxH = MediaQuery.sizeOf(context).height * 0.68;
+          final sheetHeight = MediaQuery.sizeOf(context).height * 0.72;
           final notifier = ref.read(inAppNotificationsProvider.notifier);
 
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.viewInsetsOf(context).bottom,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 8, 0),
-                  child: Text(
-                    DiscNotif.sheetTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w800,
+          if (syncAsync.isLoading && items.isEmpty) {
+            return SizedBox(
+              height: sheetHeight.clamp(200, 360),
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return SizedBox(
+            height: sheetHeight,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 8, 0),
+                    child: Text(
+                      DiscNotif.sheetTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
-                if (items.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 4, 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (unreadCount > 0)
+                  if (items.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 4, 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (unreadCount > 0)
+                            TextButton(
+                              onPressed: notifier.markAllRead,
+                              child: const Text(DiscNotif.markAllRead),
+                            ),
                           TextButton(
-                            onPressed: notifier.markAllRead,
-                            child: const Text(DiscNotif.markAllRead),
+                            onPressed: notifier.clear,
+                            child: const Text(DiscNotif.clearAll),
                           ),
-                        TextButton(
-                          onPressed: notifier.clear,
-                          child: const Text(DiscNotif.clearAll),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                if (items.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-                    child: DiscoveryNotifPlaceholder(theme: theme),
-                  )
-                else
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: maxH),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) =>
-                          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return Dismissible(
-                          key: ValueKey(item.id),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (_) {
-                            ref
-                                .read(inAppNotificationsProvider.notifier)
-                                .dismiss(item.id);
-                          },
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            color: theme.colorScheme.errorContainer,
-                            child: Icon(
-                              Icons.delete_outline_rounded,
-                              color: theme.colorScheme.onErrorContainer,
+                  Expanded(
+                    child: items.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                            child: DiscoveryNotifPlaceholder(theme: theme),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                            itemCount: items.length,
+                            separatorBuilder: (_, __) => Divider(
+                              height: 1,
+                              color: theme.colorScheme.outlineVariant,
                             ),
-                          ),
-                          child: ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                            onTap: () {
-                              notifier.markRead(item.id);
-                              Navigator.of(context).pop();
-                              handleInAppNotificationNavigation(context, item);
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              return Dismissible(
+                                key: ValueKey(item.id),
+                                direction: DismissDirection.endToStart,
+                                onDismissed: (_) {
+                                  ref
+                                      .read(
+                                        inAppNotificationsProvider.notifier,
+                                      )
+                                      .dismiss(item.id);
+                                },
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  color: theme.colorScheme.errorContainer,
+                                  child: Icon(
+                                    Icons.delete_outline_rounded,
+                                    color: theme.colorScheme.onErrorContainer,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 4,
+                                  ),
+                                  onTap: () {
+                                    notifier.markRead(item.id);
+                                    Navigator.of(context).pop();
+                                    handleInAppNotificationNavigation(
+                                      context,
+                                      item,
+                                    );
+                                  },
+                                  leading: Icon(
+                                    item.read
+                                        ? Icons.notifications_none_rounded
+                                        : Icons.notifications_active_rounded,
+                                    color: item.read
+                                        ? theme.colorScheme.onSurfaceVariant
+                                        : theme.colorScheme.primary,
+                                  ),
+                                  title: Text(
+                                    item.title,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: item.read
+                                          ? FontWeight.w600
+                                          : FontWeight.w800,
+                                    ),
+                                  ),
+                                  trailing: _NotificationReadBadge(
+                                    theme: theme,
+                                    read: item.read,
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        item.body,
+                                        style:
+                                            theme.textTheme.bodyMedium?.copyWith(
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        DateFormat(
+                                          "d MMMM '·' HH:mm",
+                                          'fr_FR',
+                                        ).format(item.createdAt.toLocal()),
+                                        style:
+                                            theme.textTheme.labelSmall?.copyWith(
+                                          color: theme.colorScheme.outline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  isThreeLine: true,
+                                ),
+                              );
                             },
-                            leading: Icon(
-                              item.read
-                                  ? Icons.notifications_none_rounded
-                                  : Icons.notifications_active_rounded,
-                              color: item.read
-                                  ? theme.colorScheme.onSurfaceVariant
-                                  : theme.colorScheme.primary,
-                            ),
-                            title: Text(
-                              item.title,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight:
-                                    item.read ? FontWeight.w600 : FontWeight.w800,
-                              ),
-                            ),
-                            trailing: _NotificationReadBadge(
-                              theme: theme,
-                              read: item.read,
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.body,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    height: 1.35,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  DateFormat(
-                                    "d MMMM '·' HH:mm",
-                                    'fr_FR',
-                                  ).format(item.createdAt.toLocal()),
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            isThreeLine: true,
                           ),
-                        );
-                      },
-                    ),
                   ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -194,6 +216,7 @@ class DiscoveryNotifPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
           Icons.notifications_off_outlined,
@@ -275,4 +298,3 @@ class NotificationBellButton extends StatelessWidget {
     );
   }
 }
-

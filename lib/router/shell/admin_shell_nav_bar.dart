@@ -44,7 +44,8 @@ class AdminShellNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = AppColors.adminAccentMid;
-    final onAccent = isDark ? AppColors.onPrimaryDarkText : AppColors.brandBrown;
+    final onAccent =
+        isDark ? AppColors.adminAccent : AppColors.brandBrown;
 
     return DecoratedBox(
       decoration: BoxDecoration(

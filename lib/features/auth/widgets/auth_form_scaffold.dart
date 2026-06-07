@@ -176,6 +176,7 @@ class _AuthFormHeader extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.4,
                 height: 1.12,
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ],

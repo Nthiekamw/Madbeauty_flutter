@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/geo/geo_point.dart';
-import '../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import 'prestataire_home_list_card.dart';
 import 'prestataire_horizontal_list_skeleton.dart';
@@ -10,24 +10,22 @@ import 'prestataire_horizontal_list_skeleton.dart';
 class PrestataireHomeHorizontalList extends StatelessWidget {
   const PrestataireHomeHorizontalList({
     super.key,
-    required this.profiles,
+    required this.entries,
     this.distanceOrigin,
     this.limit,
   });
 
-  final List<PrestataireProfile> profiles;
+  final List<PrestataireCatalogEntry> entries;
   final GeoPoint? distanceOrigin;
-
-  /// Limite d'affichage ; le reste est accessible via « Tout voir ».
   final int? limit;
 
   @override
   Widget build(BuildContext context) {
     final layout = DiscoveryResponsive.of(context);
     final maxItems = limit ?? layout.homeHorizontalPreviewLimit;
-    final visible = profiles.length <= maxItems
-        ? profiles
-        : profiles.sublist(0, maxItems);
+    final visible = entries.length <= maxItems
+        ? entries
+        : entries.sublist(0, maxItems);
 
     return SizedBox(
       height: layout.homeListCardHeight,
@@ -37,7 +35,7 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           return PrestataireHomeListCard(
-            profile: visible[index],
+            entry: visible[index],
             distanceOrigin: distanceOrigin,
             cardWidth: layout.homeListCardWidth,
             cardHeight: layout.homeListCardHeight,
@@ -62,4 +60,3 @@ class PrestataireHomeHorizontalListSkeleton extends StatelessWidget {
     );
   }
 }
-

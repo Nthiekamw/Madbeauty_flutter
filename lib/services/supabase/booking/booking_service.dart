@@ -204,6 +204,38 @@ class BookingService {
       action: () async {
         await _requirePrestataireId();
 
+        final snapshot = await _client
+            .from('reservations')
+            .select('statut, date_heure, services_beaute(duree_minutes)')
+            .eq('id', bookingId)
+            .maybeSingle();
+
+        if (snapshot == null) {
+          throw AppFailure(DiscBk.errResMissing);
+        }
+
+        final rawStatut = snapshot['statut'];
+        final s = rawStatut is String
+            ? rawStatut.trim().toLowerCase().replaceAll('é', 'e')
+            : '';
+        if (const {'terminee', 'done', 'completed'}.contains(s)) {
+          await _captureStripePaymentIfNeeded(bookingId);
+          return;
+        }
+        if (s != 'confirmee' && s != 'confirmed') {
+          throw AppFailure(DiscBk.errResBadState);
+        }
+
+        final start = DateTime.parse(snapshot['date_heure'] as String).toLocal();
+        final service = snapshot['services_beaute'];
+        final duration = service is Map
+            ? (service['duree_minutes'] as num?)?.toInt() ?? 60
+            : 60;
+        final end = start.add(Duration(minutes: duration <= 0 ? 60 : duration));
+        if (end.isAfter(DateTime.now())) {
+          throw AppFailure(DiscBk.errMarkDoneTooEarly);
+        }
+
         final updated = await _client
             .from('reservations')
             .update({'statut': 'terminee'})
@@ -217,19 +249,19 @@ class BookingService {
           return;
         }
 
-        final snapshot = await _client
+        final retry = await _client
             .from('reservations')
             .select('statut')
             .eq('id', bookingId)
             .maybeSingle();
-
-        if (snapshot == null) {
+        if (retry == null) {
           throw AppFailure(DiscBk.errResMissing);
         }
-        final raw = snapshot['statut'];
-        final s =
-            raw is String ? raw.trim().toLowerCase().replaceAll('é', 'e') : '';
-        if (const {'terminee', 'done', 'completed'}.contains(s)) {
+        final retryStatut = retry['statut'];
+        final retryS = retryStatut is String
+            ? retryStatut.trim().toLowerCase().replaceAll('é', 'e')
+            : '';
+        if (const {'terminee', 'done', 'completed'}.contains(retryS)) {
           await _captureStripePaymentIfNeeded(bookingId);
           return;
         }
@@ -424,7 +456,7 @@ class BookingService {
               'id, date_heure, statut, client_id, notes_client, notes_prestataire, '
               'amount_cents, payment_status, payment_mode, service_price_cents, '
               'platform_fee_cents, prestataire_amount_cents, '
-              'services_beaute(nom), client_profiles(user_id)',
+              'services_beaute(nom, duree_minutes), client_profiles(user_id)',
             )
             .eq('prestataire_id', prestataireId)
             .order('date_heure', ascending: true);
@@ -459,6 +491,7 @@ class BookingService {
                       : e.serviceName,
                   clientName: DiscPrestaDash.unknownClient,
                   clientId: e.clientId,
+                  clientAvatarUrl: e.clientAvatarUrl,
                   notesClient: e.notesClient,
                   notesPrestataire: e.notesPrestataire,
                   amountCents: e.amountCents,
@@ -467,6 +500,7 @@ class BookingService {
                   servicePriceCents: e.servicePriceCents,
                   platformFeeCents: e.platformFeeCents,
                   prestataireAmountCents: e.prestataireAmountCents,
+                  durationMinutes: e.durationMinutes,
                 ),
               )
               .toList();
@@ -487,6 +521,7 @@ class BookingService {
           final clientName = parts.isEmpty
               ? DiscPrestaDash.unknownClient
               : parts.join(' ');
+          final avatar = profile?.avatarUrl?.trim();
           return PrestataireReservationItem(
             id: item.id,
             dateHeure: item.dateHeure,
@@ -496,6 +531,8 @@ class BookingService {
                 : item.serviceName,
             clientName: clientName,
             clientId: item.clientId,
+            clientAvatarUrl:
+                avatar != null && avatar.isNotEmpty ? avatar : null,
             notesClient: item.notesClient,
             notesPrestataire: item.notesPrestataire,
             amountCents: item.amountCents,
@@ -504,6 +541,7 @@ class BookingService {
             servicePriceCents: item.servicePriceCents,
             platformFeeCents: item.platformFeeCents,
             prestataireAmountCents: item.prestataireAmountCents,
+            durationMinutes: item.durationMinutes,
           );
         });
       },
@@ -512,17 +550,21 @@ class BookingService {
 
   PrestataireReservationItem _prestataireReservationItemFromRow(
     Map<String, dynamic> map,
-    Object? service,
+    Object? serviceRow,
     String clientName,
   ) {
+    final duree = serviceRow is Map
+        ? (serviceRow['duree_minutes'] as num?)?.toInt() ?? 60
+        : 60;
     return PrestataireReservationItem(
       id: map['id'] as String,
       dateHeure: DateTime.parse(map['date_heure'] as String).toLocal(),
       statut: map['statut'] as String,
       serviceName:
-          service is Map ? (service['nom'] as String?)?.trim() ?? '' : '',
+          serviceRow is Map ? (serviceRow['nom'] as String?)?.trim() ?? '' : '',
       clientName: clientName,
-      clientId: map['client_id'] as String?,
+        clientId: map['client_id'] as String?,
+        clientAvatarUrl: null,
       notesClient: map['notes_client'] as String?,
       notesPrestataire: map['notes_prestataire'] as String?,
       amountCents: (map['amount_cents'] as num?)?.toInt(),
@@ -532,6 +574,7 @@ class BookingService {
       platformFeeCents: (map['platform_fee_cents'] as num?)?.toInt(),
       prestataireAmountCents:
           (map['prestataire_amount_cents'] as num?)?.toInt(),
+      durationMinutes: duree,
     );
   }
 

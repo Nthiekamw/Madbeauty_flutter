@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/widgets/app/app_text_field.dart';
 import '../../../models/prestataire_service_field_set.dart';
 import '../hub/prestataire_hub_layout.dart';
+import 'service_wizard_shine.dart';
 
 /// Tarifs et durées pour chaque prestation générée depuis le catalogue.
 class PrestataireServicePricingStep extends StatelessWidget {
@@ -17,6 +19,7 @@ class PrestataireServicePricingStep extends StatelessWidget {
     this.hideTitle = false,
     this.useHubStyle = false,
     this.emptyHint,
+    this.hideServiceCount = false,
   });
 
   final List<PrestataireServiceFieldSet> services;
@@ -25,6 +28,7 @@ class PrestataireServicePricingStep extends StatelessWidget {
   final bool hideTitle;
   final bool useHubStyle;
   final String? emptyHint;
+  final bool hideServiceCount;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +70,7 @@ class PrestataireServicePricingStep extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
-        if (useHubStyle)
+        if (useHubStyle && !hideServiceCount)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
@@ -176,90 +180,121 @@ class _PricingCard extends StatelessWidget {
     final primary = theme.colorScheme.primary;
     final name = service.nomController.text.trim();
 
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        service.prixController,
+        service.dureeController,
+      ]),
+      builder: (context, _) {
+        final configured = isServiceWizardConfigured(service);
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (useHubStyle) ...[
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$index',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: primary,
+            Row(
+              children: [
+                if (useHubStyle) ...[
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: configured
+                          ? AppColors.brandGold.withValues(alpha: 0.2)
+                          : primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: configured
+                        ? Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: AppColors.brandGold,
+                          )
+                        : Text(
+                            '$index',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: primary,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    name.isEmpty ? DiscPrestaForm.svcName : name,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: useHubStyle ? AppFonts.display : null,
+                      fontWeight: FontWeight.w700,
+                      color: configured ? primary : null,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Text(
-                name.isEmpty ? DiscPrestaForm.svcName : name,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontFamily: useHubStyle ? AppFonts.display : null,
-                  fontWeight: FontWeight.w700,
+                if (configured)
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 18,
+                    color: AppColors.brandGold,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    controller: service.prixController,
+                    label: DiscPrestaForm.svcPrice,
+                    errorText: service.prixError,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                    ],
+                    onChanged: (_) {
+                      service.prixError = null;
+                      onChanged();
+                    },
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    controller: service.dureeController,
+                    label: DiscPrestaForm.svcDuration,
+                    errorText: service.dureeError,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) {
+                      service.dureeError = null;
+                      onChanged();
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: AppTextField(
-                controller: service.prixController,
-                label: DiscPrestaForm.svcPrice,
-                errorText: service.prixError,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
-                ],
-                onChanged: (_) {
-                  service.prixError = null;
-                  onChanged();
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AppTextField(
-                controller: service.dureeController,
-                label: DiscPrestaForm.svcDuration,
-                errorText: service.dureeError,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (_) {
-                  service.dureeError = null;
-                  onChanged();
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+        );
 
-    if (!useHubStyle) {
-      return Card(margin: EdgeInsets.zero, child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: body,
-      ));
-    }
+        if (!useHubStyle) {
+          return Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: content,
+            ),
+          );
+        }
 
-    return PrestataireHubSurfaceCard(
-      padding: const EdgeInsets.all(14),
-      child: body,
+        return ServiceWizardShineFrame(
+          shine: configured,
+          borderRadius: 16,
+          child: PrestataireHubSurfaceCard(
+            padding: const EdgeInsets.all(14),
+            child: content,
+          ),
+        );
+      },
     );
   }
 }

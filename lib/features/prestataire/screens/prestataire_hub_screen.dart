@@ -22,11 +22,14 @@ import '../widgets/profile/hub/prestataire_hub_layout.dart';
 import '../widgets/profile/prestataire_hub_step_frame.dart';
 import '../widgets/profile/overview/prestataire_form_scroll_view.dart';
 import '../widgets/profile/steps/prestataire_hub_steps.dart';
+import '../widgets/profile/steps/service_wizard_shine.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/weekly_jour_horaire.dart';
 import '../providers/disponibilite_provider.dart';
 import '../widgets/dialogs/prestataire_onboarding_finish_dialog.dart';
 import '../widgets/profile/overview/prestataire_profile_load_error.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
+import '../widgets/profile/schedule/prestataire_indisponibilites_editor.dart';
 import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
 import '../widgets/profile/subscription/prestataire_subscription_onboarding_panel.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
@@ -59,6 +62,7 @@ class PrestataireHubScreen extends ConsumerStatefulWidget {
 class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   static const _galleryMaxPhotos = 10;
   static const wizardStepCount = 7;
+  static const optionalFromStep = 4;
   static const _defaultAvatarUrls = <String>[
     'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty1',
     'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty2',
@@ -475,15 +479,49 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         PrestataireProfileEditSection.services => _validateServices(),
         PrestataireProfileEditSection.gallery => true,
         PrestataireProfileEditSection.clientExperience => true,
-        PrestataireProfileEditSection.horaires => true,
+        PrestataireProfileEditSection.horaires => _validateHoraires(),
       };
     }
     return switch (_currentStep) {
       0 => _validateVitrine(),
       1 => _validateLocation(),
       2 => _validateServices(),
+      3 => _validateHoraires(),
       _ => true,
     };
+  }
+
+  bool _validateHoraires() {
+    final jours = _horaireWeek;
+    if (jours == null) {
+      setState(() => _horairesError = DiscPrestaHoraires.loadErr);
+      return false;
+    }
+    if (!jours.hasAnyOpenDay) {
+      setState(() => _horairesError = DiscPrestaHoraires.reqOpenDay);
+      return false;
+    }
+    if (!jours.validatePlages()) {
+      setState(() => _horairesError = DiscPrestaHoraires.invalidPlage);
+      return false;
+    }
+    setState(() => _horairesError = null);
+    return true;
+  }
+
+  /// Première étape obligatoire (0–3) non valide, ou `null` si tout est OK.
+  int? _firstMandatoryStepFailure() {
+    if (!_validateVitrine()) return 0;
+    if (!_validateLocation()) return 1;
+    if (!_validateServices()) return 2;
+    if (!_validateHoraires()) return 3;
+    return null;
+  }
+
+  Future<void> _prepareSavePayload() async {
+    FocusScope.of(context).unfocus();
+    await _persistOnboardingHubDraft();
+    _syncServicesFromCatalog();
   }
 
   void _ensureHoraireWeek(List<HorairePlage> plages) {
@@ -516,7 +554,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   bool get _shouldPersistHoraires =>
       widget.focusedSection == null ||
       widget.focusedSection == PrestataireProfileEditSection.horaires ||
-      _currentStep == 5;
+      _currentStep == 3;
 
   Future<bool> _saveHorairesIfNeeded() async {
     final jours = _horaireWeek;
@@ -581,14 +619,22 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   }
 
   void _syncServicesFromCatalog() {
-    final preserved = <String, ({String? id, String prix, String duree})>{
-      for (final s in _services)
-        s.nomController.text.trim().toLowerCase(): (
+    final preserved = <String, ({String? id, String prix, String duree})>{};
+    for (final s in _services) {
+      final idKey = s.id?.trim();
+      if (idKey != null && idKey.isNotEmpty) {
+        preserved[idKey] = (
           id: s.id,
           prix: s.prixController.text,
           duree: s.dureeController.text,
-        ),
-    };
+        );
+      }
+      preserved[s.nomController.text.trim().toLowerCase()] = (
+        id: s.id,
+        prix: s.prixController.text,
+        duree: s.dureeController.text,
+      );
+    }
     final existing = _services
         .map(
           (s) => PrestataireServiceFormData(
@@ -606,8 +652,9 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         _catalogSelection.toServiceFormData(existing: existing);
     _disposeServices();
     for (final service in generated) {
-      final key = service.nom.trim().toLowerCase();
-      final keep = preserved[key];
+      final nameKey = service.nom.trim().toLowerCase();
+      final keep = (service.id != null ? preserved[service.id!] : null) ??
+          preserved[nameKey];
       _services.add(
         PrestataireServiceFieldSet(
           id: keep?.id ?? service.id,
@@ -633,7 +680,9 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     var valid = true;
     for (final service in _services) {
       final price = _parsePrice(service.prixController.text);
-      final duration = int.tryParse(service.dureeController.text.trim());
+      final duration = parsePrestataireServiceDuration(
+        service.dureeController.text,
+      );
       service.prixError =
           price == null || price < 1 ? DiscPrestaForm.svcPriceBad : null;
       service.dureeError =
@@ -646,6 +695,13 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   }
 
   bool _validateServices() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_catalogSelection.isValid &&
+        (_services.isEmpty ||
+            _services.length != _catalogSelection.specialtyCount)) {
+      _syncServicesFromCatalog();
+    }
+
     var valid = true;
     setState(() {
       if (!_catalogSelection.isValid) {
@@ -656,7 +712,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
         valid = false;
       } else {
         _servicesError = null;
-        _syncServicesFromCatalog();
         if (_services.isEmpty) {
           _pricingError = DiscPrestaForm.pricingEmptyHint;
           valid = false;
@@ -670,9 +725,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     return valid;
   }
 
-  double? _parsePrice(String raw) {
-    return double.tryParse(raw.trim().replaceAll(',', '.'));
-  }
+  double? _parsePrice(String raw) => parsePrestataireServicePrice(raw);
 
   PrestataireProfileSavePayload _buildSavePayload() {
     return PrestataireProfileSavePayload(
@@ -773,12 +826,14 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       return;
     }
     if (step == 2) {
+      FocusScope.of(context).unfocus();
       if (!_validateServices()) return;
       setState(() => _currentStep = 3);
       unawaited(_persistOnboardingHubDraft());
       return;
     }
     if (step == 3) {
+      if (!_validateHoraires()) return;
       setState(() => _currentStep = 4);
       unawaited(_persistOnboardingHubDraft());
       return;
@@ -804,30 +859,37 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     unawaited(_persistOnboardingHubDraft());
   }
 
-  Future<void> _completeLater() async {
+  void _skip() {
+    if (widget.focusedSection != null) return;
     FocusScope.of(context).unfocus();
-    await _persistOnboardingHubDraft();
+    final step = _currentStep;
+    if (step < optionalFromStep) return;
+    if (step >= wizardStepCount - 1) {
+      unawaited(_save());
+      return;
+    }
+    setState(() => _currentStep += 1);
+    unawaited(_persistOnboardingHubDraft());
+  }
 
-    final canSaveCore = _validateVitrine() &&
-        _validateLocation() &&
-        _validateServices();
+  Future<void> _completeLater() async {
+    await _prepareSavePayload();
+
+    final failed = _firstMandatoryStepFailure();
     final service = ref.read(prestataireProfileFormServiceProvider);
 
     var profileSaved = false;
-    if (canSaveCore && service != null) {
+    if (failed == null && service != null) {
       setState(() => _saving = true);
       try {
         await service.save(_buildSavePayload());
         ref.invalidate(currentPrestataireProvider);
-        if (_horaireWeek != null && _horaireWeek!.hasAnyOpenDay) {
-          final horairesOk = await _saveHorairesIfNeeded();
-          if (!horairesOk) {
-            if (mounted) {
-              _showSnack(DiscPrestaHoraires.saveErr, kind: AppSnackKind.warning);
-            }
-          }
+        final horairesOk = await _saveHorairesIfNeeded();
+        if (!horairesOk && mounted) {
+          _showSnack(DiscPrestaHoraires.saveErr, kind: AppSnackKind.warning);
+        } else {
+          profileSaved = await _uploadPendingGalleryIfNeeded();
         }
-        profileSaved = true;
       } on AppFailure catch (e) {
         if (mounted) {
           _showSnack(e.message, kind: AppSnackKind.error);
@@ -845,36 +907,56 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     if (profileSaved) {
       _showSnack(
         DiscPrestaForm.completeLaterSaved,
-        kind: AppSnackKind.info,
+        kind: AppSnackKind.success,
       );
-    } else if (!canSaveCore) {
+    } else if (failed != null) {
+      setState(() => _currentStep = failed);
       _showSnack(
         DiscPrestaForm.completeLaterNeedsCore,
         kind: AppSnackKind.warning,
       );
+      return;
     }
     context.goPrestataireDashboard();
   }
 
-  Future<void> _save() async {
-    if (!_validateCurrentStep()) return;
+  Future<bool> _uploadPendingGalleryIfNeeded() async {
+    final updated = await ref.read(prestataireProfileFormProvider.future);
+    final prestataireId = updated.prestataireId;
+    final photoService = ref.read(photoRealisationServiceProvider);
+    if (prestataireId == null ||
+        photoService == null ||
+        _pendingGallery.isEmpty) {
+      return true;
+    }
 
-    if (widget.focusedSection == null) {
-      final vitrineOk = _validateVitrine();
-      final locationOk = _validateLocation();
-      final servicesOk = _validateServices();
-      if (!vitrineOk) {
-        setState(() => _currentStep = 0);
+    for (final file in _pendingGallery) {
+      await photoService.uploadAndCreate(
+        prestataireId: prestataireId,
+        file: file,
+      );
+    }
+    _pendingGallery.clear();
+    ref.invalidate(prestataireProfileFormProvider);
+    return true;
+  }
+
+  Future<void> _save() async {
+    await _prepareSavePayload();
+
+    final wizard = widget.focusedSection == null;
+    if (wizard) {
+      final failed = _firstMandatoryStepFailure();
+      if (failed != null) {
+        setState(() => _currentStep = failed);
+        _showSnack(
+          DiscPrestaForm.completeLaterNeedsCore,
+          kind: AppSnackKind.warning,
+        );
         return;
       }
-      if (!locationOk) {
-        setState(() => _currentStep = 1);
-        return;
-      }
-      if (!servicesOk) {
-        setState(() => _currentStep = 2);
-        return;
-      }
+    } else if (!_validateCurrentStep()) {
+      return;
     }
 
     final service = ref.read(prestataireProfileFormServiceProvider);
@@ -906,7 +988,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             _saving = false;
             _uploadProgress = null;
             if (widget.focusedSection == null) {
-              _currentStep = 5;
+              _currentStep = 3;
             }
           });
           return;
@@ -914,20 +996,8 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
       }
 
       var updated = await ref.refresh(prestataireProfileFormProvider.future);
-      final prestataireId = updated.prestataireId;
-      final photoService = ref.read(photoRealisationServiceProvider);
-      if (prestataireId != null &&
-          photoService != null &&
-          _pendingGallery.isNotEmpty) {
-        for (final file in _pendingGallery) {
-          await photoService.uploadAndCreate(
-            prestataireId: prestataireId,
-            file: file,
-          );
-        }
-        _pendingGallery.clear();
-        updated = await ref.refresh(prestataireProfileFormProvider.future);
-      }
+      await _uploadPendingGalleryIfNeeded();
+      updated = await ref.read(prestataireProfileFormProvider.future);
       if (!mounted) return;
       setState(() {
         _saving = false;
@@ -990,12 +1060,9 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
           unawaited(_persistOnboardingHubDraft());
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          foregroundColor: Theme.of(context).colorScheme.onSurface,
-          surfaceTintColor: Colors.transparent,
-          scrolledUnderElevation: 0,
+      child: PrestataireBrandScaffold(
+        appBar: prestataireBrandAppBar(
+          context: context,
           title: Text(
             focused?.screenTitle ?? DiscPrestaProfile.editTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -1006,21 +1073,22 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             ),
           ),
           actions: [
-            if (onboarding && focused == null)
-              compactTopAction
-                  ? IconButton(
-                      tooltip: DiscPrestaForm.completeLater,
-                      onPressed: _saving ? null : _completeLater,
-                      icon: const Icon(Icons.schedule_outlined),
-                    )
-                  : TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.primary,
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onPressed: _saving ? null : _completeLater,
-                      child: const Text(DiscPrestaForm.completeLater),
-                    ),
+            if (onboarding &&
+                focused == null &&
+                _currentStep >= optionalFromStep &&
+                _currentStep < wizardStepCount - 1)
+              TextButton(
+                onPressed: _saving ? null : _completeLater,
+                child: Text(
+                  compactTopAction
+                      ? DiscPrestaForm.onboardingFinishLater
+                      : DiscPrestaForm.completeLater,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
           ],
         ),
         body: KeyboardDismissArea(
@@ -1072,6 +1140,8 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             onStepTapped: (step) => setState(() => _currentStep = step),
             onContinue: _continue,
             onCancel: _cancel,
+            onSkip: _skip,
+            onCompleteLater: _completeLater,
             onBasicsChanged: () {
               setState(() {
                 _avatarError = null;
@@ -1133,7 +1203,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
               _schedulePersistHubDraft();
             },
             onboardingWizard: focused == null,
-            onCompleteLater: _completeLater,
               );
             },
             error: (_, __) => PrestataireProfileLoadError(
@@ -1193,6 +1262,8 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.onStepTapped,
     required this.onContinue,
     required this.onCancel,
+    required this.onSkip,
+    required this.onCompleteLater,
     required this.onBasicsChanged,
     required this.onLieuTravailChanged,
     required this.onPickAvatar,
@@ -1211,11 +1282,10 @@ class _PrestataireProfileForm extends StatelessWidget {
     required this.onPickHoraireEnd,
     required this.onCapaciteChanged,
     required this.onboardingWizard,
-    required this.onCompleteLater,
   });
 
   static const wizardStepCount = _PrestataireHubScreenState.wizardStepCount;
-  static const optionalFromStep = 3;
+  static const optionalFromStep = _PrestataireHubScreenState.optionalFromStep;
 
   final PrestataireProfileFormData data;
   final PrestataireProfileEditSection? focusedSection;
@@ -1261,6 +1331,8 @@ class _PrestataireProfileForm extends StatelessWidget {
   final ValueChanged<int> onStepTapped;
   final VoidCallback onContinue;
   final VoidCallback onCancel;
+  final VoidCallback onSkip;
+  final VoidCallback onCompleteLater;
   final VoidCallback onBasicsChanged;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
   final VoidCallback onPickAvatar;
@@ -1279,21 +1351,20 @@ class _PrestataireProfileForm extends StatelessWidget {
   final Future<void> Function(int index) onPickHoraireEnd;
   final void Function(int index, int capacite) onCapaciteChanged;
   final bool onboardingWizard;
-  final VoidCallback onCompleteLater;
 
   String _hubStepGoal(int step) => switch (step) {
         0 => DiscPrestaForm.hubGoalBasics,
         1 => DiscPrestaForm.hubGoalLocation,
         2 => DiscPrestaForm.hubGoalServices,
-        3 => DiscPrestaForm.hubGoalGallery,
-        4 => DiscPrestaForm.hubGoalComfort,
-        5 => DiscPrestaForm.hubGoalHoraires,
+        3 => DiscPrestaForm.hubGoalHoraires,
+        4 => DiscPrestaForm.hubGoalGallery,
+        5 => DiscPrestaForm.hubGoalComfort,
         _ => DiscPrestaForm.hubGoalSubscription,
       };
 
   HubStepRequirement? _hubStepRequirement(int step) => switch (step) {
-        0 || 1 || 2 => HubStepRequirement.required,
-        3 || 4 || 5 => HubStepRequirement.recommended,
+        0 || 1 || 2 || 3 => HubStepRequirement.required,
+        4 || 5 => HubStepRequirement.recommended,
         _ => HubStepRequirement.optional,
       };
 
@@ -1368,7 +1439,7 @@ class _PrestataireProfileForm extends StatelessWidget {
       ),
       PrestataireProfileEditSection.services =>
           PrestataireOnboardingServicesPanel(
-        guidedMode: guided,
+        key: const ValueKey('presta-services-guided-wizard'),
         catalogSelection: catalogSelection,
         services: services,
         catalogError: servicesError,
@@ -1400,22 +1471,32 @@ class _PrestataireProfileForm extends StatelessWidget {
         ),
       PrestataireProfileEditSection.horaires => horaireWeek == null
           ? const Center(child: CircularProgressIndicator())
-          : PrestataireWeeklyHorairesEditor(
-              jours: horaireWeek!,
-              errorText: horairesError,
-              onToggleDay: onToggleHoraireDay,
-              onPickStart: onPickHoraireStart,
-              onPickEnd: onPickHoraireEnd,
-              onCapaciteChanged: onCapaciteChanged,
-              showIntro: !guided,
-              embeddedInHub: guided,
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PrestataireWeeklyHorairesEditor(
+                  jours: horaireWeek!,
+                  errorText: horairesError,
+                  onToggleDay: onToggleHoraireDay,
+                  onPickStart: onPickHoraireStart,
+                  onPickEnd: onPickHoraireEnd,
+                  onCapaciteChanged: onCapaciteChanged,
+                  showIntro: !guided,
+                  embeddedInHub: guided,
+                ),
+                SizedBox(
+                  height: guided
+                      ? PrestataireHubLayout.blockGap
+                      : 28,
+                ),
+                PrestataireIndisponibilitesEditor(embeddedInHub: guided),
+              ],
             ),
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final focused = focusedSection;
 
     if (focused != null) {
@@ -1439,39 +1520,35 @@ class _PrestataireProfileForm extends StatelessWidget {
       0 => PrestataireProfileEditSection.vitrine,
       1 => PrestataireProfileEditSection.location,
       2 => PrestataireProfileEditSection.services,
-      3 => PrestataireProfileEditSection.gallery,
-      4 => PrestataireProfileEditSection.clientExperience,
-      5 => PrestataireProfileEditSection.horaires,
+      3 => PrestataireProfileEditSection.horaires,
+      4 => PrestataireProfileEditSection.gallery,
+      5 => PrestataireProfileEditSection.clientExperience,
       _ => PrestataireProfileEditSection.horaires,
     };
     final currentTitle = switch (currentStep) {
       0 => DiscPrestaForm.stepBasics,
       1 => DiscPrestaForm.stepLocation,
       2 => DiscPrestaForm.stepServices,
-      3 => DiscPrestaForm.stepGallery,
-      4 => DiscPrestaForm.stepComfort,
-      5 => DiscPrestaForm.stepHoraires,
+      3 => DiscPrestaForm.stepHoraires,
+      4 => DiscPrestaForm.stepGallery,
+      5 => DiscPrestaForm.stepComfort,
       _ => DiscPrestaSub.onboardingTitle,
     };
     final stepGoal = _hubStepGoal(currentStep);
     final stepRequirement = _hubStepRequirement(currentStep);
     final isLast = currentStep == wizardStepCount - 1;
-    final isOptional = currentStep >= optionalFromStep && !isLast;
+    final isOptionalStep =
+        onboardingWizard && currentStep >= optionalFromStep && !isLast;
     final continueLabel = saving
         ? DiscPrestaForm.saving
         : isLast
-            ? DiscPrestaForm.save
+            ? DiscPrestaForm.saveProfile
             : DiscPrestaForm.onward;
 
     final steps = kPrestataireHubSteps;
     final stepMeta = steps[currentStep.clamp(0, steps.length - 1)];
     final wrapStepInSurfaceCard = !isSubscriptionStep &&
-        switch (currentSection) {
-          PrestataireProfileEditSection.gallery ||
-          PrestataireProfileEditSection.horaires =>
-            true,
-          _ => false,
-        };
+        currentSection == PrestataireProfileEditSection.gallery;
 
     Widget stepInner = _stepContent(
       currentSection,
@@ -1521,28 +1598,15 @@ class _PrestataireProfileForm extends StatelessWidget {
               : stepInner,
         ),
         const SizedBox(height: PrestataireHubLayout.blockGap),
-        if (isSubscriptionStep) ...[
-          TextButton(
-            onPressed: saving ? null : onContinue,
-            child: Text(
-              DiscPrestaSub.skipForNow,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(height: PrestataireHubLayout.actionGap),
-        ],
         PrestataireHubStepActions(
           primaryLabel: continueLabel,
           onPrimary: onContinue,
           saving: saving,
           onBack: currentStep > 0 ? onCancel : null,
-          onSkip: isOptional ? onContinue : null,
-          showSkip: isOptional,
-          onCompleteLater: onboardingWizard && isOptional ? onCompleteLater : null,
-          showCompleteLater: onboardingWizard && isOptional,
+          onSkip: isOptionalStep ? onSkip : null,
+          onCompleteLater: isOptionalStep ? onCompleteLater : null,
+          showSkip: isOptionalStep,
+          showCompleteLater: isOptionalStep,
         ),
       ],
     );
@@ -1598,16 +1662,16 @@ const List<PrestataireHubStepMeta> kPrestataireHubSteps = [
     icon: Icons.content_cut_rounded,
   ),
   PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepHoraires,
+    icon: Icons.schedule_rounded,
+  ),
+  PrestataireHubStepMeta(
     title: DiscPrestaForm.stepGallery,
     icon: Icons.photo_library_outlined,
   ),
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepComfort,
     icon: Icons.favorite_rounded,
-  ),
-  PrestataireHubStepMeta(
-    title: DiscPrestaForm.stepHoraires,
-    icon: Icons.schedule_rounded,
   ),
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepSubscription,

@@ -251,6 +251,7 @@ class PrestataireHubFormSection extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontFamily: AppFonts.display,
                         fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     if (subtitle != null) ...[

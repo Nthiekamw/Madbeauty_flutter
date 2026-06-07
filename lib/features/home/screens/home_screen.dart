@@ -8,9 +8,8 @@ import '../../../router/navigation_extensions.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
-import '../providers/home_feed_provider.dart';
 import '../providers/home_profile_provider.dart';
-import '../../client/widgets/workspace/client_workspace_shell.dart';
+import '../widgets/client_home_hero_header.dart';
 import '../widgets/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -45,11 +44,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         false;
   }
 
-  void _pickInspiration(String topic) {
-    FocusScope.of(context).unfocus();
-    ref.read(homeFeedSelectionProvider.notifier).setInspiration(topic);
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authNotifierProvider);
@@ -66,13 +60,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Widget body;
     if (currentUser != null) {
       body = _ConnectedClientHome(
-        onExplorePick: _pickInspiration,
         profileSnapshotAsync: profileSnapshotAsync,
       );
     } else if (isGuestBrowsing) {
-      body = _GuestBrowseHome(
-        onExplorePick: _pickInspiration,
-      );
+      body = const _GuestBrowseHome();
     } else {
       body = _GuestFallback(
         cachedEmailAsync: cachedEmailAsync,
@@ -88,11 +79,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
-        child: ClientWorkspaceShell(
-          subtitle: currentUser != null
-              ? DiscHome.taglineDiscovery
-              : AuthStrings.guestHomeSubtitle,
-          child: body,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ClientHomeHeroHeader(),
+            Expanded(child: body),
+          ],
         ),
       ),
     );
@@ -101,11 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _ConnectedClientHome extends StatelessWidget {
   const _ConnectedClientHome({
-    required this.onExplorePick,
     required this.profileSnapshotAsync,
   });
 
-  final ValueChanged<String> onExplorePick;
   final AsyncValue<HomeProfileSnapshot?> profileSnapshotAsync;
 
   @override
@@ -117,7 +107,6 @@ class _ConnectedClientHome extends StatelessWidget {
     };
 
     return ClientHomeScrollContent(
-      onExplorePick: onExplorePick,
       footer: clientHomeProfileCacheFooter(theme, fromCache),
     );
   }
@@ -125,18 +114,13 @@ class _ConnectedClientHome extends StatelessWidget {
 
 /// Accueil client sans compte : découverte catalogue uniquement.
 class _GuestBrowseHome extends StatelessWidget {
-  const _GuestBrowseHome({
-    required this.onExplorePick,
-  });
-
-  final ValueChanged<String> onExplorePick;
+  const _GuestBrowseHome();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return ClientHomeScrollContent(
-      onExplorePick: onExplorePick,
       footer: Text(
         AuthStrings.welcomeGuestHint,
         textAlign: TextAlign.center,

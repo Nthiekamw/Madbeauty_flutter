@@ -22,8 +22,29 @@ abstract final class DiscPrestaForm {
   static const hubSectionLocationHint = 'Où les clientes te trouvent';
   static const hubSectionCatalog = '1. Prestations proposées';
   static const hubSectionCatalogHint = 'Sélectionne au moins une catégorie';
+  static const catalogMainCategoriesLine =
+      'Coiffure · Manucure · Maquillage · Pédicure';
+  static const servicesWizardAssistantTitle = 'Assistant services';
+  static const servicesWizardAssistantSubtitle =
+      'Prestation → Spécialité → Tarifs & durées';
   static const hubSectionPricing = '2. Tarifs & durées';
   static const hubSectionPricingHint = 'Renseigne chaque service ajouté';
+  static const servicesWizardStepPrestation = 'Prestation';
+  static const servicesWizardStepSpecialty = 'Spécialité';
+  static const servicesWizardStepPricing = 'Tarifs & durées';
+  static const servicesWizardPickPrestationHint =
+      'Choisis une activité pour commencer';
+  static const servicesWizardPickSpecialtyHint =
+      'Sélectionne une spécialité à configurer. Appuie sur ✕ pour la retirer.';
+  static const servicesWizardPricingHint =
+      'Indique le prix et la durée pour cette prestation';
+  static const servicesWizardAnotherSpecialty = 'Autre spécialité';
+  static const servicesWizardAnotherPrestation = 'Autre prestation';
+  static String servicesWizardActivePrestation(String name) =>
+      'Prestation : $name';
+  static String servicesWizardActiveSpecialty(String name) =>
+      'Spécialité : $name';
+  static const servicesWizardConfiguredBadge = 'Configuré';
   static const hubGalleryHint =
       'Ajoute jusqu’à 10 photos de tes meilleures prestations '
       '(JPEG, PNG ou WebP) pour valoriser ton savoir-faire et rassurer les clientes.';
@@ -35,7 +56,7 @@ abstract final class DiscPrestaForm {
   static const completeLaterSaved =
       'Brouillon enregistré. Tu pourras reprendre la complétion de ton profil à tout moment.';
   static const completeLaterNeedsCore =
-      'Complète au minimum la vitrine, l’adresse et tes services pour enregistrer ton profil. '
+      'Complète au minimum la vitrine, l’adresse, tes services et tes horaires pour enregistrer ton profil. '
       'Ton brouillon local est conservé.';
   static String hubWizardProgressLabel(int current, int total) =>
       'Étape $current sur $total';
@@ -69,16 +90,17 @@ abstract final class DiscPrestaForm {
   static const hubTipComfort =
       'Ces détails rassurent les clientes (accès, ambiance, conditions).';
   static const hubTipHoraires =
-      'Active au moins un jour avec des horaires cohérents pour recevoir des demandes.';
+      'Active au moins un jour avec des horaires cohérents. '
+      'Les congés sont optionnels : tu peux les ajouter maintenant ou plus tard.';
   static const hubTipSubscription =
       'L’abonnement peut être activé plus tard : ton profil est enregistré à chaque étape.';
   static String hubStepTip(int stepIndex) => switch (stepIndex) {
         0 => hubTipBasics,
         1 => hubTipLocation,
         2 => hubTipServices,
-        3 => hubTipGallery,
-        4 => hubTipComfort,
-        5 => hubTipHoraires,
+        3 => hubTipHoraires,
+        4 => hubTipGallery,
+        5 => hubTipComfort,
         _ => hubTipSubscription,
       };
   static const hubAvatarPickHint = 'Choisis une photo ou une illustration ci-dessous.';
@@ -178,6 +200,8 @@ abstract final class DiscPrestaForm {
   static const back = 'Retour';
   static const onward = 'Continuer';
   static const save = 'Enregistrer';
+  static const saveProfile =
+      'Enregistrer mon profil';
   static const saving = 'Enregistrement…';
   static const uploadingAvatar = 'Upload de la photo en cours…';
   static const savedToast = 'Profil professionnel enregistré.';

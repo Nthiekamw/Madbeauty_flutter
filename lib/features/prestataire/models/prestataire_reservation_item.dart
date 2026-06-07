@@ -9,6 +9,7 @@ class PrestataireReservationItem {
     required this.serviceName,
     required this.clientName,
     this.clientId,
+    this.clientAvatarUrl,
     this.notesClient,
     this.notesPrestataire,
     this.amountCents,
@@ -17,6 +18,7 @@ class PrestataireReservationItem {
     this.servicePriceCents,
     this.platformFeeCents,
     this.prestataireAmountCents,
+    this.durationMinutes = 60,
   });
 
   final String id;
@@ -25,6 +27,7 @@ class PrestataireReservationItem {
   final String serviceName;
   final String clientName;
   final String? clientId;
+  final String? clientAvatarUrl;
   final String? notesClient;
   final String? notesPrestataire;
   final int? amountCents;
@@ -33,6 +36,7 @@ class PrestataireReservationItem {
   final int? servicePriceCents;
   final int? platformFeeCents;
   final int? prestataireAmountCents;
+  final int durationMinutes;
 
   ReservationPaymentDisplay get paymentDisplay =>
       ReservationPaymentDisplay.fromFields(

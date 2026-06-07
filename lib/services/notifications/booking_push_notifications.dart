@@ -108,7 +108,7 @@ class BookingPushNotifications {
     _activeUserId = userId;
 
     await _initializeLocalNotifications();
-    await _requestPermissionsFirstLaunch();
+    unawaited(_requestPermissionsFirstLaunch());
     FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
@@ -212,6 +212,32 @@ class BookingPushNotifications {
     }
 
     await cache.setPushPermissionPrompted();
+  }
+
+  Future<void> showLocalAlert({
+    required String title,
+    required String body,
+  }) async {
+    final trimmedBody = body.trim();
+    if (trimmedBody.isEmpty) return;
+
+    await _initializeLocalNotifications();
+
+    const androidDetails = AndroidNotificationDetails(
+      madBeautyBookingAndroidChannelId,
+      'MadBeauty – réservations',
+      channelDescription: 'Demandes et statuts de réservation.',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+
+    await _local.show(
+      trimmedBody.hashCode,
+      title.trim().isEmpty ? 'MadBeauty' : title.trim(),
+      trimmedBody,
+      const NotificationDetails(android: androidDetails, iOS: iosDetails),
+    );
   }
 
   Future<void> _onForegroundMessage(RemoteMessage message) async {

@@ -86,6 +86,7 @@ abstract final class OfflineCacheCodec {
         pending: [],
         todayConfirmed: [],
         weekConfirmed: [],
+        needsCompletion: [],
       );
     }
     final map = Map<String, dynamic>.from(raw);
@@ -93,6 +94,7 @@ abstract final class OfflineCacheCodec {
       pending: _decodeReservationItems(map['pending']),
       todayConfirmed: _decodeReservationItems(map['todayConfirmed']),
       weekConfirmed: _decodeReservationItems(map['weekConfirmed']),
+      needsCompletion: _decodeReservationItems(map['needsCompletion']),
     );
   }
 
@@ -101,6 +103,7 @@ abstract final class OfflineCacheCodec {
         'pending': _encodeReservationItems(data.pending),
         'todayConfirmed': _encodeReservationItems(data.todayConfirmed),
         'weekConfirmed': _encodeReservationItems(data.weekConfirmed),
+        'needsCompletion': _encodeReservationItems(data.needsCompletion),
       };
 
   static List<PrestataireReservationItem> _decodeReservationItems(Object? raw) {
@@ -114,6 +117,7 @@ abstract final class OfflineCacheCodec {
         serviceName: map['serviceName'] as String? ?? '',
         clientName: map['clientName'] as String? ?? '',
         clientId: map['clientId'] as String?,
+        clientAvatarUrl: map['clientAvatarUrl'] as String?,
         notesClient: map['notesClient'] as String?,
         notesPrestataire: map['notesPrestataire'] as String?,
         amountCents: (map['amountCents'] as num?)?.toInt(),
@@ -123,6 +127,8 @@ abstract final class OfflineCacheCodec {
         platformFeeCents: (map['platformFeeCents'] as num?)?.toInt(),
         prestataireAmountCents:
             (map['prestataireAmountCents'] as num?)?.toInt(),
+        durationMinutes:
+            (map['durationMinutes'] as num?)?.toInt() ?? 60,
       );
     }).toList();
   }
@@ -147,6 +153,7 @@ abstract final class OfflineCacheCodec {
               'serviceName': e.serviceName,
               'clientName': e.clientName,
               'clientId': e.clientId,
+              'clientAvatarUrl': e.clientAvatarUrl,
               'notesClient': e.notesClient,
               'notesPrestataire': e.notesPrestataire,
               'amountCents': e.amountCents,
@@ -155,6 +162,7 @@ abstract final class OfflineCacheCodec {
               'servicePriceCents': e.servicePriceCents,
               'platformFeeCents': e.platformFeeCents,
               'prestataireAmountCents': e.prestataireAmountCents,
+              'durationMinutes': e.durationMinutes,
             },
           )
           .toList();

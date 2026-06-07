@@ -41,7 +41,8 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
         ),
         Positioned(
           top: 8,
-          left: 8,
+          left: showFavoriteButton ? 8 : null,
+          right: showFavoriteButton ? null : 8,
           child: PrestataireAvailabilityBadge(
             prestataireId: prestataireId,
             compact: compactBadge,

@@ -207,15 +207,14 @@ class PrestataireProfileCompletionCard extends ConsumerWidget {
     BuildContext context,
     PrestaCompletionChecklistItem item,
   ) {
-    final section = switch (item) {
-      PrestaCompletionChecklistItem.basics =>
-        PrestataireProfileEditSection.vitrine,
-      PrestaCompletionChecklistItem.services =>
-        PrestataireProfileEditSection.services,
-      PrestaCompletionChecklistItem.gallery =>
-        PrestataireProfileEditSection.gallery,
-    };
-    context.pushPrestataireProfileEditSection(section);
+    switch (item) {
+      case PrestaCompletionChecklistItem.basics:
+        PrestataireHubWizardNavigation.openWizard(context, initialStep: 0);
+      case PrestaCompletionChecklistItem.services:
+        PrestataireHubWizardNavigation.openWizard(context, initialStep: 2);
+      case PrestaCompletionChecklistItem.gallery:
+        PrestataireHubWizardNavigation.openWizard(context, initialStep: 4);
+    }
   }
 
   void _openEnhancement(

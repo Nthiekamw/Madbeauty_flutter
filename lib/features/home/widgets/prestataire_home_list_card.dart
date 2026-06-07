@@ -1,65 +1,70 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/geo/geo_point.dart';
-import '../../../core/geo/geo_utils.dart';
-import '../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../prestataire/widgets/shared/prestataire_card_photo_header.dart';
 import '../theme/home_styles.dart';
 
-/// Carte compacte pour listes horizontales d'accueil (proches, mieux notés).
+/// Carte prestataire pour listes horizontales de l'accueil client.
 class PrestataireHomeListCard extends StatelessWidget {
   const PrestataireHomeListCard({
     super.key,
-    required this.profile,
+    required this.entry,
     this.distanceOrigin,
     this.cardWidth,
     this.cardHeight,
     this.photoHeight,
+    this.dense = false,
   });
 
-  final PrestataireProfile profile;
-
-  /// Si fourni et que le profil a des coordonnées, affiche la distance.
+  final PrestataireCatalogEntry entry;
   final GeoPoint? distanceOrigin;
   final double? cardWidth;
   final double? cardHeight;
   final double? photoHeight;
+  /// Typographie réduite (grille catalogue).
+  final bool dense;
+
+  /// Hauteur minimale réservée au bloc texte sous la photo.
+  static const _minTextSectionHeight = 98.0;
+  static const _minTextSectionHeightDense = 70.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final salon = normalizeSingleLineText(profile.nomSalon);
-    final title = salon.isNotEmpty ? salon : 'Salon';
+    final profile = entry.profile;
+    final title = normalizeSingleLineText(entry.displayName);
+    final safeTitle = title.isEmpty ? 'Salon' : title;
+    final specialty = entry.specialtyNames.isNotEmpty
+        ? entry.specialtyNames.first
+        : null;
     final ville = profile.ville?.trim();
-    final la = profile.latitude;
-    final lo = profile.longitude;
     final origin = distanceOrigin;
-    final km = origin != null && la != null && lo != null
-        ? haversineDistanceKm(
-            lat1: origin.latitude,
-            lon1: origin.longitude,
-            lat2: la,
-            lon2: lo,
-          )
-        : double.infinity;
+    final km = origin != null ? entry.distanceKmFrom(origin) : double.infinity;
     final rating = profile.noteMoyenne;
     final radius = HomeStyles.cardBorderRadius;
     final w = cardWidth ?? HomeStyles.listCardWidth;
-    final h = cardHeight ?? HomeStyles.listCardHeight;
-    final photoH = photoHeight ?? HomeStyles.listCardPhotoHeight;
+    final h = cardHeight;
+    final rawPhotoH = photoHeight ?? HomeStyles.listCardPhotoHeight;
+    final minTextH = dense ? _minTextSectionHeightDense : _minTextSectionHeight;
+    final photoH = h != null
+        ? math.min(rawPhotoH, h - minTextH).clamp(dense ? 64.0 : 72.0, h * 0.58)
+        : rawPhotoH;
 
     return Material(
-      color: theme.colorScheme.surface.withValues(
-        alpha: isDark ? 0.9 : 0.98,
-      ),
+      color: AppColors.cardSurfaceFor(theme.brightness),
       elevation: isDark ? 0 : 1,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+      shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
       borderRadius: radius,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.pushPrestataireDetail(profile.id),
         borderRadius: radius,
@@ -67,7 +72,9 @@ class PrestataireHomeListCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.16),
+              color: theme.colorScheme.outline.withValues(
+                alpha: isDark ? 0.28 : 0.08,
+              ),
             ),
           ),
           child: SizedBox(
@@ -84,88 +91,51 @@ class PrestataireHomeListCard extends StatelessWidget {
                     topLeft: radius.topLeft,
                     topRight: radius.topRight,
                   ),
-                  fallbackDisplayName: title,
+                  fallbackDisplayName: safeTitle,
+                  fallbackAvatarUrl: entry.avatarUrl,
                   compactBadge: true,
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontFamily: AppFonts.display,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.15,
-                                  fontSize: 13,
+                    padding: EdgeInsets.fromLTRB(
+                      dense ? 8 : 10,
+                      dense ? 4 : 6,
+                      dense ? 8 : 10,
+                      dense ? 5 : 8,
+                    ),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: dense
+                          ? SizedBox(
+                              width: w - (dense ? 16 : 20),
+                              child: _CardTextBody(
+                                theme: theme,
+                                safeTitle: safeTitle,
+                                specialty: specialty,
+                                rating: rating,
+                                reviewCount: entry.reviewCount,
+                                ville: ville,
+                                km: km,
+                                dense: true,
+                              ),
+                            )
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topLeft,
+                              child: SizedBox(
+                                width: w - 20,
+                                child: _CardTextBody(
+                                  theme: theme,
+                                  safeTitle: safeTitle,
+                                  specialty: specialty,
+                                  rating: rating,
+                                  reviewCount: entry.reviewCount,
+                                  ville: ville,
+                                  km: km,
+                                  dense: false,
                                 ),
                               ),
                             ),
-                            if (profile.isVerified)
-                              Icon(
-                                Icons.verified_rounded,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
-                          ],
-                        ),
-                        if (ville != null && ville.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 12,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 2),
-                              Expanded(
-                                child: Text(
-                                  ville,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 10,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        const Spacer(flex: 1),
-                        Row(
-                          children: [
-                            if (rating != null)
-                              Flexible(
-                                child: _InfoChip(
-                                  icon: Icons.star_rounded,
-                                  label: rating.toStringAsFixed(1),
-                                  emphasized: true,
-                                ),
-                              ),
-                            if (rating != null &&
-                                !km.isInfinite &&
-                                !km.isNaN)
-                              const SizedBox(width: 6),
-                            if (!km.isInfinite && !km.isNaN)
-                              Flexible(
-                                child: _InfoChip(
-                                  icon: Icons.near_me_outlined,
-                                  label: DiscHome.nearbyKm(km),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -178,58 +148,128 @@ class PrestataireHomeListCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    this.emphasized = false,
+class _CardTextBody extends StatelessWidget {
+  const _CardTextBody({
+    required this.theme,
+    required this.safeTitle,
+    required this.specialty,
+    required this.rating,
+    required this.reviewCount,
+    required this.ville,
+    required this.km,
+    this.dense = false,
   });
 
-  final IconData icon;
-  final String label;
-  final bool emphasized;
+  final ThemeData theme;
+  final String safeTitle;
+  final String? specialty;
+  final double? rating;
+  final int? reviewCount;
+  final String? ville;
+  final double km;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
+    final showSpecialty =
+        !dense && specialty != null && specialty!.isNotEmpty;
+    final locationLine = _locationLine();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: emphasized
-            ? primary.withValues(alpha: 0.12)
-            : theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.8,
-              ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12,
-            color: emphasized ? primary : theme.colorScheme.onSurfaceVariant,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          safeTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontFamily: AppFonts.display,
+            fontWeight: FontWeight.w800,
+            color: theme.colorScheme.onSurface,
+            height: 1.05,
+            fontSize: dense ? 11 : 14,
           ),
-          const SizedBox(width: 3),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w600,
-                fontSize: 10,
-                color:
-                    emphasized ? primary : theme.colorScheme.onSurfaceVariant,
-              ),
+        ),
+        if (showSpecialty) ...[
+          const SizedBox(height: 2),
+          Text(
+            specialty!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.1,
             ),
           ),
         ],
-      ),
+        if (!dense && rating != null) ...[
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
+                size: 13,
+                color: AppColors.starRating,
+              ),
+              const SizedBox(width: 3),
+              Flexible(
+                child: Text(
+                  DiscHome.ratingWithReviews(rating!, reviewCount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.05,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (locationLine != null) ...[
+          SizedBox(height: dense ? 2 : 2),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: dense ? 10 : 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Text(
+                  locationLine,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: dense ? 8.5 : 11,
+                    height: 1.05,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
-}
 
+  String? _locationLine() {
+    if (ville == null || ville!.isEmpty) return null;
+    final hasKm = !km.isInfinite && !km.isNaN;
+    if (hasKm) {
+      return '$ville · ${DiscClientWorkspace.distanceKm(km)}';
+    }
+    return ville;
+  }
+}

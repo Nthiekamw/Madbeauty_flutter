@@ -22,6 +22,15 @@ abstract final class AuthStrings {
       'Si ce numéro est valide, un SMS vient de t’être envoyé.';
   static const String loginGoogleStarted =
       'Complète la connexion dans la fenêtre qui s’ouvre, puis reviens dans l’app.';
+  static const String authGoogleSignInCanceled =
+      'Connexion Google annulée.';
+  static const String authGoogleSignInTimeout =
+      'La connexion Google a pris trop de temps. Réessaie ou utilise le navigateur.';
+  static const String authGoogleFirebaseNotConfigured =
+      'Google natif indisponible sur cet appareil. Ouverture via le navigateur…';
+  static const String authGoogleSupabaseLinkFailed =
+      'Compte Google reconnu mais la session n’a pas pu s’ouvrir. '
+      'Vérifie que le fournisseur Google est activé dans Supabase (Auth → Providers).';
 
   static const String loginFieldEmail = 'E-mail';
   static const String loginFieldPassword = 'Mot de passe';
@@ -252,8 +261,13 @@ abstract final class AuthStrings {
   static String registerEmailVerifySubtitle(String email) =>
       email.trim().isEmpty ? 'Confirme ton adresse e-mail' : email.trim();
   static const String registerEmailVerifyBody =
-      'On vient de t’envoyer un lien de confirmation. Ouvre ta boîte mail, clique sur le lien, puis reviens ici.';
-  static const String registerEmailVerifyCta = 'J’ai vérifié mon e-mail';
+      'On vient de t’envoyer un lien de confirmation. Tu peux l’ouvrir sur ce '
+      'téléphone ou sur un autre (tablette, ordinateur…). Une fois le lien '
+      'cliqué, reviens ici sur MadBeauty et saisis ton mot de passe pour continuer.';
+  static const String registerEmailVerifyPasswordHint =
+      'Pas besoin d’ouvrir le lien sur ce téléphone : la confirmation se fait '
+      'en ligne, puis tu te connectes ici avec ton mot de passe.';
+  static const String registerEmailVerifyCta = 'Continuer l’inscription';
   static const String registerEmailVerifyResendLabel = 'Je ne vois pas le mail';
   static const String registerEmailVerifyResendHint =
       'Vérifie les spams / promotions, puis réessaie dans quelques secondes.';
@@ -262,7 +276,10 @@ abstract final class AuthStrings {
   static const String registerEmailVerifyResendError =
       'Impossible de renvoyer l’email pour le moment.';
   static const String registerEmailVerifyStillPending =
-      'Ton e-mail n’est pas encore confirmé. Clique sur le lien reçu puis réessaie.';
+      'Ton e-mail n’est pas encore confirmé. Clique sur le lien reçu (sur n’importe '
+      'quel appareil), attends quelques secondes, puis réessaie.';
+  static const String registerEmailVerifyPasswordRequired =
+      'Saisis le mot de passe choisi à l’inscription.';
 
   static const String loginSuccessTitle = 'Bon retour !';
   static const String loginSuccessBody =
@@ -280,21 +297,20 @@ abstract final class AuthStrings {
   static const String authPhoneFirebaseTokenMissing =
       'Connexion Firebase incomplète. Réessaie.';
   static const String authPhoneFirebaseAppNotConfigured =
-      'SMS Firebase non configuré sur cet appareil (empreinte SHA manquante dans '
-      'la console Firebase). L’app utilise le SMS Supabase si disponible.';
+      'SMS Firebase non configuré sur cet appareil. '
+      'Vérifie que « Phone » est activé dans Firebase Auth et que les empreintes '
+      'SHA sont enregistrées dans la console Firebase.';
   static const String authPhoneSupabaseLinkFailed =
       'Le code SMS est valide mais la session n’a pas pu s’ouvrir. '
-      'Active le fournisseur Firebase dans Supabase (Auth → Providers) ou '
-      'utilise uniquement le SMS Supabase.';
+      'Active le fournisseur Firebase dans Supabase (Authentication → Providers).';
   static const String authPhoneOtpAlreadyUsed =
       'Ce code a déjà été utilisé ou a expiré. Appuie sur « Envoyer le code » '
       'pour en recevoir un nouveau.';
   static const String authPhoneRateLimitExceeded =
       'Trop de SMS envoyés. Réessaie dans quelques minutes.';
   static const String authPhoneProviderUnsupported =
-      'L’envoi de SMS n’est pas encore activé sur le projet. '
-      'Dans Supabase : Authentication → Providers → active « Phone », '
-      'puis configure un fournisseur SMS (Twilio, MessageBird, etc.).';
+      'L’envoi de SMS téléphone n’est pas disponible. '
+      'Active « Phone » dans Firebase Auth et le fournisseur Firebase dans Supabase.';
   static const String authPhoneOtpHint =
       'Un code à 6 chiffres t’a été envoyé par SMS.';
   static const String phoneOtpVerifyTitle = 'Vérifie ton numéro';

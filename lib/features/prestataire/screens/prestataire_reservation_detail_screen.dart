@@ -8,6 +8,7 @@ import '../models/prestataire_reservation_item.dart';
 import '../providers/prestataire_agenda_provider.dart';
 import '../../messaging/messaging_navigation.dart';
 import '../widgets/agenda/prestataire_reservation_detail_body.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireReservationDetailScreen extends ConsumerStatefulWidget {
   const PrestataireReservationDetailScreen({
@@ -48,8 +49,9 @@ class _PrestataireReservationDetailScreenState
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return Scaffold(
-      appBar: AppBar(
+    return PrestataireBrandScaffold(
+      appBar: prestataireBrandAppBar(
+        context: context,
         title: const Text(DiscPrestaReservation.detailTitle),
       ),
       body: agendaAsync.when(
@@ -85,7 +87,7 @@ class _PrestataireReservationDetailScreenState
             ),
             onAccept: () => _runAction(() => _actions.accept(item.id)),
             onReject: () => _runAction(() => _actions.reject(item.id)),
-            onMarkDone: () => _runAction(() => _actions.markDone(item.id)),
+            onMarkDone: () => _runAction(() => _actions.markDone(item)),
           );
         },
       ),

@@ -13,6 +13,18 @@ class ClientHomeLayoutNotifier extends Notifier<ClientHomeLayout> {
   @override
   ClientHomeLayout build() {
     final raw = LocalCacheService.instance.clientHomeLayoutJson;
+    final layout = _layoutFromCache(raw);
+
+    if (_shouldMigrateLayout(raw, layout)) {
+      final defaults = ClientHomeLayout.defaults;
+      Future.microtask(() => _persist(defaults));
+      return defaults;
+    }
+
+    return layout;
+  }
+
+  ClientHomeLayout _layoutFromCache(String? raw) {
     if (raw == null || raw.trim().isEmpty) return ClientHomeLayout.defaults;
     try {
       final decoded = jsonDecode(raw);
@@ -23,6 +35,29 @@ class ClientHomeLayoutNotifier extends Notifier<ClientHomeLayout> {
       }
     } catch (_) {}
     return ClientHomeLayout.defaults;
+  }
+
+  bool _shouldMigrateLayout(String? raw, ClientHomeLayout layout) {
+    if (raw == null || raw.trim().isEmpty) return false;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return true;
+      final map = Map<String, dynamic>.from(decoded);
+      final version = map['version'] as int? ?? 1;
+      if (version != ClientHomeLayout.layoutVersion) return true;
+
+      // Ancien ordre par défaut (RDV en premier) → réappliquer le nouvel ordre.
+      final order = layout.order;
+      if (order.isNotEmpty &&
+          order.first == ClientHomeSectionId.nextAppointment) {
+        return true;
+      }
+    } catch (_) {
+      return true;
+    }
+
+    return false;
   }
 
   Future<void> _persist(ClientHomeLayout layout) async {
@@ -105,5 +140,7 @@ bool clientHomeIsLoggedIn(WidgetRef ref) {
   return user != null && !isGuest;
 }
 
-bool clientHomeHasFeedSelection(WidgetRef ref) =>
-    ref.watch(homeFeedSelectionProvider) != null;
+bool clientHomeHasFeedSelection(WidgetRef ref) {
+  final selection = ref.watch(homeFeedSelectionProvider);
+  return selection?.showsFeedSection ?? false;
+}

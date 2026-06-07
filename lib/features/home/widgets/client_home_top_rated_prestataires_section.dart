@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../providers/top_rated_prestataires_provider.dart';
+import '../providers/home_prestataire_entries_provider.dart';
 import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
 import 'prestataire_home_horizontal_list.dart';
@@ -14,7 +14,7 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(topRatedPrestatairesProvider);
+    final async = ref.watch(topRatedPrestataireEntriesProvider);
     final theme = Theme.of(context);
 
     return Column(
@@ -33,7 +33,7 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
                   title: DiscHome.topRatedEmptyTitle,
                   body: DiscHome.topRatedEmptyBody,
                 )
-              : PrestataireHomeHorizontalList(profiles: value),
+              : PrestataireHomeHorizontalList(entries: value),
           error: (_, __) => Text(
             DiscHome.nearbyLoadFail,
             style: theme.textTheme.bodySmall?.copyWith(

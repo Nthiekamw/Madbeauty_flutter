@@ -11,6 +11,7 @@ class PrestataireCatalogEntry {
     this.userPrenom,
     required this.specialtyNames,
     this.specialtyCategoryIds = const [],
+    this.reviewCount,
   });
 
   final PrestataireProfile profile;
@@ -18,9 +19,8 @@ class PrestataireCatalogEntry {
   final String? userNom;
   final String? userPrenom;
   final List<String> specialtyNames;
-
-  /// Identifiants [categories_service.id] liés via [prestataire_specialites].
   final List<String> specialtyCategoryIds;
+  final int? reviewCount;
 
   /// Distance depuis [origin] ; [double.infinity] si le profil n'a pas de coordonnées.
   double distanceKmFrom(GeoPoint origin) {

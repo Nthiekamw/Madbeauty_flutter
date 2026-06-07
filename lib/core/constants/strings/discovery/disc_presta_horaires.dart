@@ -14,6 +14,8 @@ abstract final class DiscPrestaHoraires {
   static const heureFin = 'Fin';
   static const capacite = 'Capacité simultanée';
   static const invalidPlage = 'L’heure de fin doit être après l’heure de début.';
+  static const reqOpenDay =
+      'Active au moins un jour avec des horaires pour continuer.';
 
   static const congesTitle = 'Congés & fermetures';
   static const congesIntro =

@@ -7,7 +7,9 @@ import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../../booking/logic/reservation_chat_eligibility.dart';
 import '../../../booking/widgets/reservation_payment_summary_card.dart';
+import '../../logic/prestataire_reservation_completion.dart';
 import '../../models/prestataire_reservation_item.dart';
+import '../shared/prestataire_client_identity_row.dart';
 
 /// Corps de l’écran détail réservation (infos + actions).
 class PrestataireReservationDetailBody extends StatelessWidget {
@@ -28,19 +30,15 @@ class PrestataireReservationDetailBody extends StatelessWidget {
   final VoidCallback? onMessage;
   final bool busy;
 
-  String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final status = clientReservationUiStatusFromStatut(item.statut);
     final chip = chipColorsForReservationStatus(theme.colorScheme, status);
+    final canMarkDone = status == ClientReservationUiStatus.confirmed &&
+        prestataireCanMarkReservationDone(item);
+    final showMarkDoneHint = status == ClientReservationUiStatus.confirmed &&
+        !canMarkDone;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -49,43 +47,24 @@ class PrestataireReservationDetailBody extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: theme.colorScheme.primary.withValues(
-                  alpha: 0.14,
-                ),
-                child: Text(
-                  _initials(item.clientName),
-                  style: theme.textTheme.titleMedium?.copyWith(
+              Expanded(
+                child: PrestataireClientIdentityRow(
+                  clientName: item.clientName,
+                  serviceName: item.serviceName,
+                  clientAvatarUrl: item.clientAvatarUrl,
+                  avatarRadius: 28,
+                  nameStyle: theme.textTheme.titleLarge?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w800,
-                    color: theme.colorScheme.primary,
+                    letterSpacing: -0.3,
                   ),
+                  serviceStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  nameServiceGap: 4,
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.clientName,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.serviceName,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
@@ -190,13 +169,23 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             ],
           ),
         ],
-        if (status == ClientReservationUiStatus.confirmed) ...[
+        if (canMarkDone) ...[
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton.tonal(
               onPressed: busy ? null : onMarkDone,
               child: Text(busy ? '…' : DiscPrestaAgenda.markDone),
+            ),
+          ),
+        ],
+        if (showMarkDoneHint) ...[
+          const SizedBox(height: 20),
+          Text(
+            DiscPrestaAgenda.markDonePendingHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],

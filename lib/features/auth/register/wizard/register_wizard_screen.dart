@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,14 +61,14 @@ class RegisterWizardScreen extends ConsumerStatefulWidget {
       _RegisterWizardScreenState();
 }
 
-class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
+class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
+    with WidgetsBindingObserver {
   static const _totalSteps = 3;
   static const _fieldGap = 10.0;
   static const _sectionGap = 12.0;
 
   int _step = 0;
   Timer? _saveDebounce;
-  bool _restoredDraft = false;
   bool _persistDraftOnDispose = true;
   bool _autoResumeTriggered = false;
 
@@ -101,6 +101,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   bool _loading = false;
   bool _signedUpViaOAuth = false;
   bool _googleLaunched = false;
+  bool _googleSigningIn = false;
+  bool _pendingGoogleSignIn = false;
+  Timer? _googleSessionWatch;
   bool _phoneRequiredOnExtras = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -111,11 +114,13 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final draft = RegisterWizardDraftStore.instance.read();
     if (draft != null) {
       _applyDraft(draft);
-      _restoredDraft =
-          draft.showResumeBanner && !widget.autoResumeFinalize;
+      if (draft.pendingGoogleSignIn) {
+        _googleLaunched = true;
+      }
     }
     _attachAutosave();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -124,6 +129,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           GoRouterState.of(context).uri.queryParameters['phoneVerified'] == '1';
       if (phoneVerified) {
         AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
+        if (_signedUpViaPhone && _step == 2 && !_loading) {
+          unawaited(_submit());
+        }
       }
       final hasSession =
           ref.read(authServiceProvider).currentSession?.user != null;
@@ -135,7 +143,23 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         _autoResumeTriggered = true;
         unawaited(_submit());
       }
+      if (_googleLaunched && !_signedUpViaOAuth) {
+        unawaited(_tryCompletePendingGoogleSignIn());
+      }
+      if (draft?.pendingGoogleSignIn == true &&
+          !hasSession &&
+          !_signedUpViaOAuth) {
+        unawaited(_clearStalePendingGoogleSignIn());
+      }
+      unawaited(_recoverGoogleSessionIfNeeded());
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_recoverGoogleSessionIfNeeded());
+    }
   }
 
   void _applyDraft(RegisterWizardDraft draft) {
@@ -156,6 +180,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     _phoneDialCode = draft.phoneDialCode;
     _roleChoice = draft.role;
     _signedUpViaOAuth = draft.signedUpViaOAuth;
+    _pendingGoogleSignIn = draft.pendingGoogleSignIn;
     _signedUpViaPhone = draft.signedUpViaPhone;
     _phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     _pendingEmailVerification = draft.pendingEmailVerification;
@@ -206,6 +231,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
         ville: _ville.text,
         bio: _bio.text,
         signedUpViaOAuth: _signedUpViaOAuth,
+        pendingGoogleSignIn: _pendingGoogleSignIn || _googleLaunched,
         signedUpViaPhone: _signedUpViaPhone,
         phoneRequiredOnExtras: _phoneRequiredOnExtras,
         pendingEmailVerification: _pendingEmailVerification,
@@ -216,6 +242,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   Future<void> _persistDraft({
     bool? pendingEmailVerification,
     bool? pendingPhoneVerification,
+    bool? pendingGoogleSignIn,
     bool? signedUpViaPhone,
     int? step,
   }) async {
@@ -228,6 +255,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     }
     if (signedUpViaPhone != null) {
       _signedUpViaPhone = signedUpViaPhone;
+    }
+    if (pendingGoogleSignIn != null) {
+      _pendingGoogleSignIn = pendingGoogleSignIn;
     }
     if (step != null) {
       _step = step.clamp(0, 2);
@@ -243,6 +273,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopGoogleSessionWatch();
     _saveDebounce?.cancel();
     if (_persistDraftOnDispose) {
       unawaited(_persistDraft());
@@ -266,12 +298,11 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   bool get _isPresta => _roleChoice == UserRole.prestataire;
 
   String _stepPrimaryLabel() {
-    if (_step >= 2) return AuthStrings.registerWizardSubmit;
-    if (_step == 0 &&
-        _usePhoneSignUp &&
-        !_signedUpViaOAuth &&
-        !_signedUpViaPhone) {
-      return AuthStrings.loginActionSendOtp;
+    if (_step >= 2) {
+      if (_usePhoneSignUp && !_signedUpViaOAuth && !_signedUpViaPhone) {
+        return AuthStrings.loginActionSendOtp;
+      }
+      return AuthStrings.registerWizardSubmit;
     }
     return AuthStrings.registerWizardNext;
   }
@@ -280,9 +311,16 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     final meta = user.userMetadata;
     final prenom = meta?['prenom'] as String? ?? '';
     final nom = meta?['nom'] as String? ?? '';
-    final fullName = (meta?['full_name'] as String?)?.trim() ?? '';
+    final givenName = meta?['given_name'] as String? ?? '';
+    final familyName = meta?['family_name'] as String? ?? '';
+    final fullName =
+        (meta?['full_name'] as String? ?? meta?['name'] as String?)
+            ?.trim() ??
+        '';
 
-    if (prenom.trim().isNotEmpty) {
+    if (givenName.trim().isNotEmpty) {
+      _prenom.text = givenName.trim();
+    } else if (prenom.trim().isNotEmpty) {
       _prenom.text = prenom.trim();
     } else if (fullName.isNotEmpty) {
       final parts = fullName.split(RegExp(r'\s+'));
@@ -292,9 +330,13 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       }
     }
 
-    final metaNom = nom.trim();
-    if (metaNom.isNotEmpty) {
-      _nom.text = metaNom;
+    if (familyName.trim().isNotEmpty) {
+      _nom.text = familyName.trim();
+    } else {
+      final metaNom = nom.trim();
+      if (metaNom.isNotEmpty) {
+        _nom.text = metaNom;
+      }
     }
 
     final phone = meta?['phone'] as String?;
@@ -314,6 +356,33 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
     _signedUpViaOAuth = true;
   }
 
+  void _startGoogleSessionWatch() {
+    _stopGoogleSessionWatch();
+    var ticks = 0;
+    _googleSessionWatch = Timer.periodic(const Duration(milliseconds: 350), (_) {
+      ticks++;
+      if (!mounted || !_googleSigningIn) {
+        _stopGoogleSessionWatch();
+        return;
+      }
+      if (ticks > 180) {
+        _stopGoogleSessionWatch();
+        if (mounted) {
+          setState(() => _googleSigningIn = false);
+        }
+        return;
+      }
+      final user = ref.read(authServiceProvider).currentSession?.user;
+      if (user == null) return;
+      unawaited(_onOAuthConnected(user));
+    });
+  }
+
+  void _stopGoogleSessionWatch() {
+    _googleSessionWatch?.cancel();
+    _googleSessionWatch = null;
+  }
+
   Future<void> _googleSignIn() async {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
@@ -325,39 +394,138 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       return;
     }
 
-    _googleLaunched = true;
+    final existingUser = ref.read(authServiceProvider).currentSession?.user;
+    if (existingUser != null && _isGoogleOAuthUser(existingUser)) {
+      await _onOAuthConnected(existingUser);
+      return;
+    }
+
+    setState(() {
+      _googleSigningIn = true;
+      _googleLaunched = true;
+    });
+    _startGoogleSessionWatch();
+
     try {
-      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      final user =
+          await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      _stopGoogleSessionWatch();
       if (!mounted) return;
+      if (user != null) {
+        await _onOAuthConnected(user);
+        return;
+      }
+      await _persistDraft(pendingGoogleSignIn: true);
       AppSnackBar.info(context, AuthStrings.loginGoogleStarted);
     } on AppFailure catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.message;
-          _googleLaunched = false;
-        });
-      }
+      _stopGoogleSessionWatch();
+      if (!mounted) return;
+      final recovered = await _finishGoogleFromSessionIfAny();
+      if (recovered) return;
+      setState(() {
+        _error = e.message;
+        _googleSigningIn = false;
+        _googleLaunched = false;
+      });
+      unawaited(_persistDraft(pendingGoogleSignIn: false));
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _error = CoreStrings.errorUnexpected;
-          _googleLaunched = false;
-        });
+      _stopGoogleSessionWatch();
+      if (!mounted) return;
+      final recovered = await _finishGoogleFromSessionIfAny();
+      if (recovered) return;
+      setState(() {
+        _error = CoreStrings.errorUnexpected;
+        _googleSigningIn = false;
+        _googleLaunched = false;
+      });
+      unawaited(_persistDraft(pendingGoogleSignIn: false));
+    } finally {
+      _stopGoogleSessionWatch();
+      if (mounted && _googleSigningIn) {
+        unawaited(_finishGoogleFromSessionIfAny());
       }
     }
   }
 
+  Future<bool> _finishGoogleFromSessionIfAny() async {
+    final user = ref.read(authServiceProvider).currentSession?.user;
+    if (user == null) return false;
+    await _onOAuthConnected(user);
+    return _signedUpViaOAuth;
+  }
+
   /// Google ne remplace que l’étape Compte : préremplissage, pas de saut d’étape.
   Future<void> _onOAuthConnected(User user) async {
+    if (_signedUpViaOAuth) {
+      if (mounted) {
+        setState(() {
+          _googleSigningIn = false;
+          _googleLaunched = false;
+          _pendingGoogleSignIn = false;
+        });
+      }
+      _stopGoogleSessionWatch();
+      return;
+    }
     _hydrateFromOAuthUser(user);
-    await _persistDraft();
     if (!mounted) return;
     setState(() {
       _googleLaunched = false;
+      _pendingGoogleSignIn = false;
+      _googleSigningIn = false;
       _error = null;
       _clearFieldErrors();
     });
+    _stopGoogleSessionWatch();
     AppSnackBar.success(context, AuthStrings.registerGoogleConnected);
+    unawaited(_persistDraft(pendingGoogleSignIn: false));
+  }
+
+  bool _isGoogleOAuthUser(User user) {
+    if (user.identities?.any((id) => id.provider == 'google') ?? false) {
+      return true;
+    }
+    final provider = user.appMetadata['provider'] as String?;
+    if (provider == 'google') return true;
+    final providers = user.appMetadata['providers'];
+    if (providers is List && providers.any((p) => p == 'google')) {
+      return true;
+    }
+    final iss = user.userMetadata?['iss'] as String? ??
+        user.appMetadata['iss'] as String?;
+    return iss != null && iss.contains('accounts.google.com');
+  }
+
+  Future<void> _recoverGoogleSessionIfNeeded() async {
+    if (!mounted || _signedUpViaOAuth || _step != 0) return;
+    final user = ref.read(authServiceProvider).currentSession?.user;
+    if (user == null) return;
+    if (!_googleSigningIn &&
+        !_googleLaunched &&
+        !_pendingGoogleSignIn &&
+        !_isGoogleOAuthUser(user)) {
+      return;
+    }
+    await _onOAuthConnected(user);
+  }
+
+  Future<void> _tryCompletePendingGoogleSignIn() async {
+    await _recoverGoogleSessionIfNeeded();
+  }
+
+  Future<void> _clearStalePendingGoogleSignIn() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted || _signedUpViaOAuth) return;
+    if (ref.read(authServiceProvider).currentSession?.user != null) {
+      await _tryCompletePendingGoogleSignIn();
+      return;
+    }
+    await _persistDraft(pendingGoogleSignIn: false);
+    if (!mounted) return;
+    setState(() {
+      _googleLaunched = false;
+      _pendingGoogleSignIn = false;
+    });
   }
 
   Future<void> _showRegistrationSuccessDialog() => AuthSuccessDialog.show(
@@ -438,14 +606,14 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
           _signedUpViaPhone = true;
           _pendingPhoneVerification = false;
           _loading = false;
-          _step = 1;
         });
         AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
-        unawaited(_persistDraft(
+        await _persistDraft(
           signedUpViaPhone: true,
           pendingPhoneVerification: false,
-          step: 1,
-        ));
+        );
+        if (!mounted) return;
+        unawaited(_submit());
         return;
       }
 
@@ -575,10 +743,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     if (_step == 0) {
       if (!_validateStep0()) return;
-      if (_usePhoneSignUp && !_signedUpViaOAuth && !_signedUpViaPhone) {
-        unawaited(_sendRegisterPhoneOtp());
-        return;
-      }
       setState(() {
         _step = 1;
         _error = null;
@@ -729,6 +893,11 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
 
     if (!_validateExtrasStep()) return;
 
+    if (_usePhoneSignUp && !_signedUpViaOAuth && !_signedUpViaPhone) {
+      unawaited(_sendRegisterPhoneOtp());
+      return;
+    }
+
     setState(() => _loading = true);
 
     if (!mounted) return;
@@ -830,20 +999,24 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authNotifierProvider, (previous, next) {
-      if (!_googleLaunched || _step != 0) return;
+      if (_signedUpViaOAuth || _step != 0) return;
       final user = switch (next) {
         AsyncData(:final value) => value,
         _ => null,
       };
       if (user == null) return;
+      final hadUser = switch (previous) {
+        AsyncData(:final value) => value != null,
+        _ => false,
+      };
+      if (hadUser && !_googleSigningIn && !_googleLaunched) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_googleLaunched || _step != 0) return;
-        unawaited(_onOAuthConnected(user));
+        unawaited(_recoverGoogleSessionIfNeeded());
       });
     });
 
     final theme = Theme.of(context);
-    final formEnabled = AppConfig.hasSupabase && !_loading;
+    final formEnabled = AppConfig.hasSupabase && !_loading && !_googleSigningIn;
     final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
 
     final stepTitle = switch (_step) {
@@ -912,44 +1085,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_restoredDraft) ...[
-            _DraftRestoredBanner(
-              onRestart: () async {
-                _persistDraftOnDispose = true;
-                _saveDebounce?.cancel();
-                await _clearDraft();
-                if (!mounted) return;
-                setState(() {
-                  _restoredDraft = false;
-                  _step = 0;
-                  _roleChoice = null;
-                  _signedUpViaOAuth = false;
-                  _signedUpViaPhone = false;
-                  _usePhoneSignUp = false;
-                  _pendingPhoneVerification = false;
-                  _phoneRequiredOnExtras = false;
-                  _pendingEmailVerification = false;
-                  _error = null;
-                  _clearFieldErrors();
-                  _prenom.clear();
-                  _nom.clear();
-                  _phone.clear();
-                  _email.clear();
-                  _password.clear();
-                  _confirm.clear();
-                  _adresse.clear();
-                  _salon.clear();
-                  _nomAffiche.clear();
-                  _codePostal.clear();
-                  _description.clear();
-                  _ville.clear();
-                  _bio.clear();
-                  _phoneDialCode = '+33';
-                });
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 320),
             switchInCurve: Curves.easeOutCubic,
@@ -1030,7 +1165,8 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen> {
               child: AuthGoogleButton(
                 label: AuthStrings.registerActionGoogle,
                 enabled: formEnabled,
-                onPressed: _googleSignIn,
+                isLoading: _googleSigningIn,
+                onPressed: _googleSigningIn ? null : _googleSignIn,
               ),
             ),
             const SizedBox(height: _sectionGap),
@@ -1541,64 +1677,6 @@ class _GoogleConnectedBanner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DraftRestoredBanner extends StatelessWidget {
-  const _DraftRestoredBanner({required this.onRestart});
-
-  final VoidCallback onRestart;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.9),
-      borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.restore_rounded,
-                size: 20,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                AuthStrings.registerDraftRestored,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: AppFonts.body,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  height: 1.4,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: onRestart,
-              child: Text(
-                AuthStrings.registerDraftRestart,
-                style: TextStyle(
-                  fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

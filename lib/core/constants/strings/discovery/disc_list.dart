@@ -6,6 +6,7 @@ abstract final class DiscList {
       'Filtre par salon, ville ou type de prestation.';
   static const categoriesLabel = 'Catégories';
   static const filtersQuickLabel = 'Filtres rapides';
+  static const specialtyFiltersTitle = 'Spécialités';
   static const resultsFilteredTitle = 'Résultats';
   static const resultsDiscoverTitle = 'À découvrir';
   static const quickFiltersTitle = 'Explorer par style';
@@ -41,6 +42,8 @@ abstract final class DiscList {
   static const mapNoGeoHint =
       'Les prestataires doivent renseigner latitude et longitude pour apparaître sur la carte.';
   static const mapOpenDetail = 'Voir la fiche';
+  static const mapExpandHint = 'Agrandir la carte';
+  static const mapCollapseHint = 'Réduire la carte';
   static const emptyFilterTitle = 'Aucun prestataire ne correspond à ta recherche.';
   static const emptyFilterHint =
       'Modifie ta recherche ou retire un filtre de type de service.';
@@ -51,6 +54,7 @@ abstract final class DiscList {
       'Impossible de charger le catalogue. Réessaie.';
   static const retry = 'Réessayer';
   static const seeMore = 'Voir plus';
+  static const allPrestatairesTitle = 'Tous les prestataires';
   static const loadMoreErr = 'Impossible de charger la suite. Réessaie.';
   static const refreshErr =
       'Impossible d’actualiser le catalogue. Réessaie.';

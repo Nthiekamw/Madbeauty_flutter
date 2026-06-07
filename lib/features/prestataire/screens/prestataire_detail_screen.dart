@@ -19,6 +19,7 @@ import '../widgets/public/detail/prestataire_detail_shell.dart';
 import '../widgets/public/prestataire_detail_messaging_section.dart';
 import '../widgets/public/prestataire_public_horaires_section.dart';
 import '../widgets/public/prestataire_public_reviews_live_section.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireDetailScreen extends ConsumerStatefulWidget {
   const PrestataireDetailScreen({super.key, required this.prestataireId});
@@ -74,13 +75,15 @@ class _PrestataireDetailScreenState
     final isOwnProfile = isOwnAsync.maybeWhen(data: (v) => v, orElse: () => false);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+    return PrestataireBrandScaffold(
       body: async.when(
         data: (data) {
           if (data == null) {
-            return Scaffold(
-              appBar: AppBar(title: const Text(DiscPrestaDetail.screenTitle)),
+            return PrestataireBrandScaffold(
+              appBar: prestataireBrandAppBar(
+                context: context,
+                title: const Text(DiscPrestaDetail.screenTitle),
+              ),
               body: const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
@@ -194,8 +197,11 @@ class _PrestataireDetailScreenState
             ],
           );
         },
-        error: (_, __) => Scaffold(
-          appBar: AppBar(title: const Text(DiscPrestaDetail.screenTitle)),
+        error: (_, __) => PrestataireBrandScaffold(
+          appBar: prestataireBrandAppBar(
+            context: context,
+            title: const Text(DiscPrestaDetail.screenTitle),
+          ),
           body: Center(
             child: Text(
               DiscPrestaDetail.loadErr,
@@ -205,8 +211,11 @@ class _PrestataireDetailScreenState
             ),
           ),
         ),
-        loading: () => Scaffold(
-          appBar: AppBar(title: const Text(DiscPrestaDetail.screenTitle)),
+        loading: () => PrestataireBrandScaffold(
+          appBar: prestataireBrandAppBar(
+            context: context,
+            title: const Text(DiscPrestaDetail.screenTitle),
+          ),
           body: const Center(child: CircularProgressIndicator()),
         ),
       ),

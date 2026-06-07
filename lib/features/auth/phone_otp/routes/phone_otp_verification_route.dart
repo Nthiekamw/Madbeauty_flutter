@@ -55,6 +55,7 @@ class _PhoneOtpVerificationRouteState
   Future<void> _completeLoginWelcome() async {
     if (_loginWelcomeHandled || !mounted) return;
     _loginWelcomeHandled = true;
+    final container = ProviderScope.containerOf(context);
 
     await AuthSuccessDialog.show(
       context,
@@ -62,9 +63,9 @@ class _PhoneOtpVerificationRouteState
       body: AuthStrings.loginSuccessBody,
       actionLabel: AuthStrings.loginSuccessCta,
     );
-    if (!mounted) return;
-    ref.read(phoneOtpVerificationControllerProvider.notifier).reset();
-    await PostAuthNavigation.navigate(context, ref);
+    if (!context.mounted) return;
+    container.read(phoneOtpVerificationControllerProvider.notifier).reset();
+    await PostAuthNavigation.navigateWithContainer(context, container);
   }
 
   Future<void> _onRegisterVerified() async {

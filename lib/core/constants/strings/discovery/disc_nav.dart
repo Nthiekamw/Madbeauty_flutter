@@ -10,7 +10,7 @@ abstract final class DiscNav {
       'Tu pourras bientôt consulter et gérer tes réservations jour par jour.';
 
   static const listingTitle = 'Prestataires';
-  static const searchTitle = 'Recherche';
+  static const searchTitle = 'Catalogue';
   static const bookingFlowTitle = 'Réservations';
   static const messagingTitle = 'Chat';
   static const profileTitle = 'Profil';

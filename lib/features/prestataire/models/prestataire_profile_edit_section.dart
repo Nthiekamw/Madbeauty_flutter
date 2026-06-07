@@ -34,9 +34,9 @@ enum PrestataireProfileEditSection {
     vitrine => 0,
     location => 1,
     services => 2,
-    gallery => 3,
-    clientExperience => 4,
-    horaires => 5,
+    horaires => 3,
+    gallery => 4,
+    clientExperience => 5,
   };
 
   String get screenTitle => switch (this) {

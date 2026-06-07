@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_strings.dart';
@@ -62,7 +63,13 @@ abstract final class FailureMapper {
         msg.contains('id_token') ||
         msg.contains('sign_in_with_id_token');
     if (isProviderLink) {
-      return AppFailure(AuthStrings.authPhoneSupabaseLinkFailed, cause: e);
+      final isGoogleLink = msg.contains('google');
+      return AppFailure(
+        isGoogleLink
+            ? AuthStrings.authGoogleSupabaseLinkFailed
+            : AuthStrings.authPhoneSupabaseLinkFailed,
+        cause: e,
+      );
     }
     return AppFailure(e.message, cause: e);
   }
@@ -83,8 +90,10 @@ abstract final class FailureMapper {
         msg.contains('certificate hash') ||
         msg.contains('app identifier') ||
         msg.contains('play integrity') ||
+        msg.contains('play_integrity') ||
         msg.contains('recaptcha') ||
-        msg.contains('17093');
+        msg.contains('17093') ||
+        msg.contains('17028');
   }
 
   static AppFailure fromFirebaseAuthException(fb.FirebaseAuthException e) {
@@ -121,6 +130,28 @@ abstract final class FailureMapper {
       return isFirebasePhoneSetupError(cause);
     }
     return failure.message == AuthStrings.authPhoneFirebaseAppNotConfigured;
+  }
+
+  static bool isGoogleSignInSetupError(GoogleSignInException e) {
+    return e.code == GoogleSignInExceptionCode.clientConfigurationError ||
+        e.code == GoogleSignInExceptionCode.providerConfigurationError ||
+        e.code == GoogleSignInExceptionCode.uiUnavailable;
+  }
+
+  static bool isSupabasePhoneProviderUnsupported(AppFailure failure) {
+    if (failure.message == AuthStrings.authPhoneProviderUnsupported) {
+      return true;
+    }
+    final cause = failure.cause;
+    if (cause is AuthException) {
+      final msg = cause.message.toLowerCase();
+      final code = cause.code?.toLowerCase() ?? '';
+      return msg.contains('unsupported phone provider') ||
+          msg.contains('phone_provider_disabled') ||
+          (msg.contains('sms provider') && msg.contains('could not be found')) ||
+          code == 'phone_provider_disabled';
+    }
+    return false;
   }
 
   static AppFailure fromPostgrestException(PostgrestException e) {

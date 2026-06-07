@@ -10,6 +10,7 @@ class PrestataireClientSummary {
     required this.reservations,
     required this.lastVisit,
     required this.lastServiceName,
+    this.clientAvatarUrl,
   });
 
   final String clientKey;
@@ -17,6 +18,7 @@ class PrestataireClientSummary {
   final List<PrestataireReservationItem> reservations;
   final DateTime lastVisit;
   final String lastServiceName;
+  final String? clientAvatarUrl;
 
   int get bookingCount => reservations.length;
   bool get isLoyal => bookingCount >= 3;
@@ -48,6 +50,7 @@ List<PrestataireClientSummary> listPrestataireClientSummaries(
       PrestataireClientSummary(
         clientKey: entry.key,
         clientName: latest.clientName,
+        clientAvatarUrl: latest.clientAvatarUrl,
         reservations: sorted,
         lastVisit: latest.dateHeure,
         lastServiceName: latest.serviceName,

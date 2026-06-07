@@ -8,18 +8,22 @@ import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../client/widgets/workspace/client_workspace_search_row.dart';
+import '../../client/widgets/workspace/client_workspace_header.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
-import '../models/listing_catalog_layout.dart';
+import '../models/listing_quick_filter.dart';
 import '../../prestataire/providers/prestataire_filters_provider.dart';
 import '../../prestataire/providers/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
-import '../models/listing_quick_filter.dart';
+import '../../../router/navigation_extensions.dart';
+import '../providers/listing_view_preferences_provider.dart';
 import '../widgets/listing_active_filters_bar.dart';
 import '../widgets/listing_filters_panel.dart';
 import '../widgets/listing_filters_sheet.dart';
+import '../widgets/listing_main_services_strip.dart';
+import '../widgets/listing_promo_banner.dart';
+import '../widgets/listing_quick_filters_strip.dart';
 import '../widgets/listing_results_header.dart';
-import '../widgets/listing_search_filter_zone.dart';
 import '../widgets/listing_map_view.dart';
 import '../widgets/listing_vertical_skeleton.dart';
 import '../widgets/listing_prestataires_scroll_view.dart';
@@ -37,9 +41,6 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   final _searchController = TextEditingController();
   final _listScrollController = ScrollController();
   bool _seededFromRoute = false;
-  ListingViewMode _viewMode = ListingViewMode.list;
-  ListingCatalogLayout _catalogLayout = ListingCatalogLayout.expanded;
-  // Liste type maquette par défaut (cartes horizontales étendues).
 
   @override
   void initState() {
@@ -109,12 +110,19 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     setState(() {});
   }
 
-  Widget _refreshableScrollable({required Widget child}) {
+  Widget _refreshableScrollable({
+    required Widget child,
+    ListingCatalogViewState? state,
+  }) {
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
+        slivers: [
+          if (state != null)
+            SliverToBoxAdapter(child: _catalogScrollHeader(state)),
+          SliverFillRemaining(hasScrollBody: false, child: child),
+        ],
       ),
     );
   }
@@ -205,62 +213,46 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     showListingFiltersSheet(
       context,
       categories: state.categories,
-      viewMode: _viewMode,
-      onViewModeChanged: (mode) => setState(() => _viewMode = mode),
-      catalogLayout: _catalogLayout,
-      onCatalogLayoutChanged: (layout) => setState(() => _catalogLayout = layout),
     );
   }
 
-  void _showAllAvailableToday() {
-    final dispo = ListingQuickFilter.featured.firstWhere(
-      (f) => f.id == 'dispo',
-    );
-    ref.read(prestatairesFilterProvider.notifier).applyQuickFilter(dispo);
-    _searchController.clear();
-    setState(() {});
-    if (_listScrollController.hasClients) {
-      _listScrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOut,
-      );
-    }
+  void _openAllPrestataires() {
+    context.pushAllPrestataires();
   }
 
-  Widget _discoveryScrollHeader(ListingCatalogViewState state, int count) {
+  Widget _resultsHeader(ListingCatalogViewState state) {
     final filters = ref.watch(prestatairesFilterProvider);
+    final filteredAsync = ref.watch(prestatairesFilteredProvider);
+    final count = filteredAsync.maybeWhen(
+      data: (list) => list.length,
+      orElse: () => state.entries.length,
+    );
     final title = filters.availableOnly
         ? DiscClientWorkspace.sectionAvailableToday
         : filters.hasActiveFilters
             ? DiscList.resultsFilteredTitle
             : DiscList.resultsDiscoverTitle;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ListingSearchFilterZone(
-          categories: state.categories,
-          onStyleQuerySelected: (query) {
-            if (_searchController.text != query) {
-              _searchController.text = query;
-            }
-            _onSearchChanged(query);
-          },
-        ),
-        ListingResultsHeader(
-          count: count,
-          title: title,
-          viewMode: _viewMode,
-          onViewModeChanged: (mode) => setState(() => _viewMode = mode),
-          secondaryActionLabel: DiscClientWorkspace.seeAll,
-          onSecondaryAction: _showAllAvailableToday,
-        ),
-      ],
+    return ListingResultsHeader(
+      count: count,
+      title: title,
+      secondaryActionLabel: DiscClientWorkspace.seeAll,
+      onSecondaryAction: _openAllPrestataires,
     );
   }
 
-  Widget _searchTop(ListingCatalogViewState state) {
+  Widget _catalogChrome(ListingCatalogViewState state) {
+    if (state.loadingInitial && state.entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (state.entries.isNotEmpty) {
+      return _resultsHeader(state);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _searchTopFixed() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -268,50 +260,40 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
           controller: _searchController,
           onChanged: _onSearchChanged,
           onClear: _clearSearch,
-          onFilterTap: () => _openFiltersSheet(state),
+          onFilterTap: () => _openFiltersSheet(
+            ref.read(listingCatalogNotifierProvider),
+          ),
           onSubmitted: _onSearchChanged,
           filtersActive:
               ref.watch(prestatairesFilterProvider).hasActiveFilters,
+          compact: true,
+        ),
+        const ListingMainServicesStrip(),
+      ],
+    );
+  }
+
+  Widget _catalogScrollHeader(ListingCatalogViewState state) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const ListingPromoBanner(),
+        ListingQuickFiltersStrip(
+          showTitle: false,
+          outlined: true,
+          filters: ListingQuickFilter.catalogTop,
+          onStyleQuerySelected: (query) {
+            if (_searchController.text != query) {
+              _searchController.text = query;
+            }
+            _onSearchChanged(query);
+          },
         ),
         ListingActiveFiltersBar(
           categories: state.categories,
           onClearSearch: _clearSearch,
         ),
-      ],
-    );
-  }
-
-  Widget _filtersPanel(ListingCatalogViewState state) {
-    return ListingFiltersPanel(
-      categories: state.categories,
-      viewMode: _viewMode,
-      onViewModeChanged: (mode) => setState(() => _viewMode = mode),
-    );
-  }
-
-  /// Panneau filtres compact + catalogue (priorité à la zone résultats).
-  Widget _catalogColumn({
-    required ListingCatalogViewState state,
-    required Widget child,
-  }) {
-    final layout = DiscoveryResponsive.of(context);
-    final screenH = MediaQuery.sizeOf(context).height;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: layout.listingFiltersMaxHeight(
-              screenH,
-              expanded: true,
-            ),
-          ),
-          child: SingleChildScrollView(
-            child: _filtersPanel(state),
-          ),
-        ),
-        Expanded(child: child),
+        _catalogChrome(state),
       ],
     );
   }
@@ -320,6 +302,25 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final catalogState = ref.watch(listingCatalogNotifierProvider);
+
+    ref.listen<ListingCatalogViewState>(listingCatalogNotifierProvider, (
+      _,
+      next,
+    ) {
+      if (!mounted) return;
+      if (next.loadingInitial || next.entries.isEmpty) return;
+      final filtered = ref.read(prestatairesFilteredProvider).value;
+      if (filtered == null || filtered.isNotEmpty) return;
+      final filters = ref.read(prestatairesFilterProvider);
+      if (!filters.hasActiveFilters) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(prestatairesFilterProvider.notifier).resetQuickFilters();
+        if (_searchController.text.isNotEmpty) {
+          _searchController.clear();
+        }
+      });
+    });
 
     if (!AppConfig.hasSupabase) {
       return Scaffold(
@@ -333,10 +334,10 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               onClear: _clearSearch,
             ),
             child: DiscoveryEmptyState(
-            icon: Icons.cloud_off_outlined,
-            title: ShellStrings.supabaseMissingTitle,
-            body: ShellStrings.supabaseMissingBody,
-            iconColor: theme.colorScheme.error,
+              icon: Icons.cloud_off_outlined,
+              title: ShellStrings.supabaseMissingTitle,
+              body: ShellStrings.supabaseMissingBody,
+              iconColor: theme.colorScheme.error,
             ),
           ),
         ),
@@ -348,7 +349,12 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       body: SafeArea(
         child: ClientWorkspaceShell(
           subtitle: DiscClientWorkspace.searchSubtitle,
-          top: _searchTop(catalogState),
+          panelOverlap: -8,
+          header: const ClientWorkspaceHeader(
+            subtitle: DiscClientWorkspace.searchSubtitle,
+            compact: true,
+          ),
+          top: _searchTopFixed(),
           child: _buildMainBody(theme, catalogState),
         ),
       ),
@@ -359,11 +365,12 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     if (state.loadingInitial &&
         state.entries.isEmpty &&
         state.errorMessage == null) {
-      return const Center(child: ListingVerticalSkeleton());
+      return const ListingVerticalSkeleton();
     }
 
     if (state.errorMessage != null && state.entries.isEmpty) {
       return _refreshableScrollable(
+        state: state,
         child: DiscoveryEmptyState(
           icon: Icons.cloud_off_outlined,
           title: DiscList.catalogLoadErr,
@@ -380,10 +387,12 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _buildCatalogBody(ThemeData theme, ListingCatalogViewState state) {
+    final prefs = ref.watch(listingViewPreferencesProvider);
     final all = state.entries;
 
     if (all.isEmpty) {
       return _refreshableScrollable(
+        state: state,
         child: DiscoveryEmptyState(
           icon: Icons.storefront_outlined,
           title: DiscList.emptyCatalogTitle,
@@ -392,38 +401,57 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       );
     }
 
-    final filtered = ref.watch(prestatairesFilteredProvider).value ?? const [];
-    if (filtered.isEmpty) {
-      return _refreshableScrollable(
+    final filteredAsync = ref.watch(prestatairesFilteredProvider);
+
+    return filteredAsync.when(
+      loading: () => const ListingVerticalSkeleton(),
+      error: (_, __) => _refreshableScrollable(
+        state: state,
         child: DiscoveryEmptyState(
-          icon: Icons.search_off_rounded,
-          title: DiscList.emptyFilterTitle,
-          body: DiscList.emptyFilterHint,
-          actionLabel: DiscList.quickFiltersReset,
-          onAction: () {
-            ref.read(prestatairesFilterProvider.notifier).resetQuickFilters();
-            _clearSearch();
-          },
+          icon: Icons.cloud_off_outlined,
+          title: DiscList.catalogLoadErr,
+          body: DiscList.pullDownHint,
+          iconColor: theme.colorScheme.error,
+          actionLabel: DiscList.retry,
+          onAction: () =>
+              ref.read(listingCatalogNotifierProvider.notifier).refresh(),
         ),
-      );
-    }
+      ),
+      data: (filtered) {
+        if (filtered.isEmpty) {
+          return _refreshableScrollable(
+            state: state,
+            child: DiscoveryEmptyState(
+              icon: Icons.search_off_rounded,
+              title: DiscList.emptyFilterTitle,
+              body: DiscList.emptyFilterHint,
+              actionLabel: DiscList.quickFiltersReset,
+              onAction: () {
+                ref.read(prestatairesFilterProvider.notifier).resetQuickFilters();
+                _clearSearch();
+              },
+            ),
+          );
+        }
 
-    if (_viewMode == ListingViewMode.map) {
-      return _buildMapBody(theme, state, filtered);
-    }
+        if (prefs.viewMode == ListingViewMode.map) {
+          return _buildMapBody(theme, state, filtered);
+        }
 
-    final showFooter =
-        state.hasMore ||
-        state.loadMoreError != null ||
-        state.refreshError != null;
+        final showFooter =
+            state.hasMore ||
+            state.loadMoreError != null ||
+            state.refreshError != null;
 
-    return ListingPrestatairesScrollView(
-      controller: _listScrollController,
-      entries: filtered,
-      layout: _catalogLayout,
-      onRefresh: _onRefresh,
-      header: _discoveryScrollHeader(state, filtered.length),
-      footer: showFooter ? _loadMoreFooter(theme, state) : null,
+        return ListingPrestatairesScrollView(
+          controller: _listScrollController,
+          entries: filtered,
+          layout: prefs.catalogLayout,
+          onRefresh: _onRefresh,
+          header: _catalogScrollHeader(state),
+          footer: showFooter ? _loadMoreFooter(theme, state) : null,
+        );
+      },
     );
   }
 
@@ -442,33 +470,11 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         state.loadMoreError != null ||
         state.refreshError != null;
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
-    final filters = ref.watch(prestatairesFilterProvider);
-    final title = filters.availableOnly
-        ? DiscClientWorkspace.sectionAvailableToday
-        : filters.hasActiveFilters
-            ? DiscList.resultsFilteredTitle
-            : DiscList.resultsDiscoverTitle;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ListingSearchFilterZone(
-          categories: state.categories,
-          onStyleQuerySelected: (query) {
-            if (_searchController.text != query) {
-              _searchController.text = query;
-            }
-            _onSearchChanged(query);
-          },
-        ),
-        ListingResultsHeader(
-          count: filtered.length,
-          title: title,
-          viewMode: _viewMode,
-          onViewModeChanged: (mode) => setState(() => _viewMode = mode),
-          secondaryActionLabel: DiscClientWorkspace.seeAll,
-          onSecondaryAction: _showAllAvailableToday,
-        ),
+        _catalogScrollHeader(state),
         Expanded(
           child: Padding(
             padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),

@@ -92,6 +92,7 @@ extension AppNavigationX on BuildContext {
   void pushClientPaymentMethods() =>
       pushNamed(AppRouteNames.clientPaymentMethods);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
+  void pushAllPrestataires() => pushNamed(AppRouteNames.clientAllPrestataires);
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
   void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);

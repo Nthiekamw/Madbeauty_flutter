@@ -6,8 +6,10 @@ import '../../../../shared/layout/discovery_responsive.dart';
 abstract final class PrestataireDashboardInsets {
   PrestataireDashboardInsets._();
 
-  static double horizontal(BuildContext context) =>
-      DiscoveryResponsive.of(context).horizontalPadding;
+  static double horizontal(BuildContext context) {
+    final base = DiscoveryResponsive.of(context).horizontalPadding;
+    return base > 12 ? base - 4 : base;
+  }
 
   static EdgeInsets page(BuildContext context) => EdgeInsets.fromLTRB(
         horizontal(context),

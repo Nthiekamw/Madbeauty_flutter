@@ -36,22 +36,27 @@ class DiscoveryResponsive {
     return (inner / 2.15).clamp(152.0, 188.0);
   }
 
-  double get homeListCardHeight => homeListCardWidth * (232 / 176);
+  double get homeListCardHeight => homeListCardWidth * 1.62;
 
-  double get homeListPhotoHeight => homeListCardHeight * (100 / 232);
+  double get homeListPhotoHeight => homeListCardHeight * 0.55;
 
   /// Colonnes catalogue en mode grille.
   int get catalogGridColumns => 2;
 
   static const double catalogGridSpacing = 8;
 
-  /// Hauteur d'une tuile grille (alignée sur la carte compacte).
-  double catalogGridTileHeight() {
+  /// Largeur d'une cellule grille catalogue (2 colonnes).
+  double catalogGridCellWidth() {
     final inner = (contentMaxWidth < width ? contentMaxWidth : width) -
         horizontalPadding * 2;
-    final cellW = (inner - catalogGridSpacing) / catalogGridColumns;
-    return (cellW * 1.02 + 48).clamp(188.0, 228.0);
+    return (inner - catalogGridSpacing) / catalogGridColumns;
   }
+
+  /// Hauteur d'une tuile grille (catalogue — cartes plus compactes).
+  double catalogGridTileHeight() => catalogGridCellWidth() * 1.46;
+
+  /// Photo grille : ~58 % de la hauteur carte.
+  double catalogGridPhotoHeight() => catalogGridTileHeight() * 0.58;
 
   /// Filtres rapides recherche (puces compactes).
   double get quickFiltersStripHeight => 34;

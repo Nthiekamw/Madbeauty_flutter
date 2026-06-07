@@ -96,6 +96,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     if (_welcomeHandled || !mounted) return;
     _welcomeHandled = true;
     _googleSignInPending = false;
+    final container = ProviderScope.containerOf(context);
 
     await AuthSuccessDialog.show(
       context,
@@ -103,8 +104,8 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       body: AuthStrings.loginSuccessBody,
       actionLabel: AuthStrings.loginSuccessCta,
     );
-    if (!mounted) return;
-    await PostAuthNavigation.navigate(context, ref);
+    if (!context.mounted) return;
+    await PostAuthNavigation.navigateWithContainer(context, container);
   }
 
   @override

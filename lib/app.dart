@@ -7,6 +7,7 @@ import 'features/auth/navigation/auth_recovery_navigation.dart';
 import 'router/app_router.dart';
 import 'router/deep_link_listener.dart';
 import 'services/notifications/booking_push_coordinator.dart';
+import 'services/notifications/prestataire_booking_notification_coordinator.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/router_theme_scope.dart';
 
@@ -19,21 +20,23 @@ class MadBeautyApp extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
     return DeepLinkListener(
       child: BookingPushCoordinator(
-        child: RouterThemeScope(
-          router: router,
-          builder: (context, area) {
-            return MaterialApp.router(
-              title: CoreStrings.appName,
-              debugShowCheckedModeBanner: false,
-              themeMode: ThemeMode.system,
-              theme: AppTheme.light(area),
-              darkTheme: AppTheme.dark(area),
-              locale: const Locale('fr', 'FR'),
-              supportedLocales: const [Locale('fr', 'FR')],
-              localizationsDelegates: GlobalMaterialLocalizations.delegates,
-              routerConfig: router,
-            );
-          },
+        child: PrestataireBookingNotificationCoordinator(
+          child: RouterThemeScope(
+            router: router,
+            builder: (context, area) {
+              return MaterialApp.router(
+                title: CoreStrings.appName,
+                debugShowCheckedModeBanner: false,
+                themeMode: ThemeMode.system,
+                theme: AppTheme.light(area),
+                darkTheme: AppTheme.dark(area),
+                locale: const Locale('fr', 'FR'),
+                supportedLocales: const [Locale('fr', 'FR')],
+                localizationsDelegates: GlobalMaterialLocalizations.delegates,
+                routerConfig: router,
+              );
+            },
+          ),
         ),
       ),
     );

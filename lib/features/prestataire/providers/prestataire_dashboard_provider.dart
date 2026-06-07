@@ -12,6 +12,7 @@ final prestataireDashboardProvider =
         pending: [],
         todayConfirmed: [],
         weekConfirmed: [],
+        needsCompletion: [],
       );
 
       final service = ref.watch(bookingServiceProvider);

@@ -43,6 +43,7 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
     final selectedIndex = widget.navigationShell.currentIndex;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: ClientReviewPromptCoordinator(
         child: OfflineShell(child: navigationShell),
       ),

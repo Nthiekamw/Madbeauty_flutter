@@ -62,7 +62,7 @@ class ClientShellNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 8, 6, 6),
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
           child: Row(
             children: List.generate(_kNavLabels.length, (index) {
               final selected = selectedIndex == index;
@@ -101,18 +101,23 @@ class ClientShellNavBar extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              _kNavLabels[index],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontFamily: AppFonts.body,
-                                fontWeight:
-                                    selected ? FontWeight.w700 : FontWeight.w500,
-                                fontSize: 10,
-                                color: selected
-                                    ? onPrimary
-                                    : theme.colorScheme.onSurfaceVariant,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                _kNavLabels[index],
+                                maxLines: 1,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontFamily: AppFonts.body,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  fontSize: 9.5,
+                                  color: selected
+                                      ? onPrimary
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ],

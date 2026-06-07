@@ -19,9 +19,13 @@ class ClientWorkspaceHeader extends ConsumerWidget {
   const ClientWorkspaceHeader({
     super.key,
     this.subtitle = DiscClientWorkspace.searchSubtitle,
+    this.compact = false,
   });
 
   final String subtitle;
+
+  /// Variante réduite (écran Catalogue uniquement).
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,9 +61,11 @@ class ClientWorkspaceHeader extends ConsumerWidget {
         ? subtitle.trim()
         : DiscClientWorkspace.searchSubtitle;
 
-    final avatarRadius = responsive.isCompact ? 26.0 : 28.0;
-    const iconButtonSize = 36.0;
-    const iconSize = 17.0;
+    final avatarRadius = compact
+        ? (responsive.isCompact ? 20.0 : 22.0)
+        : (responsive.isCompact ? 26.0 : 28.0);
+    final iconButtonSize = compact ? 32.0 : 36.0;
+    final iconSize = compact ? 15.0 : 17.0;
 
     final profileBlock = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -99,25 +105,31 @@ class ClientWorkspaceHeader extends ConsumerWidget {
                   color: onPrimary,
                   letterSpacing: -0.15,
                   height: 1.15,
-                  fontSize: responsive.isCompact ? 16 : 17,
+                  fontSize: compact
+                      ? (responsive.isCompact ? 13 : 14)
+                      : (responsive.isCompact ? 16 : 17),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Text(
-                lineSubtitle,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontFamily: AppFonts.body,
-                  color: onPrimary.withValues(alpha: 0.9),
-                  height: 1.25,
-                  fontWeight: FontWeight.w500,
-                  fontSize: responsive.isCompact ? 12.5 : 13.5,
+              if (lineSubtitle.isNotEmpty) ...[
+                SizedBox(height: compact ? 2 : 4),
+                Text(
+                  lineSubtitle,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontFamily: AppFonts.body,
+                    color: onPrimary.withValues(alpha: 0.9),
+                    height: 1.2,
+                    fontWeight: FontWeight.w500,
+                    fontSize: compact
+                        ? (responsive.isCompact ? 10.5 : 11)
+                        : (responsive.isCompact ? 12.5 : 13.5),
+                  ),
+                  maxLines: compact ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: !compact,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.fade,
-                softWrap: true,
-              ),
+              ],
             ],
           ),
         ),
@@ -134,7 +146,9 @@ class ClientWorkspaceHeader extends ConsumerWidget {
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(
-        minHeight: stackedLayout ? 124 : 108,
+        minHeight: compact
+            ? (stackedLayout ? 88 : 76)
+            : (stackedLayout ? 124 : 108),
       ),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
@@ -159,7 +173,7 @@ class ClientWorkspaceHeader extends ConsumerWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColors.brandBrown.withValues(alpha: 0.96),
-                      const Color(0xFF3D2A22).withValues(alpha: 0.94),
+                      AppColors.brandBrownMid.withValues(alpha: 0.94),
                       AppColors.brandBrown.withValues(alpha: 0.88),
                     ],
                   ),
@@ -192,16 +206,20 @@ class ClientWorkspaceHeader extends ConsumerWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(
                 horizontal,
-                stackedLayout ? 22 : 24,
+                compact
+                    ? (stackedLayout ? 14 : 16)
+                    : (stackedLayout ? 22 : 24),
                 horizontal,
-                stackedLayout ? 20 : 24,
+                compact
+                    ? (stackedLayout ? 14 : 16)
+                    : (stackedLayout ? 20 : 24),
               ),
               child: stackedLayout
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         profileBlock,
-                        const SizedBox(height: 14),
+                        SizedBox(height: compact ? 10 : 14),
                         Align(
                           alignment: Alignment.centerRight,
                           child: actions,

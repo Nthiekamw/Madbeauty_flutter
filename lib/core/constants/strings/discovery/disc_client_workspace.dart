@@ -11,14 +11,14 @@ abstract final class DiscClientWorkspace {
   static const notificationsTooltip = 'Notifications';
 
   static const searchSubtitle =
-      'Trouvez les meilleurs pros près de chez vous';
+      'Parcourez les prestataires près de chez vous';
   static const searchHint =
       'Rechercher un service, un salon, une ville…';
   static const filterTooltip = 'Filtres et tri';
 
   static const promoTitle = 'Réservez votre prochain look ✨';
   static const promoBody =
-      'Des professionnel·les vérifié·es, des avis authentiques et la réservation en quelques taps.';
+      'Découvrez des pros passionnés et réservez en quelques clics.';
   static const promoCta = 'Explorer';
 
   static const sectionAvailableToday = 'Disponibles aujourd’hui ✨';

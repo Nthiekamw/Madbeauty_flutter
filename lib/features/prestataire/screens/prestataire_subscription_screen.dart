@@ -8,6 +8,7 @@ import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../providers/prestataire_subscription_provider.dart';
 import '../widgets/profile/subscription/prestataire_subscription_checkout_section.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 /// Grille d’abonnement + paiement Stripe Checkout.
 class PrestataireSubscriptionScreen extends ConsumerWidget {
@@ -19,8 +20,11 @@ class PrestataireSubscriptionScreen extends ConsumerWidget {
     final primary = theme.colorScheme.primary;
     final serviceCountAsync = ref.watch(prestatairePublishedServiceCountProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscPrestaSub.screenTitle)),
+    return PrestataireBrandScaffold(
+      appBar: prestataireBrandAppBar(
+        context: context,
+        title: const Text(DiscPrestaSub.screenTitle),
+      ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [

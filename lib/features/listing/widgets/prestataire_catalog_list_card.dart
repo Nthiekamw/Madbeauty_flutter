@@ -21,13 +21,13 @@ class PrestataireCatalogListCard extends StatelessWidget {
     required this.entry,
     this.density = CatalogCardDensity.compact,
     this.distanceKm,
-    this.showAvailableBadge = false,
+    this.onCollapse,
   });
 
   final PrestataireCatalogEntry entry;
   final CatalogCardDensity density;
   final double? distanceKm;
-  final bool showAvailableBadge;
+  final VoidCallback? onCollapse;
 
   bool get _compact => density == CatalogCardDensity.compact;
 
@@ -39,7 +39,7 @@ class PrestataireCatalogListCard extends StatelessWidget {
     return _ExpandedCatalogCard(
       entry: entry,
       distanceKm: distanceKm,
-      showAvailableBadge: showAvailableBadge,
+      onCollapse: onCollapse,
     );
   }
 }
@@ -49,12 +49,12 @@ class _ExpandedCatalogCard extends StatelessWidget {
   const _ExpandedCatalogCard({
     required this.entry,
     this.distanceKm,
-    this.showAvailableBadge = false,
+    this.onCollapse,
   });
 
   final PrestataireCatalogEntry entry;
   final double? distanceKm;
-  final bool showAvailableBadge;
+  final VoidCallback? onCollapse;
 
   @override
   Widget build(BuildContext context) {
@@ -69,226 +69,261 @@ class _ExpandedCatalogCard extends StatelessWidget {
     final showSalon =
         salon != null && salon.isNotEmpty && salon != safeDisplay;
     final ville = profile.ville?.trim();
-    final cp = profile.codePostal?.trim();
-    final location = [
-      if (ville != null && ville.isNotEmpty) ville,
-      if (cp != null && cp.isNotEmpty) cp,
-    ].join(' Â· ');
+    final specialty = entry.specialtyNames.isNotEmpty
+        ? entry.specialtyNames.first
+        : null;
     final teaser = _teaserText(profile.description, profile.bio);
     final rating = profile.noteMoyenne;
-    const photoWidth = 112.0;
+    const photoWidth = 118.0;
+    const minPhotoHeight = 120.0;
 
     return Material(
-      color: AppColors.transparent,
+      color: theme.colorScheme.surfaceContainerHigh.withValues(
+        alpha: isDark ? 1 : 0.98,
+      ),
+      elevation: isDark ? 0 : 1,
+      shadowColor: primary.withValues(alpha: 0.08),
       borderRadius: cardRadius,
-      child: InkWell(
-        onTap: () => context.pushPrestataireDetail(profile.id),
-        borderRadius: cardRadius,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: cardRadius,
-            color: theme.colorScheme.surface.withValues(
-              alpha: isDark ? 0.92 : 0.98,
-            ),
-            border: Border.all(
-              color: primary.withValues(alpha: isDark ? 0.14 : 0.1),
-            ),
-            boxShadow: isDark
-                ? null
-                : [
-                    BoxShadow(
-                      color: primary.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () => context.pushPrestataireDetail(profile.id),
+            child: Stack(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: photoWidth),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    safeDisplay,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        theme.textTheme.titleSmall?.copyWith(
+                                      fontFamily: AppFonts.display,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.15,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                ),
+                                if (profile.isVerified)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Icon(
+                                      Icons.verified_rounded,
+                                      color: primary,
+                                      size: 18,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (showSalon) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                salon,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                            if (specialty != null && specialty.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                specialty,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                            if (ville != null && ville.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 11,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _locationLabel(ville, distanceKm),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: false,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                        fontSize: 10,
+                                        height: 1.05,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (rating != null) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 14,
+                                    color: AppColors.starRating,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    DiscHome.ratingWithReviews(
+                                      rating,
+                                      entry.reviewCount,
+                                    ),
+                                    style:
+                                        theme.textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: theme.colorScheme.onSurface,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (entry.specialtyNames.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 5,
+                                runSpacing: 5,
+                                children: [
+                                  ...entry.specialtyNames
+                                      .take(_kMaxChipsExpanded)
+                                      .map((n) => _SpecialtyChip(label: n)),
+                                  if (entry.specialtyNames.length >
+                                      _kMaxChipsExpanded)
+                                    _SpecialtyChip(
+                                      label:
+                                          '+${entry.specialtyNames.length - _kMaxChipsExpanded}',
+                                      muted: true,
+                                    ),
+                                ],
+                              ),
+                            ],
+                            if (teaser != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                teaser,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  height: 1.35,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: OutlinedButton(
+                                onPressed: () => context
+                                    .pushPrestataireDetail(profile.id),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: theme.colorScheme.primary,
+                                  side: BorderSide(
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.55),
+                                  ),
+                                  minimumSize: const Size(0, 32),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  textStyle: theme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                child: const Text('Voir le profil'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
                   width: photoWidth,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      PrestataireCardPhotoHeader(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final h = constraints.maxHeight;
+                      final photoHeight =
+                          h.isFinite && h > 0 ? h : minPhotoHeight;
+                      return PrestataireCardPhotoHeader(
                         prestataireId: profile.id,
-                        height: 132,
+                        height: photoHeight,
+                        width: photoWidth,
                         borderRadius: BorderRadius.only(
                           topLeft: cardRadius.topLeft,
                           bottomLeft: cardRadius.bottomLeft,
                         ),
                         fallbackDisplayName: safeDisplay,
                         fallbackAvatarUrl: entry.avatarUrl,
-                        compactBadge: false,
-                      ),
-                      if (showAvailableBadge)
-                        const Positioned(
-                          left: 6,
-                          bottom: 6,
-                          child: _AvailableBadge(),
-                        )
-                      else if (rating != null)
-                        Positioned(
-                          left: 6,
-                          bottom: 6,
-                          child: _RatingBadge(rating: rating, compact: false),
-                        ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                safeDisplay,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontFamily: AppFonts.display,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.15,
-                                ),
-                              ),
-                            ),
-                            if (profile.isVerified)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4),
-                                child: Icon(
-                                  Icons.verified_rounded,
-                                  color: primary,
-                                  size: 18,
-                                ),
-                              ),
-                          ],
-                        ),
-                        if (showSalon) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            salon,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                        if (location.isNotEmpty ||
-                            (distanceKm != null &&
-                                distanceKm!.isFinite &&
-                                distanceKm! < 500)) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 14,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  [
-                                    if (location.isNotEmpty) location,
-                                    if (distanceKm != null &&
-                                        distanceKm!.isFinite &&
-                                        distanceKm! < 500)
-                                      DiscClientWorkspace.distanceKm(
-                                        distanceKm!,
-                                      ),
-                                  ].join(' Â· '),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (rating != null) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.star_rounded,
-                                size: 16,
-                                color: AppColors.starAmber,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                rating.toStringAsFixed(1),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (entry.specialtyNames.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 5,
-                            runSpacing: 5,
-                            children: [
-                              ...entry.specialtyNames
-                                  .take(_kMaxChipsExpanded)
-                                  .map((n) => _SpecialtyChip(label: n)),
-                              if (entry.specialtyNames.length >
-                                  _kMaxChipsExpanded)
-                                _SpecialtyChip(
-                                  label:
-                                      '+${entry.specialtyNames.length - _kMaxChipsExpanded}',
-                                  muted: true,
-                                ),
-                            ],
-                          ),
-                        ],
-                        if (teaser != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            teaser,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              height: 1.35,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: FilledButton(
-                            onPressed: () =>
-                                context.pushPrestataireDetail(profile.id),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(0, 36),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                            ),
-                            child: const Text('Voir le profil'),
-                          ),
-                        ),
-                      ],
-                    ),
+                        compactBadge: true,
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          if (onCollapse != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: theme.colorScheme.surface.withValues(alpha: 0.94),
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onCollapse,
+                  customBorder: const CircleBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.close_fullscreen_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -336,8 +371,8 @@ class _VerticalCatalogCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: cardRadius,
-            color: theme.colorScheme.surface.withValues(
-              alpha: isDark ? 0.92 : 0.98,
+            color: theme.colorScheme.surfaceContainerHigh.withValues(
+              alpha: isDark ? 1 : 0.98,
             ),
             border: Border.all(
               color: primary.withValues(alpha: isDark ? 0.12 : 0.1),
@@ -401,7 +436,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                                     fontFamily: AppFonts.display,
                                     fontWeight: FontWeight.w800,
                                     height: 1.1,
-                                    fontSize: 12.5,
+                                    fontSize: 11.5,
                                   ),
                                 ),
                               ),
@@ -411,7 +446,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                                   child: Icon(
                                     Icons.verified_rounded,
                                     color: primary,
-                                    size: 13,
+                                    size: 12,
                                   ),
                                 ),
                             ],
@@ -422,7 +457,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                               children: [
                                 Icon(
                                   Icons.location_on_rounded,
-                                  size: 10,
+                                  size: 9,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 2),
@@ -433,7 +468,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: 10,
+                                      fontSize: 9,
                                       height: 1.1,
                                     ),
                                   ),
@@ -461,10 +496,11 @@ class _VerticalCatalogCard extends StatelessWidget {
                                 safeDisplay,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleMedium?.copyWith(
+                                style: theme.textTheme.titleSmall?.copyWith(
                                   fontFamily: AppFonts.display,
                                   fontWeight: FontWeight.w800,
                                   height: 1.15,
+                                  fontSize: 13.5,
                                 ),
                               ),
                             ),
@@ -496,7 +532,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     height: 1.2,
                                   ),
                                 ),
@@ -553,7 +589,7 @@ class _VerticalCatalogCard extends StatelessWidget {
                         fontFamily: AppFonts.body,
                         fontWeight: FontWeight.w700,
                         color: primary,
-                        fontSize: compact ? 10.5 : null,
+                        fontSize: compact ? 10 : null,
                       ),
                     ),
                     const Spacer(),
@@ -567,30 +603,6 @@ class _VerticalCatalogCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AvailableBadge extends StatelessWidget {
-  const _AvailableBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.availableBadge,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        DiscClientWorkspace.availableBadge,
-        style: const TextStyle(
-          fontFamily: AppFonts.body,
-          fontWeight: FontWeight.w700,
-          fontSize: 10,
-          color: AppColors.white,
         ),
       ),
     );
@@ -628,7 +640,7 @@ class _RatingBadge extends StatelessWidget {
             style: TextStyle(
               fontFamily: AppFonts.body,
               fontWeight: FontWeight.w700,
-              fontSize: compact ? 10 : 12,
+              fontSize: compact ? 9.5 : 11,
               color: AppColors.white,
             ),
           ),
@@ -649,7 +661,7 @@ class _SpecialtyChip extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: muted
             ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7)
@@ -663,6 +675,7 @@ class _SpecialtyChip extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           fontFamily: AppFonts.body,
           fontWeight: FontWeight.w600,
+          fontSize: 10,
           color: muted
               ? theme.colorScheme.onSurfaceVariant
               : theme.colorScheme.onPrimaryContainer,
@@ -670,5 +683,15 @@ class _SpecialtyChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _locationLabel(String ville, double? distanceKm) {
+  final hasKm = distanceKm != null &&
+      distanceKm.isFinite &&
+      distanceKm < 500;
+  if (hasKm) {
+    return '$ville · ${DiscClientWorkspace.distanceKm(distanceKm)}';
+  }
+  return ville;
 }
 

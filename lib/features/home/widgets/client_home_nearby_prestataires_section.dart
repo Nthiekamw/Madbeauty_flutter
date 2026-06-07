@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../listing/providers/discovery_origin_provider.dart';
-import '../providers/nearby_prestataires_provider.dart';
+import '../providers/home_prestataire_entries_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
@@ -15,7 +15,7 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(nearbyPrestatairesProvider);
+    final async = ref.watch(nearbyPrestataireEntriesProvider);
     final origin = ref.watch(discoveryOriginProvider);
     final usesClientLocation = ref.watch(discoveryUsesClientLocationProvider);
     final theme = Theme.of(context);
@@ -39,7 +39,7 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
                   body: DiscHome.nearbyEmptyBody,
                 )
               : PrestataireHomeHorizontalList(
-                  profiles: value,
+                  entries: value,
                   distanceOrigin: origin,
                 ),
           error: (_, __) => Text(

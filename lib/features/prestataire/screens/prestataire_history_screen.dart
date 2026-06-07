@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_clients_grouping.dart';
 import '../providers/prestataire_agenda_provider.dart';
 import '../widgets/workspace/prestataire_client_row_card.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
 
 class PrestataireHistoryScreen extends ConsumerStatefulWidget {
@@ -39,10 +39,8 @@ class _PrestataireHistoryScreenState
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: agendaAsync.when(
+    return PrestataireBrandScaffold(
+      body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
           child: Center(child: CircularProgressIndicator()),
         ),
@@ -187,7 +185,6 @@ class _PrestataireHistoryScreenState
           );
         },
         ),
-      ),
     );
   }
 }

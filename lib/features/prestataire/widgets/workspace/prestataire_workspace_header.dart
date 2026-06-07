@@ -137,7 +137,8 @@ class PrestataireWorkspaceHeader extends ConsumerWidget {
       unreadMsg: unreadMsg,
       buttonSize: iconButtonSize,
       iconSize: iconSize,
-      gap: responsive.isCompact ? 4 : 5,
+      gap: responsive.isCompact ? 8 : 10,
+      messagesGap: responsive.isCompact ? 14 : 16,
     );
 
     return Container(
@@ -168,7 +169,7 @@ class PrestataireWorkspaceHeader extends ConsumerWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColors.brandBrown.withValues(alpha: 0.96),
-                      const Color(0xFF3D2A22).withValues(alpha: 0.94),
+                      AppColors.brandBrownMid.withValues(alpha: 0.94),
                       AppColors.brandBrown.withValues(alpha: 0.88),
                     ],
                   ),
@@ -279,6 +280,7 @@ class _HeaderActions extends ConsumerWidget {
     required this.buttonSize,
     required this.iconSize,
     required this.gap,
+    required this.messagesGap,
   });
 
   final Future<void> Function()? onRefresh;
@@ -288,6 +290,7 @@ class _HeaderActions extends ConsumerWidget {
   final double buttonSize;
   final double iconSize;
   final double gap;
+  final double messagesGap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -327,7 +330,7 @@ class _HeaderActions extends ConsumerWidget {
             badge: unreadMsg,
             size: buttonSize,
             iconSize: iconSize,
-            gap: 0,
+            gap: messagesGap,
             onTap: () => context.goPrestataireMessages(),
           ),
       ],

@@ -122,6 +122,8 @@ abstract final class DiscBk {
   static const errResMissing = 'Réservation introuvable.';
   static const errResBadState =
       'Impossible avec l’état actuel de la réservation.';
+  static const errMarkDoneTooEarly =
+      'Cette prestation ne peut pas encore être marquée terminée.';
 
   static String svcCountLabel(int count) =>
       '$count service${count > 1 ? 's' : ''} disponible${count > 1 ? 's' : ''}';

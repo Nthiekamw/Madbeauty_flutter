@@ -255,8 +255,16 @@ class LoginController extends Notifier<LoginViewState> {
       return false;
     }
     try {
-      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      final user =
+          await ref.read(authNotifierProvider.notifier).signInWithGoogle();
       if (!ref.mounted) return false;
+      if (user != null) {
+        state = state.copyWith(
+          shouldPopRoute: true,
+          clearSubmitError: true,
+        );
+        return true;
+      }
       state = state.copyWith(clearSubmitError: true);
       return true;
     } on AppFailure catch (e) {

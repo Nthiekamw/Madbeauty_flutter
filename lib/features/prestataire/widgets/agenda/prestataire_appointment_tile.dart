@@ -3,6 +3,7 @@
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../booking/logic/booking_formatters.dart';
+import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../models/prestataire_reservation_item.dart';
 
 class PrestataireAppointmentTile extends StatelessWidget {
@@ -59,6 +60,12 @@ class PrestataireAppointmentTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
+                AppAvatar(
+                  imageUrl: item.clientAvatarUrl,
+                  displayName: item.clientName,
+                  radius: 18,
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,13 +76,15 @@ class PrestataireAppointmentTile extends StatelessWidget {
                           fontFamily: AppFonts.display,
                           fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         [
                           item.serviceName,
                           if (dateLabel != null) dateLabel,
-                        ].join(' Â· '),
+                        ].join(' · '),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           height: 1.3,

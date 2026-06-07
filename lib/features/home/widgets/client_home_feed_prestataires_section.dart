@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../listing/providers/discovery_origin_provider.dart';
+import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../models/home_feed_selection.dart';
 import '../providers/home_feed_provider.dart';
+import '../providers/home_prestataire_entries_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import 'client_home_section_header.dart';
 import 'prestataire_catalog_section_empty.dart';
@@ -19,17 +21,24 @@ class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
     final selection = ref.watch(homeFeedSelectionProvider);
     if (selection == null) return const SizedBox.shrink();
 
-    final async = ref.watch(homeFeedPrestatairesProvider);
+    final async = ref.watch(homeFeedPrestataireEntriesProvider);
     final origin = ref.watch(discoveryOriginProvider);
     final theme = Theme.of(context);
 
     final title = switch (selection.source) {
       HomeFeedSource.search => DiscHome.feedSearchTitle(selection.query),
-      HomeFeedSource.inspiration =>
-        DiscHome.feedInspirationTitle(selection.query),
+      HomeFeedSource.inspiration when selection.allServices =>
+        DiscHome.feedAllTitle,
+      HomeFeedSource.inspiration => DiscHome.feedInspirationTitle(
+          selection.mainService != null
+              ? PrestataireServiceCatalog.label(selection.mainService!)
+              : selection.query,
+        ),
     };
     final subtitle = switch (selection.source) {
       HomeFeedSource.search => DiscHome.feedSearchSub,
+      HomeFeedSource.inspiration when selection.allServices =>
+        DiscHome.feedAllSub,
       HomeFeedSource.inspiration => DiscHome.feedInspirationSub,
     };
 
@@ -50,7 +59,7 @@ class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
                   body: DiscHome.feedEmptyBody,
                 )
               : PrestataireHomeHorizontalList(
-                  profiles: value,
+                  entries: value,
                   distanceOrigin: origin,
                 ),
           error: (_, __) => Text(

@@ -8,17 +8,14 @@ import 'client_home_reorderable_sections.dart';
 class ClientHomeScrollContent extends ConsumerWidget {
   const ClientHomeScrollContent({
     super.key,
-    required this.onExplorePick,
     this.footer,
   });
 
-  final ValueChanged<String> onExplorePick;
   final Widget? footer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ClientHomeReorderableSections(
-      onExplorePick: onExplorePick,
       footer: footer,
     );
   }

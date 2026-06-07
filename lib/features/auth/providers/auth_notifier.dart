@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../services/auth/auth_service.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/failure_mapper.dart';
+import '../../../services/auth/google_auth_service.dart';
 import '../../../services/auth/phone_auth_service.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
@@ -32,6 +34,10 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 final phoneAuthServiceProvider = Provider<PhoneAuthService>((ref) {
   return PhoneAuthService(ref.watch(authServiceProvider));
+});
+
+final googleAuthServiceProvider = Provider<GoogleAuthService>((ref) {
+  return GoogleAuthService(ref.watch(authServiceProvider));
 });
 
 final roleServiceProvider = Provider<RoleService>((ref) {
@@ -252,7 +258,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     });
   }
 
-  /// Envoie un OTP SMS (Firebase si configuré, sinon Supabase).
+  /// Envoie un OTP SMS via Firebase uniquement.
   Future<PhoneOtpPending> sendPhoneOtp({
     required String phoneE164,
     bool shouldCreateUser = true,
@@ -297,13 +303,74 @@ class AuthNotifier extends AsyncNotifier<User?> {
     }
   }
 
-  /// Ouvre le navigateur / onglet OAuth ; la session arrive via deep link (PKCE).
-  Future<void> signInWithGoogle() async {
-    if (!ref.read(authSupabaseEnabledProvider)) return;
+  Future<User?> _resolveUserAfterAuth(AuthResponse response) async {
+    User? user = response.user ??
+        response.session?.user ??
+        _auth.currentSession?.user ??
+        _auth.currentUser;
+    if (user != null) return user;
+
+    try {
+      final authState = await _auth.onAuthStateChange
+          .firstWhere((event) => event.session?.user != null)
+          .timeout(const Duration(seconds: 8));
+      return authState.session?.user;
+    } catch (_) {
+      return _auth.currentSession?.user ?? _auth.currentUser;
+    }
+  }
+
+  bool _isGoogleUser(User user) {
+    if (user.identities?.any((id) => id.provider == 'google') ?? false) {
+      return true;
+    }
+    final provider = user.appMetadata['provider'] as String?;
+    if (provider == 'google') return true;
+    final providers = user.appMetadata['providers'];
+    if (providers is List && providers.any((p) => p == 'google')) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Google : natif si possible, sinon OAuth Supabase (navigateur).
+  ///
+  /// Retourne l’utilisateur si connexion immédiate, sinon `null` (deep link PKCE).
+  Future<User?> signInWithGoogle() async {
+    if (!ref.read(authSupabaseEnabledProvider)) return null;
+
+    final existing =
+        _auth.currentSession?.user ?? _auth.currentUser;
+    if (existing != null && _isGoogleUser(existing)) {
+      await _cacheCurrentEmail(existing);
+      state = AsyncData(existing);
+      if (kDebugMode) {
+        debugPrint('[GoogleAuth] session existante réutilisée: ${existing.email}');
+      }
+      return existing;
+    }
+
+    final googleAuth = ref.read(googleAuthServiceProvider);
+    if (googleAuth.canUseNativeGoogle) {
+      final response = await googleAuth.signInWithGoogleNative();
+      final user = await _resolveUserAfterAuth(response);
+      if (user == null) {
+        throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
+      }
+      await _cacheCurrentEmail(user);
+      state = AsyncData(user);
+      if (kDebugMode) {
+        debugPrint('[GoogleAuth] session Supabase OK: ${user.email}');
+      }
+      return user;
+    }
+
     await _auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: AppConfig.authEmailRedirectTo,
+      authScreenLaunchMode: LaunchMode.externalApplication,
     );
+    return null;
   }
 
   /// Après ouverture du lien « mot de passe oublié » (session recovery).

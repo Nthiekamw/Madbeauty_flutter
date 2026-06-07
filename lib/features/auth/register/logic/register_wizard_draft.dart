@@ -23,6 +23,7 @@ class RegisterWizardDraft {
     this.pendingEmailVerification = false,
     this.pendingPhoneVerification = false,
     this.signedUpViaPhone = false,
+    this.pendingGoogleSignIn = false,
     this.role,
   });
 
@@ -52,11 +53,15 @@ class RegisterWizardDraft {
 
   /// Compte créé et numéro vérifié par SMS.
   final bool signedUpViaPhone;
+
+  /// Google OAuth lancé, retour navigateur en attente.
+  final bool pendingGoogleSignIn;
   final UserRole? role;
 
   /// Brouillon actif tant que le wizard n'est pas terminé (y compris après Google).
   bool get isActive =>
       signedUpViaOAuth ||
+      pendingGoogleSignIn ||
       step > 0 ||
       prenom.isNotEmpty ||
       nom.isNotEmpty ||
@@ -70,7 +75,10 @@ class RegisterWizardDraft {
 
   /// Afficher la bannière « reprise » (cold start / retour app).
   bool get showResumeBanner =>
-      isActive && !pendingEmailVerification && !pendingPhoneVerification;
+      isActive &&
+      !pendingEmailVerification &&
+      !pendingPhoneVerification &&
+      !pendingGoogleSignIn;
 
   Map<String, dynamic> toJson() => {
         'step': step,
@@ -93,13 +101,14 @@ class RegisterWizardDraft {
         'pendingEmailVerification': pendingEmailVerification,
         'pendingPhoneVerification': pendingPhoneVerification,
         'signedUpViaPhone': signedUpViaPhone,
+        'pendingGoogleSignIn': pendingGoogleSignIn,
         'role': role?.name,
-        'v': 3,
+        'v': 4,
       };
 
   static RegisterWizardDraft? fromJson(Map<String, dynamic> json) {
     final version = json['v'];
-    if (version != 1 && version != 2 && version != 3) return null;
+    if (version != 1 && version != 2 && version != 3 && version != 4) return null;
     final step = json['step'];
     if (step is! int || step < 0 || step > 2) return null;
 
@@ -134,6 +143,7 @@ class RegisterWizardDraft {
       pendingPhoneVerification:
           json['pendingPhoneVerification'] as bool? ?? false,
       signedUpViaPhone: json['signedUpViaPhone'] as bool? ?? false,
+      pendingGoogleSignIn: json['pendingGoogleSignIn'] as bool? ?? false,
       role: role,
     );
   }

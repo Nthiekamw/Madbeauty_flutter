@@ -118,7 +118,11 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
         await _go(AppRoutes.register);
         return;
       }
-      await _go('${AppRoutes.register}?resume=1');
+      if (registerDraft.step == 2) {
+        await _go('${AppRoutes.register}?resume=1');
+      } else {
+        await _go(AppRoutes.register);
+      }
       return;
     }
 

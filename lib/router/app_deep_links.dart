@@ -1,4 +1,5 @@
 ﻿import '../core/config/share_link_config.dart';
+import '../services/auth/auth_deep_link_handler.dart';
 import 'app_router.dart';
 import 'prestataire_public_route.dart';
 
@@ -13,6 +14,10 @@ abstract final class AppDeepLinks {
     'subscription-return',
     'client-payment-return',
   };
+
+  /// URI OAuth / confirmation e-mail / recovery (`login-callback`, etc.).
+  static bool isAuthCallbackUri(Uri uri) =>
+      AuthDeepLinkHandler.isAuthCallbackUri(uri);
 
   /// Route après retour Stripe Checkout abonnement (`subscription-return`).
   static String? subscriptionReturnPath(Uri uri) {

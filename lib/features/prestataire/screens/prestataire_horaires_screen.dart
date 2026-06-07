@@ -10,6 +10,7 @@ import '../../../services/supabase/disponibilite/disponibilite_service_providers
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../widgets/profile/schedule/prestataire_indisponibilites_editor.dart';
 import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
   const PrestataireHorairesScreen({super.key});
@@ -102,8 +103,11 @@ class _PrestataireHorairesScreenState
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscPrestaHoraires.title)),
+    return PrestataireBrandScaffold(
+      appBar: prestataireBrandAppBar(
+        context: context,
+        title: const Text(DiscPrestaHoraires.title),
+      ),
       body: horairesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(

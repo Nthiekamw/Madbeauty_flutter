@@ -141,6 +141,40 @@ abstract final class PrestataireServiceCatalog {
         PrestaMainService.pedicure => pedicureSpecialties,
       };
 
+  /// Toutes les spécialités (inscription prestataire, inspirations client, filtres).
+  static List<PrestaCatalogSpecialty> get allSpecialties => [
+        for (final main in PrestaMainService.values) ...specialties(main),
+      ];
+
+  static PrestaMainService mainForSpecialty(PrestaCatalogSpecialty specialty) {
+    for (final main in PrestaMainService.values) {
+      if (specialties(main).any((s) => s.id == specialty.id)) return main;
+    }
+    return PrestaMainService.coiffure;
+  }
+
+  static IconData specialtyIcon(PrestaCatalogSpecialty specialty) {
+    final main = mainForSpecialty(specialty);
+    return switch (specialty.id) {
+      'coiffure_tresses' => Icons.waves_rounded,
+      'coiffure_locks' => Icons.all_inclusive_rounded,
+      'coiffure_coupe' => Icons.content_cut_rounded,
+      'coiffure_soin' => Icons.spa_outlined,
+      'coiffure_afro' => Icons.face_retouching_natural_outlined,
+      'manucure_classique' => Icons.back_hand_outlined,
+      'manucure_gel' => Icons.auto_awesome_outlined,
+      'manucure_semi' => Icons.brush_outlined,
+      'manucure_nail_art' => Icons.palette_outlined,
+      'maquillage_jour' => Icons.wb_sunny_outlined,
+      'maquillage_soir' => Icons.nightlife_outlined,
+      'maquillage_mariee' => Icons.favorite_border_rounded,
+      'pedicure_classique' => Icons.self_improvement_outlined,
+      'pedicure_spa' => Icons.spa_outlined,
+      'pedicure_vernis' => Icons.colorize_outlined,
+      _ => icon(main),
+    };
+  }
+
   static PrestaMainService? mainForCategoryId(String categoryId) {
     for (final main in PrestaMainService.values) {
       for (final spec in specialties(main)) {

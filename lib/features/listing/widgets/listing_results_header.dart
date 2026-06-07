@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../providers/listing_view_preferences_provider.dart';
 import 'listing_filters_panel.dart';
+import 'listing_layout_toggle.dart';
 
-/// En-tête résultats : titre, compteur, bascule liste/carte, action secondaire.
-class ListingResultsHeader extends StatelessWidget {
+/// En-tête résultats : titre, compteur, bascules liste/carte et format cartes.
+class ListingResultsHeader extends ConsumerWidget {
   const ListingResultsHeader({
     super.key,
     required this.count,
     required this.title,
-    required this.viewMode,
-    required this.onViewModeChanged,
     this.onSecondaryAction,
     this.secondaryActionLabel,
   });
 
   final int count;
   final String title;
-  final ListingViewMode viewMode;
-  final ValueChanged<ListingViewMode> onViewModeChanged;
   final VoidCallback? onSecondaryAction;
   final String? secondaryActionLabel;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
     final primary = theme.colorScheme.primary;
+    final prefs = ref.watch(listingViewPreferencesProvider);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 6),
@@ -41,16 +41,15 @@ class ListingResultsHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
+                    fontSize: 15,
                   ),
                 ),
               ),
-              if (secondaryActionLabel != null &&
-                  onSecondaryAction != null &&
-                  title != DiscClientWorkspace.sectionAvailableToday)
+              if (secondaryActionLabel != null && onSecondaryAction != null)
                 TextButton(
                   onPressed: onSecondaryAction,
                   style: TextButton.styleFrom(
@@ -72,28 +71,47 @@ class ListingResultsHeader extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: primary.withValues(alpha: 0.22),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
                   ),
-                ),
-                child: Text(
-                  DiscList.resultsCount(count),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w700,
-                    color: primary,
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: primary.withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: Text(
+                    DiscList.resultsCount(count),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontFamily: AppFonts.body,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
+              ListingLayoutToggle(
+                layout: prefs.catalogLayout,
+                onChanged: (layout) {
+                  ref
+                      .read(listingViewPreferencesProvider.notifier)
+                      .setCatalogLayout(layout);
+                  ref.read(listingExpandedCardIdProvider.notifier).clear();
+                },
+              ),
+              const SizedBox(width: 6),
               _ViewModeToggle(
-                viewMode: viewMode,
-                onChanged: onViewModeChanged,
+                viewMode: prefs.viewMode,
+                onChanged: (mode) => ref
+                    .read(listingViewPreferencesProvider.notifier)
+                    .setViewMode(mode),
               ),
             ],
           ),
@@ -131,15 +149,15 @@ class _ViewModeToggle extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _ToggleIcon(
+            tooltip: DiscList.modeList,
             icon: Icons.view_list_rounded,
-            label: DiscList.modeList,
             selected: viewMode == ListingViewMode.list,
             onTap: () => onChanged(ListingViewMode.list),
             accent: primary,
           ),
           _ToggleIcon(
+            tooltip: DiscList.modeMap,
             icon: Icons.map_rounded,
-            label: DiscList.modeMap,
             selected: viewMode == ListingViewMode.map,
             onTap: () => onChanged(ListingViewMode.map),
             accent: primary,
@@ -152,15 +170,15 @@ class _ViewModeToggle extends StatelessWidget {
 
 class _ToggleIcon extends StatelessWidget {
   const _ToggleIcon({
+    required this.tooltip,
     required this.icon,
-    required this.label,
     required this.selected,
     required this.onTap,
     required this.accent,
   });
 
+  final String tooltip;
   final IconData icon;
-  final String label;
   final bool selected;
   final VoidCallback onTap;
   final Color accent;
@@ -169,33 +187,21 @@ class _ToggleIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: selected
-          ? accent.withValues(alpha: 0.14)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: selected ? accent.withValues(alpha: 0.14) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 17,
-                color: selected ? accent : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: selected ? accent : theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              size: 20,
+              color: selected ? accent : theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),

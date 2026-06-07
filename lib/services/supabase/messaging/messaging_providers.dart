@@ -76,15 +76,12 @@ final messagingUnreadCountProvider =
 
 final chatInboxItemProvider = FutureProvider.autoDispose
     .family<ConversationInboxItem?, String>((ref, bookingId) async {
-  final client = await ref.watch(currentClientProfileProvider.future);
-  if (client != null) {
-    final items = await ref.watch(
-      conversationsInboxProvider(MessagingInboxRole.client).future,
-    );
-    for (final item in items) {
-      if (item.conversation.reservationId == bookingId) return item;
-    }
-  }
+  final service = ref.watch(messagingServiceProvider);
+  final user = switch (ref.watch(authNotifierProvider)) {
+    AsyncData(:final value) => value,
+    _ => null,
+  };
+  if (service == null || user == null) return null;
 
   final presta = await ref.watch(currentPrestataireProvider.future);
   if (presta != null) {
@@ -94,6 +91,26 @@ final chatInboxItemProvider = FutureProvider.autoDispose
     for (final item in items) {
       if (item.conversation.reservationId == bookingId) return item;
     }
+    return service.resolveInboxItemForBooking(
+      bookingId: bookingId,
+      currentUserId: user.id,
+      peerIsPrestataire: false,
+    );
+  }
+
+  final client = await ref.watch(currentClientProfileProvider.future);
+  if (client != null) {
+    final items = await ref.watch(
+      conversationsInboxProvider(MessagingInboxRole.client).future,
+    );
+    for (final item in items) {
+      if (item.conversation.reservationId == bookingId) return item;
+    }
+    return service.resolveInboxItemForBooking(
+      bookingId: bookingId,
+      currentUserId: user.id,
+      peerIsPrestataire: true,
+    );
   }
 
   return null;

@@ -10,15 +10,20 @@ class AppColors {
   static const Color black = Color(0xFF000000);
   static const Color transparent = Color(0x00000000);
 
-  // --- Fonds clairs ---
+  // --- Fonds clairs (blanc cassé chaud) ---
 
-  static const Color lightSurface = Color(0xFFF8F4F0);
-  static const Color lightSurfaceContainer = Color(0xFFFAF7F3);
-  static const Color lightSurfaceContainerHigh = Color(0xFFF0E8E2);
-  static const Color lightSurfaceContainerHighest = Color(0xFFE8DDD4);
-  static const Color lightOnSurface = Color(0xFF2D211C);
-  static const Color lightOnSurfaceVariant = Color(0xFF5D4E47);
-  static const Color lightOutline = Color(0xFF8B7355);
+  /// Fond principal écrans client / prestataire.
+  static const Color lightSurface = Color(0xFFF4E9DC);
+  static const Color lightSurfaceContainer = Color(0xFFEDE0CE);
+  static const Color lightSurfaceContainerHigh = Color(0xFFE5D6C4);
+  static const Color lightSurfaceContainerHighest = Color(0xFFDAC9B4);
+  static const Color lightOnSurface = Color(0xFF6B4E31);
+  static const Color lightOnSurfaceVariant = Color(0xFF9A7B62);
+  static const Color lightOutline = Color(0xFFC4A882);
+
+  /// Puces de filtre inactives (accueil, listing).
+  static const Color filterChipInactive = Color(0xFFEDE0CE);
+  static const Color filterChipInactiveText = Color(0xFF6B4E31);
 
   // --- Fonds sombres ---
 
@@ -27,15 +32,20 @@ class AppColors {
   static const Color darkSurfaceContainerHigh = Color(0xFF352B24);
   static const Color darkSurfaceContainerHighest = Color(0xFF40352E);
   static const Color darkOnSurface = Color(0xFFEDE6DF);
-  static const Color darkOnSurfaceVariant = Color(0xFFADA39C);
-  static const Color darkOutline = Color(0xFF5E534C);
+  static const Color darkOnSurfaceVariant = Color(0xFFC4B8AE);
+  static const Color darkOutline = Color(0xFF6E6258);
+  static const Color darkPrimaryContainer = Color(0xFF4A382E);
+  static const Color darkOnPrimaryContainer = Color(0xFFE8D4C8);
 
   // --- Marque ---
 
-  static const Color brandBrown = Color(0xFF4A3328);
-  static const Color brownSecondaryLight = Color(0xFF8D6E63);
-  static const Color brandBrownDark = Color(0xFFD4C4B8);
-  static const Color brownSecondaryDark = Color(0xFF9A8B82);
+  /// Marron principal (tan chaud — identité visuelle).
+  static const Color brandBrown = Color(0xFFC09267);
+  /// Ton intermédiaire pour dégradés d’en-tête.
+  static const Color brandBrownMid = Color(0xFFB08258);
+  static const Color brownSecondaryLight = Color(0xFFD4B896);
+  static const Color brandBrownDark = Color(0xFFC9A882);
+  static const Color brownSecondaryDark = Color(0xFFB8A092);
   static const Color onPrimaryDarkText = Color(0xFF1A1410);
 
   /// Or / bronze du logo (silhouettes premium).
@@ -56,10 +66,26 @@ class AppColors {
 
   // --- Workspace ---
 
-  static const Color workspacePanel = white;
-  static const Color notificationDot = Color(0xFFFF6B35);
+  /// Panneau sous l'en-tête marron (catalogue, réservations…) — crème, pas blanc pur.
+  static const Color workspacePanelLight = lightSurface;
+  static const Color workspacePanelDark = darkSurfaceContainer;
 
-  // --- Recherche : pastels catégories ---
+  /// Cartes et champs sur fond crème (léger contraste chaud, pas blanc pur).
+  static const Color cardSurfaceLight = Color(0xFFF7EFE4);
+  static const Color clientAppointmentIconBg = Color(0xFFF2E3D5);
+  static const Color clientAppointmentIconBgDark = Color(0xFF3D322A);
+
+  /// Panneau principal sous l’en-tête (client / prestataire).
+  static Color workspacePanelFor(Brightness brightness) =>
+      brightness == Brightness.dark ? workspacePanelDark : workspacePanelLight;
+
+  /// Fond de carte (listes, tuiles).
+  static Color cardSurfaceFor(Brightness brightness) =>
+      brightness == Brightness.dark
+          ? darkSurfaceContainerHigh
+          : cardSurfaceLight;
+
+  static const Color notificationDot = Color(0xFFFF6B35);
 
   static const List<Color> categoryPastels = [
     Color(0xFFFFE8DC),
@@ -161,5 +187,13 @@ class AppColors {
   /// Assombrit légèrement le marron pour les dégradés d'en-tête workspace.
   static Color headerGradientEnd(Color primary) =>
       Color.lerp(primary, black, 0.12)!;
+
+  /// Texte marque lisible sur fond surface (évite le marron foncé en dark).
+  static Color brandTextFor(Brightness brightness) =>
+      brightness == Brightness.dark ? brandBrownDark : brandBrown;
+
+  /// Texte sur pastille claire (badge or, notification).
+  static Color badgeTextFor(Brightness brightness) =>
+      brightness == Brightness.dark ? onPrimaryDarkText : brandBrown;
 }
 

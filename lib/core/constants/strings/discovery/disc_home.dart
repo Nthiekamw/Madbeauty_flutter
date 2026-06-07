@@ -9,10 +9,16 @@ abstract final class DiscHome {
       'Découvre des pros près de chez toi et réserve en quelques gestes.';
   static const inspireTitle = 'Inspirations';
   static const inspireSub =
-      'Choisis un thème pour afficher des prestataires.';
+      'Filtrez par service pour afficher des prestataires.';
+  static const filterAll = 'Toutes';
 
-  static const nextAppointmentTitle = 'Prochain rendez-vous';
+  static const feedAllTitle = 'À découvrir';
+  static const feedAllSub =
+      'Des professionnels passionnés, prêts à vous accueillir.';
+
+  static const nextAppointmentTitle = 'Vos prochains rendez-vous';
   static const nextAppointmentSub = 'Ta prochaine visite chez un·e pro';
+  static const nextAppointmentDetails = 'Voir détails';
   static const nextAppointmentEmptyTitle = 'Aucun rendez-vous à venir';
   static const nextAppointmentEmptyBody =
       'Parcours le catalogue pour réserver ta prochaine séance.';
@@ -27,14 +33,14 @@ abstract final class DiscHome {
 
   static const sectionNextAppointment = 'Prochain rendez-vous';
   static const sectionInspiration = 'Inspirations';
-  static const sectionFeed = 'Résultats';
+  static const sectionFeed = 'À découvrir';
   static const sectionNearby = 'Prestataires proches';
   static const sectionTopRated = 'Mieux notés';
 
   static const feedSearchSub =
       'Prestataires correspondant à votre recherche.';
   static const feedInspirationSub =
-      'Prestataires pour ce thème.';
+      'Les pros qui correspondent à votre sélection.';
   static const feedEmptyTitle = 'Aucun résultat';
   static const feedEmptyBody =
       'Essayez un autre mot-clé ou parcourez le catalogue.';
@@ -46,10 +52,9 @@ abstract final class DiscHome {
       'Les notifications arrivent bientôt.';
 
   static String feedSearchTitle(String query) =>
-      'Résultats pour « $query »';
+      'Salons pour « $query »';
 
-  static String feedInspirationTitle(String topic) =>
-      'Inspiration · $topic';
+  static String feedInspirationTitle(String topic) => 'En $topic';
 
   static const nearbyTitle = 'Prestataires proches';
   static const nearbySubWithLocation =
@@ -78,14 +83,20 @@ abstract final class DiscHome {
   static String nearbyKm(double km) {
     if (km.isInfinite || km.isNaN) return '';
     final decimals = km < 10 ? 1 : 0;
-    return '≈ ${km.toStringAsFixed(decimals)} km';
+    return '${km.toStringAsFixed(decimals)} km';
   }
 
-  /// [displayName] : nom ou vide (« Bonjour » seul).
-  static String greeting(String displayName) {
-    final t = displayName.trim();
-    if (t.isEmpty) return 'Bonjour';
-    final first = t.split(RegExp(r'\s+')).first;
-    return 'Bonjour, $first';
+  static String ratingWithReviews(double rating, int? reviewCount) {
+    final score = rating.toStringAsFixed(1);
+    if (reviewCount == null || reviewCount <= 0) return score;
+    return '$score ($reviewCount avis)';
+  }
+
+  static String clientHomeGreeting(String firstName) {
+    final name = firstName.trim();
+    if (name.isEmpty) {
+      return 'Salut, envie de vous sublimer de la tête aux pieds 👋';
+    }
+    return 'Salut $name, envie de vous sublimer de la tête aux pieds 👋';
   }
 }

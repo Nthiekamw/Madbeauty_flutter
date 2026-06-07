@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
+import '../../../core/constants/discovery/client_discovery_specialties.dart';
 
 /// Filtre rapide prédéfini de l'écran recherche / catalogue.
 enum ListingQuickFilterKind {
@@ -33,8 +33,7 @@ class ListingQuickFilter {
   /// Pour [ListingQuickFilterKind.categoryId] (famille de service).
   final String? categoryId;
 
-  /// Filtres mis en avant – thèmes coiffure + tri + disponibilité.
-  static const List<ListingQuickFilter> featured = [
+  static const _utilityFilters = [
     ListingQuickFilter(
       id: 'all',
       label: 'Tout',
@@ -59,76 +58,59 @@ class ListingQuickFilter {
       icon: Icons.star_rounded,
       kind: ListingQuickFilterKind.topRated,
     ),
-    ListingQuickFilter(
-      id: 'tresses',
-      label: 'Tresses',
-      icon: Icons.waves_rounded,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Tresses',
-    ),
-    ListingQuickFilter(
-      id: 'locks',
-      label: 'Locks',
-      icon: Icons.all_inclusive_rounded,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Locks',
-    ),
-    ListingQuickFilter(
-      id: 'afro',
-      label: 'Coiffure afro',
-      icon: Icons.face_retouching_natural_outlined,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Coiffure afro',
-    ),
-    ListingQuickFilter(
-      id: 'coupe',
-      label: 'Coupe',
-      icon: Icons.content_cut_rounded,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Coupe',
-    ),
-    ListingQuickFilter(
-      id: 'entretien',
-      label: 'Entretien',
-      icon: Icons.spa_outlined,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Entretien',
-    ),
-    ListingQuickFilter(
-      id: 'coloration',
-      label: 'Coloration',
-      icon: Icons.palette_outlined,
-      kind: ListingQuickFilterKind.styleQuery,
-      query: 'Coloration',
-    ),
-    ListingQuickFilter(
-      id: 'manucure',
-      label: 'Manucure',
-      icon: Icons.back_hand_outlined,
-      kind: ListingQuickFilterKind.categoryId,
-      categoryId: PrestataireServiceCatalog.manucureCategoryId,
-    ),
-    ListingQuickFilter(
-      id: 'maquillage',
-      label: 'Maquillage',
-      icon: Icons.face_retouching_natural_outlined,
-      kind: ListingQuickFilterKind.categoryId,
-      categoryId: PrestataireServiceCatalog.maquillageCategoryId,
-    ),
-    ListingQuickFilter(
-      id: 'pedicure',
-      label: 'Pédicure',
-      icon: Icons.spa_outlined,
-      kind: ListingQuickFilterKind.categoryId,
-      categoryId: PrestataireServiceCatalog.pedicureCategoryId,
-    ),
-    ListingQuickFilter(
-      id: 'coiffure',
-      label: 'Coiffure',
-      icon: Icons.content_cut_rounded,
-      kind: ListingQuickFilterKind.categoryId,
-      categoryId: PrestataireServiceCatalog.coiffureAfroCategoryId,
-    ),
   ];
-}
 
+  static ListingQuickFilter fromDiscoverySpecialty(ClientDiscoverySpecialty item) {
+    final cat = item.categoryId;
+    if (cat != null && cat.isNotEmpty) {
+      return ListingQuickFilter(
+        id: 'spec_${item.id}',
+        label: item.label,
+        icon: item.icon,
+        kind: ListingQuickFilterKind.categoryId,
+        categoryId: cat,
+        query: item.searchQuery,
+      );
+    }
+    return ListingQuickFilter(
+      id: 'spec_${item.id}',
+      label: item.label,
+      icon: item.icon,
+      kind: ListingQuickFilterKind.styleQuery,
+      query: item.searchQuery,
+    );
+  }
+
+  /// Utilitaires + spécialités catalogue prestataire (source unique).
+  static List<ListingQuickFilter> get featured => [
+        ..._utilityFilters,
+        ...ClientDiscoverySpecialties.all.map(fromDiscoverySpecialty),
+      ];
+
+  static List<ListingQuickFilter> get catalogTop => const [
+        ListingQuickFilter(
+          id: 'dispo',
+          label: 'Disponibles aujourd\'hui',
+          icon: Icons.schedule_rounded,
+          kind: ListingQuickFilterKind.availableOnly,
+        ),
+        ListingQuickFilter(
+          id: 'nearby',
+          label: 'À proximité',
+          icon: Icons.near_me_outlined,
+          kind: ListingQuickFilterKind.nearby,
+        ),
+        ListingQuickFilter(
+          id: 'top',
+          label: 'Mieux notés',
+          icon: Icons.star_outline_rounded,
+          kind: ListingQuickFilterKind.topRated,
+        ),
+      ];
+
+  static List<ListingQuickFilter> get utilityOnly =>
+      List<ListingQuickFilter>.unmodifiable(_utilityFilters);
+
+  static List<ListingQuickFilter> get specialtyOnly =>
+      ClientDiscoverySpecialties.all.map(fromDiscoverySpecialty).toList();
+}

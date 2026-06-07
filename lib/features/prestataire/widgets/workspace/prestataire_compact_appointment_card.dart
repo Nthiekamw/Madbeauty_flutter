@@ -4,7 +4,9 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
+import '../../logic/prestataire_reservation_completion.dart';
 import '../../models/prestataire_reservation_item.dart';
+import '../shared/prestataire_client_identity_row.dart';
 
 /// Carte rendez-vous compacte (heure Â· client Â· statut).
 class PrestataireCompactAppointmentCard extends StatelessWidget {
@@ -25,14 +27,6 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
   final VoidCallback? onMarkDone;
   final bool busy;
 
-  String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,6 +35,12 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
     final timeLabel = formatBookingTime(item.dateHeure);
     final showActions = status == ClientReservationUiStatus.pending &&
         (onAccept != null || onReject != null);
+    final canMarkDone = status == ClientReservationUiStatus.confirmed &&
+        onMarkDone != null &&
+        prestataireCanMarkReservationDone(item);
+    final showMarkDoneHint = status == ClientReservationUiStatus.confirmed &&
+        onMarkDone != null &&
+        !prestataireCanMarkReservationDone(item);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -83,43 +83,16 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor:
-                          theme.colorScheme.primary.withValues(alpha: 0.12),
-                      child: Text(
-                        _initials(item.clientName),
-                        style: theme.textTheme.labelLarge?.copyWith(
+                    Expanded(
+                      child: PrestataireClientIdentityRow(
+                        clientName: item.clientName,
+                        serviceName: item.serviceName,
+                        clientAvatarUrl: item.clientAvatarUrl,
+                        avatarRadius: 22,
+                        nameStyle: theme.textTheme.titleSmall?.copyWith(
                           fontFamily: AppFonts.display,
                           fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.primary,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.clientName,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item.serviceName,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -173,8 +146,7 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ] else if (status == ClientReservationUiStatus.confirmed &&
-                    onMarkDone != null) ...[
+                ] else if (canMarkDone) ...[
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
@@ -182,6 +154,15 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
                       onPressed: busy ? null : onMarkDone,
                       icon: const Icon(Icons.check_circle_outline, size: 18),
                       label: const Text(DiscPrestaAgenda.markDone),
+                    ),
+                  ),
+                ] else if (showMarkDoneHint) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    DiscPrestaAgenda.markDonePendingHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],

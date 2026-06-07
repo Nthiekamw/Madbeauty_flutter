@@ -5,7 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
@@ -113,7 +113,7 @@ class PrestataireProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final versionAsync = ref.watch(appVersionProvider);
 
-    return DiscoveryBrandScaffold(
+    return PrestataireBrandScaffold(
       body: profileAsync.when(
         loading: () => const PrestataireWorkspaceShell(
           child: Center(child: CircularProgressIndicator()),

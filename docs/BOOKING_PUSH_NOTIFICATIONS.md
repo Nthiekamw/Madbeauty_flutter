@@ -74,9 +74,29 @@ Configure au minimum :
 
 Sans `BOOKING_WEBHOOK_SECRET`, le code déploie encore accepte les appels (**à éviter en production**).
 
-## 4. Database Webhooks (Supabase Dashboard)
+## 4. Déclenchement automatique (recommandé — migration SQL)
 
-Configurer **deux webhooks HTTP POST** vers les URLs :
+Une migration crée des **triggers PostgreSQL + pg_net** qui appellent les Edge Functions (équivalent aux Database Webhooks du dashboard, **sans clic manuel**).
+
+```powershell
+# Depuis la racine du repo (projet Supabase déjà lié)
+.\supabase\setup_push_notifications.ps1
+```
+
+Le script :
+- applique la migration `20260608120000_booking_push_pg_net_triggers.sql` ;
+- configure `private.webhook_config` (URL + secret) ;
+- définit `BOOKING_WEBHOOK_SECRET` ;
+- déploie `on_booking_created`, `on_booking_updated`, `on_message_created`.
+
+**Firebase (une seule action manuelle)** : placer le JSON du compte de service dans  
+`supabase/firebase-service-account.json` (voir `firebase-service-account.json.example`), puis relancer le script.
+
+---
+
+## 4 bis. Database Webhooks (alternative dashboard)
+
+Si tu préfères l’UI Supabase (**Integrations → Database Webhooks**), configure **deux webhooks HTTP POST** vers les URLs :
 
 `https://<PROJECT_REF>.supabase.co/functions/v1/on_booking_created`  
 `https://<PROJECT_REF>.supabase.co/functions/v1/on_booking_updated`  

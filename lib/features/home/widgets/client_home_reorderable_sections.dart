@@ -18,16 +18,13 @@ import 'client_home_top_rated_prestataires_section.dart';
 class ClientHomeReorderableSections extends ConsumerWidget {
   const ClientHomeReorderableSections({
     super.key,
-    required this.onExplorePick,
     this.footer,
   });
 
-  final ValueChanged<String> onExplorePick;
   final Widget? footer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final pad = DiscoveryResponsive.of(context).horizontalPadding;
     final layout = ref.watch(clientHomeLayoutProvider);
     final isLoggedIn = clientHomeIsLoggedIn(ref);
@@ -41,59 +38,46 @@ class ClientHomeReorderableSections extends ConsumerWidget {
       hasFeedSelection: hasFeedSelection,
     );
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(pad, 8, pad, 32),
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                CoreStrings.appName,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.3,
-                ),
-              ),
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surface,
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(pad, 4, pad, 32),
+        children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => showClientHomeLayoutSheet(context, ref),
+            icon: const Icon(Icons.tune_rounded, size: 18),
+            label: Text(DiscHome.layoutOrganizeAction),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
-            TextButton.icon(
-              onPressed: () => showClientHomeLayoutSheet(context, ref),
-              icon: const Icon(Icons.tune_rounded, size: 18),
-              label: Text(DiscHome.layoutOrganizeAction),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         for (var i = 0; i < visible.length; i++) ...[
-          _sectionFor(visible[i], onExplorePick),
+          _sectionFor(visible[i]),
           if (i < visible.length - 1) const SizedBox(height: 28),
         ],
         if (!hasSupabase) ...[
           const SizedBox(height: 28),
-          _SupabaseConfigCard(theme: theme),
+          _SupabaseConfigCard(theme: Theme.of(context)),
         ],
         if (footer != null) ...[
           const SizedBox(height: 20),
           footer!,
         ],
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _sectionFor(
-    ClientHomeSectionId id,
-    ValueChanged<String> onExplorePick,
-  ) {
+  Widget _sectionFor(ClientHomeSectionId id) {
     return switch (id) {
       ClientHomeSectionId.nextAppointment =>
         const ClientHomeNextAppointmentSection(),
-      ClientHomeSectionId.inspiration =>
-        ClientHomeExploreRow(onPick: onExplorePick),
+      ClientHomeSectionId.inspiration => const ClientHomeExploreRow(),
       ClientHomeSectionId.feed => const ClientHomeFeedPrestatairesSection(),
       ClientHomeSectionId.nearby =>
         const ClientHomeNearbyPrestatairesSection(),

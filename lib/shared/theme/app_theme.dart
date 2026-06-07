@@ -9,9 +9,20 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData _withTypography(ThemeData base) {
-    final text = base.textTheme.apply(fontFamily: AppFonts.body);
+    final scheme = base.colorScheme;
+    final text = base.textTheme.apply(
+      fontFamily: AppFonts.body,
+      bodyColor: scheme.onSurface,
+      displayColor: scheme.onSurface,
+    );
     TextStyle? exo(TextStyle? s) =>
         s?.copyWith(fontFamily: AppFonts.display);
+
+    final primaryText = base.primaryTextTheme.apply(
+      fontFamily: AppFonts.body,
+      bodyColor: scheme.onPrimary,
+      displayColor: scheme.onPrimary,
+    );
 
     return base.copyWith(
       textTheme: text.copyWith(
@@ -23,7 +34,8 @@ class AppTheme {
         headlineSmall: exo(text.headlineSmall),
         titleLarge: exo(text.titleLarge),
       ),
-      primaryTextTheme: base.primaryTextTheme.apply(fontFamily: AppFonts.body),
+      primaryTextTheme: primaryText,
+      iconTheme: base.iconTheme.copyWith(color: scheme.onSurface),
       appBarTheme: base.appBarTheme.copyWith(
         titleTextStyle: exo(
           base.appBarTheme.titleTextStyle ??
@@ -63,11 +75,13 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme.copyWith(
-        surfaceContainerLowest: AppColors.lightSurfaceContainer,
+        surfaceContainerLowest: AppColors.lightSurface,
         surfaceContainerLow: AppColors.lightSurfaceContainer,
         surfaceContainer: AppColors.lightSurfaceContainer,
         surfaceContainerHigh: AppColors.lightSurfaceContainerHigh,
         surfaceContainerHighest: AppColors.lightSurfaceContainerHighest,
+        surfaceBright: AppColors.lightSurface,
+        surfaceDim: AppColors.lightSurfaceContainer,
       ),
     );
 
@@ -75,6 +89,34 @@ class AppTheme {
       _withTypography(
         base.copyWith(
           scaffoldBackgroundColor: AppColors.lightSurface,
+          canvasColor: AppColors.lightSurface,
+          dialogTheme: DialogThemeData(
+            backgroundColor: AppColors.lightSurface,
+            surfaceTintColor: AppColors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: AuthFormStyles.cardBorderRadius,
+            ),
+          ),
+          bottomSheetTheme: const BottomSheetThemeData(
+            backgroundColor: AppColors.lightSurface,
+            surfaceTintColor: AppColors.transparent,
+            modalBackgroundColor: AppColors.lightSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+          ),
+          navigationBarTheme: const NavigationBarThemeData(
+            backgroundColor: AppColors.lightSurface,
+            surfaceTintColor: AppColors.transparent,
+          ),
+          popupMenuTheme: const PopupMenuThemeData(
+            color: AppColors.lightSurfaceContainer,
+            surfaceTintColor: AppColors.transparent,
+          ),
+          drawerTheme: const DrawerThemeData(
+            backgroundColor: AppColors.lightSurface,
+            surfaceTintColor: AppColors.transparent,
+          ),
           appBarTheme: AppBarTheme(
             centerTitle: true,
             backgroundColor: primary,
@@ -135,6 +177,8 @@ class AppTheme {
         surfaceContainer: AppColors.darkSurfaceContainer,
         surfaceContainerHigh: AppColors.darkSurfaceContainerHigh,
         surfaceContainerHighest: AppColors.darkSurfaceContainerHighest,
+        primaryContainer: AppColors.darkPrimaryContainer,
+        onPrimaryContainer: AppColors.darkOnPrimaryContainer,
       ),
     );
 
@@ -182,6 +226,9 @@ class AppTheme {
     final focus = scheme.primary;
 
     return theme.copyWith(
+      scaffoldBackgroundColor:
+          isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      canvasColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: fieldFill,

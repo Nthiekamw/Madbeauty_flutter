@@ -23,6 +23,21 @@ abstract final class DiscPrestaAnalytics {
   static const noData = '—';
   static const revenueBreakdown =
       'Stripe capturé + paiements sur place (prestations confirmées ou terminées).';
+  static const dashboardPeriodLabel = 'Période affichée';
+  static const dashboardRevenueHeadline = 'Tu as gagné';
+  static const dashboardRevenueHint =
+      'Prestations confirmées ou terminées sur la période.';
+  static const dashboardRevenueTrend = 'Par rapport à la période précédente';
+  static const dashboardAgendaTitle = 'Agenda rempli';
+  static const dashboardAgendaHint =
+      'Part de tes créneaux ouverts déjà réservés.';
+  static const dashboardAcceptanceTitle = 'Demandes acceptées';
+  static const dashboardAcceptanceHint =
+      'Demandes confirmées sur celles reçues (hors annulations).';
+  static const dashboardReservationsTitle = 'Activité réservations';
+  static const dashboardChartTitle = 'Revenus jour par jour';
+  static const dashboardBusiestTitle = 'Jour le plus actif';
+  static const dashboardNoBusiest = 'Pas encore assez de données.';
 
   static String evolutionPercent(double? percent) {
     if (percent == null) return noData;
@@ -37,8 +52,8 @@ abstract final class DiscPrestaAnalytics {
 
   static String busiestDay(String? weekdayName) {
     if (weekdayName == null || weekdayName.isEmpty) {
-      return 'Pas assez de données';
+      return dashboardNoBusiest;
     }
-    return 'Pic : $weekdayName';
+    return weekdayName;
   }
 }

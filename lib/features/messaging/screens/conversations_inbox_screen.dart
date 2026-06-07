@@ -10,6 +10,7 @@ import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../prestataire/widgets/workspace/prestataire_profile_completion_card.dart';
+import '../../prestataire/widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../prestataire/widgets/workspace/prestataire_workspace_shell.dart';
 import '../models/conversation_inbox_item.dart';
 import '../widgets/conversation_list_tile.dart';
@@ -78,17 +79,14 @@ class _ConversationsInboxScreenState
       );
     }
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: PrestataireWorkspaceShell(
+    return PrestataireBrandScaffold(
+      body: PrestataireWorkspaceShell(
+        onRefresh: _refreshInbox,
+        headerSubtitle: headerSubtitle,
+        showMessagesAction: false,
+        child: RefreshIndicator(
           onRefresh: _refreshInbox,
-          headerSubtitle: headerSubtitle,
-          showMessagesAction: false,
-          child: RefreshIndicator(
-            onRefresh: _refreshInbox,
-            child: _buildInboxSlivers(context, theme, inboxAsync),
-          ),
+          child: _buildInboxSlivers(context, theme, inboxAsync),
         ),
       ),
     );

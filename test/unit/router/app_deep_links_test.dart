@@ -36,6 +36,29 @@ void main() {
       );
     });
 
+    test('détecte login-callback avec code PKCE', () {
+      expect(
+        AppDeepLinks.isAuthCallbackUri(
+          Uri.parse(
+            'com.madbeauty.madbeauty://login-callback?code=abc123',
+          ),
+        ),
+        isTrue,
+      );
+    });
+
+    test('détecte login-callback avec token_hash inscription', () {
+      expect(
+        AppDeepLinks.isAuthCallbackUri(
+          Uri.parse(
+            'com.madbeauty.madbeauty://login-callback'
+            '?token_hash=abc123&type=signup',
+          ),
+        ),
+        isTrue,
+      );
+    });
+
     test('subscription-return → écran abonnement', () {
       expect(
         AppDeepLinks.subscriptionReturnPath(

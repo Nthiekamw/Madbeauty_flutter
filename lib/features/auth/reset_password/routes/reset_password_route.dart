@@ -53,10 +53,12 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
       return;
     }
 
-    await ref.read(authNotifierProvider.notifier).updatePassword(p);
-    if (!mounted) return;
+    final container = ProviderScope.containerOf(context);
 
-    final auth = ref.read(authNotifierProvider);
+    await ref.read(authNotifierProvider.notifier).updatePassword(p);
+    if (!context.mounted) return;
+
+    final auth = container.read(authNotifierProvider);
     if (auth.hasError) {
       final err = auth.error;
       setState(() {
@@ -66,12 +68,12 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
       return;
     }
 
-    ref.read(passwordRecoveryPendingProvider.notifier).clear();
-    if (!mounted) return;
+    container.read(passwordRecoveryPendingProvider.notifier).clear();
+    if (!context.mounted) return;
 
     AppSnackBar.success(context, AuthStrings.resetPasswordSuccess);
 
-    await PostAuthNavigation.navigate(context, ref);
+    await PostAuthNavigation.navigateWithContainer(context, container);
   }
 
   @override

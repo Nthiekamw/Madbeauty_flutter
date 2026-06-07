@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../logic/prestataire_agenda_filters.dart';
@@ -14,6 +13,7 @@ import '../widgets/agenda/prestataire_agenda_week_calendar.dart';
 import '../widgets/workspace/prestataire_compact_appointment_card.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_segmented_tabs.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
 
 class PrestataireAgendaScreen extends ConsumerStatefulWidget {
@@ -98,7 +98,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
             onReject: () =>
                 _runAction(item.id, () => _actions.reject(item.id)),
             onMarkDone: () =>
-                _runAction(item.id, () => _actions.markDone(item.id)),
+                _runAction(item.id, () => _actions.markDone(item)),
           ),
         );
       }
@@ -118,10 +118,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: agendaAsync.when(
+    return PrestataireBrandScaffold(
+      body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
           child: Center(child: CircularProgressIndicator()),
         ),
@@ -246,7 +244,6 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
           );
         },
         ),
-      ),
     );
   }
 }
