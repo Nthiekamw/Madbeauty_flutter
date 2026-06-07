@@ -6,7 +6,7 @@ import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
-import '../../../features/messaging/logic/chat_message_moderator.dart';
+import '../../../core/logic/messaging/chat_message_moderator.dart';
 
 /// Couche data messagerie (réservation / booking + Supabase Realtime).
 class MessageService {

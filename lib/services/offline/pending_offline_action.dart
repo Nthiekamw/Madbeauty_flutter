@@ -1,4 +1,4 @@
-import '../../features/booking/models/client_reservation_summary.dart';
+import '../../core/models/domain/booking/client_reservation_summary.dart';
 
 /// Types d'actions rejouées à la reconnexion.
 enum OfflineActionType {

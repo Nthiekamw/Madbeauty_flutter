@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:madbeauty/features/booking/logic/reservation_payment_display.dart';
+import 'package:madbeauty/core/logic/booking/reservation_payment_display.dart';
 
 void main() {
   test('acompte 20 % — lignes client et prestataire', () {

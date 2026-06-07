@@ -9,7 +9,6 @@ import '../models/client_home_section_id.dart';
 import '../providers/client_home_layout_provider.dart';
 import 'client_home_explore_row.dart';
 import 'client_home_feed_prestataires_section.dart';
-import 'client_home_layout_sheet.dart';
 import 'client_home_nearby_prestataires_section.dart';
 import 'client_home_next_appointment_section.dart';
 import 'client_home_top_rated_prestataires_section.dart';
@@ -43,19 +42,6 @@ class ClientHomeReorderableSections extends ConsumerWidget {
       child: ListView(
         padding: EdgeInsets.fromLTRB(pad, 4, pad, 32),
         children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => showClientHomeLayoutSheet(context, ref),
-            icon: const Icon(Icons.tune_rounded, size: 18),
-            label: Text(DiscHome.layoutOrganizeAction),
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
         for (var i = 0; i < visible.length; i++) ...[
           _sectionFor(visible[i]),
           if (i < visible.length - 1) const SizedBox(height: 28),

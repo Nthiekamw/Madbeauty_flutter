@@ -25,6 +25,12 @@ abstract final class DiscHome {
   static const nextAppointmentCta = 'Réserver';
   static const nextAppointmentSeeAll = 'Mes réservations';
 
+  static const settingsTitle = 'Paramètres';
+  static const settingsTooltip = 'Paramètres';
+  static const settingsOpenCatalog = 'Catalogue complet';
+  static const settingsOpenCatalogHint =
+      'Parcourir tous les prestataires et filtres avancés.';
+
   static const layoutOrganizeAction = 'Organiser';
   static const layoutCustomizeTitle = 'Organiser l\'accueil';
   static const layoutCustomizeHint =

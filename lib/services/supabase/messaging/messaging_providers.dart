@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
-import '../../../features/messaging/models/conversation_inbox_item.dart';
+import '../../../core/models/domain/messaging/conversation_inbox_item.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../profile/client_profile_providers.dart';
 import '../profile/profile_providers.dart';

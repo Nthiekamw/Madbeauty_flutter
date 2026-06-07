@@ -10,12 +10,14 @@ class ClientHomeSearchCard extends StatelessWidget {
     required this.hint,
     required this.searchTooltip,
     required this.onSubmit,
+    this.onChanged,
   });
 
   final TextEditingController controller;
   final String hint;
   final String searchTooltip;
   final VoidCallback onSubmit;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class ClientHomeSearchCard extends StatelessWidget {
     return DiscoverySearchCard(
       controller: controller,
       hint: hint,
+      onChanged: onChanged,
       onSubmitted: onSubmit,
       suffixIcon: IconButton.filled(
         tooltip: searchTooltip,

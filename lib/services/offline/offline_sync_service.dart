@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/logic/booking/booking_create_failure.dart';
+import '../../core/models/domain/booking/client_reservation_summary.dart';
 import '../../core/providers/offline_providers.dart';
-import '../../features/booking/logic/booking_create_failure.dart';
-import '../../features/booking/models/client_reservation_summary.dart';
-import '../../features/prestataire/providers/prestataire_agenda_provider.dart';
-import '../../features/prestataire/providers/prestataire_dashboard_provider.dart';
+import '../../core/providers/offline_sync_hooks.dart';
 import '../../services/supabase/booking/booking_service.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import 'offline_action_queue_store.dart'
@@ -91,10 +90,7 @@ class OfflineSyncService {
     await store.replace(remaining);
 
     if (synced > 0 || removed > 0) {
-      invalidateClientReservationsFromRef(_ref);
-      _ref.invalidate(prestataireAgendaProvider);
-      _ref.invalidate(prestataireDashboardProvider);
-      _ref.invalidate(bookingsPrestataireProvider);
+      _ref.read(offlineSyncAfterFlushProvider)(_ref);
     }
 
     return OfflineSyncResult(

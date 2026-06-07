@@ -2,9 +2,9 @@
 import '../../core/models/domain/catalog/service_category.dart';
 import '../../core/models/domain/user/prestataire_profile.dart';
 import '../../core/models/domain/user/user_profile.dart';
-import '../../features/booking/models/client_reservation_summary.dart';
-import '../../features/prestataire/models/prestataire_dashboard_data.dart';
-import '../../features/prestataire/models/prestataire_reservation_item.dart';
+import '../../core/models/domain/booking/client_reservation_summary.dart';
+import '../../core/models/domain/booking/prestataire_reservation_item.dart';
+import '../../core/models/domain/prestataire/prestataire_dashboard_data.dart';
 
 /// Sérialisation JSON pour le cache hors ligne.
 abstract final class OfflineCacheCodec {

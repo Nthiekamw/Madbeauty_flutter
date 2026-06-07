@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_strings.dart';
-import '../../features/booking/logic/client_reservation_ui_status.dart';
+import '../../core/logic/booking/client_reservation_ui_status.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import 'in_app_notification.dart';
 

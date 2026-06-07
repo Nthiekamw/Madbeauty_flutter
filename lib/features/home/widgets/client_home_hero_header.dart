@@ -1,24 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/in_app_notifications_sheet.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app/app_avatar.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../profile/providers/current_user_profile_provider.dart';
+import '../models/home_feed_selection.dart';
+import '../providers/home_feed_provider.dart';
 import '../providers/home_profile_provider.dart';
+import 'client_home_search_card.dart';
+import 'client_home_settings_sheet.dart';
 
-/// En-tête accueil client : avatar centré, notifications en haut à droite, salutation.
-class ClientHomeHeroHeader extends ConsumerWidget {
+/// En-tête accueil : paramètres, logo, notifications, salutation, recherche.
+class ClientHomeHeroHeader extends ConsumerStatefulWidget {
   const ClientHomeHeroHeader({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientHomeHeroHeader> createState() =>
+      _ClientHomeHeroHeaderState();
+}
+
+class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    ref.read(homeFeedSelectionProvider.notifier).setSearch(
+          _searchController.text,
+        );
+    setState(() {});
+  }
+
+  void _submitSearch() {
+    ref.read(homeFeedSelectionProvider.notifier).setSearch(
+          _searchController.text,
+        );
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<HomeFeedSelection?>(homeFeedSelectionProvider, (_, next) {
+      if (next == null || next.source == HomeFeedSource.search) return;
+      if (_searchController.text.isEmpty) return;
+      _searchController.removeListener(_onSearchChanged);
+      _searchController.clear();
+      _searchController.addListener(_onSearchChanged);
+    });
+
     final theme = Theme.of(context);
     final isGuest = ref.watch(isGuestBrowsingProvider);
     final userProfile = ref.watch(currentUserProfileProvider).asData?.value;
@@ -33,71 +80,84 @@ class ClientHomeHeroHeader extends ConsumerWidget {
       profileDisplayName: profileSnapshot?.displayName,
       authFullName: authUser?.userMetadata?['full_name'] as String?,
     );
-    final avatarUrl = userProfile?.avatarUrl ??
-        (authUser?.userMetadata?['avatar_url'] as String?);
-    final avatarDisplayName = _avatarDisplayName(
-      userProfile: userProfile,
-      greetingName: greetingName,
-      profileDisplayName: profileSnapshot?.displayName,
-      email: authUser?.email,
-    );
     final greetingLine = DiscHome.clientHomeGreeting(greetingName);
-    final avatarRadius = MediaQuery.sizeOf(context).width < 360 ? 36.0 : 40.0;
+    const topActionSize = 40.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.brandBrown.withValues(alpha: 0.12),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.brandBrown.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+          SizedBox(
+            height: topActionSize,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: topActionSize,
+                  height: topActionSize,
+                  child: IconButton(
+                    tooltip: DiscHome.settingsTooltip,
+                    onPressed: () =>
+                        showClientHomeSettingsSheet(context, ref),
+                    icon: const Icon(Icons.settings_rounded, size: 22),
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.65),
+                      foregroundColor: theme.colorScheme.onSurface,
                     ),
-                  ],
+                  ),
                 ),
-                child: AppAvatar(
-                  imageUrl: avatarUrl,
-                  displayName: avatarDisplayName,
-                  radius: avatarRadius,
+                Expanded(
+                  child: Center(
+                    child: Image.asset(
+                      AppAssets.logo,
+                      height: 18,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Text(
+                        CoreStrings.appName,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontFamily: AppFonts.display,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.brandBrown,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                greetingLine,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.25,
-                  letterSpacing: -0.2,
+                SizedBox(
+                  width: topActionSize,
+                  height: topActionSize,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: NotificationBellButton(
+                      compact: true,
+                      unreadCount: unreadNotif,
+                      onPressed: () => showInAppNotificationsSheet(context, ref),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-            ],
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: NotificationBellButton(
-              compact: true,
-              unreadCount: unreadNotif,
-              onPressed: () => showInAppNotificationsSheet(context, ref),
+              ],
             ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            greetingLine,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.onSurface,
+              height: 1.25,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClientHomeSearchCard(
+            controller: _searchController,
+            hint: DiscHome.hintSearch,
+            searchTooltip: DiscHome.actionSearch,
+            onSubmit: _submitSearch,
           ),
         ],
       ),
@@ -130,27 +190,4 @@ String _greetingName({
   if (full.isNotEmpty) return full.split(RegExp(r'\s+')).first;
 
   return '';
-}
-
-String _avatarDisplayName({
-  required UserProfile? userProfile,
-  required String greetingName,
-  required String? profileDisplayName,
-  required String? email,
-}) {
-  final prenom = userProfile?.prenom?.trim() ?? '';
-  final nom = userProfile?.nom?.trim() ?? '';
-  if (prenom.isNotEmpty && nom.isNotEmpty) return '$prenom $nom';
-  if (prenom.isNotEmpty) return prenom;
-  if (nom.isNotEmpty) return nom;
-
-  final display = profileDisplayName?.trim() ?? '';
-  if (display.isNotEmpty) return display;
-
-  if (greetingName.isNotEmpty) return greetingName;
-
-  final mail = email?.trim() ?? '';
-  if (mail.isNotEmpty) return mail;
-
-  return CoreStrings.appName;
 }

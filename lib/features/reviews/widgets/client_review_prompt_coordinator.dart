@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/app_config.dart';
 import '../../../features/auth/guest/guest_mode_provider.dart';
 import '../../../features/booking/logic/client_reservation_ui_status.dart';
-import '../../../features/booking/models/client_reservation_summary.dart';
+import 'package:madbeauty/core/models/domain/booking/client_reservation_summary.dart';
 import '../../../services/storage/review_prompt_store.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';

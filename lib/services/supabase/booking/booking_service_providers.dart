@@ -9,7 +9,7 @@ import '../../offline/offline_cache_service.dart';
 import '../../offline/offline_sync_service.dart';
 import '../../offline/pending_offline_action.dart';
 import '../../../core/models/domain/booking/reservation.dart';
-import '../../../features/booking/models/client_reservation_summary.dart';
+import '../../../core/models/domain/booking/client_reservation_summary.dart';
 import '../../../features/prestataire/providers/current_prestataire_provider.dart';
 import '../profile/client_profile_providers.dart';
 import '../profile/profile_providers.dart';

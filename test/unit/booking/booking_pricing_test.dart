@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:madbeauty/features/booking/logic/booking_pricing.dart';
+import 'package:madbeauty/core/logic/booking/booking_pricing.dart';
 
 void main() {
   group('platformFeeCentsForPriorCount', () {

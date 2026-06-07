@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:madbeauty/features/booking/logic/reservation_chat_eligibility.dart';
+import 'package:madbeauty/core/logic/messaging/reservation_chat_eligibility.dart';
 
 void main() {
   group('reservationStatutAllowsChat', () {

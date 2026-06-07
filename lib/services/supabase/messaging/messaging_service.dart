@@ -5,9 +5,9 @@ import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
-import '../../../features/booking/logic/reservation_chat_eligibility.dart';
+import '../../../core/logic/messaging/reservation_chat_eligibility.dart';
 import '../../../features/messaging/models/client_presta_chat_access.dart';
-import '../../../features/messaging/models/conversation_inbox_item.dart';
+import '../../../core/models/domain/messaging/conversation_inbox_item.dart';
 import '../profile/profile_service.dart';
 import 'message_service.dart';
 

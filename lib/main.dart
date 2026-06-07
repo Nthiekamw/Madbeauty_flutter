@@ -7,6 +7,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'core/providers/offline_sync_hooks.dart';
+import 'features/offline/providers/offline_booking_sync_invalidation.dart';
 import 'services/auth/google_auth_service.dart';
 import 'services/notifications/booking_local_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
@@ -46,6 +48,15 @@ Future<void> main() async {
     );
   }
 
-  runApp(const ProviderScope(child: MadBeautyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        offlineSyncAfterFlushProvider.overrideWithValue(
+          invalidateBookingCachesAfterOfflineSync,
+        ),
+      ],
+      child: const MadBeautyApp(),
+    ),
+  );
 }
 

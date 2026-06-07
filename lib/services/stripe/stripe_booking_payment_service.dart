@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../core/models/domain/booking/reservation.dart';
-import '../../features/booking/logic/booking_pricing.dart';
+import '../../core/logic/booking/booking_pricing.dart';
 import '../../core/models/domain/serialization/supabase_domain_codec.dart';
 import 'stripe_payment_exception.dart';
 import 'stripe_service.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:madbeauty/features/messaging/logic/chat_message_moderator.dart';
+import 'package:madbeauty/core/logic/messaging/chat_message_moderator.dart';
 
 void main() {
   group('ChatMessageModerator.analyze', () {

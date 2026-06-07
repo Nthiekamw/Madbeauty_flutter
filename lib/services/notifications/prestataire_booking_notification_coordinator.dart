@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/providers/offline_providers.dart';
-import '../../features/booking/logic/client_reservation_ui_status.dart';
+import '../../core/logic/booking/client_reservation_ui_status.dart';
 import '../../features/prestataire/providers/current_prestataire_provider.dart';
 import '../../features/prestataire/providers/prestataire_bookings_invalidate.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
