@@ -2,7 +2,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../features/prestataire/models/prestataire_subscription_status.dart';
+import '../../core/models/domain/prestataire/prestataire_subscription_status.dart';
 
 class StripePrestaSubscriptionException implements Exception {
   const StripePrestaSubscriptionException(this.message, {this.code});
@@ -86,7 +86,8 @@ class StripePrestaSubscriptionService {
         .from('prestataire_profiles')
         .select(
           'subscription_status, subscription_tier, subscription_interval, '
-          'subscription_current_period_end, stripe_subscription_id',
+          'subscription_current_period_end, stripe_subscription_id, '
+          'catalog_trial_ends_at',
         )
         .eq('user_id', userId)
         .maybeSingle();

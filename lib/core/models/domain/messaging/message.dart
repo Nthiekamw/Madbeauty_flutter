@@ -13,6 +13,7 @@ abstract class Message with _$Message {
     @JsonKey(name: 'booking_id') required String bookingId,
     @JsonKey(name: 'sender_id') required String senderId,
     required String content,
+    @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_read') @Default(false) bool isRead,
     @JsonKey(name: 'created_at')
     @IsoDateTimeConverter()

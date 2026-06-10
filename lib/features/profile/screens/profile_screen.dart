@@ -20,20 +20,22 @@ import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../../core/models/user_role.dart';
-import '../widgets/profile_role_space_section.dart';
+import '../widgets/sections/profile_role_space_section.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';
 import '../providers/app_version_provider.dart';
 import '../providers/current_user_profile_provider.dart';
-import '../widgets/edit_profile_name_dialog.dart';
+import '../widgets/account/edit_profile_name_dialog.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
-import '../widgets/profile_account_header.dart';
-import '../widgets/profile_account_section.dart';
-import '../widgets/profile_admin_section.dart';
-import '../widgets/profile_footer_actions.dart';
-import '../widgets/profile_my_info_section.dart';
-import '../widgets/profile_page_insets.dart';
-import '../widgets/profile_preferences_section.dart';
+import '../widgets/account/profile_account_header.dart';
+import '../widgets/account/profile_account_section.dart';
+import '../widgets/sections/profile_admin_section.dart';
+import '../widgets/layout/profile_footer_actions.dart';
+import '../widgets/sections/profile_my_info_section.dart';
+import '../widgets/layout/profile_page_insets.dart';
+import '../widgets/sections/profile_appearance_section.dart';
+import '../widgets/sections/profile_favorites_section.dart';
+import '../widgets/sections/profile_preferences_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -320,6 +322,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: ProfilePageInsets.sectionGap),
                     ProfileMyInfoSection(email: email, phone: phone),
                   ],
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfileFavoritesSection(),
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfileAppearanceSection(),
                   const SizedBox(height: ProfilePageInsets.sectionGap),
                   const ProfilePreferencesSection(),
                   const SizedBox(height: ProfilePageInsets.sectionGap),

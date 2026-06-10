@@ -10,6 +10,7 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../models/client_review_list_item.dart';
 import '../providers/prestataire_note_moyenne_provider.dart';
 import '../../../services/supabase/reviews/review_service.dart';
@@ -21,20 +22,33 @@ import '../../../shared/theme/app_colors.dart';
 Future<bool?> showEditReviewSheet(
   BuildContext context, {
   required ClientReviewListItem item,
+  bool readOnly = false,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (context) => EditReviewSheet(item: item),
+    builder: (context) => EditReviewSheet(item: item, readOnly: readOnly),
   );
 }
 
+Future<void> showViewReviewSheet(
+  BuildContext context, {
+  required ClientReviewListItem item,
+}) {
+  return showEditReviewSheet(context, item: item, readOnly: true);
+}
+
 class EditReviewSheet extends ConsumerStatefulWidget {
-  const EditReviewSheet({super.key, required this.item});
+  const EditReviewSheet({
+    super.key,
+    required this.item,
+    this.readOnly = false,
+  });
 
   final ClientReviewListItem item;
+  final bool readOnly;
 
   @override
   ConsumerState<EditReviewSheet> createState() => _EditReviewSheetState();
@@ -64,11 +78,19 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
   }
 
   Future<void> _submit() async {
-    if (_note < 1 || _submitting || !widget.item.canEdit) return;
+    if (widget.readOnly) return;
+
+    final client = ref.read(currentClientProfileProvider).asData?.value;
+    final ownPrestaId =
+        ref.read(currentPrestataireProvider).asData?.value?.id;
+    final canEdit = widget.item.canEditAsClient(
+      client?.id,
+      ownPrestataireId: ownPrestaId,
+    );
+    if (_note < 1 || _submitting || !canEdit) return;
 
     final service = ref.read(reviewServiceProvider);
     final storage = ref.read(storageServiceProvider);
-    final client = await ref.read(currentClientProfileProvider.future);
     final userId = ref.read(authNotifierProvider).asData?.value?.id;
     if (service == null || client == null || storage == null || userId == null) {
       if (mounted) AppSnackBar.error(context, DiscReview.errorGeneric);
@@ -122,7 +144,19 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final canEdit = widget.item.canEdit;
+    final clientId = ref.watch(currentClientProfileProvider).asData?.value?.id;
+    final ownPrestaId =
+        ref.watch(currentPrestataireProvider).asData?.value?.id;
+    final canEdit = !widget.readOnly &&
+        widget.item.canEditAsClient(
+          clientId,
+          ownPrestataireId: ownPrestaId,
+        );
+    final blockedOnOwnBusiness = !widget.readOnly &&
+        clientId == widget.item.review.clientId &&
+        ownPrestaId != null &&
+        ownPrestaId.isNotEmpty &&
+        widget.item.review.prestataireId == ownPrestaId;
     final prestataireLabel =
         widget.item.prestataireName?.trim().isNotEmpty == true
             ? widget.item.prestataireName!.trim()
@@ -135,7 +169,11 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            canEdit ? DiscReview.editTitle : DiscReview.viewTitle,
+            canEdit
+                ? DiscReview.editTitle
+                : (widget.readOnly
+                    ? DiscPrestaDetail.reviewsTitle
+                    : DiscReview.viewTitle),
             style: theme.textTheme.titleLarge?.copyWith(
               fontFamily: AppFonts.display,
               fontWeight: FontWeight.w800,
@@ -151,11 +189,24 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            canEdit
-                ? (widget.item.daysLeftToEdit != null
-                    ? DiscReview.daysLeftToEdit(widget.item.daysLeftToEdit!)
-                    : DiscReview.editDeadlineHint)
-                : DiscReview.editExpiredLabel,
+            widget.readOnly
+                ? DiscReview.prestataireViewOnlyHint
+                : blockedOnOwnBusiness
+                    ? DiscReview.editBlockedOnOwnBusiness
+                    : canEdit
+                        ? (widget.item.daysLeftToEditFor(
+                                clientId,
+                                ownPrestataireId: ownPrestaId,
+                              ) !=
+                              null
+                            ? DiscReview.daysLeftToEdit(
+                                widget.item.daysLeftToEditFor(
+                                  clientId,
+                                  ownPrestataireId: ownPrestaId,
+                                )!,
+                              )
+                            : DiscReview.editDeadlineHint)
+                        : DiscReview.editExpiredLabel,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

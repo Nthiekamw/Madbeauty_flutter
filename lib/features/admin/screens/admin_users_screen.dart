@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,15 +20,41 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   final Set<String> _busyIds = {};
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchTextChanged);
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onSearchTextChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _applySearch);
+  }
+
+  void _applySearch() {
+    final next = _searchController.text.trim();
+    if (next == _query) return;
+    setState(() => _query = next);
+  }
+
   void _search() {
-    setState(() => _query = _searchController.text.trim());
+    _debounce?.cancel();
+    final next = _searchController.text.trim();
+    if (next == _query) {
+      ref.invalidate(adminUsersSearchProvider(_query));
+      return;
+    }
+    setState(() => _query = next);
   }
 
   @override
@@ -54,12 +82,19 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                       prefixIcon: Icon(Icons.search),
                     ),
                     onSubmitted: (_) => _search(),
+                    textInputAction: TextInputAction.search,
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: _search,
-                  child: const Text(DiscProfile.adminUsersSearchAction),
+                  onPressed: usersAsync.isLoading ? null : _search,
+                  child: usersAsync.isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(DiscProfile.adminUsersSearchAction),
                 ),
               ],
             ),
@@ -92,7 +127,18 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    DiscProfile.adminUsersSearchErr,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

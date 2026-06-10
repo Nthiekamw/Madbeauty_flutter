@@ -13,8 +13,8 @@ import '../../prestataire/widgets/workspace/prestataire_profile_completion_card.
 import '../../prestataire/widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../prestataire/widgets/workspace/prestataire_workspace_shell.dart';
 import '../models/conversation_inbox_item.dart';
-import '../widgets/conversation_list_tile.dart';
-import '../widgets/conversations_empty_state.dart';
+import '../widgets/inbox/conversation_list_tile.dart';
+import '../widgets/inbox/conversations_empty_state.dart';
 
 /// Liste des conversations (onglet Messages).
 class ConversationsInboxScreen extends ConsumerStatefulWidget {

@@ -93,7 +93,7 @@ abstract final class DiscPrestaForm {
       'Active au moins un jour avec des horaires cohérents. '
       'Les congés sont optionnels : tu peux les ajouter maintenant ou plus tard.';
   static const hubTipSubscription =
-      'L’abonnement peut être activé plus tard : ton profil est enregistré à chaque étape.';
+      'Sans abonnement actif, ton profil reste invisible dans le catalogue.';
   static String hubStepTip(int stepIndex) => switch (stepIndex) {
         0 => hubTipBasics,
         1 => hubTipLocation,

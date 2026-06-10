@@ -4,6 +4,8 @@ import '../../core/config/app_config.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/logic/booking/client_reservation_ui_status.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../services/supabase/likes/prestataire_like_providers.dart';
+import '../../services/supabase/prestataire/prestataire_verification_service.dart';
 import 'in_app_notification.dart';
 
 /// Alimente la boîte de notifications depuis l'activité Supabase
@@ -56,6 +58,66 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           createdAt: item.dateHeure,
           read: status != ClientReservationUiStatus.pending,
           actionType: type,
+        ),
+      );
+    }
+  } catch (_) {
+    /* Pas prestataire ou erreur réseau */
+  }
+
+  try {
+    final likeService = ref.read(prestataireLikeServiceProvider);
+    if (likeService != null) {
+      final prestaId = await likeService.currentPrestataireProfileId();
+      if (prestaId != null) {
+        final likes = await likeService.listRecentForPrestataire(
+          prestaId,
+          since: cutoff,
+        );
+        for (final like in likes) {
+          out.add(
+            InAppNotification(
+              id:
+                  'like_${like.clientId}_${like.prestataireId}_'
+                  '${like.createdAt.millisecondsSinceEpoch}',
+              title: DiscNotif.prestataireLikeTitle,
+              body: DiscNotif.prestataireLikeBody(
+                like.clientDisplayName ?? 'Une cliente',
+              ),
+              createdAt: like.createdAt,
+              read: false,
+              actionType: 'prestataire_like',
+              prestataireId: like.prestataireId,
+            ),
+          );
+        }
+      }
+    }
+  } catch (_) {
+    /* Pas prestataire ou erreur réseau */
+  }
+
+  try {
+    final verificationService = PrestataireVerificationService.fromEnv();
+    final events = await verificationService.listRecentDecisionEvents(
+      since: cutoff,
+    );
+    for (final event in events) {
+      final isApproved = event.action == 'approved';
+      out.add(
+        InAppNotification(
+          id: 'verification_${event.id}',
+          title: isApproved
+              ? DiscNotif.verificationApprovedTitle
+              : DiscNotif.verificationRevokedTitle,
+          body: isApproved
+              ? DiscNotif.verificationApprovedBody
+              : DiscNotif.verificationRevokedBody(event.note ?? ''),
+          createdAt: event.createdAt,
+          read: false,
+          actionType: isApproved
+              ? 'prestataire_verification_approved'
+              : 'prestataire_verification_revoked',
         ),
       );
     }

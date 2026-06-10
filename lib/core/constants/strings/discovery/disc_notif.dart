@@ -29,4 +29,18 @@ abstract final class DiscNotif {
     required String service,
   }) =>
       '$clientOrSalon · $service';
+
+  static const prestataireLikeTitle = 'Nouveau like sur ton profil';
+  static String prestataireLikeBody(String clientName) =>
+      '$clientName a aimé ton profil MadBeauty.';
+
+  static const verificationApprovedTitle = 'Profil vérifié';
+  static const verificationApprovedBody =
+      'Ton profil prestataire est approuvé sur MadBeauty.';
+
+  static const verificationRevokedTitle = 'Vérification à corriger';
+  static String verificationRevokedBody(String reason) =>
+      reason.trim().isEmpty
+          ? 'L’équipe a retiré ta vérification. Consulte ton profil.'
+          : 'Corrections demandées : $reason';
 }

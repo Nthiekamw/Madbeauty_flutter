@@ -2,7 +2,7 @@
 
 import '../../../../shared/widgets/prestataire/prestataire_favorite_button.dart';
 import '../agenda/prestataire_availability_badge.dart';
-import '../public/prestataire_realisation_carousel_scope.dart';
+import '../public/media/prestataire_realisation_carousel_scope.dart';
 
 /// Bandeau photo (réalisations) + pastille disponibilité + favori.
 class PrestataireCardPhotoHeader extends StatelessWidget {

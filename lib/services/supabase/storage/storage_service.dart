@@ -9,6 +9,7 @@ import '../../../core/errors/supabase_error_handler.dart';
 const profilePhotosBucket = 'profile-photos';
 const realisationPhotosBucket = 'realisation-photos';
 const reviewPhotosBucket = 'review-photos';
+const chatAttachmentsBucket = 'chat-attachments';
 const maxSourceImageBytes = 12 * 1024 * 1024;
 
 typedef StorageUploadProgress = void Function(double progress);
@@ -59,6 +60,23 @@ class StorageService {
       bucket: realisationPhotosBucket,
       pathPrefix: prestataireId,
       baseName: 'realisation',
+      file: file,
+      onProgress: onProgress,
+    );
+  }
+
+  /// Chemin : `{userId}/{bookingId}/photo_{stamp}.jpg`
+  Future<String> uploadChatAttachment({
+    required String userId,
+    required String bookingId,
+    required StorageUploadFile file,
+    StorageUploadProgress? onProgress,
+  }) {
+    return _uploadImage(
+      operation: 'storage.uploadChatAttachment',
+      bucket: chatAttachmentsBucket,
+      pathPrefix: '$userId/$bookingId',
+      baseName: 'photo',
       file: file,
       onProgress: onProgress,
     );

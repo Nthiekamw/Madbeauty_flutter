@@ -7,7 +7,7 @@ import '../../../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../../../providers/disponibilite_provider.dart';
+import '../../../providers/agenda/disponibilite_provider.dart';
 import '../../../providers/resolve_prestataire_id.dart';
 import '../hub/prestataire_hub_layout.dart';
 

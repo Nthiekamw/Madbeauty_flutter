@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../prestataire/providers/prestataire_open_slots_provider.dart';
-import '../../prestataire/providers/prestataires_provider.dart';
+import '../../prestataire/providers/agenda/prestataire_open_slots_provider.dart';
+import '../../prestataire/providers/catalog/prestataires_provider.dart';
 
 /// Disponibilité des prestataires du catalogue chargé (pour filtre « Dispo »).
 final catalogAvailabilityIndexProvider =

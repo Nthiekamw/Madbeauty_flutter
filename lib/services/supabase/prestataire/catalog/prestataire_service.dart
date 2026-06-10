@@ -22,10 +22,16 @@ class PrestataireService {
     operation: 'prestataire.getAll',
     action: () async {
       final to = filters.offset + filters.limit - 1;
+      final trialCutoff = DateTime.now().toUtc().toIso8601String();
       final profilesRes = await _client
           .from('prestataire_profiles')
           .select()
           .eq('is_hidden', false)
+          .or(
+            'subscription_status.eq.active,'
+            'subscription_status.eq.trialing,'
+            'catalog_trial_ends_at.gt.$trialCutoff',
+          )
           .order('created_at', ascending: false)
           .range(filters.offset, to);
 

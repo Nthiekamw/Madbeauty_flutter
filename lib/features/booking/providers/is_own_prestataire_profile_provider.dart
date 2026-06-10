@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../prestataire/providers/current_prestataire_provider.dart';
+import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 
 /// `true` si [prestataireId] correspond au profil pro de l'utilisateur connecté.
 final isOwnPrestataireProfileProvider = FutureProvider.autoDispose

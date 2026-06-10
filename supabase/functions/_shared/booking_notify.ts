@@ -38,6 +38,50 @@ export function createServiceClient() {
   return createClient(url, key);
 }
 
+type ServiceSupabase = ReturnType<typeof createServiceClient>;
+
+async function fetchFcmTokenForUserId(
+  supabase: ServiceSupabase,
+  userId: string,
+): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("fcm_token")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (profile?.fcm_token as string | null | undefined) ?? null;
+}
+
+export async function fetchFcmTokenForPrestataireProfileId(
+  supabase: ServiceSupabase,
+  prestataireProfileId: string,
+): Promise<string | null> {
+  if (!prestataireProfileId) return null;
+  const { data: prest } = await supabase
+    .from("prestataire_profiles")
+    .select("user_id")
+    .eq("id", prestataireProfileId)
+    .maybeSingle();
+  const userId = prest?.user_id as string | undefined;
+  if (!userId) return null;
+  return fetchFcmTokenForUserId(supabase, userId);
+}
+
+export async function fetchFcmTokenForClientProfileId(
+  supabase: ServiceSupabase,
+  clientProfileId: string,
+): Promise<string | null> {
+  if (!clientProfileId) return null;
+  const { data: cli } = await supabase
+    .from("client_profiles")
+    .select("user_id")
+    .eq("id", clientProfileId)
+    .maybeSingle();
+  const userId = cli?.user_id as string | undefined;
+  if (!userId) return null;
+  return fetchFcmTokenForUserId(supabase, userId);
+}
+
 interface ServiceAccount {
   client_email: string;
   private_key: string;
@@ -85,7 +129,7 @@ export async function sendFcmNotification(opts: {
   title: string;
   body: string;
   data?: Record<string, string>;
-}) {
+}): Promise<boolean> {
   const sa = loadServiceAccount();
   const accessToken = await fetchAccessToken(sa);
   const projectId = sa.project_id!;
@@ -113,7 +157,9 @@ export async function sendFcmNotification(opts: {
   if (!res.ok) {
     const txt = await res.text();
     console.error(`FCM erreur ${res.status}: ${txt}`);
+    return false;
   }
+  return true;
 }
 
 export function normalizeStatut(raw: unknown): string {

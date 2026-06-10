@@ -5,6 +5,7 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_verification_request.dart';
 import '../providers/admin_pending_counts_provider.dart';
 import '../providers/admin_verification_provider.dart';
+import '../widgets/admin_revoke_verification_dialog.dart';
 import '../widgets/admin_screen_scaffold.dart';
 import '../../../core/constants/app_strings.dart';
 
@@ -40,11 +41,11 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
               segments: const [
                 ButtonSegment(
                   value: AdminVerificationFilter.pending,
-                  label: Text('En attente'),
+                  label: Text(DiscProfile.adminVerificationFilterPending),
                 ),
                 ButtonSegment(
                   value: AdminVerificationFilter.all,
-                  label: Text('Tous'),
+                  label: Text(DiscProfile.adminVerificationFilterAll),
                 ),
               ],
               selected: {_filter},
@@ -61,7 +62,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
               data: (items) {
                 if (items.isEmpty) {
                   return const Center(
-                    child: Text('Aucune demande pour le moment.'),
+                    child: Text(DiscProfile.adminVerificationEmpty),
                   );
                 }
                 return RefreshIndicator(
@@ -118,7 +119,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: 'Vérification validée.',
+          message: DiscProfile.adminVerificationApproveOk,
           kind: AppSnackKind.success,
         );
       }
@@ -126,7 +127,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: 'Impossible de valider pour le moment.',
+          message: DiscProfile.adminVerificationApproveErr,
           kind: AppSnackKind.error,
         );
       }
@@ -136,17 +137,20 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
   }
 
   Future<void> _revoke(AdminVerificationRequest item) async {
+    final note = await showAdminRevokeVerificationDialog(context);
+    if (!mounted || note == null) return;
+
     final service = ref.read(adminVerificationServiceProvider);
     if (service == null) return;
     setState(() => _busyIds.add(item.prestataireId));
     try {
-      await service.revoke(prestataireId: item.prestataireId);
+      await service.revoke(prestataireId: item.prestataireId, note: note);
       ref.invalidate(adminVerificationRequestsProvider(_filter));
       ref.invalidate(adminPendingVerificationsCountProvider);
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: 'Vérification retirée.',
+          message: DiscProfile.adminVerificationRevokeOk,
           kind: AppSnackKind.success,
         );
       }
@@ -154,7 +158,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: 'Impossible de retirer pour le moment.',
+          message: DiscProfile.adminVerificationRevokeErr,
           kind: AppSnackKind.error,
         );
       }
@@ -195,16 +199,18 @@ class _RequestCard extends StatelessWidget {
             ),
             if (salon != null && salon.isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text('Salon: $salon'),
+              Text(DiscProfile.adminVerificationSalon(salon)),
             ],
             if (ville != null && ville.isNotEmpty) ...[
               const SizedBox(height: 2),
-              Text('Ville: $ville'),
+              Text(DiscProfile.adminVerificationVille(ville)),
             ],
             if (item.verificationRequestedAt != null) ...[
               const SizedBox(height: 2),
               Text(
-                'Demandé le ${item.verificationRequestedAt!.toLocal()}',
+                DiscProfile.adminVerificationRequestedAt(
+                  item.verificationRequestedAt!,
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -212,7 +218,11 @@ class _RequestCard extends StatelessWidget {
             Row(
               children: [
                 Chip(
-                  label: Text(verified ? 'Vérifié' : 'Non vérifié'),
+                  label: Text(
+                    verified
+                        ? DiscProfile.adminVerificationChipVerified
+                        : DiscProfile.adminVerificationChipNotVerified,
+                  ),
                 ),
                 const Spacer(),
                 if (busy)
@@ -229,12 +239,12 @@ class _RequestCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 FilledButton(
-                  onPressed: busy ? null : onApprove,
-                  child: const Text('Valider'),
+                  onPressed: busy || verified ? null : onApprove,
+                  child: const Text(DiscProfile.adminVerificationApproveCta),
                 ),
                 OutlinedButton(
-                  onPressed: busy ? null : onRevoke,
-                  child: const Text('Retirer la vérification'),
+                  onPressed: busy || !verified ? null : onRevoke,
+                  child: const Text(DiscProfile.adminVerificationRevokeCta),
                 ),
               ],
             ),

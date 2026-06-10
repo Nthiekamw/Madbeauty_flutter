@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../widgets/profile/overview/prestataire_payment_methods_section.dart';
-import '../widgets/profile/overview/prestataire_profile_insets.dart';
+import '../widgets/profile/overview/sections/prestataire_payment_methods_section.dart';
+import '../widgets/profile/overview/layout/prestataire_profile_insets.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 /// Écran dédié : abonnement (carte) + encaissement Stripe Connect.

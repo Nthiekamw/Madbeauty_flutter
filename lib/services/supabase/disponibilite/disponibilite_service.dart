@@ -5,8 +5,8 @@ import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
-import '../../../features/booking/models/booking_availability_rules.dart';
-import '../../../features/booking/models/booking_slot.dart';
+import '../../../core/models/domain/booking/booking_availability_rules.dart';
+import '../../../core/models/domain/booking/booking_slot.dart';
 import 'disponibilite_dow.dart';
 
 class DisponibiliteService {

@@ -19,25 +19,45 @@ function androidIntentUrl(deepLink: string): string {
   return `intent://${withoutScheme}#Intent;scheme=com.madbeauty.madbeauty;package=${ANDROID_PACKAGE};end`;
 }
 
-/** Page de secours si la redirection 302 ne s ouvre pas dans l app. */
-function htmlFallbackPage(deepLink: string): string {
+function pageCopy(to: string): { title: string; body: string } {
+  if (to === "subscription_success") {
+    return {
+      title: "Abonnement confirmé",
+      body: "Retour vers MadBeauty pour finaliser ton profil professionnel.",
+    };
+  }
+  if (to === "subscription_cancel") {
+    return {
+      title: "Paiement annulé",
+      body: "Tu peux reprendre l’abonnement depuis l’application.",
+    };
+  }
+  return {
+    title: "Retour MadBeauty",
+    body: "Si l’application ne s’ouvre pas automatiquement :",
+  };
+}
+
+/** Page de secours si la redirection 302 ne s’ouvre pas dans l’app. */
+function htmlFallbackPage(deepLink: string, to: string): string {
   const intentUrl = androidIntentUrl(deepLink);
+  const copy = pageCopy(to);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="0;url=${deepLink}">
-  <title>Retour MadBeauty</title>
+  <title>${copy.title}</title>
   <style>
     body { font-family: system-ui, sans-serif; padding: 2rem; text-align: center; background: #faf7f3; color: #2d211c; }
     a { color: #4a3328; font-weight: 600; }
-    .btn { display: inline-block; margin: 0.5rem; padding: 12px 20px; background: #4a3328; color: #fff; text-decoration: none; border-radius: 12px; }
+    .btn { display: inline-block; margin: 0.75rem 0.5rem; padding: 12px 20px; background: #4a3328; color: #fff; text-decoration: none; border-radius: 12px; }
   </style>
 </head>
 <body>
-  <h1 style="font-size:1.25rem;">Retour vers MadBeauty</h1>
-  <p>Si l application ne s ouvre pas automatiquement :</p>
+  <h1 style="font-size:1.25rem;">${copy.title}</h1>
+  <p>${copy.body}</p>
   <p><a class="btn" href="${deepLink}">Ouvrir MadBeauty</a></p>
   <p><a href="${intentUrl}">Ouvrir sur Android</a></p>
   <script>
@@ -60,8 +80,11 @@ Deno.serve(async (req) => {
   const to = url.searchParams.get("to") ?? "return";
   const deepLink = DEEP_LINKS[to] ?? DEEP_LINKS.return;
 
-  // Par defaut : redirection HTTP vers le deep link (evite la page HTML affichee en texte brut).
-  const useHtmlFallback = url.searchParams.get("fallback") === "1";
+  // Abonnement : page HTML (meilleure ouverture du deep link depuis Custom Tabs).
+  const useHtmlFallback =
+    url.searchParams.get("fallback") === "1" ||
+    to === "subscription_success" ||
+    to === "subscription_cancel";
 
   if (!useHtmlFallback) {
     return new Response(null, {
@@ -74,7 +97,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const html = htmlFallbackPage(deepLink);
+  const html = htmlFallbackPage(deepLink, to);
   return new Response(html, {
     status: 200,
     headers: {

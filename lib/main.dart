@@ -11,6 +11,7 @@ import 'core/providers/offline_sync_hooks.dart';
 import 'features/offline/providers/offline_booking_sync_invalidation.dart';
 import 'services/auth/google_auth_service.dart';
 import 'services/notifications/booking_local_reminders.dart';
+import 'services/notifications/prestataire_catalog_visibility_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
 import 'services/storage/local_cache_service.dart';
 import 'services/stripe/stripe_service.dart';
@@ -23,8 +24,10 @@ Future<void> main() async {
   }
   await LocalCacheService.initialize();
   await initializeDateFormatting('fr_FR');
+  await initializeDateFormatting('en_US');
   if (!kIsWeb) {
     await BookingLocalReminders.instance.initialize();
+    await PrestataireCatalogVisibilityReminders.instance.initialize();
   }
 
   if (AppConfig.hasSupabase) {

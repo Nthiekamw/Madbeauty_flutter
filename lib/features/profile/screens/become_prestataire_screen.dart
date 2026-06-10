@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +11,7 @@ import '../../../core/models/user_role.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/auth/post_signup_profile_service.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -19,10 +22,11 @@ import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
-import '../../prestataire/providers/prestataire_profile_form_provider.dart';
+import '../../prestataire/providers/profile/prestataire_profile_form_provider.dart';
 import '../logic/become_prestataire_draft.dart';
+import '../logic/become_prestataire_validation.dart';
 import '../storage/become_prestataire_draft_store.dart';
-import '../widgets/become_prestataire_form_card.dart';
+import '../widgets/sections/become_prestataire_form_card.dart';
 
 /// Ajoute le rôle prestataire et les infos de base puis ouvre l’espace pro.
 class BecomePrestataireScreen extends ConsumerStatefulWidget {
@@ -37,29 +41,62 @@ class _BecomePrestataireScreenState
     extends ConsumerState<BecomePrestataireScreen> {
   final _salon = TextEditingController();
   final _ville = TextEditingController();
+  final _codePostal = TextEditingController();
+  final _nomAffiche = TextEditingController();
+  final _description = TextEditingController();
+  final _adresse = TextEditingController();
   final _bio = TextEditingController();
 
   String? _error;
+  String? _salonError;
+  String? _villeError;
+  String? _codePostalError;
   bool _loading = false;
   bool _step1Submitted = false;
   bool _draftLoaded = false;
+  bool _clientPrefillAttempted = false;
+
+  static const _macroSteps = 3;
 
   @override
   void initState() {
     super.initState();
     _loadDraft();
-    _salon.addListener(_persistDraft);
-    _ville.addListener(_persistDraft);
-    _bio.addListener(_persistDraft);
+    for (final c in [
+      _salon,
+      _ville,
+      _codePostal,
+      _nomAffiche,
+      _description,
+      _adresse,
+      _bio,
+    ]) {
+      c.addListener(_persistDraft);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prefillFromClientProfile());
+    });
   }
 
   @override
   void dispose() {
-    _salon.removeListener(_persistDraft);
-    _ville.removeListener(_persistDraft);
-    _bio.removeListener(_persistDraft);
+    for (final c in [
+      _salon,
+      _ville,
+      _codePostal,
+      _nomAffiche,
+      _description,
+      _adresse,
+      _bio,
+    ]) {
+      c.removeListener(_persistDraft);
+    }
     _salon.dispose();
     _ville.dispose();
+    _codePostal.dispose();
+    _nomAffiche.dispose();
+    _description.dispose();
+    _adresse.dispose();
     _bio.dispose();
     super.dispose();
   }
@@ -67,11 +104,36 @@ class _BecomePrestataireScreenState
   void _loadDraft() {
     final draft = BecomePrestataireDraftStore.instance.read();
     if (draft == null) return;
+    _applyDraft(draft);
+    _draftLoaded = true;
+  }
+
+  void _applyDraft(BecomePrestataireDraft draft) {
     _salon.text = draft.salon;
     _ville.text = draft.ville;
+    _codePostal.text = draft.codePostal;
+    _nomAffiche.text = draft.nomAffiche;
+    _description.text = draft.description;
+    _adresse.text = draft.adresse;
     _bio.text = draft.bio;
     _step1Submitted = draft.step1Submitted;
-    _draftLoaded = true;
+  }
+
+  Future<void> _prefillFromClientProfile() async {
+    if (_clientPrefillAttempted) return;
+    _clientPrefillAttempted = true;
+    if (_adresse.text.trim().isNotEmpty) return;
+    try {
+      final client = await ref.read(currentClientProfileProvider.future);
+      final savedAdresse = client?.adresse?.trim();
+      if (!mounted || savedAdresse == null || savedAdresse.isEmpty) return;
+      if (_adresse.text.trim().isEmpty) {
+        _adresse.text = savedAdresse;
+        await _persistDraft();
+      }
+    } catch (_) {
+      // Profil client indisponible : pas bloquant.
+    }
   }
 
   Future<void> _persistDraft() async {
@@ -79,6 +141,10 @@ class _BecomePrestataireScreenState
       BecomePrestataireDraft(
         salon: _salon.text,
         ville: _ville.text,
+        codePostal: _codePostal.text,
+        nomAffiche: _nomAffiche.text,
+        description: _description.text,
+        adresse: _adresse.text,
         bio: _bio.text,
         step1Submitted: _step1Submitted,
       ),
@@ -93,6 +159,14 @@ class _BecomePrestataireScreenState
     context.goClientProfile();
   }
 
+  BecomePrestataireFieldErrors _validateFields() {
+    return BecomePrestataireValidation.validate(
+      salon: _salon.text,
+      ville: _ville.text,
+      codePostal: _codePostal.text,
+    );
+  }
+
   Future<void> _continueToStep2() async {
     await LocalCacheService.instance.setSelectedRole('prestataire');
     await LocalCacheService.instance.setSignupShellRole('prestataire');
@@ -102,18 +176,17 @@ class _BecomePrestataireScreenState
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
-    setState(() => _error = null);
+    final fieldErrors = _validateFields();
+    setState(() {
+      _error = null;
+      _salonError = fieldErrors.salonError;
+      _villeError = fieldErrors.villeError;
+      _codePostalError = fieldErrors.codePostalError;
+    });
+    if (!fieldErrors.isValid) return;
 
     if (!AppConfig.hasSupabase) {
       setState(() => _error = ShellStrings.supabaseMissingTitle);
-      return;
-    }
-
-    if (_salon.text.trim().isEmpty || _ville.text.trim().isEmpty) {
-      setState(
-        () => _error =
-            'Renseigne au moins le nom du salon ou de l’activité et la ville.',
-      );
       return;
     }
 
@@ -145,11 +218,21 @@ class _BecomePrestataireScreenState
       ref.invalidate(myRolesProvider);
       final serverRoles = await ref.read(myRolesProvider.future);
       await AuthRoleCache.persistServerRoles(serverRoles);
+
+      final salon = _salon.text.trim();
       await post.updatePrestataireExtras(
         userId: user.id,
-        nomSalon: _salon.text.trim(),
+        nomSalon: salon,
+        nomAffiche: _nomAffiche.text.trim().isEmpty
+            ? salon
+            : _nomAffiche.text.trim(),
         ville: _ville.text.trim(),
+        codePostal: _codePostal.text.trim(),
+        description: _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
         bio: _bio.text.trim(),
+        adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
       );
 
       await LocalCacheService.instance.setSelectedRole('prestataire');
@@ -180,6 +263,9 @@ class _BecomePrestataireScreenState
     }
   }
 
+  double get _progressValue =>
+      (_step1Submitted ? 2 : 1) / _macroSteps;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -192,10 +278,7 @@ class _BecomePrestataireScreenState
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted || _draftLoaded) return;
           setState(() {
-            _salon.text = draft.salon;
-            _ville.text = draft.ville;
-            _bio.text = draft.bio;
-            _step1Submitted = draft.step1Submitted;
+            _applyDraft(draft);
             _draftLoaded = true;
           });
         });
@@ -316,6 +399,30 @@ class _BecomePrestataireScreenState
                 height: 1.4,
               ),
             ),
+            const SizedBox(height: 16),
+            DiscoverySurfaceCard(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.auto_awesome_motion_rounded,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      DiscProfile.becomePrestaHubPreviewHint,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -323,7 +430,14 @@ class _BecomePrestataireScreenState
                 final form = BecomePrestataireFormCard(
                   salonController: _salon,
                   villeController: _ville,
+                  codePostalController: _codePostal,
+                  nomAfficheController: _nomAffiche,
+                  descriptionController: _description,
+                  adresseController: _adresse,
                   bioController: _bio,
+                  salonError: _salonError,
+                  villeError: _villeError,
+                  codePostalError: _codePostalError,
                   errorText: _error,
                 );
                 if (!horizontal) return form;
@@ -389,16 +503,15 @@ class _BecomePrestataireScreenState
             ClipRRect(
               borderRadius: DiscoveryStyles.chipBorderRadius,
               child: LinearProgressIndicator(
-                value: _step1Submitted ? 0.33 : 0.33,
+                value: _progressValue,
                 minHeight: 4,
                 backgroundColor: primary.withValues(alpha: 0.1),
                 color: primary,
               ),
-          ),
-        ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
-

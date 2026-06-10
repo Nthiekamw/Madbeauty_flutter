@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
-import '../../providers/prestataire_open_slots_provider.dart';
+import '../../providers/agenda/prestataire_open_slots_provider.dart';
 import '../../../../shared/theme/app_colors.dart';
 
 /// Pastille « Dispo » / « Non dispo » selon les créneaux réservables.

@@ -11,8 +11,8 @@ import '../../auth/logic/auth_role_cache.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../logic/prestataire_profile_completeness.dart';
-import '../providers/disponibilite_provider.dart';
-import '../providers/prestataire_profile_form_provider.dart';
+import '../providers/agenda/disponibilite_provider.dart';
+import '../providers/profile/prestataire_profile_form_provider.dart';
 import 'prestataire_hub_wizard_navigation.dart';
 
 /// Navigation intelligente vers l'espace prestataire (devenir / hub / dashboard).

@@ -6,11 +6,13 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../services/stripe/stripe_prestataire_subscription_service.dart';
 import '../../../../../services/stripe/stripe_service.dart';
 import '../../../../../services/stripe/stripe_subscription_providers.dart';
+import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/utils/app_url_launcher.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../models/prestataire_subscription_status.dart';
-import '../../../providers/prestataire_profile_form_provider.dart';
-import '../../../providers/prestataire_subscription_provider.dart';
+import '../../../logic/prestataire_subscription_refresh.dart';
+import '../../../providers/profile/prestataire_profile_form_provider.dart';
+import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import 'prestataire_payout_setup_hint.dart';
 
 /// Boutons d'abonnement / portail Stripe pour le palier courant.
@@ -41,13 +43,7 @@ class _PrestataireSubscriptionCheckoutSectionState
   }
 
   Future<void> _refreshStatus() async {
-    ref.invalidate(prestataireSubscriptionStatusProvider);
-    final service = ref.read(stripePrestaSubscriptionServiceProvider);
-    if (service == null) return;
-    try {
-      await service.syncFromStripe();
-      ref.invalidate(prestataireSubscriptionStatusProvider);
-    } catch (_) {}
+    await refreshPrestataireSubscription(ref);
   }
 
   Future<bool> _ensureProfileForBilling() async {
@@ -132,6 +128,7 @@ class _PrestataireSubscriptionCheckoutSectionState
     if (status.isActive) return DiscPrestaSub.statusActive;
     return switch (status.status) {
       'past_due' => DiscPrestaSub.statusPastDue,
+      'trialing' => DiscPrestaSub.statusTrialing,
       'canceled' => DiscPrestaSub.statusCanceled,
       'incomplete' => DiscPrestaSub.statusIncomplete,
       _ => DiscPrestaSub.statusNone,
@@ -180,10 +177,22 @@ class _PrestataireSubscriptionCheckoutSectionState
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (status.isInCatalogTrial) ...[
+                  _CatalogTrialHint(theme: theme, status: status),
+                  const SizedBox(height: 10),
+                ],
                 if (status.needsAttention) ...[
                   _AttentionBanner(theme: theme, status: status),
                   const SizedBox(height: 10),
                 ],
+                Text(
+                  DiscPrestaSub.checkoutTrialHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 SegmentedButton<String>(
                   segments: const [
                     ButtonSegment(
@@ -304,6 +313,41 @@ class _ActiveBanner extends StatelessWidget {
             child: const Text(DiscPrestaSub.refreshStatus),
           ),
           const PrestatairePayoutSetupHint(compact: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _CatalogTrialHint extends StatelessWidget {
+  const _CatalogTrialHint({required this.theme, required this.status});
+
+  final ThemeData theme;
+  final PrestataireSubscriptionStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final days = status.catalogTrialDaysRemaining;
+    if (days == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.timer_outlined, color: AppColors.success, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              DiscPrestaSub.trialBannerBody(days),
+              style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
+            ),
+          ),
         ],
       ),
     );

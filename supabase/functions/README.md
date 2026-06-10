@@ -49,6 +49,7 @@ npx supabase functions deploy on_content_report_created --no-verify-jwt
 | Fonction | Déclencheur | Cible |
 |----------|-------------|--------|
 | `on_verification_requested` | `INSERT prestataire_verification_events` où `action = requested` | e-mails équipe |
+| `on_verification_decided` | `INSERT prestataire_verification_events` où `action ∈ {approved, revoked}` | push FCM prestataire |
 
 Réutilise les secrets Resend / destinataires des signalements (`CONTENT_REPORT_NOTIFY_EMAILS` ou `ADMIN_NOTIFY_EMAILS`).
 

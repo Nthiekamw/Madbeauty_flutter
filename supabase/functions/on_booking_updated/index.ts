@@ -107,7 +107,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    await sendFcmNotification({ token, title, body });
+    await sendFcmNotification({
+      token,
+      title,
+      body,
+      data: {
+        type: "booking_status",
+        reservation_id: String(record["id"] ?? ""),
+        status: newS,
+      },
+    });
 
     let waitlistNotified = 0;
     if (

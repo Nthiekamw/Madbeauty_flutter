@@ -10,8 +10,8 @@ import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../providers/discovery_origin_provider.dart';
 import '../providers/listing_catalog_provider.dart';
-import '../widgets/listing_vertical_skeleton.dart';
-import '../widgets/prestataire_catalog_list_card.dart';
+import '../widgets/content/listing_vertical_skeleton.dart';
+import '../widgets/catalog/prestataire_catalog_list_card.dart';
 
 /// Catalogue complet de tous les prestataires (depuis « Voir tout »).
 class AllPrestatairesScreen extends ConsumerStatefulWidget {

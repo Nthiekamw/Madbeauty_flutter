@@ -8,14 +8,14 @@ import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../router/navigation_extensions.dart';
 import '../models/booked_slots_query.dart';
 import '../models/booking_slot.dart';
-import '../../prestataire/providers/disponibilite_provider.dart';
+import '../../prestataire/providers/agenda/disponibilite_provider.dart';
 import '../providers/booking_availability_provider.dart';
 import '../providers/booking_selection_provider.dart';
 import '../providers/booking_services_provider.dart';
 import '../providers/booked_slots_provider.dart';
-import '../widgets/booking_message.dart';
+import '../widgets/shared/booking_message.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
-import '../widgets/booking_step_one_content.dart';
+import '../widgets/flow/booking_step_one_content.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   const BookingScreen({

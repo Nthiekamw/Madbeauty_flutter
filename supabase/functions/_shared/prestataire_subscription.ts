@@ -4,6 +4,9 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 export type SubscriptionTier = "solo" | "multi";
 export type SubscriptionInterval = "month" | "year";
 
+/** Jours d’essai catalogue (plateforme) et Stripe Checkout (premier abonnement). */
+export const PRESTATAIRE_TRIAL_DAYS = 5;
+
 function connectRedirectFunctionBase(): string {
   const explicit = Deno.env.get("STRIPE_CONNECT_REDIRECT_BASE_URL")?.trim();
   if (explicit) return explicit.replace(/\/$/, "");

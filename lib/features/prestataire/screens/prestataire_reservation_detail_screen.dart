@@ -5,7 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
-import '../providers/prestataire_agenda_provider.dart';
+import '../providers/agenda/prestataire_agenda_provider.dart';
 import '../../messaging/messaging_navigation.dart';
 import '../widgets/agenda/prestataire_reservation_detail_body.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';

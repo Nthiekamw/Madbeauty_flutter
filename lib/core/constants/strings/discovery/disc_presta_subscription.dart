@@ -31,12 +31,38 @@ abstract final class DiscPrestaSub {
       'Gère ton abonnement et consulte ton palier.';
   static const onboardingTitle = 'Ton abonnement MadBeauty';
   static const onboardingBody =
-      'Pour publier tes services sur le catalogue, un abonnement professionnel '
-      'est requis. Tu peux t’abonner maintenant ou passer cette étape et le faire '
-      'plus tard depuis ton profil.';
+      'Tu bénéficies de 5 jours d’essai gratuit pour apparaître dans le catalogue. '
+      'Ensuite, active ton abonnement pour rester visible et gérer tes réservations.';
+  static const trialBannerTitle = 'Essai gratuit en cours';
+  static String trialBannerBody(int days) =>
+      'Il te reste $days jour${days > 1 ? 's' : ''} pour tester le catalogue gratuitement. '
+      'Pense à t’abonner avant la fin pour rester visible.';
+  static const trialBannerCta = 'Voir les offres';
+  static const trialBadge = 'Essai 5 jours';
+  static const checkoutTrialHint =
+      '5 jours d’essai offerts à l’abonnement — aucun prélèvement avant la fin de l’essai.';
+  static const statusTrialing = 'Période d’essai Stripe en cours';
+  static const statusCatalogTrial = 'Essai catalogue actif';
   static const skipForNow = 'Passer pour l’instant';
   static const onboardingCompactHint =
-      'Tu peux t’abonner maintenant ou passer cette étape et le faire plus tard depuis ton profil.';
+      'Abonnement obligatoire pour être visible dans le catalogue et gérer tes réservations.';
+  static const subscriptionRequiredForCatalog =
+      'Active ton abonnement pour terminer et être visible dans le catalogue.';
+  static const notVisibleBannerTitle = 'Les clientes ne te voient pas';
+  static const notVisibleBannerBody =
+      'Ton profil est prêt, mais il est masqué du catalogue. Active ton abonnement maintenant pour recevoir des réservations.';
+  static const notVisibleBannerCta = 'Activer maintenant';
+  static const notVisibleBannerBadge = 'Action requise';
+  static const notVisibleGateHint =
+      'Active ton abonnement pour apparaître dans le catalogue et débloquer toutes les actions pro.';
+  static const notVisibleReminderTitle = 'MadBeauty Pro';
+  static const notVisibleReminderBody =
+      'Urgent : ton profil est masqué du catalogue. Active ton abonnement pour être visible des clientes.';
+  static const featureLockedTitle = 'Abonnement requis pour agir';
+  static const featureLockedBody =
+      'Sans abonnement actif, tu n’es pas visible et tu ne peux pas gérer tes réservations.';
+  static const bookingActionLocked =
+      'Abonne-toi pour confirmer ou refuser des réservations.';
   static const viewFullDetails = 'Voir le détail des offres';
   static const registerHint =
       'Après la création du compte, tu pourras t’abonner depuis ton profil '
@@ -69,4 +95,16 @@ abstract final class DiscPrestaSub {
   static const activeConnectHintBodyShort =
       'Pour être payé par tes clientes, configure « Recevoir mes paiements » dans ton profil.';
   static const activeConnectHintCta = 'Configurer dans mon profil';
+  static const activeHeroBadge = 'Actif';
+  static const activeHeroTitle = 'Ton abonnement est actif';
+  static const activeHeroBody =
+      'Ton profil et tes services peuvent être visibles sur le catalogue MadBeauty.';
+  static String activeTierLabel(String tierLabel) =>
+      'Palier : $tierLabel';
+  static const activeIntervalMonthly = 'Facturation mensuelle';
+  static const activeIntervalYearly = 'Facturation annuelle';
+  static const activeSyncing = 'Mise à jour de ton abonnement…';
+  static const plansSectionTitle = 'Comparer les offres';
+  static const plansSectionSubtitle =
+      'Le palier dépend du nombre de services que tu publies.';
 }

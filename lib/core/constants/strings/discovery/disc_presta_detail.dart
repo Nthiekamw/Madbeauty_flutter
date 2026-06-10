@@ -23,6 +23,9 @@ abstract final class DiscPrestaDetail {
   static const conditionsTitle = 'Conditions de service';
   static const specialtiesTitle = 'Spécialités';
   static const galleryTitle = 'Réalisations';
+  static const galleryCloseTooltip = 'Fermer';
+  static String galleryPhotoCounter(int current, int total) =>
+      '$current / $total';
   static const svcTitle = 'Services';
   static const reviewsTitle = 'Avis clients';
   static const actionBook = 'Réserver un service';
@@ -30,6 +33,10 @@ abstract final class DiscPrestaDetail {
   static const fromPrice = 'À partir de';
   static const statRating = 'Note';
   static const statServices = 'Services';
+  static const statLikes = 'Likes';
+  static const engagementSectionTitle = 'Tu aimes ce profil ?';
+  static const engagementSectionSubtitle =
+      'Aimer soutient le/la pro (visible). Enregistrer le garde dans ta liste privée.';
   static const statResponse = 'Réponse';
   static const navServices = 'Services';
   static const navGallery = 'Galerie';

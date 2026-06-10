@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/constants/app_strings.dart';
+import 'core/providers/app_appearance_provider.dart';
 import 'features/auth/navigation/auth_recovery_navigation.dart';
 import 'router/app_router.dart';
 import 'router/deep_link_listener.dart';
-import 'services/notifications/booking_push_coordinator.dart';
-import 'services/notifications/prestataire_booking_notification_coordinator.dart';
+import 'features/notifications/widgets/booking_push_coordinator.dart';
+import 'features/notifications/widgets/prestataire_booking_notification_coordinator.dart';
+import 'features/notifications/widgets/prestataire_visibility_notification_coordinator.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/router_theme_scope.dart';
 
@@ -18,24 +20,31 @@ class MadBeautyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     listenPasswordRecoveryNavigation(ref);
     final router = ref.watch(goRouterProvider);
+    final appearance = ref.watch(appAppearanceProvider);
     return DeepLinkListener(
       child: BookingPushCoordinator(
         child: PrestataireBookingNotificationCoordinator(
-          child: RouterThemeScope(
-            router: router,
-            builder: (context, area) {
-              return MaterialApp.router(
-                title: CoreStrings.appName,
-                debugShowCheckedModeBanner: false,
-                themeMode: ThemeMode.system,
-                theme: AppTheme.light(area),
-                darkTheme: AppTheme.dark(area),
-                locale: const Locale('fr', 'FR'),
-                supportedLocales: const [Locale('fr', 'FR')],
-                localizationsDelegates: GlobalMaterialLocalizations.delegates,
-                routerConfig: router,
-              );
-            },
+          child: PrestataireVisibilityNotificationCoordinator(
+            child: RouterThemeScope(
+              router: router,
+              builder: (context, area) {
+                return MaterialApp.router(
+                  title: CoreStrings.appName,
+                  debugShowCheckedModeBanner: false,
+                  themeMode: appearance.themeMode,
+                  theme: AppTheme.light(area),
+                  darkTheme: AppTheme.dark(area),
+                  locale: appearance.locale,
+                  supportedLocales: const [
+                    Locale('fr', 'FR'),
+                    Locale('en', 'US'),
+                  ],
+                  localizationsDelegates:
+                      GlobalMaterialLocalizations.delegates,
+                  routerConfig: router,
+                );
+              },
+            ),
           ),
         ),
       ),

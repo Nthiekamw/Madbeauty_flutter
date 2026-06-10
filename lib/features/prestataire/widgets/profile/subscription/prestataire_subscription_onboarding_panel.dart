@@ -7,7 +7,7 @@ import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../../../providers/prestataire_subscription_provider.dart';
+import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import 'prestataire_subscription_checkout_section.dart';
 
 /// Etape ou encart abonnement (inscription / hub) avec paiement Stripe.

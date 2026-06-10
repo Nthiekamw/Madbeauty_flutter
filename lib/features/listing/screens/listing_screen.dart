@@ -11,22 +11,22 @@ import '../../client/widgets/workspace/client_workspace_search_row.dart';
 import '../../client/widgets/workspace/client_workspace_header.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../models/listing_quick_filter.dart';
-import '../../prestataire/providers/prestataire_filters_provider.dart';
-import '../../prestataire/providers/prestataires_provider.dart';
+import '../../prestataire/providers/catalog/prestataire_filters_provider.dart';
+import '../../prestataire/providers/catalog/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import '../providers/listing_view_preferences_provider.dart';
-import '../widgets/listing_active_filters_bar.dart';
-import '../widgets/listing_filters_panel.dart';
-import '../widgets/listing_filters_sheet.dart';
-import '../widgets/listing_main_services_strip.dart';
-import '../widgets/listing_promo_banner.dart';
-import '../widgets/listing_quick_filters_strip.dart';
-import '../widgets/listing_results_header.dart';
-import '../widgets/listing_map_view.dart';
-import '../widgets/listing_vertical_skeleton.dart';
-import '../widgets/listing_prestataires_scroll_view.dart';
+import '../widgets/filters/listing_active_filters_bar.dart';
+import '../widgets/filters/listing_filters_panel.dart';
+import '../widgets/filters/listing_filters_sheet.dart';
+import '../widgets/header/listing_main_services_strip.dart';
+import '../widgets/content/listing_promo_banner.dart';
+import '../widgets/filters/listing_quick_filters_strip.dart';
+import '../widgets/header/listing_results_header.dart';
+import '../widgets/content/listing_map_view.dart';
+import '../widgets/content/listing_vertical_skeleton.dart';
+import '../widgets/content/listing_prestataires_scroll_view.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 
 /// Exploration / recherche : catalogue paginé, filtres, tri, pull-to-refresh.
@@ -253,6 +253,10 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _searchTopFixed() {
+    final mapMode =
+        ref.watch(listingViewPreferencesProvider).viewMode ==
+        ListingViewMode.map;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -268,7 +272,32 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               ref.watch(prestatairesFilterProvider).hasActiveFilters,
           compact: true,
         ),
-        const ListingMainServicesStrip(),
+        if (!mapMode) const ListingMainServicesStrip(),
+      ],
+    );
+  }
+
+  /// En-tête allégé au-dessus de la carte (sans bannière promo).
+  Widget _catalogMapHeader(ListingCatalogViewState state) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListingQuickFiltersStrip(
+          showTitle: false,
+          outlined: true,
+          filters: ListingQuickFilter.catalogTop,
+          onStyleQuerySelected: (query) {
+            if (_searchController.text != query) {
+              _searchController.text = query;
+            }
+            _onSearchChanged(query);
+          },
+        ),
+        ListingActiveFiltersBar(
+          categories: state.categories,
+          onClearSearch: _clearSearch,
+        ),
+        _catalogChrome(state),
       ],
     );
   }
@@ -474,10 +503,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _catalogScrollHeader(state),
         Expanded(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
+            padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: DiscoveryStyles.cardBorderRadius,
@@ -498,10 +526,31 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               ),
               child: ClipRRect(
                 borderRadius: DiscoveryStyles.cardBorderRadius,
-                child: ListingMapView(
-                  entries: filtered,
-                  clientLocation: clientLocation,
-                  locationLoading: locationAsync.isLoading,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ListingMapView(
+                      entries: filtered,
+                      clientLocation: clientLocation,
+                      locationLoading: locationAsync.isLoading,
+                      borderRadius: BorderRadius.zero,
+                      overlayPadding: const EdgeInsets.fromLTRB(12, 128, 12, 12),
+                    ),
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      right: 8,
+                      child: Material(
+                        elevation: 2,
+                        shadowColor: Colors.black26,
+                        color: theme.colorScheme.surface.withValues(
+                          alpha: 0.94,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        child: _catalogMapHeader(state),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

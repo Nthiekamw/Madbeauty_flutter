@@ -16,8 +16,42 @@ void main() {
       expect(r.primary, ChatMessageViolationType.phoneNumber);
     });
 
+    test('bloque un fragment de numéro (6 chiffres)', () {
+      final r = ChatMessageModerator.analyze('076285');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.phoneNumber);
+    });
+
+    test('bloque un numéro envoyé en morceaux', () {
+      final r = ChatMessageModerator.analyze(
+        '5388',
+        context: const ChatMessageModerationContext(
+          recentOutgoingMessages: ['076285'],
+        ),
+      );
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.phoneNumber);
+    });
+
     test('bloque une adresse e-mail', () {
       final r = ChatMessageModerator.analyze('Écrivez à contact@exemple.fr');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.email);
+    });
+
+    test('bloque un e-mail en morceaux', () {
+      final r = ChatMessageModerator.analyze(
+        '@gmail.com',
+        context: const ChatMessageModerationContext(
+          recentOutgoingMessages: ['mon mail c est jean.dupont'],
+        ),
+      );
+      expect(r.isBlocked, isTrue);
+      expect(r.violations, contains(ChatMessageViolationType.email));
+    });
+
+    test('bloque le symbole @ seul', () {
+      final r = ChatMessageModerator.analyze('jean.dupont@');
       expect(r.isBlocked, isTrue);
       expect(r.primary, ChatMessageViolationType.email);
     });
@@ -40,6 +74,79 @@ void main() {
       final r = ChatMessageModerator.analyze('On continue sur whatsapp ?');
       expect(r.isBlocked, isTrue);
       expect(r.primary, ChatMessageViolationType.externalContact);
+    });
+
+    test('bloque une adresse postale', () {
+      final r = ChatMessageModerator.analyze('12 rue de la Paix 75002 Paris');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.physicalAddress);
+    });
+
+    test('bloque une adresse en morceaux', () {
+      final r = ChatMessageModerator.analyze(
+        '75001 Paris',
+        context: const ChatMessageModerationContext(
+          recentOutgoingMessages: ['Je suis au 5 avenue de l Opéra'],
+        ),
+      );
+      expect(r.isBlocked, isTrue);
+      expect(r.violations, contains(ChatMessageViolationType.physicalAddress));
+    });
+
+    test('bloque une demande de numéro', () {
+      final r = ChatMessageModerator.analyze(
+        'Donnez-moi votre numéro de téléphone',
+      );
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.contactSolicitation);
+    });
+
+    test('bloque une demande d e-mail', () {
+      final r = ChatMessageModerator.analyze('Envoie-moi ton mail perso');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.contactSolicitation);
+    });
+
+    test('bloque une insulte', () {
+      final r = ChatMessageModerator.analyze('Espèce de connard');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.insult);
+    });
+
+    test('bloque une insulte espacée', () {
+      final r = ChatMessageModerator.analyze('c o n n a r d');
+      expect(r.isBlocked, isTrue);
+      expect(r.violations, contains(ChatMessageViolationType.insult));
+    });
+
+    test('bloque une insulte en morceaux', () {
+      final r = ChatMessageModerator.analyze(
+        'nard',
+        context: const ChatMessageModerationContext(
+          recentOutgoingMessages: ['con'],
+        ),
+      );
+      expect(r.isBlocked, isTrue);
+      expect(r.violations, contains(ChatMessageViolationType.insult));
+    });
+
+    test('bloque un contenu sexuel explicite', () {
+      final r = ChatMessageModerator.analyze('On baise ce soir ?');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.sexualContent);
+    });
+
+    test('bloque une demande de photo intime', () {
+      final r = ChatMessageModerator.analyze('Envoie-moi une photo intime');
+      expect(r.isBlocked, isTrue);
+      expect(r.primary, ChatMessageViolationType.sexualContent);
+    });
+
+    test('accepte un message beauté courant', () {
+      final r = ChatMessageModerator.analyze(
+        'Le massage du visage est prévu à 15h, merci.',
+      );
+      expect(r.isBlocked, isFalse);
     });
   });
 

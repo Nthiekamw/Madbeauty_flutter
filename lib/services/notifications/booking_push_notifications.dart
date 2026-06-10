@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -32,6 +33,7 @@ class BookingPushNotifications {
   bool _inboxOpenedAppAttached = false;
   void Function(RemoteMessage)? _onInboxMessage;
   void Function(RemoteMessage)? _onNotificationOpened;
+  void Function(Map<String, dynamic>)? _onPushDataOpened;
 
   bool get isConfigured => isFirebaseConfiguredForPush();
 
@@ -41,6 +43,10 @@ class BookingPushNotifications {
 
   void setOnNotificationOpened(void Function(RemoteMessage)? handler) {
     _onNotificationOpened = handler;
+  }
+
+  void setOnPushDataOpened(void Function(Map<String, dynamic>)? handler) {
+    _onPushDataOpened = handler;
   }
 
   void _deliverToInbox(RemoteMessage message) {
@@ -174,10 +180,13 @@ class BookingPushNotifications {
       requestAlertPermission: false,
     );
 
-    await _local.initialize(const InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    ));
+    await _local.initialize(
+      const InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
+      ),
+      onDidReceiveNotificationResponse: _onLocalNotificationTapped,
+    );
 
     if (Platform.isAndroid) {
       const channel = AndroidNotificationChannel(
@@ -193,6 +202,24 @@ class BookingPushNotifications {
     }
 
     _localNotificationsReady = true;
+  }
+
+  void _onLocalNotificationTapped(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.trim().isEmpty) return;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map) return;
+      final data = Map<String, dynamic>.from(decoded);
+      _onPushDataOpened?.call(data);
+    } catch (_) {
+      /* payload invalide */
+    }
+  }
+
+  String? _payloadFromData(Map<String, dynamic> data) {
+    if (data.isEmpty) return null;
+    return jsonEncode(data);
   }
 
   /// Dialogue système uniquement lors du premier flux (persisté localement).
@@ -258,6 +285,7 @@ class BookingPushNotifications {
         notification.title ?? 'MadBeauty',
         notification.body,
         NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: _payloadFromData(message.data),
       );
     }
   }

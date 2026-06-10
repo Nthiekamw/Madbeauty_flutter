@@ -1,5 +1,7 @@
 import {
   createServiceClient,
+  fetchFcmTokenForClientProfileId,
+  fetchFcmTokenForPrestataireProfileId,
   sendFcmNotification,
   verifyWebhookSecret,
   type WebhookPayload,
@@ -26,51 +28,59 @@ Deno.serve(async (req) => {
       });
     }
 
-    const prestataireId = String(record["prestataire_id"] ?? "");
-    if (!prestataireId) {
-      return new Response(JSON.stringify({ ok: false, error: "pas de prestataire" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createServiceClient();
+    const reservationId = String(record["id"]);
+    const prestataireId = String(record["prestataire_id"] ?? "");
+    const clientId = String(record["client_id"] ?? "");
 
-    const { data: prest } = await supabase
-      .from("prestataire_profiles")
-      .select("user_id")
-      .eq("id", prestataireId)
-      .maybeSingle();
+    let sentPrestataire = false;
+    let sentClient = false;
 
-    const userId = prest?.user_id as string | undefined;
-    if (!userId) {
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "no user_id" }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (prestataireId) {
+      const token = await fetchFcmTokenForPrestataireProfileId(
+        supabase,
+        prestataireId,
+      );
+      if (token) {
+        await sendFcmNotification({
+          token,
+          title: "MadBeauty",
+          body: "Nouvelle demande de réservation",
+          data: {
+            type: "booking_created",
+            reservation_id: reservationId,
+            role: "prestataire",
+          },
+        });
+        sentPrestataire = true;
+      }
     }
 
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("fcm_token")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const token = profile?.fcm_token as string | null | undefined;
-    if (!token) {
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "no fcm_token" }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (clientId) {
+      const token = await fetchFcmTokenForClientProfileId(supabase, clientId);
+      if (token) {
+        await sendFcmNotification({
+          token,
+          title: "MadBeauty",
+          body: "Demande envoyée — en attente de confirmation",
+          data: {
+            type: "booking_created",
+            reservation_id: reservationId,
+            role: "client",
+          },
+        });
+        sentClient = true;
+      }
     }
 
-    await sendFcmNotification({
-      token,
-      title: "MadBeauty",
-      body: "Nouvelle demande de réservation",
-    });
-
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        sent_prestataire: sentPrestataire,
+        sent_client: sentClient,
+      }),
+      { headers: { "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ ok: false, error: String(e) }), {

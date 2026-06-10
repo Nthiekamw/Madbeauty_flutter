@@ -7,41 +7,141 @@ import 'in_app_notification.dart';
 
 /// Navigation depuis une notification push ou la liste in-app.
 void handlePushMessageNavigation(BuildContext context, RemoteMessage message) {
-  final type = message.data['type'] as String?;
-  if (type == 'slot_waitlist') {
-    _openBookingFromData(context, message.data);
-  }
+  navigateFromPushData(context, message.data);
 }
 
 void handlePushMessageNavigationWithRouter(
   GoRouter router,
   RemoteMessage message,
 ) {
-  final type = message.data['type'] as String?;
-  if (type == 'slot_waitlist') {
-    _openBookingWithRouter(router, message.data);
-  }
+  navigateFromPushDataWithRouter(router, message.data);
 }
 
 void handleInAppNotificationNavigation(
   BuildContext context,
   InAppNotification notification,
 ) {
-  if (notification.actionType == 'slot_waitlist') {
-    _openBookingFromData(context, {
-      if (notification.prestataireId != null)
-        'prestataire_id': notification.prestataireId!,
-      if (notification.serviceId != null) 'service_id': notification.serviceId!,
-      if (notification.dateJour != null) 'date_jour': notification.dateJour!,
-    });
+  navigateFromPushData(context, _dataFromInApp(notification));
+}
+
+void navigateFromPushData(
+  BuildContext context,
+  Map<String, dynamic> data,
+) {
+  if (!context.mounted) return;
+  navigateFromPushDataWithRouter(GoRouter.of(context), data);
+}
+
+void navigateFromPushDataWithRouter(
+  GoRouter router,
+  Map<String, dynamic> data,
+) {
+  final type = _str(data, 'type');
+  final reservationId =
+      _str(data, 'reservation_id') ?? _str(data, 'reservationId');
+  final bookingId = _str(data, 'booking_id') ?? _str(data, 'bookingId');
+  final role = _str(data, 'role');
+  final nav = _str(data, 'nav');
+
+  switch (type) {
+    case 'slot_waitlist':
+      _openBookingWithRouter(router, data);
+      return;
+    case 'prestataire_catalog_visibility':
+      router.pushNamed(AppRouteNames.prestataireSubscription);
+      return;
+    case 'booking_created':
+    case 'booking_status':
+      if (reservationId != null) {
+        _openReservationDetail(router, reservationId, role: role);
+      }
+      return;
+    case 'message':
+      if (bookingId != null) {
+        router.pushNamed(
+          AppRouteNames.chat,
+          pathParameters: {'bookingId': bookingId},
+        );
+      }
+      return;
+    case 'prestataire_like':
+      router.goNamed(AppRouteNames.prestataireDashboard);
+      return;
+    case 'prestataire_verification_approved':
+    case 'prestataire_verification_revoked':
+      router.pushNamed(AppRouteNames.prestataireProfileEdit);
+      return;
+    case 'admin_broadcast':
+      _openAdminNavTarget(router, nav, data);
+      return;
+  }
+
+  // Webhook Stripe legacy : reservationId sans type.
+  if (reservationId != null) {
+    _openReservationDetail(router, reservationId, role: 'prestataire');
   }
 }
 
-void _openBookingFromData(BuildContext context, Map<String, dynamic> data) {
-  final params = _bookingQueryParams(data);
-  if (params == null) return;
-  if (!context.mounted) return;
-  context.pushNamed(AppRouteNames.booking, queryParameters: params);
+Map<String, dynamic> _dataFromInApp(InAppNotification notification) {
+  return {
+    if (notification.actionType != null) 'type': notification.actionType!,
+    if (notification.prestataireId != null)
+      'prestataire_id': notification.prestataireId!,
+    if (notification.serviceId != null) 'service_id': notification.serviceId!,
+    if (notification.dateJour != null) 'date_jour': notification.dateJour!,
+    if (notification.reservationId != null)
+      'reservation_id': notification.reservationId!,
+    if (notification.bookingId != null) 'booking_id': notification.bookingId!,
+    if (notification.role != null) 'role': notification.role!,
+    if (notification.nav != null) 'nav': notification.nav!,
+  };
+}
+
+void _openAdminNavTarget(
+  GoRouter router,
+  String? nav,
+  Map<String, dynamic> data,
+) {
+  switch (nav) {
+    case 'client_home':
+      router.goNamed(AppRouteNames.clientHome);
+    case 'client_reservations':
+      router.goNamed(AppRouteNames.clientReservations);
+    case 'client_search':
+      router.goNamed(AppRouteNames.clientSearch);
+    case 'client_messages':
+      router.goNamed(AppRouteNames.clientMessages);
+    case 'prestataire_dashboard':
+      router.goNamed(AppRouteNames.prestataireDashboard);
+    case 'prestataire_subscription':
+      router.pushNamed(AppRouteNames.prestataireSubscription);
+    case 'prestataire_profile_edit':
+      router.pushNamed(AppRouteNames.prestataireProfileEdit);
+    case 'booking':
+      _openBookingWithRouter(router, data);
+    case 'none':
+    case null:
+    case '':
+      break;
+  }
+}
+
+void _openReservationDetail(
+  GoRouter router,
+  String reservationId, {
+  String? role,
+}) {
+  if (role == 'prestataire') {
+    router.pushNamed(
+      AppRouteNames.prestataireReservationDetail,
+      pathParameters: {'id': reservationId},
+    );
+    return;
+  }
+  router.pushNamed(
+    AppRouteNames.clientReservationDetail,
+    pathParameters: {'id': reservationId},
+  );
 }
 
 void _openBookingWithRouter(GoRouter router, Map<String, dynamic> data) {
@@ -51,11 +151,11 @@ void _openBookingWithRouter(GoRouter router, Map<String, dynamic> data) {
 }
 
 Map<String, String>? _bookingQueryParams(Map<String, dynamic> data) {
-  final prestataireId = (data['prestataire_id'] as String?)?.trim();
+  final prestataireId = _str(data, 'prestataire_id');
   if (prestataireId == null || prestataireId.isEmpty) return null;
 
-  final serviceId = (data['service_id'] as String?)?.trim();
-  final dateJour = (data['date_jour'] as String?)?.trim();
+  final serviceId = _str(data, 'service_id');
+  final dateJour = _str(data, 'date_jour');
 
   return {
     'prestataireId': prestataireId,
@@ -64,3 +164,9 @@ Map<String, String>? _bookingQueryParams(Map<String, dynamic> data) {
   };
 }
 
+String? _str(Map<String, dynamic> data, String key) {
+  final raw = data[key];
+  if (raw == null) return null;
+  final value = raw.toString().trim();
+  return value.isEmpty ? null : value;
+}

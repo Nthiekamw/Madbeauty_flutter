@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/user/user_profile.dart';
 import '../../../../services/notifications/in_app_notifications_provider.dart';
-import '../../../../services/notifications/in_app_notifications_sheet.dart';
+import '../../../notifications/widgets/in_app_notifications_sheet.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';

@@ -5,7 +5,7 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
-import '../../../booking/widgets/reservation_payment_summary_card.dart';
+import '../../../booking/widgets/reservation/reservation_payment_summary_card.dart';
 import '../../logic/prestataire_reservation_completion.dart';
 import '../../models/prestataire_reservation_item.dart';
 import '../shared/prestataire_client_identity_row.dart';
@@ -136,7 +136,9 @@ class PrestataireAgendaReservationCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: PrestataireClientIdentityRow(
-                                  clientName: item.clientName,
+                                  clientName: item.clientDisplayName,
+                                  clientPrenom: item.clientPrenom,
+                                  clientNom: item.clientNom,
                                   serviceName: item.serviceName,
                                   clientAvatarUrl: item.clientAvatarUrl,
                                   avatarRadius: 20,

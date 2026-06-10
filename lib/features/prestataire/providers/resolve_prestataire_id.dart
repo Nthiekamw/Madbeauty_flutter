@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
 import '../../auth/providers/auth_notifier.dart';
-import 'current_prestataire_provider.dart';
-import 'prestataire_profile_form_provider.dart';
+import 'profile/current_prestataire_provider.dart';
+import 'profile/prestataire_profile_form_provider.dart';
 
 /// ID prestataire pour horaires / congés — crée un profil minimal si besoin
 /// (onboarding hub avant la première sauvegarde complète).

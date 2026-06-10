@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../services/location/geolocation_service.dart';
-import '../widgets/listing_map_view.dart';
+import '../widgets/content/listing_map_view.dart';
 
 /// Carte catalogue en plein écran.
 class ListingMapFullscreenScreen extends StatelessWidget {

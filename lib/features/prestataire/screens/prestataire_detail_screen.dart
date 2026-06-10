@@ -10,14 +10,18 @@ import '../../messaging/messaging_navigation.dart';
 import '../../messaging/models/client_presta_chat_access.dart';
 import '../../messaging/providers/client_presta_chat_access_provider.dart';
 import '../../trust/widgets/report_content_sheet.dart';
+import '../../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../../services/supabase/trust/content_report_service.dart';
 import '../logic/prestataire_share.dart';
-import '../providers/prestataire_detail_provider.dart';
-import '../widgets/profile/overview/prestataire_client_experience_section.dart';
+import '../providers/catalog/prestataire_detail_provider.dart';
+import '../widgets/profile/overview/sections/prestataire_client_experience_section.dart';
+import '../widgets/public/detail/prestataire_client_engagement_row.dart';
 import '../widgets/public/detail/prestataire_detail_sections.dart';
 import '../widgets/public/detail/prestataire_detail_shell.dart';
 import '../widgets/public/prestataire_detail_messaging_section.dart';
 import '../widgets/public/prestataire_public_horaires_section.dart';
+import '../../reviews/models/client_review_list_item.dart';
+import '../../reviews/widgets/edit_review_sheet.dart';
 import '../widgets/public/prestataire_public_reviews_live_section.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
@@ -118,6 +122,9 @@ class _PrestataireDetailScreenState
                 child: RefreshIndicator(
                   onRefresh: () async {
                     ref.invalidate(
+                      prestataireLikesCountProvider(widget.prestataireId),
+                    );
+                    ref.invalidate(
                       prestataireDetailProvider(widget.prestataireId),
                     );
                     await ref.read(
@@ -165,6 +172,12 @@ class _PrestataireDetailScreenState
                               : null,
                         ),
                       ),
+                      if (!isOwnProfile)
+                        SliverToBoxAdapter(
+                          child: PrestataireClientEngagementRow(
+                            prestataireId: data.profile.id,
+                          ),
+                        ),
                       SliverPersistentHeader(
                         pinned: true,
                         delegate: PrestataireDetailSectionNavDelegate(
@@ -352,6 +365,13 @@ class _DetailContent extends StatelessWidget {
             title: DiscPrestaDetail.reviewsTitle,
             child: PrestatairePublicReviewsLiveSection(
               prestataireId: data.profile.id,
+              readOnly: isOwnProfile,
+              onReviewTap: isOwnProfile
+                  ? (review) => showViewReviewSheet(
+                        context,
+                        item: ClientReviewListItem(review: review),
+                      )
+                  : null,
             ),
           ),
         ),

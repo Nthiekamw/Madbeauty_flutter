@@ -366,6 +366,10 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Stripe redirige le navigateur sans JWT — accès public obligatoire.
+[functions.stripe_connect_redirect]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

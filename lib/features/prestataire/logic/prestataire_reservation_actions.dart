@@ -6,7 +6,8 @@ import '../../../core/errors/app_failure.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
-import '../providers/prestataire_bookings_invalidate.dart';
+import '../providers/booking/prestataire_bookings_invalidate.dart';
+import '../providers/subscription/prestataire_subscription_gate_provider.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/prestataire_reservation_item.dart';
 import 'prestataire_reservation_completion.dart';
@@ -20,6 +21,10 @@ class PrestataireReservationActions {
   final BuildContext context;
 
   Future<bool> accept(String reservationId) async {
+    if (!ref.read(prestataireCanManageBookingsProvider)) {
+      _snack(DiscPrestaSub.bookingActionLocked);
+      return false;
+    }
     final booking = ref.read(bookingServiceProvider);
     if (booking == null) {
       _snack(DiscPrestaDash.actionErr);
@@ -51,6 +56,10 @@ class PrestataireReservationActions {
   }
 
   Future<bool> reject(String reservationId) async {
+    if (!ref.read(prestataireCanManageBookingsProvider)) {
+      _snack(DiscPrestaSub.bookingActionLocked);
+      return false;
+    }
     final reason = await showRejectReservationDialog(context);
     if (!context.mounted) return false;
     if (reason == null) return false;
@@ -89,6 +98,10 @@ class PrestataireReservationActions {
   }
 
   Future<bool> markDone(PrestataireReservationItem item) async {
+    if (!ref.read(prestataireCanManageBookingsProvider)) {
+      _snack(DiscPrestaSub.bookingActionLocked);
+      return false;
+    }
     if (!prestataireCanMarkReservationDone(item)) {
       _snack(DiscPrestaAgenda.markDoneTooEarly);
       return false;

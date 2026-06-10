@@ -46,7 +46,11 @@ async function notifyPrestatairePaymentConfirmed(
     token,
     title: "MadBeauty",
     body: "Paiement confirmé — nouvelle réservation",
-    data: { reservationId },
+    data: {
+      type: "booking_created",
+      reservation_id: reservationId,
+      role: "prestataire",
+    },
   });
 }
 

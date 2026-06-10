@@ -6,7 +6,7 @@ import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../../booking/logic/reservation_chat_eligibility.dart';
-import '../../../booking/widgets/reservation_payment_summary_card.dart';
+import '../../../booking/widgets/reservation/reservation_payment_summary_card.dart';
 import '../../logic/prestataire_reservation_completion.dart';
 import '../../models/prestataire_reservation_item.dart';
 import '../shared/prestataire_client_identity_row.dart';
@@ -49,7 +49,9 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             children: [
               Expanded(
                 child: PrestataireClientIdentityRow(
-                  clientName: item.clientName,
+                  clientName: item.clientDisplayName,
+                  clientPrenom: item.clientPrenom,
+                  clientNom: item.clientNom,
                   serviceName: item.serviceName,
                   clientAvatarUrl: item.clientAvatarUrl,
                   avatarRadius: 28,

@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
-import '../../../features/admin/models/admin_content_report.dart';
+import '../../../core/models/domain/admin/admin_content_report.dart';
 import '../supabase_service.dart';
 
 class AdminContentReportsService {

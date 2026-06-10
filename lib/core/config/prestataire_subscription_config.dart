@@ -2,6 +2,9 @@
 abstract final class PrestataireSubscriptionConfig {
   PrestataireSubscriptionConfig._();
 
+  /// Essai catalogue + Stripe (premier abonnement).
+  static const int catalogTrialDays = 5;
+
   /// Seuil : 1 service = palier « solo », sinon palier « multi ».
   static const int multiServiceThreshold = 2;
 

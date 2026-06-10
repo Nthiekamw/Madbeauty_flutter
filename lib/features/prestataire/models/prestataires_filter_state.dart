@@ -6,6 +6,8 @@ class PrestatairesFilterState {
     this.categoryId,
     this.sort = PrestatairesSort.distance,
     this.availableOnly = false,
+    this.favoritesOnly = false,
+    this.likedOnly = false,
     this.activeQuickFilterId,
   });
 
@@ -13,6 +15,8 @@ class PrestatairesFilterState {
   final String? categoryId;
   final PrestatairesSort sort;
   final bool availableOnly;
+  final bool favoritesOnly;
+  final bool likedOnly;
 
   /// Identifiant du filtre rapide actif ([ListingQuickFilter.id]).
   final String? activeQuickFilterId;
@@ -21,6 +25,8 @@ class PrestatairesFilterState {
       query.trim().isNotEmpty ||
       categoryId != null ||
       availableOnly ||
+      favoritesOnly ||
+      likedOnly ||
       (activeQuickFilterId != null && activeQuickFilterId != 'all');
 
   PrestatairesFilterState copyWith({
@@ -28,6 +34,8 @@ class PrestatairesFilterState {
     Object? categoryId = _unset,
     PrestatairesSort? sort,
     bool? availableOnly,
+    bool? favoritesOnly,
+    bool? likedOnly,
     Object? activeQuickFilterId = _unset,
   }) {
     return PrestatairesFilterState(
@@ -37,6 +45,8 @@ class PrestatairesFilterState {
           : categoryId as String?,
       sort: sort ?? this.sort,
       availableOnly: availableOnly ?? this.availableOnly,
+      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+      likedOnly: likedOnly ?? this.likedOnly,
       activeQuickFilterId: identical(activeQuickFilterId, _unset)
           ? this.activeQuickFilterId
           : activeQuickFilterId as String?,

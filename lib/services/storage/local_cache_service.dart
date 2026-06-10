@@ -21,6 +21,8 @@ class LocalCacheService {
   /// Code parrain reçu via lien d'invitation (à appliquer après connexion).
   static const String pendingReferralCodeKey = 'referral.pending_code_v1';
   static const String clientHomeLayoutKey = 'client.home_layout_v1';
+  static const String appThemeModeKey = 'app.theme_mode_v1';
+  static const String appLanguageCodeKey = 'app.language_code_v1';
 
   static LocalCacheService? _instance;
 
@@ -111,6 +113,16 @@ class LocalCacheService {
 
   Future<bool> setClientHomeLayoutJson(String value) =>
       setString(clientHomeLayoutKey, value);
+
+  String? get appThemeMode => getString(appThemeModeKey);
+
+  Future<bool> setAppThemeMode(String value) =>
+      setString(appThemeModeKey, value);
+
+  String? get appLanguageCode => getString(appLanguageCodeKey);
+
+  Future<bool> setAppLanguageCode(String value) =>
+      setString(appLanguageCodeKey, value);
 }
 
 

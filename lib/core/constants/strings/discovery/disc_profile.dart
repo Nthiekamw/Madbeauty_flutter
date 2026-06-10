@@ -100,6 +100,8 @@ abstract final class DiscProfile {
   static const adminUsersSearchHint = 'E-mail, nom ou ID…';
   static const adminUsersSearchAction = 'Chercher';
   static const adminUsersEmpty = 'Aucun utilisateur trouvé.';
+  static const adminUsersSearchErr =
+      'Impossible de charger les utilisateurs. Vérifie ta connexion ou réessaie.';
   static const adminUsersBan = 'Bannir';
   static const adminUsersUnban = 'Débannir';
   static const adminUsersBannedBadge = 'Banni';
@@ -128,6 +130,62 @@ abstract final class DiscProfile {
   static String adminUsersBanDialogTitle(String name) =>
       'Bannir $name ?';
 
+  static const actionAdminPush = 'Notifications push';
+  static const actionAdminPushHint =
+      'Envoyer une annonce ou un message aux utilisateurs';
+  static const adminPushIntroTitle = 'Envoi de notifications push';
+  static const adminPushIntroBody =
+      'Diffuse un message sur les appareils des utilisateurs ayant activé les notifications. Les comptes admin sont exclus.';
+  static const adminPushAudienceLabel = 'Destinataires';
+  static const adminPushAudienceAll = 'Tous';
+  static const adminPushAudienceClients = 'Clientes';
+  static const adminPushAudiencePrestataires = 'Prestataires';
+  static const adminPushAudienceUser = 'Un utilisateur';
+  static const adminPushTitleLabel = 'Titre';
+  static const adminPushTitleHint = 'Ex. Nouveauté MadBeauty';
+  static const adminPushBodyLabel = 'Message';
+  static const adminPushBodyHint = 'Texte affiché dans la notification…';
+  static const adminPushPreviewLoading = 'Calcul des destinataires…';
+  static String adminPushPreviewCount(int count) =>
+      '$count appareil${count > 1 ? 's' : ''} joignable${count > 1 ? 's' : ''}';
+  static const adminPushRefreshPreview = 'Actualiser';
+  static const adminPushSendAction = 'Envoyer';
+  static const adminPushConfirmTitle = 'Confirmer l’envoi ?';
+  static String adminPushConfirmBody(int count) =>
+      'Cette notification sera envoyée à $count appareil${count > 1 ? 's' : ''}.';
+  static const adminPushFieldsRequired =
+      'Le titre et le message sont obligatoires.';
+  static const adminPushUserRequired =
+      'Sélectionne un utilisateur destinataire.';
+  static String adminPushSentSummary(int sent, int failed, int recipients) {
+    if (recipients == 0) {
+      return 'Aucun appareil joignable pour cette sélection.';
+    }
+    if (failed == 0) {
+      return 'Notification envoyée à $sent appareil${sent > 1 ? 's' : ''}.';
+    }
+    return '$sent envoyée${sent > 1 ? 's' : ''}, $failed échec${failed > 1 ? 's' : ''}.';
+  }
+  static const adminPushExcludeBannedLabel = 'Exclure les utilisateurs bannis';
+  static const adminPushExcludeBannedHint =
+      'Les comptes bannis ne recevront pas la notification.';
+  static const adminPushNavLabel = 'À l’ouverture, ouvrir…';
+  static const adminPushNavNone = 'L’application seulement';
+  static const adminPushNavClientHome = 'Accueil cliente';
+  static const adminPushNavClientReservations = 'Mes réservations (cliente)';
+  static const adminPushNavClientSearch = 'Recherche prestataires';
+  static const adminPushNavClientMessages = 'Messages (cliente)';
+  static const adminPushNavPrestataireDashboard = 'Tableau de bord pro';
+  static const adminPushNavPrestataireSubscription = 'Abonnement pro';
+  static const adminPushNavPrestataireProfileEdit = 'Profil pro (édition)';
+  static const adminPushNavBooking = 'Écran de réservation';
+  static const adminPushPrestataireIdLabel = 'ID prestataire (UUID)';
+  static const adminPushPrestataireIdHint = 'Obligatoire pour l’écran de réservation';
+  static const adminPushServiceIdLabel = 'ID service (optionnel)';
+  static const adminPushServiceIdHint = 'Pré-sélectionner un service';
+  static const adminPushBookingNavRequired =
+      'L’ID prestataire est requis pour ouvrir l’écran de réservation.';
+
   static const actionAdminAudit = 'Journal d’audit';
   static const actionAdminAuditHint =
       'Historique des actions admin et vérifications';
@@ -149,12 +207,49 @@ abstract final class DiscProfile {
   static const prestataireVerificationRequestBody =
       'Demande la vérification de ton profil pour inspirer confiance aux clientes.';
   static const prestataireVerificationRequestCta = 'Demander la vérification';
+  static const prestataireVerificationRequestAgainCta =
+      'Refaire une demande de vérification';
   static const prestataireVerificationPending =
       'Demande envoyée — l’équipe examine ton profil.';
   static const prestataireVerificationVerified = 'Profil vérifié';
+  static const prestataireVerificationVerifiedBody =
+      'Ton profil affiche le badge vérifié. Tu n’as plus besoin de faire une demande.';
+  static const prestataireVerificationVerifiedSince =
+      'Approuvé le %s';
+  static const prestataireVerificationRevokedTitle =
+      'Corrections demandées par l’équipe';
+  static const prestataireVerificationRevokedHint =
+      'Une fois les points corrigés sur ton profil, tu peux renvoyer une demande.';
   static const prestataireVerificationRequestOk = 'Demande envoyée.';
   static const prestataireVerificationRequestErr =
       'Impossible d’envoyer la demande pour le moment.';
+
+  static const adminVerificationFilterPending = 'En attente';
+  static const adminVerificationFilterAll = 'Tous';
+  static const adminVerificationEmpty = 'Aucune demande pour le moment.';
+  static const adminVerificationApproveOk = 'Vérification validée.';
+  static const adminVerificationApproveErr =
+      'Impossible de valider pour le moment.';
+  static const adminVerificationRevokeOk = 'Vérification retirée.';
+  static const adminVerificationRevokeErr =
+      'Impossible de retirer pour le moment. Indique un motif.';
+  static const adminVerificationRevokeTitle = 'Retirer la vérification';
+  static const adminVerificationRevokeBody =
+      'Explique au prestataire ce qu’il doit corriger. Ce message lui sera envoyé.';
+  static const adminVerificationRevokeNoteLabel = 'Motif';
+  static const adminVerificationRevokeNoteHint =
+      'Ex. : photos floues, adresse incomplète…';
+  static const adminVerificationRevokeNoteTooShort =
+      'Le motif doit contenir au moins 3 caractères.';
+  static const adminVerificationRevokeConfirm = 'Retirer et notifier';
+  static const adminVerificationChipVerified = 'Vérifié';
+  static const adminVerificationChipNotVerified = 'Non vérifié';
+  static const adminVerificationApproveCta = 'Valider';
+  static const adminVerificationRevokeCta = 'Retirer la vérification';
+  static String adminVerificationRequestedAt(DateTime at) =>
+      'Demandé le ${at.toLocal()}';
+  static String adminVerificationSalon(String salon) => 'Salon : $salon';
+  static String adminVerificationVille(String ville) => 'Ville : $ville';
 
   static const signOut = 'Se déconnecter';
   static const deleteAccount = 'Supprimer mon compte';
@@ -201,7 +296,11 @@ abstract final class DiscProfile {
   static const becomePrestaHubStep = 'Étape 2 sur 3';
   static const becomePrestaScreenTitle = 'Lance ton activité';
   static const becomePrestaScreenBody =
-      'Ces informations apparaîtront sur ta fiche. Tu pourras compléter photo, spécialités et services juste après.';
+      'Les mêmes informations que lors d’une inscription prestataire. '
+      'Ensuite, un assistant en 7 étapes te guide (photo, spécialités, services, horaires…) '
+      'pour apparaître dans le catalogue.';
+  static const becomePrestaHubPreviewHint =
+      'Étape suivante : profil professionnel guidé (photo, services, horaires, galerie…).';
   static const becomePrestaScreenSubmit = 'Continuer';
   static const becomePrestaContinueStep2 = 'Continuer vers l’étape 2';
   static const becomePrestaStep1SavedBanner =

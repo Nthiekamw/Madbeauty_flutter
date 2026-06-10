@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/availability/horaire_plage.dart';
 import '../models/weekly_jour_horaire.dart';
-import '../providers/disponibilite_provider.dart';
+import '../providers/agenda/disponibilite_provider.dart';
 import '../providers/resolve_prestataire_id.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';

@@ -8,8 +8,10 @@ import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
+import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../models/client_review_list_item.dart';
 import '../providers/review_provider.dart';
@@ -51,6 +53,9 @@ class ClientReviewsScreen extends ConsumerWidget {
     }
 
     final reviewsAsync = ref.watch(clientReviewsForCurrentClientProvider);
+    final clientId = ref.watch(currentClientProfileProvider).asData?.value?.id;
+    final ownPrestaId =
+        ref.watch(currentPrestataireProvider).asData?.value?.id;
 
     return DiscoveryBrandScaffold(
       body: Column(
@@ -117,10 +122,20 @@ class ClientReviewsScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       return _ClientReviewCard(
                         item: items[index],
+                        clientProfileId: clientId,
+                        ownPrestataireId: ownPrestaId,
                         onTap: () async {
+                          final item = items[index];
+                          if (!item.canEditAsClient(
+                            clientId,
+                            ownPrestataireId: ownPrestaId,
+                          )) {
+                            await showViewReviewSheet(context, item: item);
+                            return;
+                          }
                           final updated = await showEditReviewSheet(
                             context,
-                            item: items[index],
+                            item: item,
                           );
                           if (updated == true) {
                             ref.invalidate(clientReviewsForCurrentClientProvider);
@@ -142,10 +157,14 @@ class ClientReviewsScreen extends ConsumerWidget {
 class _ClientReviewCard extends StatelessWidget {
   const _ClientReviewCard({
     required this.item,
+    required this.clientProfileId,
+    this.ownPrestataireId,
     required this.onTap,
   });
 
   final ClientReviewListItem item;
+  final String? clientProfileId;
+  final String? ownPrestataireId;
   final VoidCallback onTap;
 
   @override
@@ -157,6 +176,15 @@ class _ClientReviewCard extends StatelessWidget {
             : DiscBk.unknownPresta;
     final serviceLabel = item.serviceName?.trim();
     final reservationDate = item.reservationDate;
+    final canEdit = item.canEditAsClient(
+      clientProfileId,
+      ownPrestataireId: ownPrestataireId,
+    );
+    final blockedOnOwnBusiness =
+        clientProfileId == item.review.clientId &&
+        ownPrestataireId != null &&
+        ownPrestataireId!.isNotEmpty &&
+        item.review.prestataireId == ownPrestataireId;
 
     return DiscoverySurfaceCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -227,18 +255,29 @@ class _ClientReviewCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                item.canEdit ? Icons.edit_outlined : Icons.lock_outline,
+                canEdit ? Icons.edit_outlined : Icons.lock_outline,
                 size: 16,
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  item.canEdit
-                      ? (item.daysLeftToEdit != null
-                          ? DiscReview.daysLeftToEdit(item.daysLeftToEdit!)
-                          : DiscReview.editDeadlineHint)
-                      : DiscReview.editExpiredLabel,
+                  blockedOnOwnBusiness
+                      ? DiscReview.editBlockedOnOwnBusiness
+                      : canEdit
+                          ? (item.daysLeftToEditFor(
+                                    clientProfileId,
+                                    ownPrestataireId: ownPrestataireId,
+                                  ) !=
+                                  null
+                              ? DiscReview.daysLeftToEdit(
+                                  item.daysLeftToEditFor(
+                                    clientProfileId,
+                                    ownPrestataireId: ownPrestataireId,
+                                  )!,
+                                )
+                              : DiscReview.editDeadlineHint)
+                          : DiscReview.editExpiredLabel,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,

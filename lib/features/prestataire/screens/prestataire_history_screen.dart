@@ -6,7 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_clients_grouping.dart';
-import '../providers/prestataire_agenda_provider.dart';
+import '../providers/agenda/prestataire_agenda_provider.dart';
 import '../widgets/workspace/prestataire_client_row_card.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';

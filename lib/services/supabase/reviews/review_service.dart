@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/reviews/review.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
-import '../../../features/reviews/models/client_review_list_item.dart';
+import '../../../core/models/domain/reviews/client_review_list_item.dart';
 /// Avis clients (table `avis`) liés aux réservations terminées.
 class ReviewService {
   ReviewService(this._client);

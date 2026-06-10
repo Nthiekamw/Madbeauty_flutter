@@ -13,7 +13,7 @@ import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../messaging/messaging_navigation.dart';
 import '../logic/client_reservation_lists.dart';
 import '../models/client_reservation_summary.dart';
-import '../widgets/client_reservation_card.dart';
+import '../widgets/reservation/client_reservation_card.dart';
 
 class ClientHistoryScreen extends ConsumerStatefulWidget {
   const ClientHistoryScreen({super.key});

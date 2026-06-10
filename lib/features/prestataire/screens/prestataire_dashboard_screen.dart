@@ -6,18 +6,20 @@ import '../../../core/constants/app_strings.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
-import '../providers/disponibilite_provider.dart';
-import '../providers/prestataire_analytics_provider.dart';
-import '../providers/prestataire_dashboard_layout_provider.dart';
-import '../providers/prestataire_dashboard_provider.dart';
-import '../providers/prestataire_profile_form_provider.dart';
+import '../providers/agenda/disponibilite_provider.dart';
+import '../providers/analytics/prestataire_analytics_provider.dart';
+import '../providers/dashboard/prestataire_dashboard_layout_provider.dart';
+import '../providers/dashboard/prestataire_dashboard_provider.dart';
+import '../providers/profile/prestataire_profile_form_provider.dart';
 import '../../booking/logic/client_reservation_ui_status.dart';
 import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
-import '../widgets/dashboard/prestataire_pending_request_card.dart';
-import '../providers/prestataire_dashboard_overview_provider.dart';
-import '../widgets/dashboard/prestataire_dashboard_overview_grid.dart';
-import '../widgets/dashboard/prestataire_dashboard_reorderable_sections.dart';
-import '../widgets/profile/overview/prestataire_profile_load_error.dart';
+import '../widgets/dashboard/requests/prestataire_pending_request_card.dart';
+import '../providers/dashboard/prestataire_dashboard_overview_provider.dart';
+import '../widgets/dashboard/content/prestataire_dashboard_overview_grid.dart';
+import '../widgets/dashboard/content/prestataire_dashboard_reorderable_sections.dart';
+import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
+import '../widgets/subscription/prestataire_catalog_trial_banner.dart';
+import '../widgets/subscription/prestataire_catalog_visibility_banner.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -88,6 +90,12 @@ class _PrestataireDashboardScreenState
                       const SliverToBoxAdapter(
                         child: PrestataireProfileCompletionCard(),
                       ),
+                    const SliverToBoxAdapter(
+                      child: PrestataireCatalogTrialBanner(),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: PrestataireCatalogVisibilityBanner(),
+                    ),
                     if (dashboardAsync.maybeWhen(
                       data: (data) => data.needsCompletion.isNotEmpty,
                       orElse: () => false,

@@ -39,6 +39,7 @@ abstract final class DiscPrestaProfile {
   static const sectionAccount = 'Compte';
   static const sectionAccountHint = 'E-mail connecté à MadBeauty';
   static const statServices = 'Services';
+  static const statLikes = 'Likes';
   static const statSpecialties = 'Spécialités';
   static const statPhotos = 'Réalisations';
   static String servicesCount(int n) =>

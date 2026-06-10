@@ -6,7 +6,7 @@ import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../core/logic/messaging/reservation_chat_eligibility.dart';
-import '../../../features/messaging/models/client_presta_chat_access.dart';
+import '../../../core/models/domain/messaging/client_presta_chat_access.dart';
 import '../../../core/models/domain/messaging/conversation_inbox_item.dart';
 import '../profile/profile_service.dart';
 import 'message_service.dart';
@@ -184,14 +184,28 @@ class MessagingService {
       peerDisplayName: peer?.displayName.trim().isNotEmpty == true
           ? peer!.displayName.trim()
           : fallbackName,
+      peerPrenom: peer?.prenom,
+      peerNom: peer?.nom,
       peerAvatarUrl: peer?.avatarUrl,
-      lastMessagePreview: last?.content,
+      lastMessagePreview: _messagePreview(last),
       lastMessageAt: last?.createdAt ?? conv.lastMessageAt,
       unreadCount: unread,
       reservationDate: reservation?.dateHeure,
       serviceName: reservation?.serviceName,
       isLastMessageMine: last?.senderId == currentUserId,
+      isLastMessageReadByPeer: last == null || last.senderId != currentUserId
+          ? true
+          : last.isRead,
     );
+  }
+
+  String? _messagePreview(Message? last) {
+    if (last == null) return null;
+    final imageUrl = last.imageUrl?.trim();
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return DiscChat.imageMessagePreview;
+    }
+    return last.content;
   }
 
   Future<Map<String, _ReservationMeta>> _reservationMetaById(
@@ -287,10 +301,23 @@ class MessagingService {
       avatarByPresta[id] = _normalizeAvatarUrl(p?.avatarUrl);
     }
 
+    final prenomByPresta = <String, String?>{};
+    final nomByPresta = <String, String?>{};
+    for (final raw in response as List<dynamic>) {
+      final m = Map<String, dynamic>.from(raw as Map);
+      final id = m['id'] as String;
+      final uid = m['user_id'] as String?;
+      final p = uid != null ? profiles[uid] : null;
+      prenomByPresta[id] = p?.prenom?.trim();
+      nomByPresta[id] = p?.nom?.trim();
+    }
+
     return {
       for (final id in prestataireIds)
         id: _PeerInboxInfo(
           displayName: labelByPresta[id] ?? DiscBk.unknownPresta,
+          prenom: prenomByPresta[id],
+          nom: nomByPresta[id],
           avatarUrl: avatarByPresta[id],
         ),
     };
@@ -400,6 +427,8 @@ class MessagingService {
           final name = parts.where((s) => s.isNotEmpty).join(' ');
           return _PeerInboxInfo(
             displayName: name.isNotEmpty ? name : DiscPrestaDash.unknownClient,
+            prenom: p?.prenom?.trim(),
+            nom: p?.nom?.trim(),
             avatarUrl: _normalizeAvatarUrl(p?.avatarUrl),
           );
         }(),
@@ -443,10 +472,14 @@ class _ReservationMeta {
 class _PeerInboxInfo {
   const _PeerInboxInfo({
     required this.displayName,
+    this.prenom,
+    this.nom,
     this.avatarUrl,
   });
 
   final String displayName;
+  final String? prenom;
+  final String? nom;
   final String? avatarUrl;
 }
 

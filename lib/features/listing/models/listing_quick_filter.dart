@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/discovery/client_discovery_specialties.dart';
 
 /// Filtre rapide prédéfini de l'écran recherche / catalogue.
@@ -7,6 +8,8 @@ enum ListingQuickFilterKind {
   all,
   availableOnly,
   nearby,
+  favoritesOnly,
+  likedOnly,
   topRated,
   styleQuery,
   categoryId,
@@ -51,6 +54,18 @@ class ListingQuickFilter {
       label: 'Proches',
       icon: Icons.near_me_rounded,
       kind: ListingQuickFilterKind.nearby,
+    ),
+    ListingQuickFilter(
+      id: 'favorites',
+      label: DiscFavori.profileSectionTitle,
+      icon: Icons.bookmark_rounded,
+      kind: ListingQuickFilterKind.favoritesOnly,
+    ),
+    ListingQuickFilter(
+      id: 'liked',
+      label: DiscLike.filterPreferred,
+      icon: Icons.thumb_up_rounded,
+      kind: ListingQuickFilterKind.likedOnly,
     ),
     ListingQuickFilter(
       id: 'top',
@@ -99,6 +114,18 @@ class ListingQuickFilter {
           label: 'À proximité',
           icon: Icons.near_me_outlined,
           kind: ListingQuickFilterKind.nearby,
+        ),
+        ListingQuickFilter(
+          id: 'favorites',
+          label: DiscFavori.profileSectionTitle,
+          icon: Icons.bookmark_rounded,
+          kind: ListingQuickFilterKind.favoritesOnly,
+        ),
+        ListingQuickFilter(
+          id: 'liked',
+          label: DiscLike.filterPreferred,
+          icon: Icons.thumb_up_outlined,
+          kind: ListingQuickFilterKind.likedOnly,
         ),
         ListingQuickFilter(
           id: 'top',

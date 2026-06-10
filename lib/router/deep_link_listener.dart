@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/app_strings.dart';
 import '../services/auth/auth_deep_link_handler.dart';
 import '../services/storage/local_cache_service.dart';
-import '../services/stripe/stripe_subscription_providers.dart';
+import '../features/prestataire/logic/prestataire_subscription_refresh.dart';
 import '../shared/widgets/app/app_snack_bar.dart';
 import 'app_deep_links.dart';
 import 'app_router.dart';
@@ -112,13 +112,7 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
       final router = ref.read(goRouterProvider);
       router.go(path);
       if (result == 'success') {
-        final service = ref.read(stripePrestaSubscriptionServiceProvider);
-        if (service != null) {
-          try {
-            await service.syncFromStripe();
-          } catch (_) {}
-          ref.invalidate(prestataireSubscriptionStatusProvider);
-        }
+        await refreshPrestataireSubscription(ref);
       }
       if (!mounted) return;
       final message = result == 'success'

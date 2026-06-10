@@ -40,15 +40,36 @@ class PrestataireHistoryClientSection extends StatelessWidget {
           leading: AppAvatar(
             imageUrl: latest?.clientAvatarUrl,
             displayName: group.clientName,
-            radius: 20,
+            radius: 22,
           ),
-          title: Text(
-            group.clientName,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          title: latest?.clientPrenom?.trim().isNotEmpty == true &&
+                  latest?.clientNom?.trim().isNotEmpty == true
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      latest!.clientPrenom!.trim(),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      latest.clientNom!.trim(),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  group.clientName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
           subtitle: Text(
             latest?.serviceName ??
                 DiscPrestaClients.clientReservationCount(

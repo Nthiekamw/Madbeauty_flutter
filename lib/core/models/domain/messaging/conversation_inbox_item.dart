@@ -5,6 +5,8 @@ class ConversationInboxItem {
   const ConversationInboxItem({
     required this.conversation,
     required this.peerDisplayName,
+    this.peerPrenom,
+    this.peerNom,
     this.peerAvatarUrl,
     this.lastMessagePreview,
     this.lastMessageAt,
@@ -12,10 +14,13 @@ class ConversationInboxItem {
     this.reservationDate,
     this.serviceName,
     this.isLastMessageMine = false,
+    this.isLastMessageReadByPeer = true,
   });
 
   final Conversation conversation;
   final String peerDisplayName;
+  final String? peerPrenom;
+  final String? peerNom;
   final String? peerAvatarUrl;
   final String? lastMessagePreview;
   final DateTime? lastMessageAt;
@@ -23,8 +28,13 @@ class ConversationInboxItem {
   final DateTime? reservationDate;
   final String? serviceName;
   final bool isLastMessageMine;
+  final bool isLastMessageReadByPeer;
 
   bool get hasUnread => unreadCount > 0;
+
+  /// Dernier message envoyé par moi, pas encore lu par l’interlocuteur.
+  bool get isOutgoingUnread =>
+      isLastMessageMine && !isLastMessageReadByPeer;
 
   bool get hasConversationActivity =>
       (lastMessagePreview?.trim().isNotEmpty ?? false) || lastMessageAt != null;

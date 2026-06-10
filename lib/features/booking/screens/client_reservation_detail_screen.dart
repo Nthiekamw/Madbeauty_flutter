@@ -9,8 +9,8 @@ import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../logic/reservation_calendar_export.dart';
-import '../widgets/reservation_pending_banner.dart';
-import '../widgets/reservation_reject_reason_box.dart';
+import '../widgets/reservation/reservation_pending_banner.dart';
+import '../widgets/reservation/reservation_reject_reason_box.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../messaging/messaging_navigation.dart';
@@ -20,8 +20,8 @@ import '../logic/reservation_chat_eligibility.dart';
 import '../logic/reservation_payment_display.dart';
 import '../models/client_reservation_summary.dart';
 import '../providers/client_reservation_detail_provider.dart';
-import '../widgets/client_reservation_review_action.dart';
-import '../widgets/reservation_payment_summary_card.dart';
+import '../widgets/reservation/client_reservation_review_action.dart';
+import '../widgets/reservation/reservation_payment_summary_card.dart';
 
 class ClientReservationDetailScreen extends ConsumerStatefulWidget {
   const ClientReservationDetailScreen({

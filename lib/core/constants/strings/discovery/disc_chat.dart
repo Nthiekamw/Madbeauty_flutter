@@ -11,7 +11,11 @@ abstract final class DiscChat {
   static const emptyBodyPresta =
       'Quand une cliente réserve chez toi, la conversation apparaîtra ici automatiquement.';
   static const readLabel = 'Lu';
+  static const sentLabel = 'Envoyé';
   static const unreadLabel = 'Non lu';
+  static const imageMessagePreview = 'Photo';
+  static const attachImageTooltip = 'Ajouter une photo';
+  static const imagePickError = 'Impossible d’ajouter cette photo. Réessaie.';
   static String unreadCountLabel(int count) =>
       count == 1 ? '1 non lu' : '$count non lus';
   static const profileShortcut = 'Chat';
@@ -28,8 +32,8 @@ abstract final class DiscChat {
   static const moderationDialogOk = 'Compris';
   static const moderationMultipleBlocked =
       'Pour votre sécurité, ce message ne peut pas être envoyé '
-      '(téléphone, e-mail, lien ou coordonnées bancaires). '
-      'Échange uniquement via MadBeauty.';
+      '(coordonnées, contenu inapproprié ou langage offensant). '
+      'Reste courtois et utilise la messagerie MadBeauty.';
   static const moderationPhoneBlocked =
       'Pour votre sécurité, les numéros de téléphone ne peuvent pas être '
       'envoyés. Utilise la messagerie pour organiser ton rendez-vous.';
@@ -42,10 +46,22 @@ abstract final class DiscChat {
   static const moderationExternalContactBlocked =
       'Évite de partager WhatsApp, Instagram ou d’autres contacts '
       'en dehors de l’application.';
+  static const moderationAddressBlocked =
+      'Les adresses postales ne peuvent pas être partagées dans le chat. '
+      'Organise le rendez-vous via MadBeauty.';
+  static const moderationSolicitationBlocked =
+      'Demander un numéro, un e-mail ou une adresse personnelle '
+      'n’est pas autorisé. Utilise la messagerie MadBeauty.';
+  static const moderationInsultBlocked =
+      'Les insultes et le langage agressif ne sont pas autorisés. '
+      'Merci de rester respectueux.';
+  static const moderationSexualBlocked =
+      'Le contenu sexuel explicite n’est pas autorisé dans le chat. '
+      'Ce canal sert uniquement à organiser ta réservation.';
   static const quickRepliesLabel = 'Réponses rapides';
   static const moderationSafetyHint =
-      'Pour ta sécurité, ne partage pas ton numéro, ton e-mail ni de liens '
-      'dans le chat.';
+      'Pour ta sécurité, ne partage pas tes coordonnées ni de contenu '
+      'inapproprié. Reste courtois.';
   static const loginRequired = 'Connecte-toi pour accéder à tes messages.';
   static const reservationPrefix = 'Réservation';
   static const you = 'Vous';

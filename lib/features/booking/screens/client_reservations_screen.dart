@@ -18,8 +18,8 @@ import '../logic/client_reservation_lists.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
 import '../../messaging/messaging_navigation.dart';
-import '../../../services/notifications/booking_local_reminders.dart';
-import '../widgets/client_reservation_card.dart';
+import '../../../services/notifications/booking_reminders_sync.dart';
+import '../widgets/reservation/client_reservation_card.dart';
 
 class ClientReservationsScreen extends ConsumerStatefulWidget {
   const ClientReservationsScreen({super.key});
@@ -49,18 +49,7 @@ class _ClientReservationsScreenState
   }
 
   Future<void> _syncReminders(List<ClientReservationSummary> list) async {
-    await BookingLocalReminders.instance.syncForReservations(
-      list
-          .map(
-            (r) => (
-              id: r.id,
-              dateHeure: r.dateHeure,
-              title: r.serviceName ?? DiscBk.unknownSvc,
-              statut: r.statut,
-            ),
-          )
-          .toList(),
-    );
+    await syncClientBookingReminders(list);
   }
 
   Future<void> _confirmCancel(ClientReservationSummary item) async {

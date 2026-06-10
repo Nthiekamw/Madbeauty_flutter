@@ -137,6 +137,14 @@ class AuthNotifier extends AsyncNotifier<User?> {
               state = const AsyncData(null);
               return;
             }
+            if (AuthSessionSanitizer.isTransientNetworkError(error)) {
+              final user =
+                  _auth.currentSession?.user ?? _auth.currentUser;
+              if (user != null) {
+                state = AsyncData(user);
+              }
+              return;
+            }
             state = AsyncError(error, stackTrace);
           },
           loading: () {},

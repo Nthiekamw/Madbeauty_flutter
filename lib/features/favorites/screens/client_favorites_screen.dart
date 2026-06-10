@@ -9,7 +9,7 @@ import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
-import '../../listing/widgets/prestataire_catalog_list_card.dart';
+import '../../listing/widgets/catalog/prestataire_catalog_list_card.dart';
 import '../providers/client_favorite_catalog_provider.dart';
 
 class ClientFavoritesScreen extends ConsumerWidget {
@@ -32,7 +32,7 @@ class ClientFavoritesScreen extends ConsumerWidget {
             _FavoritesHeader(onBack: () => context.pop()),
             Expanded(
               child: GuestAccountPrompt(
-                icon: Icons.favorite_border_rounded,
+                icon: Icons.bookmark_border_rounded,
                 title: DiscFavori.screenTitle,
                 message: DiscFavori.loginRequired,
               ),
@@ -66,7 +66,7 @@ class ClientFavoritesScreen extends ConsumerWidget {
                 if (entries.isEmpty) {
                   return Center(
                     child: DiscoveryEmptyState(
-                      icon: Icons.favorite_border_rounded,
+                      icon: Icons.bookmark_border_rounded,
                       title: DiscFavori.emptyTitle,
                       body: DiscFavori.emptyBody,
                       iconColor: theme.colorScheme.primary,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../theme/app_colors.dart';
 import '../app/app_avatar.dart';
 
 /// Carrousel auto-défilant pour les photos de réalisations d'un prestataire.
@@ -16,6 +17,7 @@ class PrestataireRealisationCarousel extends StatefulWidget {
     this.fallbackDisplayName,
     this.fallbackAvatarUrl,
     this.autoAdvanceInterval = const Duration(seconds: 3),
+    this.onPhotoTap,
   });
 
   final List<String> photoUrls;
@@ -25,6 +27,7 @@ class PrestataireRealisationCarousel extends StatefulWidget {
   final String? fallbackDisplayName;
   final String? fallbackAvatarUrl;
   final Duration autoAdvanceInterval;
+  final void Function(int index)? onPhotoTap;
 
   @override
   State<PrestataireRealisationCarousel> createState() =>
@@ -133,6 +136,7 @@ class _PrestataireRealisationCarouselState
         url: _urls.first,
         size: size,
         borderRadius: widget.borderRadius,
+        onTap: widget.onPhotoTap != null ? () => widget.onPhotoTap!(0) : null,
       );
     }
 
@@ -153,6 +157,9 @@ class _PrestataireRealisationCarouselState
                   url: _urls[index],
                   size: size,
                   borderRadius: BorderRadius.zero,
+                  onTap: widget.onPhotoTap != null
+                      ? () => widget.onPhotoTap!(index)
+                      : null,
                 );
               },
             ),
@@ -197,48 +204,57 @@ class _PhotoFrame extends StatelessWidget {
     required this.url,
     required this.size,
     required this.borderRadius,
+    this.onTap,
   });
 
   final String url;
   final Size size;
   final BorderRadius borderRadius;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final image = Image.network(
+      url,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => ColoredBox(
+        color: theme.colorScheme.surfaceContainerHighest,
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return ColoredBox(
+          color: theme.colorScheme.surfaceContainerHighest,
+          child: Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
 
     return ClipRRect(
       borderRadius: borderRadius,
       child: SizedBox(
         width: size.width > 0 ? size.width : null,
         height: size.height,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => ColoredBox(
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Icon(
-              Icons.broken_image_outlined,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return ColoredBox(
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
+        child: onTap == null
+            ? image
+            : Material(
+                color: AppColors.transparent,
+                child: InkWell(onTap: onTap, child: image),
               ),
-            );
-          },
-        ),
       ),
     );
   }

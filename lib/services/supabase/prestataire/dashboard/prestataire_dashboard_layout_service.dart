@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/supabase_error_handler.dart';
-import '../../../../features/prestataire/models/prestataire_dashboard_layout.dart';
+import '../../../../core/models/domain/prestataire/prestataire_dashboard_layout.dart';
 import '../../../storage/local_cache_service.dart';
 
 /// Lecture / écriture de [prestataire_profiles.dashboard_layout].

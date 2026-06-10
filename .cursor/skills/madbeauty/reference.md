@@ -8,7 +8,17 @@
 - [ ] Le fichier ira dans screens / widgets / providers (ou sous-dossier équivalent)
 - [ ] Le nom suit le préfixe de la feature (client_home_*, prestataire_*, disc_* pour les strings)
 - [ ] Si le dossier parent est déjà dense, j’ai créé ou utilisé un sous-dossier thématique
+- [ ] L’UI est responsive (skill `madbeauty-responsive`) : compact, tablette, large
 ```
+
+## Design responsive
+
+Voir skill **`madbeauty-responsive`**. Résumé :
+
+- `DiscoveryResponsive.of(context)` — padding, `contentMaxWidth`, grilles, formulaires
+- `LayoutBuilder` — comportement selon la largeur du parent
+- `MediaQuery` — safe area, clavier, breakpoints ponctuels
+- Fichier central : `lib/shared/layout/discovery_responsive.dart`
 
 ## Exemples de structure
 

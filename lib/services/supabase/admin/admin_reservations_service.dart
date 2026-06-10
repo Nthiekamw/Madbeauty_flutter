@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
-import '../../../features/admin/models/admin_reservation_filters.dart';
-import '../../../features/admin/models/admin_reservation_summary.dart';
+import '../../../core/models/domain/admin/admin_reservation_filters.dart';
+import '../../../core/models/domain/admin/admin_reservation_summary.dart';
 import '../supabase_service.dart';
 
 class AdminReservationsService {

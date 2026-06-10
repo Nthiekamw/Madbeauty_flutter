@@ -101,6 +101,13 @@ class AdminHomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           _ActionCard(
+            icon: Icons.notifications_active_outlined,
+            title: DiscProfile.actionAdminPush,
+            subtitle: DiscProfile.actionAdminPushHint,
+            onTap: () => context.pushAdminPush(),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
             icon: Icons.history,
             title: DiscProfile.actionAdminAudit,
             subtitle: DiscProfile.actionAdminAuditHint,

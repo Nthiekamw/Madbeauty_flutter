@@ -2,6 +2,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
@@ -66,7 +67,28 @@ class MessageService {
           if (text.isEmpty) {
             throw ArgumentError('Le contenu du message est vide.');
           }
-          final moderation = ChatMessageModerator.analyze(text);
+          final recentRows = await _client
+              .from('messages')
+              .select('content, contenu')
+              .eq('booking_id', bookingId)
+              .eq('sender_id', senderId)
+              .order('created_at', ascending: false)
+              .limit(5);
+          final recentOutgoing = <String>[];
+          final rows = (recentRows as List<dynamic>).reversed;
+          for (final raw in rows) {
+            final row = Map<String, dynamic>.from(raw as Map);
+            final body = (row['content'] as String?)?.trim() ??
+                (row['contenu'] as String?)?.trim() ??
+                '';
+            if (body.isNotEmpty) recentOutgoing.add(body);
+          }
+          final moderation = ChatMessageModerator.analyze(
+            text,
+            context: ChatMessageModerationContext(
+              recentOutgoingMessages: recentOutgoing,
+            ),
+          );
           if (moderation.isBlocked) {
             throw MessageValidationException(moderation.primary!);
           }
@@ -77,6 +99,31 @@ class MessageService {
             'sender_id': senderId,
             'content': text,
             'contenu': text,
+          });
+        },
+      );
+
+  /// Envoie une photo sur le fil de réservation.
+  Future<void> sendImage({
+    required String bookingId,
+    required String senderId,
+    required String imageUrl,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.sendImage',
+        action: () async {
+          final url = imageUrl.trim();
+          if (url.isEmpty) {
+            throw ArgumentError('L’URL de l’image est vide.');
+          }
+          final thread = await ensureThreadForBooking(bookingId);
+          await _client.from('messages').insert({
+            'booking_id': bookingId,
+            'conversation_id': thread.id,
+            'sender_id': senderId,
+            'content': DiscChat.imageMessagePreview,
+            'contenu': DiscChat.imageMessagePreview,
+            'image_url': url,
           });
         },
       );

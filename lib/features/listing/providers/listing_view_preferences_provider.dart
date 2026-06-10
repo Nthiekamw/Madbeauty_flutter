@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/listing_catalog_layout.dart';
-import '../widgets/listing_filters_panel.dart';
+import '../widgets/filters/listing_filters_panel.dart';
 
 /// Préférences d'affichage catalogue (liste/carte, grille/étendu).
 class ListingViewPreferences {

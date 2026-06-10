@@ -5,8 +5,8 @@ description: >-
   beauté client/prestataire. Utiliser pour toute tâche sur ce dépôt : features,
   widgets, providers, routes, services, tests, docs, commits ou PR. Couvre la
   structure en trio (screens/widgets/providers), l’exploration de l’existant
-  avant création de fichier, et le découpage en sous-dossiers si un dossier est
-  trop chargé.
+  avant création de fichier, le découpage en sous-dossiers si un dossier est
+  trop chargé, et l’obligation d’un design responsive sur tous les écrans.
 ---
 
 # MadBeauty — contexte projet
@@ -31,6 +31,15 @@ description: >-
 | `shared/` | Thème (`AppArea` vert client / bleu prestataire), widgets réutilisables |
 
 **Règle** : pas de logique métier lourde dans les seuls widgets ; orchestration dans controllers/notifiers.
+
+## Design responsive (obligatoire)
+
+**Toujours adapter le design à l’écran** — compact, téléphone, tablette et large. Aucun écran ne doit être pensé pour une seule taille.
+
+- Avant toute UI : lire le skill **`madbeauty-responsive`**
+- Réutiliser `DiscoveryResponsive` (`lib/shared/layout/discovery_responsive.dart`) et les widgets `shared/` existants
+- Vérifier safe area, clavier, scroll, centrage `maxWidth` sur grands écrans
+- Pas de largeurs fixes sans `clamp` / breakpoint / `LayoutBuilder`
 
 ### Dépendances interdites
 
@@ -114,6 +123,8 @@ Périmètre MVP vs V2 : `docs/FEATURES.md`.
 
 ## Skills complémentaires
 
+- **Design UI** (ergonomie, AppColors, composants) → skill `madbeauty-ui-design`
+- Design responsive (tous écrans) → skill `madbeauty-responsive`
 - Textes UI → skill `madbeauty-ui-strings`
 - Migrations / Edge Functions / RLS → skill `madbeauty-supabase`
 

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../widgets/client_payment_methods_section.dart';
-import '../widgets/profile_page_insets.dart';
+import '../widgets/sections/client_payment_methods_section.dart';
+import '../widgets/layout/profile_page_insets.dart';
 
 /// Écran dédié : cartes bancaires client (portail Stripe).
 class ClientPaymentMethodsScreen extends StatelessWidget {

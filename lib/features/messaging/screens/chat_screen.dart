@@ -6,16 +6,20 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/models/domain/messaging/message.dart';
 
 import '../../../features/auth/providers/auth_notifier.dart';
 
 import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../services/supabase/messaging/message_service.dart';
+import '../../../services/supabase/storage/storage_providers.dart';
+import '../../../services/supabase/storage/storage_service.dart';
 import '../providers/message_provider.dart';
 
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -24,12 +28,12 @@ import '../models/conversation_inbox_item.dart';
 
 import '../logic/chat_message_moderator.dart';
 import '../logic/chat_message_templates.dart';
-import '../../prestataire/providers/current_prestataire_provider.dart';
-import '../widgets/chat_composer.dart';
-import '../widgets/chat_message_list.dart';
+import '../../prestataire/providers/profile/current_prestataire_provider.dart';
+import '../widgets/chat/chat_composer.dart';
+import '../widgets/chat/chat_message_list.dart';
 import '../../trust/widgets/report_content_sheet.dart';
 import '../../../services/supabase/trust/content_report_service.dart';
-import '../widgets/chat_screen_app_bar.dart';
+import '../widgets/chat/chat_screen_app_bar.dart';
 
 
 
@@ -60,6 +64,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scrollController = ScrollController();
 
   bool _sending = false;
+  bool _attachingImage = false;
 
   int _lastMessageCount = 0;
   ConversationInboxItem? _lastHeader;
@@ -112,6 +117,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
 
+  List<String> _recentOutgoingMessages(
+    List<Message> messages,
+    String? userId,
+  ) {
+    if (userId == null) return const [];
+    final mine = messages.where((m) => m.senderId == userId).toList();
+    if (mine.length <= 1) return const [];
+    final withoutLatest = mine.sublist(0, mine.length - 1);
+    final tail = withoutLatest.length > 5
+        ? withoutLatest.sublist(withoutLatest.length - 5)
+        : withoutLatest;
+    return tail.map((m) => m.content).toList();
+  }
+
   Future<void> _markRead() async {
 
     final service = ref.read(messageServiceProvider);
@@ -150,7 +169,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
 
-    final moderation = ChatMessageModerator.analyze(text);
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null) return;
+
+    final recentOutgoing = _recentOutgoingMessages(
+      ref.read(messagesProvider(widget.bookingId)).asData?.value ?? const [],
+      user.id,
+    );
+    final moderation = ChatMessageModerator.analyze(
+      text,
+      context: ChatMessageModerationContext(
+        recentOutgoingMessages: recentOutgoing,
+      ),
+    );
     if (moderation.isBlocked) {
       if (!mounted) return;
       await showDialog<void>(
@@ -175,16 +209,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
 
     final service = ref.read(messageServiceProvider);
-
-    final user = switch (ref.read(authNotifierProvider)) {
-
-      AsyncData(:final value) => value,
-
-      _ => null,
-
-    };
-
-    if (service == null || user == null) return;
+    if (service == null) return;
 
 
 
@@ -215,6 +240,65 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     }
 
+  }
+
+  Future<void> _sendImage() async {
+    if (_sending || _attachingImage) return;
+
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null) return;
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 2048,
+      imageQuality: 88,
+    );
+    if (picked == null || !mounted) return;
+
+    late final StorageUploadFile uploadFile;
+    try {
+      uploadFile = await StorageUploadFile.fromXFile(picked);
+      StorageService.validateImageFile(uploadFile);
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(context, message: DiscChat.imagePickError);
+      }
+      return;
+    }
+
+    final storage = ref.read(storageServiceProvider);
+    final messageService = ref.read(messageServiceProvider);
+    if (storage == null || messageService == null) {
+      if (mounted) {
+        AppSnackBar.show(context, message: DiscChat.imagePickError);
+      }
+      return;
+    }
+
+    setState(() => _attachingImage = true);
+    try {
+      final imageUrl = await storage.uploadChatAttachment(
+        userId: user.id,
+        bookingId: widget.bookingId,
+        file: uploadFile,
+      );
+      await messageService.sendImage(
+        bookingId: widget.bookingId,
+        senderId: user.id,
+        imageUrl: imageUrl,
+      );
+      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
+      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(context, message: DiscChat.imagePickError);
+      }
+    } finally {
+      if (mounted) setState(() => _attachingImage = false);
+    }
   }
 
 
@@ -346,6 +430,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
       appBar: ChatScreenAppBar(
         displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
+        peerPrenom: header?.peerPrenom,
+        peerNom: header?.peerNom,
         avatarUrl: header?.peerAvatarUrl,
         subtitle: _headerSubtitle(header),
         onReport: header == null
@@ -407,8 +493,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ChatComposer(
               controller: _controller,
               sending: _sending,
+              attachingImage: _attachingImage,
               onSend: _send,
+              onAttachImage: _sendImage,
               quickReplyTemplates: quickTemplates,
+              recentOutgoingMessages: _recentOutgoingMessages(
+                messagesAsync.asData?.value ?? const [],
+                userId,
+              ),
             ),
           ],
         ),

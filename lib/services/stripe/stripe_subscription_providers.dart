@@ -1,7 +1,7 @@
 ﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
-import '../../features/prestataire/models/prestataire_subscription_status.dart';
+import '../../core/models/domain/prestataire/prestataire_subscription_status.dart';
 import '../supabase/supabase_service.dart';
 import 'stripe_prestataire_subscription_service.dart';
 import 'stripe_service.dart';

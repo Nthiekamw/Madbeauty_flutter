@@ -11,7 +11,7 @@ abstract final class DiscoveryStyles {
   static const double listCardHeight = 232;
   static const double horizontalSectionHeight = 232;
   static const double listCardPhotoHeight = 100;
-  static const double catalogCardPhotoHeight = 148;
+  static const double catalogCardPhotoHeight = 168;
   static const double catalogListCardRadius = 20;
 
   static BorderRadius get heroBorderRadius =>

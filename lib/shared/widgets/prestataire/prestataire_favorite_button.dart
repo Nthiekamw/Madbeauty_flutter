@@ -79,10 +79,21 @@ class _PrestataireFavoriteButtonState
     setState(() => _busy = true);
     _pulse.forward(from: 0);
 
+    final wasFavorite =
+        ref.read(isPrestataireFavoriteProvider(widget.prestataireId));
+
     try {
       await ref
           .read(clientFavoritePrestataireIdsProvider.notifier)
           .toggle(widget.prestataireId);
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: wasFavorite
+              ? DiscFavori.removedFeedback
+              : DiscFavori.addedFeedback,
+        );
+      }
     } catch (_) {
       if (mounted) {
         AppSnackBar.show(context, message: DiscFavori.toggleError);
@@ -140,7 +151,9 @@ class _PrestataireFavoriteButtonState
                   child: child,
                 ),
                 child: Icon(
-                  isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  isFavorite
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
                   key: ValueKey(isFavorite),
                   size: iconSize,
                   color: iconColor,

@@ -62,7 +62,7 @@ class PrestataireAppointmentTile extends StatelessWidget {
                 const SizedBox(width: 12),
                 AppAvatar(
                   imageUrl: item.clientAvatarUrl,
-                  displayName: item.clientName,
+                  displayName: item.clientDisplayName,
                   radius: 18,
                 ),
                 const SizedBox(width: 10),
@@ -70,15 +70,36 @@ class PrestataireAppointmentTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.clientName,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w700,
+                      if (item.clientPrenom?.trim().isNotEmpty == true &&
+                          item.clientNom?.trim().isNotEmpty == true) ...[
+                        Text(
+                          item.clientPrenom!.trim(),
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        Text(
+                          item.clientNom!.trim(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ] else
+                        Text(
+                          item.clientDisplayName,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       const SizedBox(height: 2),
                       Text(
                         [

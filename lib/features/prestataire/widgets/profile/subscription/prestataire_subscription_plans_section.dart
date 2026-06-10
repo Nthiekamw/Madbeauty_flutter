@@ -9,7 +9,7 @@ import '../../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../../../providers/prestataire_subscription_provider.dart';
+import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import '../../shared/prestataire_section_header.dart';
 
 /// Aperçu des paliers d'abonnement dans « Mon compte ».

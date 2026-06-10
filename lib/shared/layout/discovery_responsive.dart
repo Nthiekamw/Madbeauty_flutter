@@ -43,7 +43,7 @@ class DiscoveryResponsive {
   /// Colonnes catalogue en mode grille.
   int get catalogGridColumns => 2;
 
-  static const double catalogGridSpacing = 8;
+  static const double catalogGridSpacing = 10;
 
   /// Largeur d'une cellule grille catalogue (2 colonnes).
   double catalogGridCellWidth() {
@@ -52,11 +52,11 @@ class DiscoveryResponsive {
     return (inner - catalogGridSpacing) / catalogGridColumns;
   }
 
-  /// Hauteur d'une tuile grille (catalogue — cartes plus compactes).
-  double catalogGridTileHeight() => catalogGridCellWidth() * 1.46;
+  /// Hauteur d'une tuile grille catalogue (ratio carte / largeur).
+  double catalogGridTileHeight() => catalogGridCellWidth() * 1.68;
 
-  /// Photo grille : ~58 % de la hauteur carte.
-  double catalogGridPhotoHeight() => catalogGridTileHeight() * 0.58;
+  /// Photo grille : ~61 % de la hauteur carte.
+  double catalogGridPhotoHeight() => catalogGridTileHeight() * 0.61;
 
   /// Filtres rapides recherche (puces compactes).
   double get quickFiltersStripHeight => 34;

@@ -6,7 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../../profile/logic/become_prestataire_flow_resume.dart';
-import '../../prestataire/providers/current_prestataire_provider.dart';
+import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../core/models/user_role.dart';
 import '../logic/auth_role_cache.dart';
 import '../providers/auth_notifier.dart';

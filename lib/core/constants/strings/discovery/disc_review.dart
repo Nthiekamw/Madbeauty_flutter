@@ -35,6 +35,13 @@ abstract final class DiscReview {
   static const editDeadlineHint =
       'Modifiable pendant 30 jours après publication.';
   static const editExpiredLabel = 'Modification impossible (délai dépassé)';
+  static const prestataireViewOnlyHint =
+      'Lecture seule — seule la cliente peut modifier son avis.';
+  static const receivedReviewsTitle = 'Avis reçus';
+  static const receivedReviewsSubtitle =
+      'Avis publiés sur ton activité (consultation uniquement).';
+  static const editBlockedOnOwnBusiness =
+      'Tu ne peux pas modifier un avis publié sur ton activité.';
 
   static String starsSelected(int note) => '$note / 5';
   static String daysLeftToEdit(int days) =>

@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/stats/stats_prestataire.dart';
-import '../../../features/prestataire/models/prestataire_analytics_period.dart';
+import '../../../core/models/domain/prestataire/prestataire_analytics_period.dart';
 
 class StatsService {
   StatsService(this._client);

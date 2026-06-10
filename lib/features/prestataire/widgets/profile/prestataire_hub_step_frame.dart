@@ -1,4 +1,4 @@
-export 'hub/prestataire_hub_layout.dart'
+export 'hub/layout/prestataire_hub_layout.dart'
     show
         HubStepRequirement,
         PrestataireHubFormSection,

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,14 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/providers/runtime_providers.dart';
 import '../../../features/auth/logic/auth_role_cache.dart';
 import '../../../features/auth/navigation/post_auth_navigation.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
-import '../../../features/prestataire/providers/current_prestataire_provider.dart';
-import '../../../features/prestataire/providers/prestataire_profile_form_provider.dart';
+import '../../../features/prestataire/providers/profile/current_prestataire_provider.dart';
+import '../../../features/prestataire/providers/profile/prestataire_profile_form_provider.dart';
 import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -155,6 +156,14 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
 
   /// `true` si une navigation a déjà été déclenchée (ex. profil incomplet).
   Future<bool> _bootstrapAuthenticated(ProviderContainer container) async {
+    final online = await container.read(connectivityServiceProvider).isOnline();
+    if (!online) {
+      if (kDebugMode) {
+        debugPrint('Splash: hors ligne – bootstrap réseau ignoré');
+      }
+      return false;
+    }
+
     _setStatus(ShellStrings.splashLoadingRoles);
 
     try {

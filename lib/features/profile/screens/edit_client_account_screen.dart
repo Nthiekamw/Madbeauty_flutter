@@ -26,8 +26,8 @@ import '../../auth/providers/auth_notifier.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';
 import '../providers/current_user_profile_provider.dart';
-import '../widgets/edit_client_account_avatar_section.dart';
-import '../widgets/edit_client_account_form.dart';
+import '../widgets/account/edit_client_account_avatar_section.dart';
+import '../widgets/account/edit_client_account_form.dart';
 
 class EditClientAccountScreen extends ConsumerStatefulWidget {
   const EditClientAccountScreen({super.key});

@@ -8,6 +8,8 @@ class PrestataireReservationItem {
     required this.statut,
     required this.serviceName,
     required this.clientName,
+    this.clientPrenom,
+    this.clientNom,
     this.clientId,
     this.clientAvatarUrl,
     this.notesClient,
@@ -26,8 +28,20 @@ class PrestataireReservationItem {
   final String statut;
   final String serviceName;
   final String clientName;
+  final String? clientPrenom;
+  final String? clientNom;
   final String? clientId;
   final String? clientAvatarUrl;
+
+  /// Prénom + nom affichables (fallback sur [clientName]).
+  String get clientDisplayName {
+    final parts = <String>[
+      if (clientPrenom?.trim().isNotEmpty == true) clientPrenom!.trim(),
+      if (clientNom?.trim().isNotEmpty == true) clientNom!.trim(),
+    ];
+    if (parts.isNotEmpty) return parts.join(' ');
+    return clientName;
+  }
   final String? notesClient;
   final String? notesPrestataire;
   final int? amountCents;

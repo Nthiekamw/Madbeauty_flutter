@@ -9,8 +9,8 @@ import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
 import '../providers/home_profile_provider.dart';
-import '../widgets/client_home_hero_header.dart';
-import '../widgets/client_home_scroll_content.dart';
+import '../widgets/header/client_home_hero_header.dart';
+import '../widgets/layout/client_home_scroll_content.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
 

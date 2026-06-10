@@ -10,21 +10,24 @@ import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../profile/providers/app_version_provider.dart';
-import '../../profile/widgets/profile_account_section.dart';
-import '../../profile/widgets/profile_footer_actions.dart';
-import '../../profile/widgets/profile_preferences_section.dart';
-import '../../profile/widgets/profile_role_space_section.dart';
+import '../../profile/widgets/account/profile_account_section.dart';
+import '../../profile/widgets/layout/profile_footer_actions.dart';
+import '../../profile/widgets/sections/profile_appearance_section.dart';
+import '../../profile/widgets/sections/profile_preferences_section.dart';
+import '../../profile/widgets/sections/profile_role_space_section.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../navigation/prestataire_hub_wizard_navigation.dart';
-import '../providers/disponibilite_provider.dart';
-import '../providers/prestataire_profile_form_provider.dart';
-import '../widgets/profile/overview/prestataire_profile_account_menu.dart';
-import '../widgets/profile/overview/prestataire_profile_insets.dart';
-import '../widgets/profile/overview/prestataire_profile_load_error.dart';
-import '../widgets/profile/overview/prestataire_profile_manage_menu.dart';
-import '../widgets/profile/overview/prestataire_profile_section.dart';
-import '../widgets/profile/overview/prestataire_profile_stats_strip.dart';
+import '../providers/agenda/disponibilite_provider.dart';
+import '../providers/profile/prestataire_profile_form_provider.dart';
+import '../widgets/profile/overview/menu/prestataire_profile_account_menu.dart';
+import '../widgets/profile/overview/layout/prestataire_profile_insets.dart';
+import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
+import '../widgets/profile/overview/menu/prestataire_profile_manage_menu.dart';
+import '../widgets/profile/overview/sections/prestataire_profile_section.dart';
+import '../widgets/profile/overview/stats/prestataire_profile_stats_strip.dart';
 import '../widgets/prestataire_verification_request_card.dart';
+import '../widgets/subscription/prestataire_catalog_trial_banner.dart';
+import '../widgets/subscription/prestataire_catalog_visibility_banner.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_profile_summary_card.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -145,6 +148,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
                 ),
                 children: [
                   const PrestataireProfileCompletionCard(),
+                  const PrestataireCatalogTrialBanner(),
+                  const PrestataireCatalogVisibilityBanner(),
                   PrestataireProfileSummaryCard(
                     title: title,
                     subtitle: profession,
@@ -203,6 +208,12 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     padding: PrestataireProfileInsets.page(context).copyWith(
                       top: PrestataireProfileInsets.sectionTop,
                     ),
+                    child: const ProfileAppearanceSection(),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
                     child: const ProfilePreferencesSection(),
                   ),
                   Padding(
@@ -217,6 +228,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     ),
                     child: const ProfileAccountSection(
                       menuPrefix: PrestataireProfileAccountMenu(),
+                      showClientPaymentMethods: false,
+                      showClientReviews: false,
                     ),
                   ),
                   Padding(

@@ -101,9 +101,9 @@ Fichiers critiques :
 | Fichier | Import problématique | Solution |
 |---------|---------------------|----------|
 | `offline_sync_service.dart` | `prestataire_agenda_provider`, `prestataire_dashboard_provider` | **Fait** — hook `offlineSyncAfterFlushProvider` + `features/offline/providers/offline_booking_sync_invalidation.dart` (override dans `main.dart`) |
-| `booking_service_providers.dart` | `auth_notifier`, `guest_mode`, `current_prestataire` | Garder les providers dans `services/` mais déplacer la **composition** dans `features/booking/providers/` qui lit auth + appelle le service |
-| `booking_push_coordinator.dart` | auth, referral, favorites providers | Déplacer vers `features/notifications/` ou `services/notifications/` **sans** dépendre des providers : passer des callbacks depuis `app.dart` / shell |
-| `prestataire_booking_notification_coordinator.dart` | providers prestataire | Idem — orchestration dans feature shell |
+| `booking_service_providers.dart` | `auth_notifier`, `guest_mode`, `current_prestataire` | **Fait** — `booking_service_core_providers.dart` (service seul) + `features/booking/providers/booking_session_providers.dart` |
+| `booking_push_coordinator.dart` | auth, referral, favorites providers | **Fait** — `features/notifications/widgets/booking_push_coordinator.dart` (shim export dans `services/notifications/`) |
+| `prestataire_booking_notification_coordinator.dart` | providers prestataire | **Fait** — `features/notifications/widgets/prestataire_booking_notification_coordinator.dart` |
 
 **Pattern cible :**
 
@@ -124,43 +124,42 @@ services/supabase/booking/booking_service.dart          → uniquement core/mode
 
 ## Phase 2 — Découper les god files
 
-### 2.1 `prestataire_hub_screen.dart` (~1583 lignes)
+### 2.1 `prestataire_hub_screen.dart` (~1583 → ~490 lignes)
 
 **Cible :** écran < 250 lignes + notifier + steps existants.
 
-| Extraire vers | Contenu |
-|---------------|---------|
-| `prestataire/providers/prestataire_hub_form_notifier.dart` | État formulaire, validation, save, upload, horaires |
-| `prestataire/logic/prestataire_hub_save_pipeline.dart` | Enchaînement save (profil, services, photos) |
-| `prestataire/widgets/profile/hub/prestataire_hub_screen_body.dart` | Arbre widgets du hub |
-| Garder dans `screens/` | `Scaffold`, `AppBar`, branchement provider |
+| Extraire vers | Contenu | Statut |
+|---------------|---------|--------|
+| `prestataire/providers/prestataire_hub_form_controller.dart` | État formulaire, validation, brouillon, navigation wizard | **Fait** |
+| `prestataire/logic/prestataire_hub_save_pipeline.dart` | Payload save + sync catalogue services | **Fait** |
+| `prestataire/logic/prestataire_hub_validation.dart` | Règles validation par étape | **Fait** |
+| `prestataire/logic/prestataire_hub_constants.dart` | Constantes wizard + `kPrestataireHubSteps` | **Fait** |
+| `prestataire/widgets/profile/hub/prestataire_hub_screen_body.dart` | Arbre widgets du hub | **Fait** |
+| Garder dans `screens/` | Scaffold, save async, pickers, navigation | **En cours** (~490 lignes) |
 
-**Ordre :**
+**Reste :** extraire save async + upload galerie vers `prestataire_hub_save_pipeline` ou notifier Riverpod pour viser < 250 lignes.
 
-1. Extraire le **notifier** (état + méthodes async) — aucun changement UI
-2. Extraire **widgets** déjà partiellement dans `prestataire_hub_layout.dart` (842 lignes) — fusionner responsabilités
-3. Réduire l’écran à glue code
+### 2.2 `register_wizard_screen.dart` (~1577 → ~616 lignes)
 
-### 2.2 `register_wizard_screen.dart` (~1577 lignes)
+| Extraire vers | Statut |
+|---------------|--------|
+| `register/providers/register_wizard_form_controller.dart` | **Fait** |
+| `register/logic/register_wizard_validation.dart` | **Fait** |
+| `register/logic/register_wizard_constants.dart` | **Fait** |
+| `register/widgets/register_wizard_step_widgets.dart` | **Fait** (3 étapes + bannières) |
+| `register/widgets/register_wizard_screen_body.dart` | **Fait** |
+| OAuth / submit async | Reste dans l'écran (~616 lignes) |
 
-Même approche que auth/login (déjà bien découpé) :
+### 2.3 `booking_service.dart` (~744 → ~85 lignes façade)
 
-| Extraire vers |
-|---------------|
-| `auth/register/wizard/register_wizard_notifier.dart` |
-| `auth/register/wizard/register_wizard_steps.dart` (déjà partiel ?) |
-| Un widget par étape si > 300 lignes |
-
-### 2.3 `booking_service.dart` (~744 lignes)
-
-| Extraire vers |
-|---------------|
-| `services/supabase/booking/booking_queries.dart` — sélections SQL / maps |
-| `services/supabase/booking/booking_mappers.dart` — row → domain models |
-| `services/supabase/booking/booking_prestataire_ops.dart` — liste / statuts prestataire |
-| `services/supabase/booking/booking_client_ops.dart` — réservations client |
-
-`BookingService` devient une façade mince.
+| Fichier | Rôle | Statut |
+|---------|------|--------|
+| `booking_mappers.dart` | row → modèles domaine + enrichissement avatars | **Fait** |
+| `booking_session_context.dart` | `requireClientId` / `requirePrestataireId` | **Fait** |
+| `booking_slot_queries.dart` | capacité créneau + comptage actifs | **Fait** |
+| `booking_client_ops.dart` | create, cancel, listes client | **Fait** |
+| `booking_prestataire_ops.dart` | confirm, reject, markAsDone, listes presta | **Fait** |
+| `booking_service.dart` | façade délégation | **Fait** |
 
 ### 2.4 Autres fichiers > 500 lignes (priorité secondaire)
 

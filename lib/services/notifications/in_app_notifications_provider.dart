@@ -152,6 +152,8 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
         '${DateTime.now().microsecondsSinceEpoch}_${body.hashCode}';
 
     final type = msg.data['type'] as String?;
+    final reservationId = msg.data['reservation_id'] as String? ??
+        msg.data['reservationId'] as String?;
     enqueue(
       InAppNotification(
         id: id,
@@ -163,6 +165,11 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
         prestataireId: msg.data['prestataire_id'] as String?,
         serviceId: msg.data['service_id'] as String?,
         dateJour: msg.data['date_jour'] as String?,
+        reservationId: reservationId,
+        bookingId: msg.data['booking_id'] as String? ??
+            msg.data['bookingId'] as String?,
+        role: msg.data['role'] as String?,
+        nav: msg.data['nav'] as String?,
       ),
     );
   }

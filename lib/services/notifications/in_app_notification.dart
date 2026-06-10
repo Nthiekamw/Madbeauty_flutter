@@ -10,6 +10,10 @@ class InAppNotification {
     this.prestataireId,
     this.serviceId,
     this.dateJour,
+    this.reservationId,
+    this.bookingId,
+    this.role,
+    this.nav,
   });
 
   final String id;
@@ -21,6 +25,10 @@ class InAppNotification {
   final String? prestataireId;
   final String? serviceId;
   final String? dateJour;
+  final String? reservationId;
+  final String? bookingId;
+  final String? role;
+  final String? nav;
 
   InAppNotification copyWith({
     String? id,
@@ -32,6 +40,10 @@ class InAppNotification {
     String? prestataireId,
     String? serviceId,
     String? dateJour,
+    String? reservationId,
+    String? bookingId,
+    String? role,
+    String? nav,
   }) {
     return InAppNotification(
       id: id ?? this.id,
@@ -43,6 +55,10 @@ class InAppNotification {
       prestataireId: prestataireId ?? this.prestataireId,
       serviceId: serviceId ?? this.serviceId,
       dateJour: dateJour ?? this.dateJour,
+      reservationId: reservationId ?? this.reservationId,
+      bookingId: bookingId ?? this.bookingId,
+      role: role ?? this.role,
+      nav: nav ?? this.nav,
     );
   }
 
@@ -56,6 +72,10 @@ class InAppNotification {
         if (prestataireId != null) 'prestataireId': prestataireId,
         if (serviceId != null) 'serviceId': serviceId,
         if (dateJour != null) 'dateJour': dateJour,
+        if (reservationId != null) 'reservationId': reservationId,
+        if (bookingId != null) 'bookingId': bookingId,
+        if (role != null) 'role': role,
+        if (nav != null) 'nav': nav,
       };
 
   factory InAppNotification.fromJson(Map<String, dynamic> json) {
@@ -70,7 +90,10 @@ class InAppNotification {
       prestataireId: json['prestataireId'] as String?,
       serviceId: json['serviceId'] as String?,
       dateJour: json['dateJour'] as String?,
+      reservationId: json['reservationId'] as String?,
+      bookingId: json['bookingId'] as String?,
+      role: json['role'] as String?,
+      nav: json['nav'] as String?,
     );
   }
 }
-
