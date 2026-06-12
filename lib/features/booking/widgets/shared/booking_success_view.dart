@@ -48,9 +48,10 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      padding: EdgeInsets.fromLTRB(24, 32, 24, 24 + bottomInset),
       child: Column(
         children: [
           const Spacer(),
@@ -153,6 +154,8 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
 
           const Spacer(),
 
+          const SizedBox(height: 16),
+
           // CTA
           FadeTransition(
             opacity: _fade,
@@ -183,6 +186,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
               ),
             ),
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );

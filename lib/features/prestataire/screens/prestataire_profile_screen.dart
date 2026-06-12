@@ -6,6 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
@@ -119,7 +120,7 @@ class PrestataireProfileScreen extends ConsumerWidget {
     return PrestataireBrandScaffold(
       body: profileAsync.when(
         loading: () => const PrestataireWorkspaceShell(
-          child: Center(child: CircularProgressIndicator()),
+          child: DiscoveryDetailSkeleton(),
         ),
         error: (_, __) => PrestataireProfileLoadError(
           onRetry: () => ref.invalidate(prestataireProfileFormProvider),
@@ -156,6 +157,12 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     avatarUrl: data.avatarUrl,
                     trailingBadge: prestataireFreePlanBadge(context),
                     onTap: () => context.pushPrestataireProfileEdit(),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
+                    child: const ProfileRoleSpaceSection(),
                   ),
                   if (!complete)
                     Padding(
@@ -215,12 +222,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
                       top: PrestataireProfileInsets.sectionTop,
                     ),
                     child: const ProfilePreferencesSection(),
-                  ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfileRoleSpaceSection(),
                   ),
                   Padding(
                     padding: PrestataireProfileInsets.page(context).copyWith(

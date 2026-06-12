@@ -2,6 +2,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/booking/screens/client_history_screen.dart';
 import '../../features/favorites/screens/client_favorites_screen.dart';
+import '../../features/bug_report/screens/bug_report_chat_screen.dart';
+import '../../features/bug_report/screens/my_bug_reports_screen.dart';
+import '../../features/bug_report/screens/report_bug_screen.dart';
 import '../../features/help/screens/help_center_screen.dart';
 import '../../features/listing/screens/all_prestataires_screen.dart';
 import '../../features/profile/screens/client_payment_methods_screen.dart';
@@ -46,6 +49,23 @@ List<RouteBase> buildClientProfileRoutes() => [
         name: AppRouteNames.clientHelp,
         path: AppRoutes.clientHelp,
         builder: (context, state) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientReportBug,
+        path: AppRoutes.clientReportBug,
+        builder: (context, state) => const ReportBugScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientMyBugReports,
+        path: AppRoutes.clientMyBugReports,
+        builder: (context, state) => const MyBugReportsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.bugReportChat,
+        path: AppRoutes.bugReportChat,
+        builder: (context, state) => BugReportChatScreen(
+          bugReportId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         name: AppRouteNames.clientReferral,

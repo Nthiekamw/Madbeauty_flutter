@@ -36,10 +36,13 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
   @override
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
-    final pendingCount = ref.watch(clientPendingReservationsCountProvider).value ?? 0;
-    final messagesUnread =
-        ref.watch(messagingUnreadCountProvider(MessagingInboxRole.client)).value ??
-            0;
+    final pendingCount = ref.watch(
+      clientPendingReservationsCountProvider.select((a) => a.value ?? 0),
+    );
+    final messagesUnread = ref.watch(
+      messagingUnreadCountProvider(MessagingInboxRole.client)
+          .select((a) => a.value ?? 0),
+    );
     final selectedIndex = widget.navigationShell.currentIndex;
 
     return Scaffold(

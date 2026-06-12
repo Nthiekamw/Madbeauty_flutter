@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../listing/widgets/catalog/prestataire_catalog_list_card.dart';
 import '../providers/client_favorite_catalog_provider.dart';
+import '../providers/client_favorite_prestataire_ids_provider.dart';
 
 class ClientFavoritesScreen extends ConsumerWidget {
   const ClientFavoritesScreen({super.key});
@@ -42,6 +45,14 @@ class ClientFavoritesScreen extends ConsumerWidget {
       );
     }
 
+    ref.listen(clientFavoritePrestataireIdsProvider, (previous, next) {
+      final prevIds = previous?.asData?.value;
+      final nextIds = next.asData?.value;
+      if (prevIds != nextIds) {
+        ref.invalidate(clientFavoriteCatalogProvider);
+      }
+    });
+
     final catalogAsync = ref.watch(clientFavoriteCatalogProvider);
 
     return DiscoveryBrandScaffold(
@@ -51,15 +62,16 @@ class ClientFavoritesScreen extends ConsumerWidget {
           _FavoritesHeader(onBack: () => context.pop()),
           Expanded(
             child: catalogAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const DiscoveryListSkeleton(rowCount: 5),
               error: (_, __) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    DiscFavori.toggleError,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge,
-                  ),
+                child: DiscoveryEmptyState(
+                  icon: Icons.cloud_off_outlined,
+                  title: DiscFavori.loadErrorTitle,
+                  body: DiscFavori.loadErrorBody,
+                  iconColor: theme.colorScheme.error,
+                  actionLabel: DiscList.retry,
+                  onAction: () =>
+                      ref.invalidate(clientFavoriteCatalogProvider),
                 ),
               ),
               data: (entries) {
@@ -70,6 +82,8 @@ class ClientFavoritesScreen extends ConsumerWidget {
                       title: DiscFavori.emptyTitle,
                       body: DiscFavori.emptyBody,
                       iconColor: theme.colorScheme.primary,
+                      actionLabel: DiscBk.browsePresta,
+                      onAction: () => context.goClientSearch(),
                     ),
                   );
                 }

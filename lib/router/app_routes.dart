@@ -6,9 +6,9 @@ abstract final class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String registerVerifyEmail = '/register/verify-email';
-  static const String verifyPhone = '/verify-phone';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String bannedAccountSupport = '/support/banned-account';
   static const String role = '/role';
   /// Fiche publique partageable : `/prestataire/:id` (UUID).
   static const String prestatairePublicProfile = '/prestataire';
@@ -34,10 +34,14 @@ abstract final class AppRoutes {
   static const String clientReviews = '/client/reviews';
   static const String clientHistory = '/client/history';
   static const String clientHelp = '/client/help';
+  static const String clientReportBug = '/client/report-bug';
+  static const String clientMyBugReports = '/client/my-bug-reports';
+  static const String bugReportChat = '/bug-report/:id/chat';
   static const String clientReferral = '/client/referral';
   static const String adminHome = '/admin/home';
   static const String adminVerifications = '/admin/verifications';
   static const String adminReports = '/admin/reports';
+  static const String adminBugReports = '/admin/bug-reports';
   static const String adminProfile = '/admin/profile';
   static const String adminUsers = '/admin/users';
   static const String adminReservations = '/admin/reservations';
@@ -72,9 +76,9 @@ abstract final class AppRouteNames {
   static const String login = 'login';
   static const String register = 'register';
   static const String registerVerifyEmail = 'register-verify-email';
-  static const String verifyPhone = 'verify-phone';
   static const String forgotPassword = 'forgot-password';
   static const String resetPassword = 'reset-password';
+  static const String bannedAccountSupport = 'banned-account-support';
   static const String role = 'role';
   static const String prestataireDetail = 'prestataire-detail';
   static const String booking = 'booking';
@@ -96,10 +100,14 @@ abstract final class AppRouteNames {
   static const String clientReviews = 'client-reviews';
   static const String clientHistory = 'client-history';
   static const String clientHelp = 'client-help';
+  static const String clientReportBug = 'client-report-bug';
+  static const String clientMyBugReports = 'client-my-bug-reports';
+  static const String bugReportChat = 'bug-report-chat';
   static const String clientReferral = 'client-referral';
   static const String adminHome = 'admin-home';
   static const String adminVerifications = 'admin-verifications';
   static const String adminReports = 'admin-reports';
+  static const String adminBugReports = 'admin-bug-reports';
   static const String adminProfile = 'admin-profile';
   static const String adminUsers = 'admin-users';
   static const String adminReservations = 'admin-reservations';

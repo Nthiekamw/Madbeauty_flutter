@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/guest/guest_mode_provider.dart';
+import '../features/auth/navigation/post_auth_navigation.dart';
+import '../features/auth/providers/auth_redirect_providers.dart';
 import '../features/auth/guest/guest_route_policy.dart';
 import '../features/auth/logic/auth_role_cache.dart';
 import '../features/auth/providers/auth_notifier.dart';
@@ -11,7 +15,6 @@ import '../features/auth/providers/password_recovery_provider.dart'
     show isPasswordRecoveryActiveProvider;
 import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../services/storage/local_cache_service.dart';
-import '../shared/utils/phone_number_utils.dart';
 import 'admin_route_policy.dart';
 import 'app_deep_links.dart';
 import 'app_routes.dart';
@@ -19,6 +22,8 @@ import 'prestataire_public_route.dart';
 
 /// Logique de redirection globale GoRouter (auth, rôles, legacy).
 String? appRouterRedirect(Ref ref, GoRouterState state) {
+  if (PostAuthNavigation.isInFlight) return null;
+
   final auth = ref.read(authNotifierProvider);
   final recoveryActive = ref.read(isPasswordRecoveryActiveProvider);
   final guestMode = ref.read(guestModeProvider);
@@ -40,9 +45,9 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     AppRoutes.login,
     AppRoutes.register,
     AppRoutes.registerVerifyEmail,
-    AppRoutes.verifyPhone,
     AppRoutes.forgotPassword,
     AppRoutes.resetPassword,
+    AppRoutes.bannedAccountSupport,
     if (kDebugMode) AppRoutes.asyncStateTest,
   };
   final guestOnlyRoutes = <String>{
@@ -50,7 +55,6 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     AppRoutes.login,
     AppRoutes.register,
     AppRoutes.registerVerifyEmail,
-    AppRoutes.verifyPhone,
     AppRoutes.forgotPassword,
   };
 
@@ -84,19 +88,11 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
 
   if (registerWizardOngoing) {
     if (location == AppRoutes.register ||
-        location == AppRoutes.registerVerifyEmail ||
-        location == AppRoutes.verifyPhone) {
+        location == AppRoutes.registerVerifyEmail) {
       return null;
     }
     if (registerDraft.pendingEmailVerification && !isAuthenticated) {
       return '${AppRoutes.registerVerifyEmail}?email=${Uri.encodeComponent(registerDraft.email.trim())}';
-    }
-    if (registerDraft.pendingPhoneVerification && !isAuthenticated) {
-      final phone = PhoneNumberUtils.toE164(
-        dialCode: registerDraft.phoneDialCode,
-        local: registerDraft.phone,
-      );
-      return '${AppRoutes.verifyPhone}?flow=register&phone=${Uri.encodeComponent(phone)}';
     }
     if (isAuthenticated) {
       if (location == AppRoutes.register) return null;
@@ -108,20 +104,22 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     return AppRoutes.register;
   }
 
-  if (auth.isLoading) {
-    if (location == AppRoutes.register ||
-        location == AppRoutes.registerVerifyEmail ||
-        location == AppRoutes.verifyPhone) {
-      return null;
-    }
-    return location == AppRoutes.splash ? null : AppRoutes.splash;
-  }
-
   if (recoveryActive) {
     if (location != AppRoutes.resetPassword) {
       return AppRoutes.resetPassword;
     }
     return null;
+  }
+
+  if (auth.isLoading) {
+    if (location == AppRoutes.register ||
+        location == AppRoutes.registerVerifyEmail ||
+        location == AppRoutes.login ||
+        location == AppRoutes.forgotPassword ||
+        location == AppRoutes.resetPassword) {
+      return null;
+    }
+    return location == AppRoutes.splash ? null : AppRoutes.splash;
   }
 
   if (location == AppRoutes.resetPassword) {
@@ -142,17 +140,30 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     return AppRoutes.welcome;
   }
 
+  final handoffTarget = ref.read(splashRedirectTargetProvider);
+  if (handoffTarget != null) {
+    scheduleMicrotask(
+      () => ref.read(splashRedirectTargetProvider.notifier).clear(),
+    );
+    return handoffTarget;
+  }
+
   if (location == AppRoutes.splash) {
     return null;
   }
 
   if (location == AppRoutes.login) {
+    if (isAuthenticated && ref.read(loginRedirectAfterWelcomeProvider)) {
+      scheduleMicrotask(
+        () => ref.read(loginRedirectAfterWelcomeProvider.notifier).disarm(),
+      );
+      return preferredPath;
+    }
     return null;
   }
 
   if (location == AppRoutes.register ||
-      location == AppRoutes.registerVerifyEmail ||
-      location == AppRoutes.verifyPhone) {
+      location == AppRoutes.registerVerifyEmail) {
     return null;
   }
 
@@ -164,7 +175,8 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
       return AppRoutes.adminHome;
     }
     if (!AdminRoutePolicy.isAdminShellPath(location) &&
-        !isPublicPrestataireProfilePath(location)) {
+        !isPublicPrestataireProfilePath(location) &&
+        !AdminRoutePolicy.isBugReportPath(location)) {
       return AppRoutes.adminHome;
     }
     return null;

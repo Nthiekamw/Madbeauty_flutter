@@ -5,6 +5,7 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../../shared/widgets/app/app_avatar.dart';
+import '../../../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../../../shared/widgets/app/app_text_field.dart';
 import '../../hub/prestataire_hub_layout.dart';
 import 'prestataire_work_location_selector.dart';
@@ -562,10 +563,10 @@ class _DefaultAvatarChip extends StatelessWidget {
                 : null,
           ),
           child: ClipOval(
-            child: Image.network(
-              imageUrl,
+            child: AppNetworkImage(
+              url: imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => ColoredBox(
+              error: ColoredBox(
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.person_rounded,

@@ -19,10 +19,13 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/phone_number_utils.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_form_scroll_view.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../auth/register/logic/register_validators.dart';
 import '../../home/providers/home_profile_provider.dart';
 import '../logic/profile_display.dart';
 import '../providers/current_user_profile_provider.dart';
@@ -50,6 +53,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
   String? _error;
   String? _prenomError;
   String? _nomError;
+  String? _phoneError;
   Uint8List? _avatarPreviewBytes;
 
   @override
@@ -84,12 +88,17 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     final prenomErr = prenom.isEmpty && nom.isEmpty
         ? DiscProfile.editAccountNameRequired
         : null;
+    final phoneLocal = _phone.text.trim();
+    final phoneErr = phoneLocal.isEmpty
+        ? null
+        : RegisterValidators.phoneLocal(phoneLocal, dialCode: _phoneDialCode);
     setState(() {
       _prenomError = prenomErr;
       _nomError = prenomErr;
+      _phoneError = phoneErr;
       _error = null;
     });
-    return prenomErr == null;
+    return prenomErr == null && phoneErr == null;
   }
 
   Future<void> _save() async {
@@ -114,11 +123,15 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     });
 
     try {
+      final phoneStored = PhoneNumberUtils.toStored(
+        dialCode: _phoneDialCode,
+        local: _phone.text,
+      );
       await profileService.upsertClientDetails(
         userId: user.id,
         prenom: _prenom.text.trim(),
         nom: _nom.text.trim(),
-        telephone: _phone.text.trim(),
+        telephone: phoneStored.isEmpty ? null : phoneStored,
       );
       await clientService.updateAdresse(
         userId: user.id,
@@ -239,11 +252,25 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
 
     return DiscoveryBrandScaffold(
       body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => const DiscoveryDetailSkeleton(),
+        error: (_, __) => DiscoveryEmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: CoreStrings.networkErrorTitle,
+          body: CoreStrings.networkErrorBody,
+          iconColor: Theme.of(context).colorScheme.error,
+          actionLabel: DiscList.retry,
+          onAction: () => ref.invalidate(currentUserProfileProvider),
+        ),
         data: (profile) => clientAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text(e.toString())),
+          loading: () => const DiscoveryDetailSkeleton(),
+          error: (_, __) => DiscoveryEmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: CoreStrings.networkErrorTitle,
+            body: CoreStrings.networkErrorBody,
+            iconColor: Theme.of(context).colorScheme.error,
+            actionLabel: DiscList.retry,
+            onAction: () => ref.invalidate(currentClientProfileProvider),
+          ),
           data: (client) {
             _bindFields(profile, client);
             final displayName = profileDisplayName(profile: profile, email: email);
@@ -298,8 +325,17 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                     nomController: _nom,
                     phoneController: _phone,
                     phoneDialCode: _phoneDialCode,
+                    phoneError: _phoneError,
                     onPhoneDialCodeChanged: (code) {
-                      setState(() => _phoneDialCode = code);
+                      setState(() {
+                        _phoneDialCode = code;
+                        _phoneError = null;
+                      });
+                    },
+                    onPhoneChanged: () {
+                      if (_phoneError != null) {
+                        setState(() => _phoneError = null);
+                      }
                     },
                     cityController: _city,
                     email: email,

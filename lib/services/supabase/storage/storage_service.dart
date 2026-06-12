@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/models/domain/catalog/realisation_media_type.dart';
+
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 
@@ -10,24 +12,40 @@ const profilePhotosBucket = 'profile-photos';
 const realisationPhotosBucket = 'realisation-photos';
 const reviewPhotosBucket = 'review-photos';
 const chatAttachmentsBucket = 'chat-attachments';
+const bugReportScreenshotsBucket = 'bug-report-screenshots';
 const maxSourceImageBytes = 12 * 1024 * 1024;
+const maxSourceVideoBytes = 50 * 1024 * 1024;
 
 typedef StorageUploadProgress = void Function(double progress);
 
 class StorageUploadFile {
-  const StorageUploadFile({required this.bytes, this.fileName, this.mimeType});
+  const StorageUploadFile({
+    required this.bytes,
+    this.fileName,
+    this.mimeType,
+    this.localPath,
+  });
 
   static Future<StorageUploadFile> fromXFile(XFile file) async {
     return StorageUploadFile(
       bytes: await file.readAsBytes(),
       fileName: file.name,
       mimeType: file.mimeType,
+      localPath: file.path,
     );
   }
 
   final Uint8List bytes;
   final String? fileName;
   final String? mimeType;
+  final String? localPath;
+
+  RealisationMediaType get mediaType =>
+      StorageService.isVideoFile(this)
+          ? RealisationMediaType.video
+          : RealisationMediaType.image;
+
+  bool get isVideo => mediaType.isVideo;
 }
 
 class StorageService {
@@ -55,6 +73,13 @@ class StorageService {
     required StorageUploadFile file,
     StorageUploadProgress? onProgress,
   }) {
+    if (isVideoFile(file)) {
+      return uploadRealisationVideo(
+        prestataireId: prestataireId,
+        file: file,
+        onProgress: onProgress,
+      );
+    }
     return _uploadImage(
       operation: 'storage.uploadRealisation',
       bucket: realisationPhotosBucket,
@@ -63,6 +88,49 @@ class StorageService {
       file: file,
       onProgress: onProgress,
     );
+  }
+
+  Future<String> uploadRealisationVideo({
+    required String prestataireId,
+    required StorageUploadFile file,
+    StorageUploadProgress? onProgress,
+  }) {
+    return SupabaseErrorHandler.run(
+      operation: 'storage.uploadRealisationVideo',
+      action: () async {
+        validateVideoFile(file);
+        onProgress?.call(0.1);
+        final stamp = DateTime.now().millisecondsSinceEpoch;
+        final ext = _videoExtensionForFile(file);
+        final contentType = _videoContentTypeForFile(file);
+        final path = '$prestataireId/realisation_$stamp.$ext';
+
+        await _client.storage.from(realisationPhotosBucket).uploadBinary(
+              path,
+              file.bytes,
+              fileOptions: FileOptions(
+                contentType: contentType,
+                upsert: false,
+              ),
+            );
+        onProgress?.call(0.9);
+
+        final publicUrl =
+            _client.storage.from(realisationPhotosBucket).getPublicUrl(path);
+        onProgress?.call(1);
+        return publicUrl;
+      },
+    );
+  }
+
+  static bool isVideoFile(StorageUploadFile file) {
+    final mimeType = file.mimeType?.toLowerCase().trim();
+    if (mimeType != null && mimeType.startsWith('video/')) return true;
+    final extension = _extensionFromFileName(file.fileName);
+    return switch (extension) {
+      'mp4' || 'mov' || 'm4v' || 'webm' => true,
+      _ => false,
+    };
   }
 
   /// Chemin : `{userId}/{bookingId}/photo_{stamp}.jpg`
@@ -77,6 +145,23 @@ class StorageService {
       bucket: chatAttachmentsBucket,
       pathPrefix: '$userId/$bookingId',
       baseName: 'photo',
+      file: file,
+      onProgress: onProgress,
+    );
+  }
+
+  /// Chemin : `{userId}/{reportId}/screenshot_{stamp}.jpg`
+  Future<String> uploadBugReportScreenshot({
+    required String userId,
+    required String reportId,
+    required StorageUploadFile file,
+    StorageUploadProgress? onProgress,
+  }) {
+    return _uploadImage(
+      operation: 'storage.uploadBugReportScreenshot',
+      bucket: bugReportScreenshotsBucket,
+      pathPrefix: '$userId/$reportId',
+      baseName: 'screenshot',
       file: file,
       onProgress: onProgress,
     );
@@ -155,6 +240,37 @@ class StorageService {
     );
   }
 
+  static void validateVideoFile(StorageUploadFile file) {
+    if (file.bytes.lengthInBytes > maxSourceVideoBytes) {
+      throw const AppFailure(
+        'Vidéo trop lourde. Choisis une vidéo de moins de 50 Mo.',
+      );
+    }
+
+    final mimeType = file.mimeType?.toLowerCase().trim();
+    final extension = _extensionFromFileName(file.fileName);
+    final supportedMime = switch (mimeType) {
+      null || '' => null,
+      'video/mp4' ||
+      'video/quicktime' ||
+      'video/webm' ||
+      'video/x-m4v' =>
+        true,
+      _ => false,
+    };
+    final supportedExtension = switch (extension) {
+      'mp4' || 'mov' || 'm4v' || 'webm' => true,
+      _ => false,
+    };
+
+    if ((supportedMime == false && !supportedExtension) ||
+        (supportedMime == null && !supportedExtension)) {
+      throw const AppFailure(
+        'Format vidéo non supporté. Utilise un fichier MP4, MOV ou WebM.',
+      );
+    }
+  }
+
   static void validateImageFile(StorageUploadFile file) {
     if (file.bytes.lengthInBytes > maxSourceImageBytes) {
       throw const AppFailure(
@@ -230,6 +346,26 @@ class StorageService {
     if (fileName == null || !fileName.contains('.')) return null;
     final ext = fileName.split('.').last.toLowerCase();
     return ext.isEmpty ? null : ext;
+  }
+
+  static String _videoExtensionForFile(StorageUploadFile file) {
+    final ext = _extensionFromFileName(file.fileName);
+    return switch (ext) {
+      'mov' => 'mov',
+      'webm' => 'webm',
+      'm4v' => 'm4v',
+      _ => 'mp4',
+    };
+  }
+
+  static String _videoContentTypeForFile(StorageUploadFile file) {
+    final mimeType = file.mimeType?.toLowerCase().trim();
+    if (mimeType != null && mimeType.startsWith('video/')) return mimeType;
+    return switch (_videoExtensionForFile(file)) {
+      'mov' => 'video/quicktime',
+      'webm' => 'video/webm',
+      _ => 'video/mp4',
+    };
   }
 }
 

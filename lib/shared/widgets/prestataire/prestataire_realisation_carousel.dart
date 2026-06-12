@@ -3,23 +3,49 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../theme/app_colors.dart';
 import '../app/app_avatar.dart';
+import 'realisation_media_cover.dart';
 
-/// Carrousel auto-défilant pour les photos de réalisations d'un prestataire.
+/// Élément affichable dans [PrestataireRealisationCarousel].
+class RealisationCarouselItem {
+  const RealisationCarouselItem({
+    required this.url,
+    this.mediaType = RealisationMediaType.image,
+  });
+
+  factory RealisationCarouselItem.fromPhoto(PhotoRealisation photo) {
+    return RealisationCarouselItem(
+      url: photo.url,
+      mediaType: photo.mediaType,
+    );
+  }
+
+  final String url;
+  final RealisationMediaType mediaType;
+
+  bool get isVideo => mediaType.isVideo;
+}
+
+/// Carrousel auto-défilant pour photos et vidéos de réalisations.
 class PrestataireRealisationCarousel extends StatefulWidget {
   const PrestataireRealisationCarousel({
     super.key,
-    required this.photoUrls,
+    this.items = const [],
+    @Deprecated('Use items instead') this.photoUrls = const [],
     this.height = 120,
     this.width,
     this.borderRadius = BorderRadius.zero,
     this.fallbackDisplayName,
     this.fallbackAvatarUrl,
     this.autoAdvanceInterval = const Duration(seconds: 3),
-    this.onPhotoTap,
+    this.playVideos = false,
+    this.onItemTap,
   });
 
+  final List<RealisationCarouselItem> items;
   final List<String> photoUrls;
   final double height;
   final double? width;
@@ -27,7 +53,8 @@ class PrestataireRealisationCarousel extends StatefulWidget {
   final String? fallbackDisplayName;
   final String? fallbackAvatarUrl;
   final Duration autoAdvanceInterval;
-  final void Function(int index)? onPhotoTap;
+  final bool playVideos;
+  final void Function(int index)? onItemTap;
 
   @override
   State<PrestataireRealisationCarousel> createState() =>
@@ -40,10 +67,20 @@ class _PrestataireRealisationCarouselState
   Timer? _autoTimer;
   int _pageIndex = 0;
 
-  List<String> get _urls => _normalizeUrls(widget.photoUrls);
+  List<RealisationCarouselItem> get _items => _resolveItems();
 
-  static List<String> _normalizeUrls(List<String> raw) =>
-      raw.map((u) => u.trim()).where((u) => u.isNotEmpty).toList();
+  List<RealisationCarouselItem> _resolveItems() {
+    if (widget.items.isNotEmpty) {
+      return widget.items
+          .where((item) => item.url.trim().isNotEmpty)
+          .toList();
+    }
+    return widget.photoUrls
+        .map((u) => u.trim())
+        .where((u) => u.isNotEmpty)
+        .map((url) => RealisationCarouselItem(url: url))
+        .toList();
+  }
 
   @override
   void initState() {
@@ -55,7 +92,11 @@ class _PrestataireRealisationCarouselState
   @override
   void didUpdateWidget(covariant PrestataireRealisationCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (listEquals(_normalizeUrls(oldWidget.photoUrls), _urls)) return;
+    if (listEquals(oldWidget.items, widget.items) &&
+        listEquals(oldWidget.photoUrls, widget.photoUrls) &&
+        oldWidget.playVideos == widget.playVideos) {
+      return;
+    }
 
     _stopAutoAdvance();
     _pageIndex = 0;
@@ -65,7 +106,7 @@ class _PrestataireRealisationCarouselState
   }
 
   void _initController() {
-    if (_urls.length > 1) {
+    if (_items.length > 1) {
       _pageController = PageController();
     }
   }
@@ -82,18 +123,21 @@ class _PrestataireRealisationCarouselState
 
   void _scheduleAutoAdvance() {
     _stopAutoAdvance();
-    if (_urls.length <= 1) return;
+    if (_items.length <= 1) return;
 
     _autoTimer = Timer.periodic(widget.autoAdvanceInterval, (_) {
       if (!mounted) return;
 
-      final urls = _urls;
+      final items = _items;
       final controller = _pageController;
-      if (urls.length <= 1 || controller == null || !controller.hasClients) {
+      if (items.length <= 1 || controller == null || !controller.hasClients) {
         return;
       }
 
-      final next = (_pageIndex + 1) % urls.length;
+      final current = items[_pageIndex];
+      if (widget.playVideos && current.isVideo) return;
+
+      final next = (_pageIndex + 1) % items.length;
       controller.animateToPage(
         next,
         duration: const Duration(milliseconds: 450),
@@ -121,8 +165,9 @@ class _PrestataireRealisationCarouselState
     double? width,
   ) {
     final size = Size(width ?? 0, widget.height);
+    final items = _items;
 
-    if (_urls.isEmpty) {
+    if (items.isEmpty) {
       return _FallbackMedia(
         size: size,
         borderRadius: widget.borderRadius,
@@ -131,12 +176,13 @@ class _PrestataireRealisationCarouselState
       );
     }
 
-    if (_urls.length == 1) {
-      return _PhotoFrame(
-        url: _urls.first,
+    if (items.length == 1) {
+      return _MediaFrame(
+        item: items.first,
         size: size,
         borderRadius: widget.borderRadius,
-        onTap: widget.onPhotoTap != null ? () => widget.onPhotoTap!(0) : null,
+        playVideos: widget.playVideos,
+        onTap: widget.onItemTap != null ? () => widget.onItemTap!(0) : null,
       );
     }
 
@@ -151,14 +197,15 @@ class _PrestataireRealisationCarouselState
             PageView.builder(
               controller: _pageController,
               onPageChanged: (i) => setState(() => _pageIndex = i),
-              itemCount: _urls.length,
+              itemCount: items.length,
               itemBuilder: (context, index) {
-                return _PhotoFrame(
-                  url: _urls[index],
+                return _MediaFrame(
+                  item: items[index],
                   size: size,
                   borderRadius: BorderRadius.zero,
-                  onTap: widget.onPhotoTap != null
-                      ? () => widget.onPhotoTap!(index)
+                  playVideos: widget.playVideos && index == _pageIndex,
+                  onTap: widget.onItemTap != null
+                      ? () => widget.onItemTap!(index)
                       : null,
                 );
               },
@@ -172,7 +219,7 @@ class _PrestataireRealisationCarouselState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
-                  children: List.generate(_urls.length, (i) {
+                  children: List.generate(items.length, (i) {
                     final active = i == _pageIndex;
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -199,49 +246,30 @@ class _PrestataireRealisationCarouselState
   }
 }
 
-class _PhotoFrame extends StatelessWidget {
-  const _PhotoFrame({
-    required this.url,
+class _MediaFrame extends StatelessWidget {
+  const _MediaFrame({
+    required this.item,
     required this.size,
     required this.borderRadius,
+    required this.playVideos,
     this.onTap,
   });
 
-  final String url;
+  final RealisationCarouselItem item;
   final Size size;
   final BorderRadius borderRadius;
+  final bool playVideos;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final image = Image.network(
-      url,
+    final media = RealisationMediaCover(
+      mediaType: item.mediaType,
+      imageUrl: item.url,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => ColoredBox(
-        color: theme.colorScheme.surfaceContainerHighest,
-        child: Icon(
-          Icons.broken_image_outlined,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
-        return ColoredBox(
-          color: theme.colorScheme.surfaceContainerHighest,
-          child: Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-        );
-      },
+      playVideoPreview: playVideos && item.isVideo,
+      showPlayBadge: item.isVideo && !playVideos,
+      playIconSize: size.height < 120 ? 24 : 36,
     );
 
     return ClipRRect(
@@ -250,10 +278,10 @@ class _PhotoFrame extends StatelessWidget {
         width: size.width > 0 ? size.width : null,
         height: size.height,
         child: onTap == null
-            ? image
+            ? media
             : Material(
                 color: AppColors.transparent,
-                child: InkWell(onTap: onTap, child: image),
+                child: InkWell(onTap: onTap, child: media),
               ),
       ),
     );
@@ -279,10 +307,11 @@ class _FallbackMedia extends StatelessWidget {
     final url = avatarUrl?.trim();
 
     if (url != null && url.isNotEmpty) {
-      return _PhotoFrame(
-        url: url,
+      return _MediaFrame(
+        item: RealisationCarouselItem(url: url),
         size: size,
         borderRadius: borderRadius,
+        playVideos: false,
       );
     }
 

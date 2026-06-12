@@ -14,11 +14,13 @@ class PrestataireFavoriteButton extends ConsumerStatefulWidget {
     super.key,
     required this.prestataireId,
     this.compact = false,
+    this.micro = false,
     this.style = PrestataireFavoriteButtonStyle.overlay,
   });
 
   final String prestataireId;
   final bool compact;
+  final bool micro;
   final PrestataireFavoriteButtonStyle style;
 
   @override
@@ -108,8 +110,8 @@ class _PrestataireFavoriteButtonState
     final theme = Theme.of(context);
     final isFavorite =
         ref.watch(isPrestataireFavoriteProvider(widget.prestataireId));
-    final iconSize = widget.compact ? 20.0 : 24.0;
-    final pad = widget.compact ? 6.0 : 8.0;
+    final iconSize = widget.micro ? 14.0 : (widget.compact ? 20.0 : 24.0);
+    final pad = widget.micro ? 3.5 : (widget.compact ? 6.0 : 8.0);
 
     final Color iconColor;
     final Color? backgroundColor;

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../shared/theme/discovery_styles.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../providers/dashboard/prestataire_dashboard_overview_provider.dart';
@@ -52,16 +55,46 @@ class PrestataireDashboardOverviewGrid extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
           overviewAsync.when(
-            loading: () => const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(strokeWidth: 2),
+            loading: () => _OverviewGridSkeleton(),
+            error: (_, __) => DiscoverySectionError(
+              message: DiscPrestaDash.loadErr,
+              onRetry: () => ref.invalidate(
+                prestataireDashboardOverviewProvider,
               ),
             ),
-            error: (_, __) => const SizedBox.shrink(),
             data: (data) => _OverviewGridBody(data: data),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OverviewGridSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final track = DiscoveryShimmer.colors(theme).track;
+    final radius = DiscoveryStyles.cardBorderRadius;
+
+    return DiscoveryShimmer.wrap(
+      context: context,
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.35,
+        children: List.generate(
+          4,
+          (_) => Container(
+            decoration: BoxDecoration(
+              color: track,
+              borderRadius: radius,
+            ),
+          ),
+        ),
       ),
     );
   }

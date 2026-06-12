@@ -23,29 +23,32 @@ import '../../../services/supabase/storage/storage_service.dart';
 import '../providers/message_provider.dart';
 
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 
 import '../models/conversation_inbox_item.dart';
 
 import '../logic/chat_message_moderator.dart';
 import '../logic/chat_message_templates.dart';
-import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../widgets/chat/chat_composer.dart';
 import '../widgets/chat/chat_message_list.dart';
 import '../../trust/widgets/report_content_sheet.dart';
 import '../../../services/supabase/trust/content_report_service.dart';
 import '../widgets/chat/chat_screen_app_bar.dart';
+import '../models/chat_inbox_key.dart';
+import '../providers/messaging_inbox_providers.dart';
 
 
 
 class ChatScreen extends ConsumerStatefulWidget {
 
-  const ChatScreen({super.key, required this.bookingId});
-
-
+  const ChatScreen({super.key, required this.bookingId, this.viewerRole});
 
   /// Identifiant de la réservation (booking).
-
   final String bookingId;
+
+  /// Rôle dans le fil (client → salon ; prestataire → cliente).
+  final MessagingInboxRole? viewerRole;
 
 
 
@@ -68,13 +71,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   int _lastMessageCount = 0;
   ConversationInboxItem? _lastHeader;
+  Timer? _presenceRefresh;
 
 
+
+  ChatInboxKey get _inboxKey => ChatInboxKey(
+        bookingId: widget.bookingId,
+        viewerRole: widget.viewerRole,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _presenceRefresh = Timer.periodic(const Duration(seconds: 45), (_) {
+      if (!mounted) return;
+      ref.invalidate(chatInboxItemProvider(_inboxKey));
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bookingId != widget.bookingId ||
+        oldWidget.viewerRole != widget.viewerRole) {
+      _lastHeader = null;
+    }
+  }
 
   @override
 
   void dispose() {
-
+    _presenceRefresh?.cancel();
     _controller.dispose();
 
     _scrollController.dispose();
@@ -377,14 +404,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
 
-    final headerAsync = ref.watch(chatInboxItemProvider(widget.bookingId));
+    final headerAsync = ref.watch(chatInboxItemProvider(_inboxKey));
 
     final messagesAsync =
 
         ref.watch(messagesProvider(widget.bookingId));
 
-    final isPresta =
-        ref.watch(currentPrestataireProvider).asData?.value != null;
+    final headerForRole = headerAsync.asData?.value ?? _lastHeader;
+    final isPresta = widget.viewerRole == MessagingInboxRole.prestataire ||
+        (widget.viewerRole == null &&
+            headerForRole != null &&
+            !headerForRole.showSalonName);
     final quickTemplates = isPresta
         ? ChatMessageTemplates.prestataire
         : ChatMessageTemplates.client;
@@ -399,7 +429,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     });
 
-    ref.listen(chatInboxItemProvider(widget.bookingId), (_, next) {
+    ref.listen(chatInboxItemProvider(_inboxKey), (_, next) {
       final fresh = next.asData?.value;
       if (fresh != null && mounted) {
         setState(() => _lastHeader = fresh);
@@ -434,6 +464,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         peerNom: header?.peerNom,
         avatarUrl: header?.peerAvatarUrl,
         subtitle: _headerSubtitle(header),
+        peerLastSeenAt: header?.peerLastSeenAt,
+        useSalonName: header?.showSalonName ?? false,
         onReport: header == null
             ? null
             : () => showReportContentSheet(
@@ -457,22 +489,67 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
-                DiscChat.moderationSafetyHint,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.3,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Center(
+                child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHigh
+                      .withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                  ),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.verified_user_outlined,
+                      size: 14,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        DiscChat.moderationSafetyHint,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.25,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               ),
             ),
             Expanded(
               child: messagesAsync.when(
 
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const DiscoveryListSkeleton(
+                rowCount: 6,
+                rowHeight: 72,
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+              ),
 
-              error: (_, __) => Center(child: Text(DiscChat.loadError)),
+              error: (_, __) => Center(
+                child: DiscoveryEmptyState(
+                  icon: Icons.cloud_off_outlined,
+                  title: CoreStrings.networkErrorTitle,
+                  body: DiscChat.loadError,
+                  iconColor: theme.colorScheme.error,
+                  actionLabel: DiscList.retry,
+                  onAction: () =>
+                      ref.invalidate(messagesProvider(widget.bookingId)),
+                ),
+              ),
 
               data: (messages) {
 

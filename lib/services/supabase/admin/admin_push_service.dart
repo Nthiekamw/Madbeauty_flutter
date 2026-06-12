@@ -39,11 +39,15 @@ class AdminPushSendResult {
     required this.recipients,
     required this.sent,
     required this.failed,
+    this.credentialError,
+    this.firstError,
   });
 
   final int recipients;
   final int sent;
   final int failed;
+  final String? credentialError;
+  final String? firstError;
 }
 
 class AdminPushService {
@@ -103,6 +107,8 @@ class AdminPushService {
           recipients: _intField(data, 'recipients'),
           sent: _intField(data, 'sent'),
           failed: _intField(data, 'failed'),
+          credentialError: data['credentialError'] as String?,
+          firstError: data['firstError'] as String?,
         );
       },
     );

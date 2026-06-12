@@ -7,6 +7,13 @@ abstract final class AdminRoutePolicy {
   static bool isAdminShellPath(String location) =>
       location.startsWith('/admin/');
 
+  /// Chat et formulaires de signalement technique (hors shell admin).
+  static bool isBugReportPath(String location) =>
+      location.startsWith('/bug-report/') ||
+      location == AppRoutes.clientReportBug ||
+      location == AppRoutes.clientMyBugReports ||
+      location == AppRoutes.bannedAccountSupport;
+
   static bool isClientWorkspacePath(String location) =>
       location.startsWith('/client');
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../theme/app_colors.dart';
+import '../app/app_network_image.dart';
 
 /// Galerie plein écran avec défilement horizontal entre les photos.
 class FullscreenPhotoGallery extends StatefulWidget {
@@ -161,28 +162,25 @@ class _GalleryPhotoPage extends StatelessWidget {
       child: Center(
         child: Padding(
           padding: EdgeInsets.only(top: topInset, bottom: 24),
-          child: Image.network(
-            url,
+          child: AppNetworkImage(
+            url: url,
             fit: BoxFit.contain,
             width: double.infinity,
-            errorBuilder: (_, __, ___) => Icon(
+            placeholder: const Center(
+              child: SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+            error: Icon(
               Icons.broken_image_outlined,
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return const Center(
-                child: SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white70,
-                  ),
-                ),
-              );
-            },
           ),
         ),
       ),

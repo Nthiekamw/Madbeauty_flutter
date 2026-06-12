@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -22,6 +20,8 @@ class PrestataireHomeListCard extends StatelessWidget {
     this.cardHeight,
     this.photoHeight,
     this.dense = false,
+    this.showDistanceOnPhoto = false,
+    this.showRatingOnPhoto = false,
   });
 
   final PrestataireCatalogEntry entry;
@@ -31,10 +31,8 @@ class PrestataireHomeListCard extends StatelessWidget {
   final double? photoHeight;
   /// Typographie réduite (grille catalogue).
   final bool dense;
-
-  /// Hauteur minimale réservée au bloc texte sous la photo.
-  static const _minTextSectionHeight = 98.0;
-  static const _minTextSectionHeightDense = 82.0;
+  final bool showDistanceOnPhoto;
+  final bool showRatingOnPhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +47,14 @@ class PrestataireHomeListCard extends StatelessWidget {
     final ville = profile.ville?.trim();
     final origin = distanceOrigin;
     final km = origin != null ? entry.distanceKmFrom(origin) : double.infinity;
+    final distanceLabel = (!km.isInfinite && !km.isNaN)
+        ? DiscHome.nearbyKm(km)
+        : null;
     final rating = profile.noteMoyenne;
     final radius = HomeStyles.cardBorderRadius;
     final w = cardWidth ?? HomeStyles.listCardWidth;
     final h = cardHeight;
     final rawPhotoH = photoHeight ?? HomeStyles.listCardPhotoHeight;
-    final minTextH = dense ? _minTextSectionHeightDense : _minTextSectionHeight;
-    final photoH = h != null
-        ? math.min(rawPhotoH, h - minTextH).clamp(dense ? 72.0 : 72.0, h * 0.62)
-        : rawPhotoH;
 
     return Material(
       color: AppColors.cardSurfaceFor(theme.brightness),
@@ -83,60 +80,52 @@ class PrestataireHomeListCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                PrestataireCardPhotoHeader(
-                  prestataireId: profile.id,
-                  height: photoH,
-                  width: w,
-                  borderRadius: BorderRadius.only(
-                    topLeft: radius.topLeft,
-                    topRight: radius.topRight,
+                if (h != null)
+                  Expanded(
+                    child: _PhotoSection(
+                      profileId: profile.id,
+                      width: w,
+                      radius: radius,
+                      safeTitle: safeTitle,
+                      avatarUrl: entry.avatarUrl,
+                      showDistanceOnPhoto: showDistanceOnPhoto,
+                      showRatingOnPhoto: showRatingOnPhoto,
+                      distanceLabel: distanceLabel,
+                      rating: rating,
+                    ),
+                  )
+                else
+                  _PhotoSection(
+                    profileId: profile.id,
+                    width: w,
+                    radius: radius,
+                    safeTitle: safeTitle,
+                    avatarUrl: entry.avatarUrl,
+                    showDistanceOnPhoto: showDistanceOnPhoto,
+                    showRatingOnPhoto: showRatingOnPhoto,
+                    distanceLabel: distanceLabel,
+                    rating: rating,
+                    fixedHeight: rawPhotoH,
                   ),
-                  fallbackDisplayName: safeTitle,
-                  fallbackAvatarUrl: entry.avatarUrl,
-                  compactBadge: true,
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      dense ? 8 : 10,
-                      dense ? 4 : 6,
-                      dense ? 8 : 10,
-                      dense ? 5 : 8,
-                    ),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: dense
-                          ? SizedBox(
-                              width: w - (dense ? 16 : 20),
-                              child: _CardTextBody(
-                                theme: theme,
-                                safeTitle: safeTitle,
-                                specialty: specialty,
-                                rating: rating,
-                                reviewCount: entry.reviewCount,
-                                ville: ville,
-                                km: km,
-                                dense: true,
-                              ),
-                            )
-                          : FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.topLeft,
-                              child: SizedBox(
-                                width: w - 20,
-                                child: _CardTextBody(
-                                  theme: theme,
-                                  safeTitle: safeTitle,
-                                  specialty: specialty,
-                                  rating: rating,
-                                  reviewCount: entry.reviewCount,
-                                  ville: ville,
-                                  km: km,
-                                  dense: false,
-                                ),
-                              ),
-                            ),
-                    ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    dense ? 6 : 7,
+                    dense ? 2 : 3,
+                    dense ? 6 : 7,
+                    dense ? 3 : 4,
+                  ),
+                  child: _CardTextBody(
+                    theme: theme,
+                    safeTitle: safeTitle,
+                    isVerified: profile.isVerified,
+                    specialty: specialty,
+                    rating: rating,
+                    reviewCount: entry.reviewCount,
+                    ville: ville,
+                    km: km,
+                    dense: dense,
+                    showDistanceOnPhoto: showDistanceOnPhoto,
+                    showRatingOnPhoto: showRatingOnPhoto,
                   ),
                 ),
               ],
@@ -148,86 +137,185 @@ class PrestataireHomeListCard extends StatelessWidget {
   }
 }
 
+class _PhotoSection extends StatelessWidget {
+  const _PhotoSection({
+    required this.profileId,
+    required this.width,
+    required this.radius,
+    required this.safeTitle,
+    required this.avatarUrl,
+    required this.showDistanceOnPhoto,
+    required this.showRatingOnPhoto,
+    required this.distanceLabel,
+    required this.rating,
+    this.fixedHeight,
+  });
+
+  final String profileId;
+  final double width;
+  final BorderRadius radius;
+  final String safeTitle;
+  final String? avatarUrl;
+  final bool showDistanceOnPhoto;
+  final bool showRatingOnPhoto;
+  final String? distanceLabel;
+  final double? rating;
+  final double? fixedHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxH = constraints.maxHeight;
+        final photoH = fixedHeight ??
+            (maxH.isFinite && maxH > 0 ? maxH : HomeStyles.listCardPhotoHeight);
+
+        return SizedBox(
+          height: photoH,
+          width: width,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+            PrestataireCardPhotoHeader(
+              prestataireId: profileId,
+              height: photoH,
+              width: width,
+              borderRadius: BorderRadius.only(
+                topLeft: radius.topLeft,
+                topRight: radius.topRight,
+              ),
+              fallbackDisplayName: safeTitle,
+              fallbackAvatarUrl: avatarUrl,
+              compactBadge: true,
+              microOverlay: true,
+            ),
+            if (showDistanceOnPhoto && distanceLabel != null)
+              Positioned(
+                left: 5,
+                bottom: 5,
+                child: _PhotoPill(
+                  icon: Icons.near_me_rounded,
+                  label: distanceLabel!,
+                ),
+              ),
+            if (showRatingOnPhoto && rating != null)
+              Positioned(
+                left: 5,
+                bottom: 5,
+                child: _PhotoPill(
+                  icon: Icons.star_rounded,
+                  label: rating!.toStringAsFixed(1),
+                  iconColor: AppColors.starRating,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _CardTextBody extends StatelessWidget {
   const _CardTextBody({
     required this.theme,
     required this.safeTitle,
+    required this.isVerified,
     required this.specialty,
     required this.rating,
     required this.reviewCount,
     required this.ville,
     required this.km,
     this.dense = false,
+    this.showDistanceOnPhoto = false,
+    this.showRatingOnPhoto = false,
   });
 
   final ThemeData theme;
   final String safeTitle;
+  final bool isVerified;
   final String? specialty;
   final double? rating;
   final int? reviewCount;
   final String? ville;
   final double km;
   final bool dense;
+  final bool showDistanceOnPhoto;
+  final bool showRatingOnPhoto;
 
   @override
   Widget build(BuildContext context) {
-    final showSpecialty =
-        !dense && specialty != null && specialty!.isNotEmpty;
-    final locationLine = _locationLine();
+    final titleSize = dense ? 8.5 : 9.0;
+    final bodySize = dense ? 7.5 : 8.0;
+    final showSpecialty = specialty != null && specialty!.isNotEmpty;
+    final locationLine =
+        showDistanceOnPhoto ? null : _locationLine();
+    final showRating = !showRatingOnPhoto && rating != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          safeTitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w800,
-            color: theme.colorScheme.onSurface,
-            height: 1.05,
-            fontSize: dense ? 12 : 14,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                safeTitle,
+                softWrap: true,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurface,
+                  height: 1.1,
+                  fontSize: titleSize,
+                ),
+              ),
+            ),
+            if (isVerified)
+              Padding(
+                padding: EdgeInsets.only(left: dense ? 2 : 3),
+                child: Icon(
+                  Icons.verified_rounded,
+                  color: theme.colorScheme.primary,
+                  size: dense ? 10 : 11,
+                ),
+              ),
+          ],
         ),
         if (showSpecialty) ...[
           const SizedBox(height: 2),
           Text(
             specialty!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            softWrap: false,
+            softWrap: true,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 12,
+              fontSize: bodySize,
               height: 1.1,
             ),
           ),
         ],
-        if (!dense && rating != null) ...[
-          const SizedBox(height: 3),
+        if (showRating) ...[
+          const SizedBox(height: 2),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
                 Icons.star_rounded,
-                size: 13,
+                size: dense ? 10 : 11,
                 color: AppColors.starRating,
               ),
-              const SizedBox(width: 3),
-              Flexible(
+              const SizedBox(width: 2),
+              Expanded(
                 child: Text(
                   DiscHome.ratingWithReviews(rating!, reviewCount),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
+                  softWrap: true,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSurface,
-                    height: 1.05,
-                    fontSize: 11,
+                    height: 1.1,
+                    fontSize: bodySize,
                   ),
                 ),
               ),
@@ -235,25 +323,24 @@ class _CardTextBody extends StatelessWidget {
           ),
         ],
         if (locationLine != null) ...[
-          SizedBox(height: dense ? 2 : 2),
+          const SizedBox(height: 2),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
                 Icons.location_on_outlined,
-                size: dense ? 10 : 12,
+                size: dense ? 9 : 10,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 2),
               Expanded(
                 child: Text(
                   locationLine,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
+                  softWrap: true,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: dense ? 9.5 : 11,
-                    height: 1.05,
+                    fontSize: bodySize,
+                    height: 1.1,
                   ),
                 ),
               ),
@@ -271,5 +358,46 @@ class _CardTextBody extends StatelessWidget {
       return '$ville · ${DiscClientWorkspace.distanceKm(km)}';
     }
     return ville;
+  }
+}
+
+class _PhotoPill extends StatelessWidget {
+  const _PhotoPill({
+    required this.icon,
+    required this.label,
+    this.iconColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 8, color: iconColor ?? AppColors.white),
+            const SizedBox(width: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

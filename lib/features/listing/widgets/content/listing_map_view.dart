@@ -7,6 +7,7 @@ import '../../../../core/geo/discovery_reference.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../services/location/geolocation_service.dart';
 import '../../screens/listing_map_fullscreen_screen.dart';
 
@@ -400,12 +401,15 @@ class _LocationLoadingBadge extends StatelessWidget {
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(999),
       elevation: 3,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(strokeWidth: 2),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: DiscoveryShimmer.wrap(
+          context: context,
+          child: DiscoveryShimmerBox(
+            width: 18,
+            height: 18,
+            borderRadius: BorderRadius.circular(999),
+          ),
         ),
       ),
     );

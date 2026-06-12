@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_clients_grouping.dart';
 import '../providers/agenda/prestataire_agenda_provider.dart';
@@ -42,7 +43,7 @@ class _PrestataireHistoryScreenState
     return PrestataireBrandScaffold(
       body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
-          child: Center(child: CircularProgressIndicator()),
+          child: DiscoveryListSkeleton(rowCount: 5, rowHeight: 88),
         ),
         error: (_, __) => PrestataireWorkspaceShell(
           onRefresh: _reload,

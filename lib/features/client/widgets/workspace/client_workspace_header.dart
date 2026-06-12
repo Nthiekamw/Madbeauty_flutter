@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -99,6 +99,7 @@ class ClientWorkspaceHeader extends ConsumerWidget {
             children: [
               Text(
                 DiscClientWorkspace.greeting(greetingName),
+                softWrap: true,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w800,
@@ -109,25 +110,21 @@ class ClientWorkspaceHeader extends ConsumerWidget {
                       ? (responsive.isCompact ? 13 : 14)
                       : (responsive.isCompact ? 16 : 17),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
               if (lineSubtitle.isNotEmpty) ...[
                 SizedBox(height: compact ? 2 : 4),
                 Text(
                   lineSubtitle,
+                  softWrap: true,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.body,
                     color: onPrimary.withValues(alpha: 0.9),
-                    height: 1.2,
+                    height: 1.25,
                     fontWeight: FontWeight.w500,
                     fontSize: compact
                         ? (responsive.isCompact ? 10.5 : 11)
                         : (responsive.isCompact ? 12.5 : 13.5),
                   ),
-                  maxLines: compact ? 1 : 2,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: !compact,
                 ),
               ],
             ],
@@ -147,7 +144,7 @@ class ClientWorkspaceHeader extends ConsumerWidget {
       width: double.infinity,
       constraints: BoxConstraints(
         minHeight: compact
-            ? (stackedLayout ? 88 : 76)
+            ? (stackedLayout ? 96 : 80)
             : (stackedLayout ? 124 : 108),
       ),
       decoration: BoxDecoration(

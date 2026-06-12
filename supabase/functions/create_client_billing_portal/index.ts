@@ -1,6 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   clientPaymentReturnUrl,
+  ensureClientProfileRow,
   ensureStripeCustomer,
   requireAuthUser,
   serviceClient,
@@ -20,15 +21,8 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const stripe = stripeClient();
 
-    const { data: clientRow } = await admin
-      .from("client_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (!clientRow?.id) {
-      return jsonResponse({ error: "Profil client manquant" }, 403);
-    }
-    const clientProfileId = clientRow.id as string;
+    const clientRow = await ensureClientProfileRow(admin, user.id);
+    const clientProfileId = clientRow.id;
 
     const customerId = await ensureStripeCustomer(
       admin,

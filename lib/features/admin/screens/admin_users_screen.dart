@@ -7,6 +7,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_user_summary.dart';
 import '../providers/admin_users_provider.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/admin_screen_scaffold.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
@@ -87,6 +89,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
                   onPressed: usersAsync.isLoading ? null : _search,
                   child: usersAsync.isLoading
                       ? const SizedBox(
@@ -126,18 +132,14 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    DiscProfile.adminUsersSearchErr,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
+              loading: () => const DiscoveryListSkeleton(rowCount: 6),
+              error: (_, __) => DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: DiscProfile.adminUsersSearchErr,
+                iconColor: Theme.of(context).colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () => ref.invalidate(adminUsersSearchProvider(_query)),
               ),
             ),
           ),
@@ -172,47 +174,11 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     );
   }
 
-  Future<String?> _promptBanReason(AdminUserSummary user) async {
-    final controller = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    final result = await showDialog<String>(
+  Future<String?> _promptBanReason(AdminUserSummary user) {
+    return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(DiscProfile.adminUsersBanDialogTitle(user.displayName)),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: DiscProfile.adminUsersBanReasonLabel,
-              hintText: DiscProfile.adminUsersBanReasonHint,
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return DiscProfile.adminUsersBanReasonRequired;
-              }
-              return null;
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DiscProfile.adminUsersBanCancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() != true) return;
-              Navigator.of(ctx).pop(controller.text.trim());
-            },
-            child: const Text(DiscProfile.adminUsersBanConfirm),
-          ),
-        ],
-      ),
+      builder: (ctx) => _BanUserDialog(displayName: user.displayName),
     );
-    controller.dispose();
-    return result;
   }
 
   Future<void> _unban(AdminUserSummary user) async {
@@ -236,6 +202,66 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     await _run(
       user.userId,
       () => service.removeUserRole(userId: user.userId, role: role),
+    );
+  }
+}
+
+class _BanUserDialog extends StatefulWidget {
+  const _BanUserDialog({required this.displayName});
+
+  final String displayName;
+
+  @override
+  State<_BanUserDialog> createState() => _BanUserDialogState();
+}
+
+class _BanUserDialogState extends State<_BanUserDialog> {
+  final _controller = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() != true) return;
+    Navigator.of(context).pop(_controller.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(DiscProfile.adminUsersBanDialogTitle(widget.displayName)),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          maxLines: 3,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: DiscProfile.adminUsersBanReasonLabel,
+            hintText: DiscProfile.adminUsersBanReasonHint,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return DiscProfile.adminUsersBanReasonRequired;
+            }
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(DiscProfile.adminUsersBanCancel),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text(DiscProfile.adminUsersBanConfirm),
+        ),
+      ],
     );
   }
 }

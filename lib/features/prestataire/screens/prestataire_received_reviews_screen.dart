@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/reviews/review.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../reviews/models/client_review_list_item.dart';
@@ -24,7 +25,7 @@ class PrestataireReceivedReviewsScreen extends ConsumerWidget {
     return PrestataireBrandScaffold(
       body: prestaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
-          child: Center(child: CircularProgressIndicator()),
+          child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 88),
         ),
         error: (_, __) => PrestataireWorkspaceShell(
           onRefresh: () async {
@@ -33,8 +34,8 @@ class PrestataireReceivedReviewsScreen extends ConsumerWidget {
           child: Center(
             child: DiscoveryEmptyState(
               icon: Icons.cloud_off_outlined,
-              title: DiscBk.listErrTitle,
-              body: DiscBk.listErrBody,
+              title: CoreStrings.networkErrorTitle,
+              body: CoreStrings.networkErrorBody,
               actionLabel: DiscList.retry,
               onAction: () => ref.invalidate(currentPrestataireProvider),
             ),
@@ -65,7 +66,6 @@ class PrestataireReceivedReviewsScreen extends ConsumerWidget {
               Expanded(
                 child: PrestatairePublicReviewsLiveSection(
                   prestataireId: presta.id,
-                  readOnly: true,
                   onReviewTap: (review) => _openReview(context, review),
                 ),
               ),

@@ -7,33 +7,45 @@ import '../profile/prestataire_profile_form_provider.dart';
 
 /// Abonnement Stripe actif ou essai catalogue (accès catalogue + actions pro).
 final prestataireHasActiveSubscriptionProvider = Provider<bool>((ref) {
-  final status = ref.watch(prestataireSubscriptionStatusProvider).value;
+  final status = ref.watch(
+    prestataireSubscriptionStatusProvider.select((a) => a.value),
+  );
   return status?.hasCatalogAccess ?? false;
 });
 
 /// Essai catalogue en cours (sans abonnement payant).
 final prestataireIsInCatalogTrialProvider = Provider<bool>((ref) {
-  final status = ref.watch(prestataireSubscriptionStatusProvider).value;
+  final status = ref.watch(
+    prestataireSubscriptionStatusProvider.select((a) => a.value),
+  );
   return status?.isInCatalogTrial ?? false;
 });
 
 /// Jours restants d’essai catalogue (null si pas en essai).
 final prestataireCatalogTrialDaysRemainingProvider = Provider<int?>((ref) {
-  final status = ref.watch(prestataireSubscriptionStatusProvider).value;
+  final status = ref.watch(
+    prestataireSubscriptionStatusProvider.select((a) => a.value),
+  );
   return status?.catalogTrialDaysRemaining;
 });
 
 /// Profil prêt catalogue mais sans accès (ni abo ni essai).
 final prestataireNeedsSubscriptionForCatalogProvider = Provider<bool>((ref) {
-  final profile = ref.watch(prestataireProfileFormProvider).value;
-  final status = ref.watch(prestataireSubscriptionStatusProvider).value;
+  final profile = ref.watch(
+    prestataireProfileFormProvider.select((a) => a.value),
+  );
+  final status = ref.watch(
+    prestataireSubscriptionStatusProvider.select((a) => a.value),
+  );
   if (profile == null || status == null) return false;
   return profile.isProfessionallyComplete && !status.hasCatalogAccess;
 });
 
 /// Visible dans le catalogue client (profil complet + abo ou essai).
 final prestataireIsCatalogVisibleProvider = Provider<bool>((ref) {
-  final profile = ref.watch(prestataireProfileFormProvider).value;
+  final profile = ref.watch(
+    prestataireProfileFormProvider.select((a) => a.value),
+  );
   final hasAccess = ref.watch(prestataireHasActiveSubscriptionProvider);
   if (profile == null) return false;
   return profile.isProfessionallyComplete && hasAccess;

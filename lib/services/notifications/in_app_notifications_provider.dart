@@ -170,6 +170,7 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
             msg.data['bookingId'] as String?,
         role: msg.data['role'] as String?,
         nav: msg.data['nav'] as String?,
+        bugReportId: msg.data['bug_report_id'] as String?,
       ),
     );
   }

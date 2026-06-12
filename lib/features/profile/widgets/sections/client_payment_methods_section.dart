@@ -1,15 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../services/stripe/client_payment_methods_provider.dart';
 import '../../../../services/stripe/stripe_client_payment_providers.dart';
 import '../../../../services/stripe/stripe_client_payment_service.dart';
-import '../../../../shared/theme/app_fonts.dart';
+import '../../../../services/stripe/stripe_service.dart';
 import '../../../../shared/utils/app_url_launcher.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../../shared/widgets/app/app_button.dart';
+import '../../../../shared/widgets/stripe/saved_stripe_cards_panel.dart';
 
-/// Cartes bancaires client (portail Stripe).
+/// Cartes bancaires client (liste + Customer Sheet dans l’app).
 class ClientPaymentMethodsSection extends ConsumerStatefulWidget {
   const ClientPaymentMethodsSection({super.key});
 
@@ -20,104 +22,101 @@ class ClientPaymentMethodsSection extends ConsumerStatefulWidget {
 
 class _ClientPaymentMethodsSectionState
     extends ConsumerState<ClientPaymentMethodsSection> {
-  bool _busy = false;
+  bool _sheetBusy = false;
+  bool _portalBusy = false;
 
   void _snack(String message, {AppSnackKind kind = AppSnackKind.info}) {
     AppSnackBar.show(context, message: message, kind: kind);
   }
 
-  Future<void> _openPortal() async {
+  Future<void> _openCustomerSheet() async {
     final service = ref.read(stripeClientPaymentServiceProvider);
     if (service == null) {
       _snack(DiscPaymentMethods.unavailable, kind: AppSnackKind.error);
       return;
     }
 
-    setState(() => _busy = true);
+    setState(() => _sheetBusy = true);
     try {
-      final url = await service.createBillingPortalUrl();
-      if (!context.mounted) return;
-      final opened = await AppUrlLauncher.openInApp(context, url);
-      if (!context.mounted) return;
-      if (!opened) {
-        _snack(DiscPaymentMethods.browserErr, kind: AppSnackKind.error);
-      } else {
-        _snack(DiscPaymentMethods.portalOpened);
-      }
+      await service.presentCustomerSheet();
+      if (!mounted) return;
+      ref.invalidate(clientPaymentMethodsProvider);
+      _snack(DiscPaymentMethods.cardsUpdated, kind: AppSnackKind.success);
     } on StripeClientPaymentException catch (e) {
       _snack(e.message, kind: AppSnackKind.error);
     } catch (e) {
-      debugPrint('client billing portal: $e');
-      _snack(DiscPaymentMethods.portalErr, kind: AppSnackKind.error);
+      debugPrint('customer sheet: $e');
+      _snack(DiscPaymentMethods.sheetErr, kind: AppSnackKind.error);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _sheetBusy = false);
+    }
+  }
+
+  Future<void> _openPortalFallback() async {
+    final service = ref.read(stripeClientPaymentServiceProvider);
+    if (service == null) return;
+
+    setState(() => _portalBusy = true);
+    try {
+      final url = await service.createBillingPortalUrl();
+      if (!mounted) return;
+      final opened = await AppUrlLauncher.openInApp(context, url);
+      if (!mounted) return;
+      if (opened) {
+        ref.invalidate(clientPaymentMethodsProvider);
+      } else {
+        _snack(DiscPaymentMethods.browserErr, kind: AppSnackKind.error);
+      }
+    } on StripeClientPaymentException catch (e) {
+      _snack(e.message, kind: AppSnackKind.error);
+    } finally {
+      if (mounted) setState(() => _portalBusy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
+    if (!StripeService.isConfigured) {
+      return Text(
+        DiscPaymentMethods.unavailable,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+      );
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.credit_card_rounded, color: primary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    DiscPaymentMethods.clientCardsTitle,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DiscPaymentMethods.clientCardsHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (_busy)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          )
-        else
-          AppButton(
-            variant: AppButtonVariant.primary,
-            onPressed: _openPortal,
-            child: Text(DiscPaymentMethods.clientCardsManage),
+    if (kIsWeb) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            DiscPaymentMethods.webFallbackHint,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
           ),
-      ],
+          const SizedBox(height: 12),
+          if (_portalBusy)
+            const Center(child: CircularProgressIndicator(strokeWidth: 2))
+          else
+            FilledButton(
+              onPressed: _openPortalFallback,
+              child: Text(DiscPaymentMethods.clientCardsManage),
+            ),
+        ],
+      );
+    }
+
+    return SavedStripeCardsPanel(
+      title: DiscPaymentMethods.clientCardsTitle,
+      hint: DiscPaymentMethods.clientCardsHint,
+      manageLabel: DiscPaymentMethods.clientCardsManage,
+      methodsAsync: ref.watch(clientPaymentMethodsProvider),
+      busy: _sheetBusy || _portalBusy,
+      onManage: _openCustomerSheet,
+      onPortalFallback: _openPortalFallback,
+      onRetry: () => ref.invalidate(clientPaymentMethodsProvider),
     );
   }
 }

@@ -1,11 +1,16 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../models/admin_verification_request.dart';
 import '../providers/admin_pending_counts_provider.dart';
 import '../providers/admin_verification_provider.dart';
 import '../widgets/admin_revoke_verification_dialog.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../widgets/admin_discovery_widgets.dart';
 import '../widgets/admin_screen_scaffold.dart';
 import '../../../core/constants/app_strings.dart';
 
@@ -37,7 +42,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SegmentedButton<AdminVerificationFilter>(
+            child: AdminFilterSegment<AdminVerificationFilter>(
               segments: const [
                 ButtonSegment(
                   value: AdminVerificationFilter.pending,
@@ -61,8 +66,10 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
             child: requestsAsync.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return const Center(
-                    child: Text(DiscProfile.adminVerificationEmpty),
+                  return const AdminListEmptyState(
+                    icon: Icons.verified_user_outlined,
+                    title: DiscProfile.adminVerificationEmpty,
+                    body: DiscProfile.adminVerificationsIntroBody,
                   );
                 }
                 return RefreshIndicator(
@@ -75,7 +82,7 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = items[index];
                       return _RequestCard(
@@ -88,18 +95,15 @@ class _AdminVerificationScreenState extends ConsumerState<AdminVerificationScree
                   ),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    err.toString(),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+              loading: () => const DiscoveryListSkeleton(rowCount: 5),
+              error: (_, __) => DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: CoreStrings.networkErrorBody,
+                iconColor: theme.colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () =>
+                    ref.invalidate(adminVerificationRequestsProvider(_filter)),
               ),
             ),
           ),
@@ -183,73 +187,100 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final verified = item.isVerified;
     final salon = item.nomSalon?.trim();
     final ville = item.ville?.trim();
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item.displayName,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (salon != null && salon.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(DiscProfile.adminVerificationSalon(salon)),
-            ],
-            if (ville != null && ville.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(DiscProfile.adminVerificationVille(ville)),
-            ],
-            if (item.verificationRequestedAt != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                DiscProfile.adminVerificationRequestedAt(
-                  item.verificationRequestedAt!,
+    return AdminDiscoveryCard(
+      accentColor: verified
+          ? theme.colorScheme.tertiary
+          : AppColors.adminAccentMid,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.adminBg12,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.adminBorder30),
                 ),
-                style: Theme.of(context).textTheme.bodySmall,
+                child: const Icon(
+                  Icons.verified_user_outlined,
+                  color: AppColors.adminAccentMid,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.displayName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (busy)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                AdminStatusChip(
+                  label: verified
+                      ? DiscProfile.adminVerificationChipVerified
+                      : DiscProfile.adminVerificationChipNotVerified,
+                  tone: verified
+                      ? AdminStatusTone.success
+                      : AdminStatusTone.pending,
+                ),
+            ],
+          ),
+          if (salon != null && salon.isNotEmpty)
+            AdminInfoRow(
+              icon: Icons.storefront_outlined,
+              label: 'Salon',
+              value: salon,
+              dense: true,
+            ),
+          if (ville != null && ville.isNotEmpty)
+            AdminInfoRow(
+              icon: Icons.location_on_outlined,
+              label: 'Ville',
+              value: ville,
+              dense: true,
+            ),
+          if (item.verificationRequestedAt != null)
+            AdminInfoRow(
+              icon: Icons.schedule_rounded,
+              label: 'Demande',
+              value: DiscProfile.adminVerificationRequestedAt(
+                item.verificationRequestedAt!,
+              ),
+              dense: true,
+            ),
+          AdminActionRow(
+            children: [
+              FilledButton.icon(
+                onPressed: busy || verified ? null : onApprove,
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text(DiscProfile.adminVerificationApproveCta),
+              ),
+              OutlinedButton.icon(
+                onPressed: busy || !verified ? null : onRevoke,
+                icon: const Icon(Icons.block_rounded, size: 18),
+                label: const Text(DiscProfile.adminVerificationRevokeCta),
               ),
             ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Chip(
-                  label: Text(
-                    verified
-                        ? DiscProfile.adminVerificationChipVerified
-                        : DiscProfile.adminVerificationChipNotVerified,
-                  ),
-                ),
-                const Spacer(),
-                if (busy)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton(
-                  onPressed: busy || verified ? null : onApprove,
-                  child: const Text(DiscProfile.adminVerificationApproveCta),
-                ),
-                OutlinedButton(
-                  onPressed: busy || !verified ? null : onRevoke,
-                  child: const Text(DiscProfile.adminVerificationRevokeCta),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../../shared/theme/discovery_styles.dart';
 import '../models/admin_analytics_summary.dart';
 import '../providers/admin_analytics_provider.dart';
 import '../providers/admin_pending_counts_provider.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/admin_screen_scaffold.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/utils/currency_format.dart';
@@ -24,6 +25,7 @@ class AdminHomeScreen extends ConsumerWidget {
     final pendingVerifications =
         ref.watch(adminPendingVerificationsCountProvider);
     final pendingReports = ref.watch(adminPendingReportsCountProvider);
+    final pendingBugs = ref.watch(adminPendingBugReportsCountProvider);
     final analyticsAsync = ref.watch(adminAnalyticsProvider);
 
     return AdminScreenScaffold(
@@ -84,6 +86,14 @@ class AdminHomeScreen extends ConsumerWidget {
             subtitle: DiscProfile.actionAdminReportsHint,
             badge: pendingReports.maybeWhen(data: (c) => c, orElse: () => 0),
             onTap: () => context.goNamed(AppRouteNames.adminReports),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
+            icon: Icons.bug_report_outlined,
+            title: DiscProfile.actionAdminBugReports,
+            subtitle: DiscProfile.actionAdminBugReportsHint,
+            badge: pendingBugs.maybeWhen(data: (c) => c, orElse: () => 0),
+            onTap: () => context.pushAdminBugReports(),
           ),
           const SizedBox(height: 10),
           _ActionCard(
@@ -164,17 +174,37 @@ class _AnalyticsGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _StatTile(
-                value: '${stats.usersTotal}',
-                label: DiscProfile.adminHomeStatUsers,
-                icon: Icons.people_outline,
+                value: '${stats.clientsTotal}',
+                label: DiscProfile.adminHomeStatClients,
+                icon: Icons.person_outline_rounded,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _StatTile(
+                value: '${stats.prestatairesTotal}',
+                label: DiscProfile.adminHomeStatPrestataires,
+                icon: Icons.storefront_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
                 value: '${stats.verificationPending}',
                 label: DiscProfile.adminHomeStatVerifications,
                 icon: Icons.verified_user_outlined,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                value: '${stats.usersTotal}',
+                label: DiscProfile.adminHomeStatUsers,
+                icon: Icons.people_outline,
               ),
             ),
           ],
@@ -298,7 +328,7 @@ class _StatsLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SizedBox(
       height: 96,
-      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      child: DiscoveryListSkeleton(rowCount: 1, rowHeight: 80, padding: EdgeInsets.symmetric(horizontal: 16)),
     );
   }
 }

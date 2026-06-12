@@ -6,6 +6,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/widgets/discovery/content/discovery_inline_error_banner.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../client/widgets/workspace/client_workspace_search_row.dart';
 import '../../client/widgets/workspace/client_workspace_header.dart';
@@ -181,31 +182,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     required String message,
     required VoidCallback onRetry,
   }) {
-    return Material(
-      color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onErrorContainer,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: onRetry,
-                child: Text(DiscList.retry),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return DiscoveryInlineErrorBanner(
+      message: message,
+      onRetry: onRetry,
     );
   }
 
@@ -426,6 +405,9 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
           icon: Icons.storefront_outlined,
           title: DiscList.emptyCatalogTitle,
           body: DiscList.pullDownHint,
+          actionLabel: DiscList.retry,
+          onAction: () =>
+              ref.read(listingCatalogNotifierProvider.notifier).refresh(),
         ),
       );
     }

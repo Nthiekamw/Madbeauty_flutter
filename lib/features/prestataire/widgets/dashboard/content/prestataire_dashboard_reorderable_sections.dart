@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../router/navigation_extensions.dart';
+import '../../../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../logic/prestataire_profile_completeness.dart';
 import '../../../models/prestataire_dashboard_data.dart';
@@ -75,7 +76,7 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
         return const [
           Padding(
             padding: EdgeInsets.all(48),
-            child: Center(child: CircularProgressIndicator()),
+            child: DiscoveryListSkeleton(rowCount: 2, rowHeight: 100),
           ),
         ];
       }
@@ -222,7 +223,7 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
         if (dashboardLoading) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
+            child: DiscoveryListSkeleton(rowCount: 2, rowHeight: 100),
           );
         }
         if (dashboardError || dashboard == null) {

@@ -4,7 +4,8 @@ import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/supabase_service.dart';
 
 /// Nombre de réservations client (hors annulées) — pour le seuil frais 1 €.
-final clientPriorBookingCountProvider = FutureProvider<int>((ref) async {
+final clientPriorBookingCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
   final client = await ref.watch(currentClientProfileProvider.future);
   if (client == null) return 0;
 

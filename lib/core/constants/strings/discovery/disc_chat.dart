@@ -75,4 +75,13 @@ abstract final class DiscChat {
       'Le chat est disponible une fois ta réservation confirmée.';
   static const today = 'Aujourd\'hui';
   static const yesterday = 'Hier';
+
+  static const presenceOnline = 'En ligne';
+  static const presenceUnknown = 'Dernière activité inconnue';
+  static const presenceJustNow = 'Vu à l\'instant';
+  static String presenceMinutesAgo(int minutes) =>
+      'Vu il y a $minutes min';
+  static String presenceHoursAgo(int hours) => 'Vu il y a $hours h';
+  static String presenceYesterdayAt(String time) => 'Vu hier à $time';
+  static String presenceOnDate(String formatted) => 'Vu le $formatted';
 }

@@ -8,12 +8,15 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../client/widgets/workspace/client_workspace_header.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../prestataire/widgets/workspace/prestataire_profile_completion_card.dart';
 import '../../prestataire/widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../prestataire/widgets/workspace/prestataire_workspace_shell.dart';
 import '../models/conversation_inbox_item.dart';
 import '../widgets/inbox/conversation_list_tile.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/inbox/conversations_empty_state.dart';
 
 /// Liste des conversations (onglet Messages).
@@ -47,6 +50,11 @@ class _ConversationsInboxScreenState
         body: SafeArea(
           child: ClientWorkspaceShell(
             subtitle: DiscChat.inboxTitle,
+            panelOverlap: -8,
+            header: const ClientWorkspaceHeader(
+              subtitle: DiscChat.inboxTitle,
+              compact: true,
+            ),
             child: GuestAccountPrompt(
             icon: Icons.chat_bubble_outline_rounded,
             title: DiscChat.inboxTitle,
@@ -73,7 +81,15 @@ class _ConversationsInboxScreenState
         body: SafeArea(
           child: ClientWorkspaceShell(
             subtitle: headerSubtitle,
-            child: _buildInboxSlivers(context, theme, inboxAsync),
+            panelOverlap: -8,
+            header: ClientWorkspaceHeader(
+              subtitle: headerSubtitle,
+              compact: true,
+            ),
+            child: RefreshIndicator(
+              onRefresh: _refreshInbox,
+              child: _buildInboxSlivers(context, theme, inboxAsync),
+            ),
           ),
         ),
       );
@@ -162,23 +178,19 @@ class _ConversationsInboxScreenState
         ),
         ...inboxAsync.when(
           loading: () => [
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            ),
+            DiscoveryListSkeleton.asSliver(rowCount: 6, rowHeight: 76),
           ],
           error: (_, __) => [
             SliverFillRemaining(
               hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  DiscChat.loadError,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
-                ),
+              child: DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: DiscChat.loadError,
+                iconColor: theme.colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () =>
+                    ref.invalidate(conversationsInboxProvider(widget.role)),
               ),
             ),
           ],
@@ -197,7 +209,7 @@ class _ConversationsInboxScreenState
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                 sliver: SliverList.separated(
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return ConversationListTile(
@@ -222,7 +234,10 @@ class _ConversationsInboxScreenState
   }
 
   Future<void> _openChat(String bookingId) async {
-    await context.pushChat(bookingId);
+    await context.pushChat(
+      bookingId,
+      as: widget.role == MessagingInboxRole.client ? 'client' : 'prestataire',
+    );
     if (!mounted) return;
     ref.invalidate(conversationsInboxProvider(widget.role));
     ref.invalidate(messagingUnreadCountProvider(widget.role));

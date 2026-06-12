@@ -6,6 +6,7 @@ void main() {
     final summary = AdminAnalyticsSummary.fromJson({
       'users_total': 120,
       'users_banned': 2,
+      'clients_total': 80,
       'prestataires_total': 45,
       'prestataires_verified': 30,
       'verification_pending': 5,
@@ -18,6 +19,8 @@ void main() {
 
     expect(summary.usersTotal, 120);
     expect(summary.usersBanned, 2);
+    expect(summary.clientsTotal, 80);
+    expect(summary.prestatairesTotal, 45);
     expect(summary.verificationPending, 5);
     expect(summary.revenueCapturedCents, 125000);
   });

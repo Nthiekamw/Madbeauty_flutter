@@ -23,6 +23,8 @@ class LocalCacheService {
   static const String clientHomeLayoutKey = 'client.home_layout_v1';
   static const String appThemeModeKey = 'app.theme_mode_v1';
   static const String appLanguageCodeKey = 'app.language_code_v1';
+  static const String passwordRecoveryPendingKey =
+      'auth.password_recovery_pending_v1';
 
   static LocalCacheService? _instance;
 
@@ -123,6 +125,15 @@ class LocalCacheService {
 
   Future<bool> setAppLanguageCode(String value) =>
       setString(appLanguageCodeKey, value);
+
+  bool get passwordRecoveryPending =>
+      _prefs.getBool(passwordRecoveryPendingKey) ?? false;
+
+  Future<bool> setPasswordRecoveryPending(bool value) =>
+      _prefs.setBool(passwordRecoveryPendingKey, value);
+
+  Future<bool> clearPasswordRecoveryPending() =>
+      remove(passwordRecoveryPendingKey);
 }
 
 

@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/admin/screens/admin_audit_screen.dart';
 import '../../features/admin/screens/admin_push_screen.dart';
+import '../../features/admin/screens/admin_bug_reports_screen.dart';
 import '../../features/admin/screens/admin_content_reports_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 import '../../features/admin/screens/admin_profile_screen.dart';
@@ -88,5 +89,10 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminPush,
         path: AppRoutes.adminPush,
         builder: (context, state) => const AdminPushScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminBugReports,
+        path: AppRoutes.adminBugReports,
+        builder: (context, state) => const AdminBugReportsScreen(),
       ),
     ];

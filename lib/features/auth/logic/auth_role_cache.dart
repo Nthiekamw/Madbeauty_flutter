@@ -106,8 +106,8 @@ abstract final class AuthRoleCache {
       'admin' => AppRoutes.adminHome,
       'prestataire' => AppRoutes.prestataireDashboard,
       'client' => AppRoutes.clientHome,
-      // Rôles pas encore synchronisés après login : repasser par le splash.
-      null when cachedRoles.isEmpty => AppRoutes.splash,
+      // Rôles pas encore synchronisés : éviter /splash (conflit avec PostAuthNavigation).
+      null when cachedRoles.isEmpty => AppRoutes.role,
       _ => AppRoutes.role,
     };
   }

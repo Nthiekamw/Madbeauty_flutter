@@ -6,7 +6,6 @@ import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/theme/auth_form_styles.dart';
 import '../../../../../shared/widgets/app/app_text_field.dart';
 import '../../../../../shared/widgets/phone/phone_number_field.dart';
-import '../../../widgets/auth_credential_method_toggle.dart';
 import '../../../widgets/auth_form_card.dart';
 import '../../../widgets/auth_google_button.dart';
 import '../../../widgets/auth_or_divider.dart';
@@ -33,26 +32,12 @@ class RegisterWizardIdentityStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showPhoneHere = !form.signedUpViaOAuth || !form.phoneRequiredOnExtras;
-    final showPhoneField =
-        (form.usePhoneSignUp && !form.signedUpViaPhone) ||
-        (form.signedUpViaOAuth && showPhoneHere);
-
     return AuthFormCard(
       compact: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!form.signedUpViaOAuth && !form.signedUpViaPhone) ...[
-            AuthCredentialMethodToggle(
-              emailLabel: AuthStrings.loginPasswordTabEmail,
-              phoneLabel: AuthStrings.loginPasswordTabPhone,
-              isPhoneSelected: form.usePhoneSignUp,
-              enabled: formEnabled,
-              compact: true,
-              onChanged: form.setUsePhoneSignUp,
-            ),
-            const SizedBox(height: RegisterWizardConstants.sectionGap),
+          if (!form.signedUpViaOAuth) ...[
             AuthStepSection(
               compact: true,
               title: AuthStrings.registerSectionQuick,
@@ -67,10 +52,6 @@ class RegisterWizardIdentityStep extends StatelessWidget {
             ),
             const SizedBox(height: RegisterWizardConstants.sectionGap),
             const AuthOrDivider(compact: true),
-            const SizedBox(height: RegisterWizardConstants.sectionGap),
-          ],
-          if (form.signedUpViaPhone) ...[
-            const RegisterWizardPhoneVerifiedBanner(),
             const SizedBox(height: RegisterWizardConstants.sectionGap),
           ],
           AuthStepSection(
@@ -103,56 +84,48 @@ class RegisterWizardIdentityStep extends StatelessWidget {
           const SizedBox(height: RegisterWizardConstants.sectionGap),
           AuthStepSection(
             compact: true,
-            title: form.usePhoneSignUp
-                ? AuthStrings.registerSectionContact
-                : AuthStrings.loginFieldEmail,
-            icon: form.usePhoneSignUp
-                ? Icons.contact_phone_outlined
-                : Icons.mail_outline_rounded,
-            child: Column(
-              children: [
-                if (showPhoneField) ...[
-                  PhoneNumberField(
-                    dense: true,
-                    enabled: formEnabled &&
-                        !(form.usePhoneSignUp && form.signedUpViaPhone),
-                    localController: form.phone,
-                    dialCode: form.phoneDialCode,
-                    errorText: form.phoneError,
-                    onDialCodeChanged: form.setPhoneDialCode,
-                    onLocalChanged: form.clearPhoneError,
-                  ),
-                  const SizedBox(height: RegisterWizardConstants.fieldGap),
-                ],
-                if (!form.usePhoneSignUp || form.signedUpViaOAuth) ...[
-                  AppTextField(
-                    dense: true,
-                    controller: form.email,
-                    onChanged: (_) => form.clearEmailError(),
-                    enabled: formEnabled && !form.signedUpViaOAuth,
-                    label: AuthStrings.loginFieldEmail,
-                    errorText: form.emailError,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [
-                      AutofillHints.email,
-                      AutofillHints.username,
-                    ],
-                    prefixIcon: Icon(
-                      Icons.mail_outline,
-                      color: onSurfaceVariant,
-                    ),
-                  ),
-                ],
+            title: AuthStrings.registerSectionContact,
+            icon: Icons.phone_outlined,
+            child: PhoneNumberField(
+              dense: true,
+              enabled: formEnabled,
+              localController: form.phone,
+              dialCode: form.phoneDialCode,
+              errorText: form.phoneError,
+              onDialCodeChanged: form.setPhoneDialCode,
+              onLocalChanged: form.clearPhoneError,
+            ),
+          ),
+          const SizedBox(height: RegisterWizardConstants.sectionGap),
+          AuthStepSection(
+            compact: true,
+            title: AuthStrings.loginFieldEmail,
+            icon: Icons.mail_outline_rounded,
+            child: AppTextField(
+              dense: true,
+              controller: form.email,
+              onChanged: (_) => form.clearEmailError(),
+              enabled: formEnabled && !form.signedUpViaOAuth,
+              label: AuthStrings.loginFieldEmail,
+              errorText: form.emailError,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [
+                AutofillHints.email,
+                AutofillHints.username,
               ],
+              prefixIcon: Icon(
+                Icons.mail_outline,
+                color: onSurfaceVariant,
+              ),
             ),
           ),
           if (form.signedUpViaOAuth) ...[
             const SizedBox(height: RegisterWizardConstants.sectionGap),
             const RegisterWizardGoogleConnectedBanner(),
           ],
-          if (!form.signedUpViaOAuth && !form.usePhoneSignUp) ...[
+          if (!form.signedUpViaOAuth) ...[
             const SizedBox(height: RegisterWizardConstants.sectionGap),
             AuthStepSection(
               compact: true,
@@ -303,24 +276,6 @@ class RegisterWizardExtrasStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (form.phoneRequiredOnExtras) ...[
-            AuthStepSection(
-              compact: true,
-              title: AuthStrings.registerSectionContact,
-              subtitle: AuthStrings.registerGooglePhoneHint,
-              icon: Icons.phone_outlined,
-              child: PhoneNumberField(
-                dense: true,
-                enabled: formEnabled,
-                localController: form.phone,
-                dialCode: form.phoneDialCode,
-                errorText: form.phoneError,
-                onDialCodeChanged: form.setPhoneDialCode,
-                onLocalChanged: form.clearPhoneError,
-              ),
-            ),
-            const SizedBox(height: RegisterWizardConstants.sectionGap),
-          ],
           if (!form.isPresta)
             AppTextField(
               dense: true,
@@ -391,45 +346,6 @@ class RegisterPrestaSubscriptionHint extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: onSurfaceVariant,
                 height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class RegisterWizardPhoneVerifiedBanner extends StatelessWidget {
-  const RegisterWizardPhoneVerifiedBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(AuthFormStyles.bannerRadius),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.phone_android_outlined,
-            size: 20,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              AuthStrings.registerPhoneVerified,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
           ),

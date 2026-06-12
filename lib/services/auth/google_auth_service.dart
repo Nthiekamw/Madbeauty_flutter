@@ -7,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/failure_mapper.dart';
-import '../../firebase_runtime_helpers.dart';
 import 'auth_service.dart';
 
 /// Connexion Google native → jeton Google → session Supabase.
@@ -25,11 +24,22 @@ class GoogleAuthService {
 
   final AuthService _auth;
 
-  bool get canUseNativeGoogle => isFirebaseConfiguredForPush();
+  /// Google natif (Android/iOS) — indépendant de Firebase Auth / FCM.
+  bool get canUseNativeGoogle => isNativeGoogleSignInAvailable();
+
+  static bool isNativeGoogleSignInAvailable() {
+    if (kIsWeb) return false;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        return firebaseWebClientId.trim().isNotEmpty;
+      default:
+        return false;
+    }
+  }
 
   static Future<void> warmUp() async {
-    if (!isFirebaseConfiguredForPush()) return;
-    await ensureFirebaseInitialized();
+    if (!isNativeGoogleSignInAvailable()) return;
     await _ensureGoogleSignInReady();
   }
 
@@ -49,6 +59,7 @@ class GoogleAuthService {
     } catch (e, st) {
       _initCompleter!.completeError(e, st);
       _initCompleter = null;
+      if (kDebugMode) debugPrint('[GoogleAuth] warmUp failed: $e\n$st');
       rethrow;
     }
   }
@@ -71,7 +82,7 @@ class GoogleAuthService {
 
       final googleIdToken = googleUser.authentication.idToken;
       if (googleIdToken == null || googleIdToken.isEmpty) {
-        throw AppFailure(FailureMapper.firebasePhoneTokenMissingMessage);
+        throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
       }
 
       if (kDebugMode) {

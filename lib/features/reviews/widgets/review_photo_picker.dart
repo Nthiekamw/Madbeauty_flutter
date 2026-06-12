@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/app/app_network_image.dart';
 
 /// Sélection locale de photos pour un avis (max 3).
 class ReviewPhotoPicker extends StatefulWidget {
@@ -98,7 +99,7 @@ class _ReviewPhotoPickerState extends State<ReviewPhotoPicker> {
           children: [
             for (var i = 0; i < _urls.length; i++)
               _Thumb(
-                child: Image.network(_urls[i], fit: BoxFit.cover),
+                child: AppNetworkImage(url: _urls[i], fit: BoxFit.cover),
                 onRemove: () => _removeUrl(i),
               ),
             for (var i = 0; i < _bytes.length; i++)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_fonts.dart';
 
 /// Pastille « Lu » / « Non lu » (+ nombre optionnel) sur une ligne inbox.
 class ConversationReadStatusBadge extends StatelessWidget {
@@ -27,21 +28,25 @@ class ConversationReadStatusBadge extends StatelessWidget {
     final Color bg;
     final Color fg;
     final String label;
+    final IconData icon;
 
     if (hasUnread) {
-      bg = theme.colorScheme.primary.withValues(alpha: 0.14);
+      bg = theme.colorScheme.primary.withValues(alpha: 0.12);
       fg = theme.colorScheme.primary;
       label = unreadCount > 1
           ? DiscChat.unreadCountLabel(unreadCount)
           : DiscChat.unreadLabel;
+      icon = Icons.mark_chat_unread_rounded;
     } else if (isOutgoingPendingRead) {
-      bg = theme.colorScheme.secondaryContainer.withValues(alpha: 0.65);
+      bg = theme.colorScheme.secondaryContainer.withValues(alpha: 0.55);
       fg = theme.colorScheme.onSecondaryContainer;
       label = DiscChat.sentLabel;
+      icon = Icons.check_rounded;
     } else {
-      bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.9);
+      bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85);
       fg = theme.colorScheme.onSurfaceVariant;
       label = DiscChat.readLabel;
+      icon = Icons.done_all_rounded;
     }
 
     return Container(
@@ -51,19 +56,26 @@ class ConversationReadStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasUnread
-              ? theme.colorScheme.primary.withValues(alpha: 0.26)
-              : theme.colorScheme.outline.withValues(alpha: 0.2),
+              ? theme.colorScheme.primary.withValues(alpha: 0.2)
+              : theme.colorScheme.outline.withValues(alpha: 0.14),
         ),
       ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: fg,
-          fontSize: 11,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w700,
+              color: fg,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-

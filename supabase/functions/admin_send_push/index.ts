@@ -1,5 +1,8 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { sendFcmNotification } from "../_shared/booking_notify.ts";
+import {
+  isFirebaseCredentialError,
+  sendFcmNotification,
+} from "../_shared/booking_notify.ts";
 import {
   requireAuthUser,
   serviceClient,
@@ -186,17 +189,19 @@ async function sendFcmWithResult(opts: {
   title: string;
   body: string;
   data: Record<string, string>;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; error?: string }> {
   try {
-    return await sendFcmNotification({
+    const ok = await sendFcmNotification({
       token: opts.token,
       title: opts.title,
       body: opts.body,
       data: opts.data,
     });
+    return { ok };
   } catch (e) {
-    console.error("FCM send:", e);
-    return false;
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("FCM send:", message);
+    return { ok: false, error: message };
   }
 }
 
@@ -291,16 +296,24 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     let failed = 0;
+    let firstError: string | undefined;
     for (const row of recipients) {
-      const ok = await sendFcmWithResult({
+      const result = await sendFcmWithResult({
         token: row.fcm_token,
         title,
         body,
         data: pushData,
       });
-      if (ok) sent += 1;
-      else failed += 1;
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        firstError ??= result.error;
+      }
     }
+
+    const credentialError = sent === 0 && failed > 0 &&
+      firstError != null && isFirebaseCredentialError(firstError);
 
     const { error: auditError } = await admin.from("admin_audit_log").insert({
       actor_user_id: user.id,
@@ -334,6 +347,13 @@ Deno.serve(async (req) => {
       audience,
       excludeBanned,
       nav,
+      ...(firstError ? { firstError } : {}),
+      ...(credentialError
+        ? {
+          credentialError:
+            "Clé Firebase invalide ou révoquée. Régénère un compte de service dans Firebase Console, mets à jour supabase/firebase-service-account.json puis relance .\\supabase\\setup_push_notifications.ps1",
+        }
+        : {}),
     });
   } catch (e) {
     if (e instanceof Response) return e;

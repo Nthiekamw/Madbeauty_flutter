@@ -243,9 +243,21 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                             onPressed: onBook,
                             icon: const Icon(
                               Icons.calendar_month_rounded,
-                              size: 20,
+                              size: 18,
                             ),
-                            label: Text(DiscPrestaDetail.actionBook),
+                            label: Text(
+                              DiscPrestaDetail.actionBook,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              minimumSize: const Size(0, 40),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
                         ),
                         if (onMessage != null) ...[
@@ -256,9 +268,24 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                               onPressed: onMessage,
                               icon: const Icon(
                                 Icons.chat_bubble_outline_rounded,
-                                size: 18,
+                                size: 17,
                               ),
-                              label: Text(DiscPrestaDetail.contact),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  DiscPrestaDetail.contact,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 10,
+                                ),
+                                minimumSize: const Size(0, 40),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                             ),
                           ),
                         ],

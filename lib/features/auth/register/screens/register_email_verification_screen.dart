@@ -44,11 +44,6 @@ class _RegisterEmailVerificationScreenState
   @override
   void initState() {
     super.initState();
-    final draft = RegisterWizardDraftStore.instance.read();
-    final draftPassword = draft?.password.trim() ?? '';
-    if (draftPassword.isNotEmpty) {
-      _passwordController.text = draftPassword;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_continueIfSessionReady());
     });
@@ -71,10 +66,7 @@ class _RegisterEmailVerificationScreenState
     super.dispose();
   }
 
-  String get _password =>
-      _passwordController.text.trim().isNotEmpty
-          ? _passwordController.text.trim()
-          : (RegisterWizardDraftStore.instance.read()?.password.trim() ?? '');
+  String get _password => _passwordController.text.trim();
 
   Future<User?> _resolveVerifiedUser() async {
     final authService = ref.read(authServiceProvider);
@@ -130,8 +122,6 @@ class _RegisterEmailVerificationScreenState
         phone: draft.phone,
         phoneDialCode: draft.phoneDialCode,
         email: draft.email,
-        password: _password.isNotEmpty ? _password : draft.password,
-        confirmPassword: draft.confirmPassword,
         adresse: draft.adresse,
         salon: draft.salon,
         nomAffiche: draft.nomAffiche,
@@ -141,10 +131,8 @@ class _RegisterEmailVerificationScreenState
         bio: draft.bio,
         signedUpViaOAuth: draft.signedUpViaOAuth,
         pendingGoogleSignIn: draft.pendingGoogleSignIn,
-        signedUpViaPhone: draft.signedUpViaPhone,
         phoneRequiredOnExtras: draft.phoneRequiredOnExtras,
         pendingEmailVerification: pendingEmailVerification,
-        pendingPhoneVerification: draft.pendingPhoneVerification,
         role: draft.role,
       ),
     );

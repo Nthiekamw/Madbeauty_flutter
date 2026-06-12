@@ -1,9 +1,10 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/app_config.dart';
 import '../auth/auth_session_sanitizer.dart';
+import 'supabase_http_client.dart';
 
 class SupabaseService {
   SupabaseService._();
@@ -14,9 +15,14 @@ class SupabaseService {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       anonKey: AppConfig.supabaseAnonKey,
+      httpClient: SupabaseTimeoutHttpClient(),
+      realtimeClientOptions: RealtimeClientOptions(
+        timeout: AppConfig.supabaseRealtimeTimeout,
+      ),
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        detectSessionInUri: true,
+        // Géré par [DeepLinkListener] + [AuthDeepLinkHandler] (navigation recovery).
+        detectSessionInUri: false,
       ),
     );
 

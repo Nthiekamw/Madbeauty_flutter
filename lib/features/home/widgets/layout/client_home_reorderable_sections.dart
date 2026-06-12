@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../models/client_home_section_id.dart';
 import '../../providers/client_home_layout_provider.dart';
 import '../sections/client_home_explore_row.dart';
+import '../sections/client_home_promo_banner.dart';
 import '../sections/client_home_feed_prestataires_section.dart';
 import '../sections/client_home_nearby_prestataires_section.dart';
 import '../sections/client_home_next_appointment_section.dart';
@@ -37,14 +39,17 @@ class ClientHomeReorderableSections extends ConsumerWidget {
       hasFeedSelection: hasFeedSelection,
     );
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
+      color: isDark ? theme.colorScheme.surface : AppColors.lightSurface,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(pad, 4, pad, 32),
+        padding: EdgeInsets.fromLTRB(pad, 2, pad, 28),
         children: [
         for (var i = 0; i < visible.length; i++) ...[
           _sectionFor(visible[i]),
-          if (i < visible.length - 1) const SizedBox(height: 28),
+          if (i < visible.length - 1) const SizedBox(height: 18),
         ],
         if (!hasSupabase) ...[
           const SizedBox(height: 28),
@@ -64,6 +69,7 @@ class ClientHomeReorderableSections extends ConsumerWidget {
       ClientHomeSectionId.nextAppointment =>
         const ClientHomeNextAppointmentSection(),
       ClientHomeSectionId.inspiration => const ClientHomeExploreRow(),
+      ClientHomeSectionId.promo => const ClientHomePromoBanner(),
       ClientHomeSectionId.feed => const ClientHomeFeedPrestatairesSection(),
       ClientHomeSectionId.nearby =>
         const ClientHomeNearbyPrestatairesSection(),

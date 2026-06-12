@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
+
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 
 /// Squelette de la liste horizontale prestataires (accueil : proches, mieux notés).
 class PrestataireHorizontalListSkeleton extends StatelessWidget {
@@ -18,21 +19,12 @@ class PrestataireHorizontalListSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cardBg = theme.colorScheme.surfaceContainerHigh;
-    final track = theme.colorScheme.onSurface.withValues(alpha: 0.08);
-    final base = theme.colorScheme.surfaceContainerHighest;
-    final highlight = Color.lerp(
-          base,
-          theme.colorScheme.surface,
-          theme.brightness == Brightness.dark ? 0.4 : 0.65,
-        ) ??
-        base;
+    final track = DiscoveryShimmer.colors(theme).track;
 
     return SizedBox(
       height: height,
-      child: Shimmer.fromColors(
-        baseColor: base,
-        highlightColor: highlight,
-        period: const Duration(milliseconds: 1200),
+      child: DiscoveryShimmer.wrap(
+        context: context,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
@@ -111,4 +103,3 @@ class PrestataireHorizontalListSkeleton extends StatelessWidget {
     );
   }
 }
-

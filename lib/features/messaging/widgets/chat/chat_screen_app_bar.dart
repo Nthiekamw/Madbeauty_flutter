@@ -13,6 +13,8 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.peerNom,
     this.avatarUrl,
     this.subtitle,
+    this.peerLastSeenAt,
+    this.useSalonName = false,
     this.onReport,
   });
 
@@ -21,10 +23,12 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? peerNom;
   final String? avatarUrl;
   final String? subtitle;
+  final DateTime? peerLastSeenAt;
+  final bool useSalonName;
   final VoidCallback? onReport;
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 4);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 18);
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +77,8 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     peerNom: peerNom,
                     avatarUrl: avatarUrl,
                     subtitle: subtitle,
+                    peerLastSeenAt: peerLastSeenAt,
+                    useSalonName: useSalonName,
                     titleColor: AppColors.white,
                     subtitleColor: AppColors.onPrimaryMuted88,
                     onLightGradient: true,

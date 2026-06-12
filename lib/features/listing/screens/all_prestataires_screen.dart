@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../providers/discovery_origin_provider.dart';
 import '../providers/listing_catalog_provider.dart';
@@ -115,16 +116,9 @@ class _AllPrestatairesScreenState extends ConsumerState<AllPrestatairesScreen> {
                                     if (index >= state.entries.length) {
                                       return Center(
                                         child: state.loadingMore
-                                            ? const Padding(
+                                            ? const DiscoveryInlineSkeleton(
+                                                height: 28,
                                                 padding: EdgeInsets.all(16),
-                                                child: SizedBox(
-                                                  width: 28,
-                                                  height: 28,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
-                                                ),
                                               )
                                             : FilledButton.tonal(
                                                 onPressed: () => ref

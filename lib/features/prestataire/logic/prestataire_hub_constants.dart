@@ -7,6 +7,7 @@ abstract final class PrestataireHubConstants {
   PrestataireHubConstants._();
 
   static const galleryMaxPhotos = 10;
+  static const galleryMaxVideos = 3;
   static const wizardStepCount = 7;
   static const optionalFromStep = 4;
 

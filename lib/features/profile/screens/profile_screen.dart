@@ -12,6 +12,7 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/offline/offline_actions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
+import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -298,9 +299,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (loadingProfile)
-                    const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: Center(child: CircularProgressIndicator()),
+                    DiscoveryShimmer.wrap(
+                      context: context,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: DiscoveryShimmer.colors(
+                                Theme.of(context),
+                              ).track,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 18,
+                                  width: 140,
+                                  decoration: BoxDecoration(
+                                    color: DiscoveryShimmer.colors(
+                                      Theme.of(context),
+                                    ).track,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 14,
+                                  width: 200,
+                                  decoration: BoxDecoration(
+                                    color: DiscoveryShimmer.colors(
+                                      Theme.of(context),
+                                    ).track,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   else
                     ProfileAccountHeader(
@@ -318,6 +361,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 8),
                     const LinearProgressIndicator(minHeight: 2),
                   ],
+                  const SizedBox(height: ProfilePageInsets.sectionGap),
+                  const ProfileRoleSpaceSection(),
                   if (!loadingProfile) ...[
                     const SizedBox(height: ProfilePageInsets.sectionGap),
                     ProfileMyInfoSection(email: email, phone: phone),
@@ -328,8 +373,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const ProfileAppearanceSection(),
                   const SizedBox(height: ProfilePageInsets.sectionGap),
                   const ProfilePreferencesSection(),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfileRoleSpaceSection(),
                   const SizedBox(height: ProfilePageInsets.sectionGap),
                   const ProfileAdminSection(),
                   const ProfileAccountSection(),

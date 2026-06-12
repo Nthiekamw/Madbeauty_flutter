@@ -2,6 +2,7 @@
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/user/user_profile.dart';
+import '../../../core/models/domain/user_ban_status.dart';
 
 class ProfileService {
   ProfileService(this._client);
@@ -21,18 +22,26 @@ class ProfileService {
         },
       );
 
-  Future<bool> isUserBanned(String userId) => SupabaseErrorHandler.run(
-        operation: 'profile.isUserBanned',
+  Future<UserBanStatus> getBanStatus(String userId) => SupabaseErrorHandler.run(
+        operation: 'profile.getBanStatus',
         action: () async {
           final response = await _client
               .from('user_profiles')
-              .select('is_banned')
+              .select('is_banned, ban_reason')
               .eq('user_id', userId)
               .maybeSingle();
-          if (response == null) return false;
-          return response['is_banned'] as bool? ?? false;
+          if (response == null) return const UserBanStatus.notBanned();
+          final isBanned = response['is_banned'] as bool? ?? false;
+          if (!isBanned) return const UserBanStatus.notBanned();
+          final reason = response['ban_reason'] as String?;
+          return UserBanStatus(isBanned: true, reason: reason);
         },
       );
+
+  Future<bool> isUserBanned(String userId) async {
+    final status = await getBanStatus(userId);
+    return status.isBanned;
+  }
 
   Future<UserProfile?> getByUserId(String userId) => SupabaseErrorHandler.run(
         operation: 'profile.getByUserId',
@@ -166,6 +175,42 @@ class ProfileService {
               .eq('user_id', userId);
         },
       );
+
+  Future<void> touchLastSeen({required String userId}) =>
+      SupabaseErrorHandler.run(
+        operation: 'profile.touchLastSeen',
+        action: () async {
+          final currentUserId = _client.auth.currentUser?.id;
+          if (currentUserId == null || currentUserId != userId) return;
+          final now = DateTime.now().toUtc().toIso8601String();
+          await _client.from('user_profiles').update({
+            'last_seen_at': now,
+            'updated_at': now,
+          }).eq('user_id', userId);
+        },
+      );
+
+  Future<Map<String, DateTime?>> lastSeenByUserIds(List<String> userIds) async {
+    if (userIds.isEmpty) return const {};
+    return SupabaseErrorHandler.run(
+      operation: 'profile.lastSeenByUserIds',
+      action: () async {
+        final response = await _client
+            .from('user_profiles')
+            .select('user_id, last_seen_at')
+            .inFilter('user_id', userIds);
+        final out = <String, DateTime?>{};
+        for (final raw in response as List<dynamic>) {
+          final m = Map<String, dynamic>.from(raw as Map);
+          final uid = m['user_id'] as String?;
+          if (uid == null) continue;
+          final parsed = DateTime.tryParse(m['last_seen_at'] as String? ?? '');
+          out[uid] = parsed?.toUtc();
+        }
+        return out;
+      },
+    );
+  }
 
   Future<void> clearFcmToken({required String userId}) =>
       SupabaseErrorHandler.run(

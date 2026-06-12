@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
+import '../../../features/auth/logic/account_ban_handler.dart';
 import '../../../features/auth/logic/auth_role_cache.dart';
-import '../../../features/auth/navigation/post_auth_navigation.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
+import '../../../features/auth/providers/auth_redirect_providers.dart';
+import '../../../router/navigation_extensions.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
@@ -80,7 +80,15 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     await action();
   }
 
-  Future<void> _go(String route) => _navigate(() => context.go(route));
+  Future<void> _go(String route) => _navigate(() async {
+        final router = ref.read(goRouterProvider);
+        await router.goDeferred(route);
+      });
+
+  void _handoffSplashToRedirect(String target) {
+    ref.read(splashRedirectTargetProvider.notifier).setTarget(target);
+    ref.read(routerRedirectBumpProvider)();
+  }
 
   Future<void> _boot(ProviderContainer container) async {
     _setStatus(ShellStrings.splashCheckingSession);
@@ -137,11 +145,17 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     }
 
     if (user != null) {
-      final navigatedAway = await _bootstrapAuthenticated(container);
-      if (!mounted || navigatedAway) return;
-      await _navigate(
-        () => PostAuthNavigation.navigateWithContainer(context, container),
-      );
+      if (!await AccountBanHandler.ensureNotBanned(
+        container,
+        dialogContext: mounted ? context : null,
+      )) {
+        return;
+      }
+      final handoffTarget = await _bootstrapAuthenticated(container);
+      if (!mounted) return;
+      if (handoffTarget != null) {
+        await _navigate(() async => _handoffSplashToRedirect(handoffTarget));
+      }
       return;
     }
 
@@ -154,14 +168,14 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     }
   }
 
-  /// `true` si une navigation a déjà été déclenchée (ex. profil incomplet).
-  Future<bool> _bootstrapAuthenticated(ProviderContainer container) async {
+  /// Chemin de handoff redirect, ou `null` si le splash doit rester (bootstrap en cours).
+  Future<String?> _bootstrapAuthenticated(ProviderContainer container) async {
     final online = await container.read(connectivityServiceProvider).isOnline();
     if (!online) {
       if (kDebugMode) {
         debugPrint('Splash: hors ligne – bootstrap réseau ignoré');
       }
-      return false;
+      return AuthRoleCache.preferredAuthenticatedPath();
     }
 
     _setStatus(ShellStrings.splashLoadingRoles);
@@ -192,7 +206,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     }
 
     if (LocalCacheService.instance.selectedRole != 'prestataire') {
-      return false;
+      return AuthRoleCache.preferredAuthenticatedPath();
     }
 
     _setStatus(ShellStrings.splashLoadingProfile);
@@ -201,9 +215,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
           .read(prestataireProfileFormProvider.future)
           .timeout(SplashConfig.bootstrapTimeout);
       if (!profile.isProfessionallyComplete) {
-        if (!mounted) return true;
-        await _go(AppRoutes.prestataireProfileEdit);
-        return true;
+        return AppRoutes.prestataireProfileEdit;
       }
     } on TimeoutException {
       if (kDebugMode) {
@@ -214,7 +226,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
         debugPrint('Splash: profil prestataire – $e\n$st');
       }
     }
-    return false;
+    return AuthRoleCache.preferredAuthenticatedPath();
   }
 
   @override

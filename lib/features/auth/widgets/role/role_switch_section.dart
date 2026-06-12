@@ -9,6 +9,8 @@ import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../navigation/client_navigation.dart';
@@ -24,12 +26,14 @@ class RoleSwitchSection extends ConsumerWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 0),
     this.showHeader = true,
     this.compact = false,
+    this.forceTwoColumns = false,
   });
 
   final String? sectionTitle;
   final EdgeInsetsGeometry padding;
   final bool showHeader;
   final bool compact;
+  final bool forceTwoColumns;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,9 +68,9 @@ class RoleSwitchSection extends ConsumerWidget {
               !hasPresta &&
               clientProfileAsync.isLoading;
           if (awaitingClientProfile) {
-            return const Padding(
+            return const DiscoveryInlineSkeleton(
+              height: 88,
               padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
             );
           }
 
@@ -82,12 +86,15 @@ class RoleSwitchSection extends ConsumerWidget {
               if (showHeader) ...[
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w800,
+                    fontSize: compact ? 13 : null,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: compact ? 8 : 6),
               ],
               if (hasClient && hasPresta) ...[
                 if (!compact)
@@ -101,7 +108,7 @@ class RoleSwitchSection extends ConsumerWidget {
                 if (!compact) const SizedBox(height: 10),
                 _RoleSpaceCards(
                   compact: compact,
-                  stackVertically:
+                  stackVertically: !forceTwoColumns &&
                       DiscoveryResponsive.of(context).stackRoleSpaceCards,
                   activeRole: activeRole,
                   onClientTap: activeRole == 'client'
@@ -125,16 +132,17 @@ class RoleSwitchSection extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Padding(
+        loading: () => const DiscoveryInlineSkeleton(
+          height: 88,
           padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
         ),
-        error: (e, _) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            e.toString(),
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
+        error: (e, _) => DiscoverySectionError(
+          message: CoreStrings.networkErrorBody,
+          onRetry: () {
+            ref.invalidate(myRolesProvider);
+            ref.invalidate(currentClientProfileProvider);
+            ref.invalidate(currentPrestataireProvider);
+          },
         ),
       ),
     );

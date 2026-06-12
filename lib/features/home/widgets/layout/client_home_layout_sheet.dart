@@ -160,9 +160,14 @@ Future<void> showClientHomeLayoutSheet(BuildContext context, WidgetRef ref) {
         DiscHome.sectionInspiration,
         theme.colorScheme.secondary,
       ),
+    ClientHomeSectionId.promo => (
+        Icons.campaign_outlined,
+        DiscHome.sectionPromo,
+        theme.colorScheme.tertiary,
+      ),
     ClientHomeSectionId.feed => (
-        Icons.search_rounded,
-        DiscHome.sectionFeed,
+        Icons.local_fire_department_outlined,
+        DiscHome.sectionTrending,
         theme.colorScheme.tertiary,
       ),
     ClientHomeSectionId.nearby => (

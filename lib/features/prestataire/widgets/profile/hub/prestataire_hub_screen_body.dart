@@ -1,8 +1,9 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
@@ -77,6 +78,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.selectedDefaultAvatarUrl,
     required this.onSelectDefaultAvatar,
     required this.onPickGallery,
+    required this.onPickGalleryVideo,
     required this.onRemoveGalleryPhoto,
     required this.onRemovePendingGallery,
     required this.onCatalogChanged,
@@ -146,6 +148,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final String? selectedDefaultAvatarUrl;
   final ValueChanged<String> onSelectDefaultAvatar;
   final VoidCallback onPickGallery;
+  final VoidCallback onPickGalleryVideo;
   final ValueChanged<PhotoRealisation> onRemoveGalleryPhoto;
   final ValueChanged<int> onRemovePendingGallery;
   final VoidCallback onCatalogChanged;
@@ -255,11 +258,12 @@ class PrestataireHubScreenBody extends StatelessWidget {
       ),
       PrestataireProfileEditSection.gallery => PrestataireProfileGalleryStep(
         photos: galleryPhotos,
-        pendingPreviews: pendingGallery.map((f) => f.bytes).toList(),
+        pendingFiles: pendingGallery,
         errorText: galleryError,
         uploading: false,
         uploadProgress: null,
         onPick: onPickGallery,
+        onPickVideo: onPickGalleryVideo,
         onRemoveExisting: onRemoveGalleryPhoto,
         onRemovePending: onRemovePendingGallery,
         embeddedInHub: guided,
@@ -276,7 +280,11 @@ class PrestataireHubScreenBody extends StatelessWidget {
           embeddedInHub: guided,
         ),
       PrestataireProfileEditSection.horaires => horaireWeek == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const DiscoveryListSkeleton(
+              rowCount: 3,
+              rowHeight: 56,
+              padding: EdgeInsets.symmetric(vertical: 8),
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

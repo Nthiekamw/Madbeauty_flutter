@@ -15,6 +15,7 @@ import '../providers/booking_services_provider.dart';
 import '../providers/booked_slots_provider.dart';
 import '../widgets/shared/booking_message.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/flow/booking_step_one_content.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
@@ -92,9 +93,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               message: DiscBk.missingPrestaBody,
             )
           : switch (isOwnAsync) {
-              AsyncLoading() => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              AsyncLoading() => const DiscoveryDetailSkeleton(),
               AsyncData(:final value) when value => const BookingMessage(
                 icon: Icons.person_outline,
                 title: DiscBk.cannotBookOwnTitle,
@@ -103,12 +102,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               _ => ref
                 .watch(bookingActiveServicesProvider(prestataireId))
                 .when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (_, __) => const BookingMessage(
+                  loading: () => const DiscoveryDetailSkeleton(),
+                  error: (_, __) => BookingMessage(
                     icon: Icons.cloud_off_outlined,
                     title: DiscBk.svcLoadFailTitle,
                     message: DiscBk.svcLoadFailBody,
+                    actionLabel: DiscList.retry,
+                    onAction: () => ref.invalidate(
+                      bookingActiveServicesProvider(prestataireId),
+                    ),
                   ),
                   data: (services) {
                     if (services.isEmpty) return const _NoServicesMessage();

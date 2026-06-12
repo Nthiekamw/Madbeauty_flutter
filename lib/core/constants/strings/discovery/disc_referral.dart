@@ -7,6 +7,10 @@ abstract final class DiscReferral {
   static const heroBody =
       'Partage ton code : quand une amie s’inscrit avec, elle bénéficie de −10 % sur sa prochaine réservation. '
       'À 3 filleules, tu débloques le badge Ambassadrice et −10 % sur ta prochaine résa.';
+  static String benefitFriendDiscount(int percent) =>
+      '−$percent % pour tes amies';
+  static const benefitAmbassadorMilestone =
+      'Badge Ambassadrice à 3 filleules';
   static const yourCode = 'Ton code';
   static const copyCode = 'Copier le code';
   static const copied = 'Code copié.';

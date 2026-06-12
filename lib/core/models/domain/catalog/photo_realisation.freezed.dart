@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PhotoRealisation {
 
- String get id; String get prestataireId; String get url; String? get caption; String? get categorieId;@IsoDateTimeConverter() DateTime get createdAt;
+ String get id; String get prestataireId; String get url; String? get caption; String? get categorieId;@JsonKey(name: 'media_type') RealisationMediaType get mediaType;@IsoDateTimeConverter() DateTime get createdAt;
 /// Create a copy of PhotoRealisation
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PhotoRealisationCopyWith<PhotoRealisation> get copyWith => _$PhotoRealisationCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PhotoRealisation&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.url, url) || other.url == url)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PhotoRealisation&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.url, url) || other.url == url)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,prestataireId,url,caption,categorieId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,prestataireId,url,caption,categorieId,mediaType,createdAt);
 
 @override
 String toString() {
-  return 'PhotoRealisation(id: $id, prestataireId: $prestataireId, url: $url, caption: $caption, categorieId: $categorieId, createdAt: $createdAt)';
+  return 'PhotoRealisation(id: $id, prestataireId: $prestataireId, url: $url, caption: $caption, categorieId: $categorieId, mediaType: $mediaType, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PhotoRealisationCopyWith<$Res>  {
   factory $PhotoRealisationCopyWith(PhotoRealisation value, $Res Function(PhotoRealisation) _then) = _$PhotoRealisationCopyWithImpl;
 @useResult
 $Res call({
- String id, String prestataireId, String url, String? caption, String? categorieId,@IsoDateTimeConverter() DateTime createdAt
+ String id, String prestataireId, String url, String? caption, String? categorieId,@JsonKey(name: 'media_type') RealisationMediaType mediaType,@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -65,14 +65,15 @@ class _$PhotoRealisationCopyWithImpl<$Res>
 
 /// Create a copy of PhotoRealisation
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? prestataireId = null,Object? url = null,Object? caption = freezed,Object? categorieId = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? prestataireId = null,Object? url = null,Object? caption = freezed,Object? categorieId = freezed,Object? mediaType = null,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,prestataireId: null == prestataireId ? _self.prestataireId : prestataireId // ignore: cast_nullable_to_non_nullable
 as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,categorieId: freezed == categorieId ? _self.categorieId : categorieId // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: cast_nullable_to_non_nullable
+as RealisationMediaType,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @JsonKey(name: 'media_type')  RealisationMediaType mediaType, @IsoDateTimeConverter()  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PhotoRealisation() when $default != null:
-return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.createdAt);case _:
+return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.mediaType,_that.createdAt);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categ
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @JsonKey(name: 'media_type')  RealisationMediaType mediaType, @IsoDateTimeConverter()  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _PhotoRealisation():
-return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.createdAt);case _:
+return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.mediaType,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categ
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String prestataireId,  String url,  String? caption,  String? categorieId, @JsonKey(name: 'media_type')  RealisationMediaType mediaType, @IsoDateTimeConverter()  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PhotoRealisation() when $default != null:
-return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.createdAt);case _:
+return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categorieId,_that.mediaType,_that.createdAt);case _:
   return null;
 
 }
@@ -214,7 +215,7 @@ return $default(_that.id,_that.prestataireId,_that.url,_that.caption,_that.categ
 @JsonSerializable()
 
 class _PhotoRealisation implements PhotoRealisation {
-  const _PhotoRealisation({required this.id, required this.prestataireId, required this.url, this.caption, this.categorieId, @IsoDateTimeConverter() required this.createdAt});
+  const _PhotoRealisation({required this.id, required this.prestataireId, required this.url, this.caption, this.categorieId, @JsonKey(name: 'media_type') this.mediaType = RealisationMediaType.image, @IsoDateTimeConverter() required this.createdAt});
   factory _PhotoRealisation.fromJson(Map<String, dynamic> json) => _$PhotoRealisationFromJson(json);
 
 @override final  String id;
@@ -222,6 +223,7 @@ class _PhotoRealisation implements PhotoRealisation {
 @override final  String url;
 @override final  String? caption;
 @override final  String? categorieId;
+@override@JsonKey(name: 'media_type') final  RealisationMediaType mediaType;
 @override@IsoDateTimeConverter() final  DateTime createdAt;
 
 /// Create a copy of PhotoRealisation
@@ -237,16 +239,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PhotoRealisation&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.url, url) || other.url == url)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PhotoRealisation&&(identical(other.id, id) || other.id == id)&&(identical(other.prestataireId, prestataireId) || other.prestataireId == prestataireId)&&(identical(other.url, url) || other.url == url)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.categorieId, categorieId) || other.categorieId == categorieId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,prestataireId,url,caption,categorieId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,prestataireId,url,caption,categorieId,mediaType,createdAt);
 
 @override
 String toString() {
-  return 'PhotoRealisation(id: $id, prestataireId: $prestataireId, url: $url, caption: $caption, categorieId: $categorieId, createdAt: $createdAt)';
+  return 'PhotoRealisation(id: $id, prestataireId: $prestataireId, url: $url, caption: $caption, categorieId: $categorieId, mediaType: $mediaType, createdAt: $createdAt)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class _$PhotoRealisationCopyWith<$Res> implements $PhotoRealisati
   factory _$PhotoRealisationCopyWith(_PhotoRealisation value, $Res Function(_PhotoRealisation) _then) = __$PhotoRealisationCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String prestataireId, String url, String? caption, String? categorieId,@IsoDateTimeConverter() DateTime createdAt
+ String id, String prestataireId, String url, String? caption, String? categorieId,@JsonKey(name: 'media_type') RealisationMediaType mediaType,@IsoDateTimeConverter() DateTime createdAt
 });
 
 
@@ -274,14 +276,15 @@ class __$PhotoRealisationCopyWithImpl<$Res>
 
 /// Create a copy of PhotoRealisation
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? prestataireId = null,Object? url = null,Object? caption = freezed,Object? categorieId = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? prestataireId = null,Object? url = null,Object? caption = freezed,Object? categorieId = freezed,Object? mediaType = null,Object? createdAt = null,}) {
   return _then(_PhotoRealisation(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,prestataireId: null == prestataireId ? _self.prestataireId : prestataireId // ignore: cast_nullable_to_non_nullable
 as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,categorieId: freezed == categorieId ? _self.categorieId : categorieId // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: cast_nullable_to_non_nullable
+as RealisationMediaType,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

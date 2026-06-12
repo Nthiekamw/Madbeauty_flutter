@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/models/user_role.dart';
+import '../../../router/app_routes.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -89,6 +91,31 @@ abstract final class PrestataireNavigation {
     await _goDashboardOrCompleteProfileWithContainer(context, container);
   }
 
+  static Future<void> switchToPrestataireSpaceWithRouter(
+    GoRouter router,
+    ProviderContainer container,
+  ) async {
+    await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
+    await _goDashboardOrCompleteProfileWithRouter(router, container);
+  }
+
+  /// Destination prestataire pour handoff redirect (sans navigation).
+  static Future<String> prestataireSpacePath(ProviderContainer container) async {
+    await LocalCacheService.instance.setSelectedRole('prestataire');
+    await LocalCacheService.instance.setSignupShellRole('prestataire');
+    try {
+      final data = await container.read(prestataireProfileFormProvider.future);
+      if (data.isProfessionallyComplete) {
+        unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+        return AppRoutes.prestataireDashboard;
+      }
+      return AppRoutes.prestataireProfileEdit;
+    } catch (_) {
+      return AppRoutes.prestataireDashboard;
+    }
+  }
+
   static Future<void> _goDashboardOrCompleteProfile(
     BuildContext context,
     WidgetRef ref,
@@ -125,6 +152,26 @@ abstract final class PrestataireNavigation {
     }
   }
 
+  static Future<void> _goDashboardOrCompleteProfileWithRouter(
+    GoRouter router,
+    ProviderContainer container,
+  ) async {
+    try {
+      final data = await container.read(prestataireProfileFormProvider.future);
+      final hasHoraires = container.read(prestataireHorairesProvider).maybeWhen(
+            data: (h) => h.isNotEmpty,
+            orElse: () => false,
+          );
+      await _goFromProfileDataWithRouter(
+        router,
+        data,
+        hasHoraires: hasHoraires,
+      );
+    } catch (_) {
+      await router.goNamedDeferred(AppRouteNames.prestataireDashboard);
+    }
+  }
+
   static void _goFromProfileData(
     BuildContext context,
     PrestataireProfileFormData data, {
@@ -142,6 +189,28 @@ abstract final class PrestataireNavigation {
           data,
           hasHoraires: hasHoraires,
         ),
+      ),
+    );
+  }
+
+  static Future<void> _goFromProfileDataWithRouter(
+    GoRouter router,
+    PrestataireProfileFormData data, {
+    bool hasHoraires = false,
+  }) async {
+    if (data.isProfessionallyComplete) {
+      unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+      await router.goNamedDeferred(AppRouteNames.prestataireDashboard);
+      return;
+    }
+    await router.goNamedDeferred(AppRouteNames.prestataireDashboard);
+    final context = router.routerDelegate.navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    await PrestataireHubWizardNavigation.openWizard(
+      context,
+      initialStep: PrestataireHubWizardNavigation.hubStepFromProfileData(
+        data,
+        hasHoraires: hasHoraires,
       ),
     );
   }

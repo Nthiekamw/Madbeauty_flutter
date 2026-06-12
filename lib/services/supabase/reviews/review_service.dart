@@ -4,6 +4,30 @@ import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/reviews/review.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../core/models/domain/reviews/client_review_list_item.dart';
+
+/// Avis récent reçu par un prestataire (notifications in-app).
+class PrestataireReviewRecord {
+  const PrestataireReviewRecord({
+    required this.id,
+    required this.clientId,
+    required this.prestataireId,
+    required this.reservationId,
+    required this.note,
+    required this.createdAt,
+    this.clientDisplayName,
+    this.commentaire,
+  });
+
+  final String id;
+  final String clientId;
+  final String prestataireId;
+  final String reservationId;
+  final int note;
+  final DateTime createdAt;
+  final String? clientDisplayName;
+  final String? commentaire;
+}
+
 /// Avis clients (table `avis`) liés aux réservations terminées.
 class ReviewService {
   ReviewService(this._client);
@@ -126,6 +150,41 @@ class ReviewService {
         },
       );
 
+  Future<List<PrestataireReviewRecord>> listRecentForPrestataire(
+    String prestataireId, {
+    DateTime? since,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'review.listRecentForPrestataire',
+        action: () async {
+          var filter = _client
+              .from('avis')
+              .select(
+                'id, client_id, prestataire_id, reservation_id, note, '
+                'commentaire, created_at, client_display_name',
+              )
+              .eq('prestataire_id', prestataireId);
+
+          if (since != null) {
+            filter = filter.gte(
+              'created_at',
+              since.toUtc().toIso8601String(),
+            );
+          }
+
+          final response = await filter
+              .order('created_at', ascending: false)
+              .limit(25);
+
+          return [
+            for (final raw in response as List<dynamic>)
+              _prestataireReviewRecordFromRow(
+                Map<String, dynamic>.from(raw as Map),
+              ),
+          ];
+        },
+      );
+
   Future<bool> hasReviewed(String bookingId) =>
       SupabaseErrorHandler.run(
         operation: 'review.hasReviewed',
@@ -241,6 +300,21 @@ class ReviewService {
           prestataire is Map ? prestataire['nom_salon'] as String? : null,
       serviceName: service is Map ? service['nom'] as String? : null,
       reservationDate: reservationDate,
+    );
+  }
+
+  PrestataireReviewRecord _prestataireReviewRecordFromRow(
+    Map<String, dynamic> map,
+  ) {
+    return PrestataireReviewRecord(
+      id: map['id'] as String,
+      clientId: map['client_id'] as String,
+      prestataireId: map['prestataire_id'] as String,
+      reservationId: map['reservation_id'] as String,
+      note: (map['note'] as num).toInt(),
+      createdAt: DateTime.parse(map['created_at'] as String),
+      clientDisplayName: map['client_display_name'] as String?,
+      commentaire: map['commentaire'] as String?,
     );
   }
 }

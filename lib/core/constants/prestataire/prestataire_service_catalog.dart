@@ -133,6 +133,18 @@ abstract final class PrestataireServiceCatalog {
         PrestaMainService.pedicure => Icons.spa_outlined,
       };
 
+  /// Vignette catégorie (accueil client).
+  static String coverImageUrl(PrestaMainService service) => switch (service) {
+        PrestaMainService.coiffure =>
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=120&h=120&fit=crop&q=80',
+        PrestaMainService.manucure =>
+          'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=120&h=120&fit=crop&q=80',
+        PrestaMainService.maquillage =>
+          'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=120&h=120&fit=crop&q=80',
+        PrestaMainService.pedicure =>
+          'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=120&h=120&fit=crop&q=80',
+      };
+
   static List<PrestaCatalogSpecialty> specialties(PrestaMainService service) =>
       switch (service) {
         PrestaMainService.coiffure => coiffureSpecialties,

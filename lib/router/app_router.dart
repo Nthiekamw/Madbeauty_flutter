@@ -19,16 +19,33 @@ import 'routes/prestataire_shell_routes.dart';
 export 'app_routes.dart';
 
 /// Recalcule les [redirect] sans recréer [GoRouter] (évite le double clic invité).
-final routerRefreshListenableProvider = Provider<Listenable>((ref) {
+final routerRefreshListenableProvider = Provider<ValueNotifier<int>>((ref) {
   final notifier = ValueNotifier<int>(0);
   void bump() => notifier.value++;
 
-  ref.listen(authNotifierProvider, (_, __) => bump());
+  ref.listen(authNotifierProvider, (previous, next) {
+    final wasSignedIn = switch (previous) {
+      AsyncData(:final value) => value != null,
+      _ => false,
+    };
+    final isSignedIn = switch (next) {
+      AsyncData(:final value) => value != null,
+      _ => false,
+    };
+    // Connexion : navigation explicite (login / splash). Déconnexion : redirect.
+    if (wasSignedIn && !isSignedIn) bump();
+  });
   ref.listen(guestModeProvider, (_, __) => bump());
   ref.listen(isPasswordRecoveryActiveProvider, (_, __) => bump());
 
   ref.onDispose(notifier.dispose);
   return notifier;
+});
+
+/// Force un recalcul du redirect (ex. fin du dialogue de bienvenue login).
+final routerRedirectBumpProvider = Provider<void Function()>((ref) {
+  final notifier = ref.watch(routerRefreshListenableProvider);
+  return () => notifier.value++;
 });
 
 final goRouterProvider = Provider<GoRouter>((ref) {

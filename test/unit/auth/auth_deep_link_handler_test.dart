@@ -11,6 +11,35 @@ void main() {
       expect(AuthDeepLinkHandler.otpTypeFromQuery('recovery'), OtpType.recovery);
     });
 
+    test('détecte type recovery dans query ou fragment', () {
+      expect(
+        AuthDeepLinkHandler.isPasswordRecoveryUri(
+          Uri.parse(
+            'com.madbeauty.madbeauty://login-callback'
+            '?token_hash=hash123&type=recovery',
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        AuthDeepLinkHandler.isPasswordRecoveryUri(
+          Uri.parse(
+            'com.madbeauty.madbeauty://login-callback'
+            '#access_token=abc&type=recovery',
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        AuthDeepLinkHandler.isPasswordRecoveryUri(
+          Uri.parse(
+            'com.madbeauty.madbeauty://login-callback?code=abc123',
+          ),
+        ),
+        isFalse,
+      );
+    });
+
     test('normalise token_hash dans le fragment', () {
       final params = AuthDeepLinkHandler.normalizedQueryParameters(
         Uri.parse(

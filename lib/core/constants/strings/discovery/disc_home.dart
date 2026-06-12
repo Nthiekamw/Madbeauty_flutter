@@ -3,7 +3,9 @@ abstract final class DiscHome {
   DiscHome._();
 
   static const hintSearch =
-      'Rechercher un style, une ville, un pseudo…';
+      'Rechercher un style, un service, un salon…';
+  static const greetingSubtitle =
+      'Que souhaitez-vous réserver aujourd\'hui ?';
   static const actionSearch = 'Rechercher';
   static const taglineDiscovery =
       'Découvre des pros près de chez toi et réserve en quelques gestes.';
@@ -16,7 +18,7 @@ abstract final class DiscHome {
   static const feedAllSub =
       'Des professionnels passionnés, prêts à vous accueillir.';
 
-  static const nextAppointmentTitle = 'Vos prochains rendez-vous';
+  static const nextAppointmentTitle = '📅 Vos prochains rendez-vous';
   static const nextAppointmentSub = 'Ta prochaine visite chez un·e pro';
   static const nextAppointmentDetails = 'Voir détails';
   static const nextAppointmentEmptyTitle = 'Aucun rendez-vous à venir';
@@ -40,8 +42,15 @@ abstract final class DiscHome {
   static const sectionNextAppointment = 'Prochain rendez-vous';
   static const sectionInspiration = 'Inspirations';
   static const sectionFeed = 'À découvrir';
-  static const sectionNearby = 'Prestataires proches';
-  static const sectionTopRated = 'Mieux notés';
+  static const sectionNearby = 'Proches de vous';
+  static const sectionTopRated = 'Les mieux notés';
+  static const sectionPromo = 'Bannière promo';
+  static const sectionTrending = 'Tendances cette semaine';
+  static const heroBannerLead = 'Trouvez le professionnel idéal pour';
+  static const heroBannerAccent = 'toute la famille';
+  static const heroBannerSub =
+      'Coiffure, Barbe, Maquillage, Manucure, Pédicure et plus encore.';
+  static const heroBannerCta = 'Explorer';
 
   static const feedSearchSub =
       'Prestataires correspondant à votre recherche.';
@@ -62,7 +71,7 @@ abstract final class DiscHome {
 
   static String feedInspirationTitle(String topic) => 'En $topic';
 
-  static const nearbyTitle = 'Prestataires proches';
+  static const nearbyTitle = '📍 Proches de vous';
   static const nearbySubWithLocation =
       'Triés par distance depuis ta position (rayon 50 km).';
   static const nearbySubNoLocation =
@@ -74,12 +83,15 @@ abstract final class DiscHome {
   static const nearbyLoadFail =
       'Impossible de charger les prestataires. Réessaie.';
 
-  static const topRatedTitle = 'Mieux notés';
+  static const topRatedTitle = '⭐ Les mieux notés';
+  static const trendingTitle = '🔥 Tendances cette semaine';
   static const topRatedSub =
       'Triés par note moyenne (les profils sans note encore en bas de liste).';
   static const topRatedEmptyTitle = 'Pas encore de classement';
   static const topRatedEmptyBody =
       'Aucune note moyenne enregistrée pour l’instant. Ouvre le catalogue pour découvrir les salons.';
+  static const topRatedLoadFail =
+      'Impossible de charger le classement. Réessaie.';
   static const ctaBrowseCatalog = 'Voir le catalogue';
   static const ctaSeeAll = 'Tout voir';
   static const badgeDispo = 'Dispo';
@@ -100,9 +112,13 @@ abstract final class DiscHome {
 
   static String clientHomeGreeting(String firstName) {
     final name = firstName.trim();
-    if (name.isEmpty) {
-      return 'Salut, envie de vous sublimer de la tête aux pieds 👋';
-    }
-    return 'Salut $name, envie de vous sublimer de la tête aux pieds 👋';
+    if (name.isEmpty) return 'Bonjour 👋';
+    return 'Bonjour $name 👋';
+  }
+
+  static String trendingBookings(int count) {
+    if (count <= 0) return 'Nouveau';
+    if (count == 1) return '1 réservation';
+    return '$count réservations';
   }
 }

@@ -127,6 +127,8 @@ Périmètre MVP vs V2 : `docs/FEATURES.md`.
 - Design responsive (tous écrans) → skill `madbeauty-responsive`
 - Textes UI → skill `madbeauty-ui-strings`
 - Migrations / Edge Functions / RLS → skill `madbeauty-supabase`
+- **Polish UX** (shimmer, vide/erreur/retry, snackbars, placeholders) → skill `madbeauty-ux-states`
+- **Perf & stabilité** (cache images, uploads, timeout Supabase, autoDispose, release) → skill `madbeauty-performance`
 
 ## Références détaillées
 

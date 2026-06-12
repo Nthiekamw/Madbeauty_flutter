@@ -10,6 +10,7 @@ import 'availability_calendar.dart';
 import 'booking_continue_button.dart';
 import '../shared/booking_section_title.dart';
 import 'selected_service_header.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import 'service_choice_card.dart';
 import 'booking_waitlist_card.dart';
 import 'slot_choice_wrap.dart';
@@ -95,7 +96,24 @@ class BookingStepOneContent extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         if (daySlotsLoading)
-          const Center(child: CircularProgressIndicator())
+          DiscoveryShimmer.wrap(
+            context: context,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(
+                8,
+                (_) => Container(
+                  width: 72,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          )
         else if (slots.isEmpty) ...[
           Text(
             DiscBk.noSlotsDay,

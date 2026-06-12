@@ -7,6 +7,7 @@ import 'core/providers/app_appearance_provider.dart';
 import 'features/auth/navigation/auth_recovery_navigation.dart';
 import 'router/app_router.dart';
 import 'router/deep_link_listener.dart';
+import 'features/messaging/widgets/presence/user_presence_coordinator.dart';
 import 'features/notifications/widgets/booking_push_coordinator.dart';
 import 'features/notifications/widgets/prestataire_booking_notification_coordinator.dart';
 import 'features/notifications/widgets/prestataire_visibility_notification_coordinator.dart';
@@ -22,28 +23,30 @@ class MadBeautyApp extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
     final appearance = ref.watch(appAppearanceProvider);
     return DeepLinkListener(
-      child: BookingPushCoordinator(
-        child: PrestataireBookingNotificationCoordinator(
-          child: PrestataireVisibilityNotificationCoordinator(
-            child: RouterThemeScope(
-              router: router,
-              builder: (context, area) {
-                return MaterialApp.router(
-                  title: CoreStrings.appName,
-                  debugShowCheckedModeBanner: false,
-                  themeMode: appearance.themeMode,
-                  theme: AppTheme.light(area),
-                  darkTheme: AppTheme.dark(area),
-                  locale: appearance.locale,
-                  supportedLocales: const [
-                    Locale('fr', 'FR'),
-                    Locale('en', 'US'),
-                  ],
-                  localizationsDelegates:
-                      GlobalMaterialLocalizations.delegates,
-                  routerConfig: router,
-                );
-              },
+      child: UserPresenceCoordinator(
+        child: BookingPushCoordinator(
+          child: PrestataireBookingNotificationCoordinator(
+            child: PrestataireVisibilityNotificationCoordinator(
+              child: RouterThemeScope(
+                router: router,
+                builder: (context, area) {
+                  return MaterialApp.router(
+                    title: CoreStrings.appName,
+                    debugShowCheckedModeBanner: false,
+                    themeMode: appearance.themeMode,
+                    theme: AppTheme.light(area),
+                    darkTheme: AppTheme.dark(area),
+                    locale: appearance.locale,
+                    supportedLocales: const [
+                      Locale('fr', 'FR'),
+                      Locale('en', 'US'),
+                    ],
+                    localizationsDelegates:
+                        GlobalMaterialLocalizations.delegates,
+                    routerConfig: router,
+                  );
+                },
+              ),
             ),
           ),
         ),

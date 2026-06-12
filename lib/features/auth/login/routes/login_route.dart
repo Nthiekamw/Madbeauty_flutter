@@ -8,18 +8,17 @@ import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../router/app_router.dart';
-import '../../navigation/post_auth_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../guest/guest_mode_provider.dart';
-import '../../phone_otp/models/phone_otp_flow.dart';
+import '../../logic/account_ban_handler.dart';
+import '../../navigation/auth_session_cache.dart';
 import '../../providers/auth_notifier.dart';
+import '../../providers/auth_redirect_providers.dart';
 import '../../widgets/auth_success_dialog.dart';
-import '../../../../shared/utils/phone_number_utils.dart';
-import '../models/login_credential_method.dart';
-import '../models/login_view_state.dart';
 import '../providers/login_controller.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../screens/login_page.dart';
+import '../models/login_view_state.dart';
 
 /// Entrée route `/login` : Riverpod, navigation et [SnackBar] (hors design).
 class LoginRoute extends ConsumerStatefulWidget {
@@ -32,8 +31,6 @@ class LoginRoute extends ConsumerStatefulWidget {
 class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  String _phoneDialCode = '+33';
   bool _googleSignInPending = false;
   bool _welcomeHandled = false;
 
@@ -41,7 +38,9 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       exitGuestMode(ref);
+      ref.read(loginRedirectAfterWelcomeProvider.notifier).disarm();
     });
   }
 
@@ -49,14 +48,8 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
-
-  String get _phoneE164 => PhoneNumberUtils.toE164(
-        dialCode: _phoneDialCode,
-        local: _phoneController.text,
-      );
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
@@ -64,7 +57,6 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       await ref.read(loginControllerProvider.notifier).submit(
             rawEmail: _emailController.text,
             rawPassword: _passwordController.text,
-            rawPhoneE164: _phoneE164,
           );
     } on AppFailure catch (e) {
       if (!mounted) return;
@@ -86,26 +78,47 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     }
   }
 
-  void _onCredentialMethodChanged(bool isPhone) {
-    ref.read(loginControllerProvider.notifier).setCredentialMethod(
-          isPhone ? LoginCredentialMethod.phone : LoginCredentialMethod.email,
-        );
-  }
-
   Future<void> _completeLoginWithWelcome() async {
     if (_welcomeHandled || !mounted) return;
     _welcomeHandled = true;
     _googleSignInPending = false;
+
     final container = ProviderScope.containerOf(context);
+    final router = container.read(goRouterProvider);
+    final loginRedirectNotifier =
+        container.read(loginRedirectAfterWelcomeProvider.notifier);
+    final bumpRedirect = container.read(routerRedirectBumpProvider);
+
+    final rootContext = router.routerDelegate.navigatorKey.currentContext;
+    final dialogContext = rootContext ?? (mounted ? context : null);
+
+    if (!await AccountBanHandler.ensureNotBanned(
+      container,
+      dialogContext: dialogContext,
+      router: router,
+    )) {
+      return;
+    }
+
+    if (dialogContext == null) return;
 
     await AuthSuccessDialog.show(
-      context,
+      dialogContext,
       title: AuthStrings.loginSuccessTitle,
       body: AuthStrings.loginSuccessBody,
       actionLabel: AuthStrings.loginSuccessCta,
     );
-    if (!context.mounted) return;
-    await PostAuthNavigation.navigateWithContainer(context, container);
+
+    if (container.read(authNotifierProvider).value == null) return;
+
+    final prepared =
+        await AuthSessionCache.prepareForAuthenticatedRedirect(container);
+    if (!prepared || container.read(authNotifierProvider).value == null) {
+      return;
+    }
+
+    loginRedirectNotifier.arm();
+    bumpRedirect();
   }
 
   @override
@@ -115,22 +128,9 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
         AppSnackBar.warning(context, ShellStrings.supabaseMissingTitle);
         ref.read(loginControllerProvider.notifier).acknowledgeSupabaseSnack();
       }
-      if (next.infoMessage != null &&
-          previous?.infoMessage != next.infoMessage) {
-        AppSnackBar.info(context, next.infoMessage!);
-        ref.read(loginControllerProvider.notifier).acknowledgeInfoMessage();
-      }
       if (next.submitError != null && previous?.submitError != next.submitError) {
         AppSnackBar.error(context, next.submitError!);
         ref.read(loginControllerProvider.notifier).acknowledgeSubmitError();
-      }
-      if (next.shouldNavigateToPhoneOtp &&
-          previous?.shouldNavigateToPhoneOtp != next.shouldNavigateToPhoneOtp) {
-        ref.read(loginControllerProvider.notifier).acknowledgePhoneOtpNavigation();
-        context.pushVerifyPhone(
-          flow: PhoneOtpFlow.login.queryValue,
-          phone: _phoneE164,
-        );
       }
       if (next.shouldPopRoute) {
         ref.read(loginControllerProvider.notifier).acknowledgeRouteClose();
@@ -161,17 +161,11 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
 
     return LoginPage(
       showSupabaseConfigCard: !AppConfig.hasSupabase,
-      credentialMethod: loginUi.credentialMethod,
       emailController: _emailController,
       passwordController: _passwordController,
-      phoneController: _phoneController,
-      phoneDialCode: _phoneDialCode,
-      onPhoneDialCodeChanged: (code) => setState(() => _phoneDialCode = code),
       emailError: loginUi.emailError,
       passwordError: loginUi.passwordError,
-      phoneError: loginUi.phoneError,
       submitError: null,
-      infoMessage: loginUi.infoMessage,
       isLoading: isLoading,
       formEnabled: formEnabled,
       onBack: () =>
@@ -182,8 +176,6 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       onEmailChanged: ref.read(loginControllerProvider.notifier).onEmailChanged,
       onPasswordChanged:
           ref.read(loginControllerProvider.notifier).onPasswordChanged,
-      onPhoneChanged: ref.read(loginControllerProvider.notifier).onPhoneChanged,
-      onCredentialMethodChanged: _onCredentialMethodChanged,
       onGoogle: _google,
       onForgotPassword: context.pushForgotPassword,
     );

@@ -11,9 +11,11 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../logic/reservation_calendar_export.dart';
 import '../widgets/reservation/reservation_pending_banner.dart';
 import '../widgets/reservation/reservation_reject_reason_box.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../messaging/messaging_navigation.dart';
+import '../../messaging/models/messaging_inbox_role.dart';
 import '../logic/booking_formatters.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../logic/reservation_chat_eligibility.dart';
@@ -97,13 +99,20 @@ class _ClientReservationDetailScreenState
     return Scaffold(
       appBar: AppBar(title: const Text(DiscBk.detailTitle)),
       body: detailAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(20),
+          child: DiscoveryListSkeleton(rowCount: 3, rowHeight: 88),
+        ),
         error: (_, __) => Center(
           child: DiscoveryEmptyState(
             icon: Icons.cloud_off_outlined,
-            title: DiscBk.listErrTitle,
+            title: CoreStrings.networkErrorTitle,
             body: DiscBk.listErrBody,
             iconColor: theme.colorScheme.error,
+            actionLabel: DiscList.retry,
+            onAction: () => ref.invalidate(
+              clientReservationDetailProvider(widget.reservationId),
+            ),
           ),
         ),
         data: (item) {
@@ -261,6 +270,7 @@ class _ClientReservationDetailScreenState
                             context,
                             ref,
                             item.id,
+                            viewerRole: MessagingInboxRole.client,
                           ),
                   child: const Text(DiscChat.openChat),
                 ),

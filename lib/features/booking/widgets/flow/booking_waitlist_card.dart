@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../providers/slot_waitlist_provider.dart';
 
@@ -61,10 +63,10 @@ class BookingWaitlistCard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           activeAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Text(
-              DiscWaitlist.err,
-              style: TextStyle(color: theme.colorScheme.error),
+            loading: () => const DiscoveryInlineSkeleton(height: 44),
+            error: (_, __) => DiscoverySectionError(
+              message: DiscWaitlist.err,
+              onRetry: () => ref.invalidate(slotWaitlistActiveProvider(query)),
             ),
             data: (active) => OutlinedButton.icon(
               onPressed: () => _toggle(context, ref, active),

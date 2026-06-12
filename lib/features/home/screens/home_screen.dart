@@ -11,6 +11,7 @@ import '../models/home_profile_snapshot.dart';
 import '../providers/home_profile_provider.dart';
 import '../widgets/header/client_home_hero_header.dart';
 import '../widgets/layout/client_home_scroll_content.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
 
@@ -76,8 +77,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor:
+          isDark ? theme.colorScheme.surface : AppColors.lightSurface,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

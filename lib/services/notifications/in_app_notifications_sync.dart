@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/logic/booking/client_reservation_ui_status.dart';
+import '../../core/models/user_role.dart';
+import '../../features/admin/providers/admin_bug_reports_provider.dart';
+import '../../features/auth/providers/my_roles_provider.dart';
+import '../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../features/reviews/providers/review_provider.dart';
 import '../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../services/supabase/prestataire/prestataire_verification_service.dart';
 import 'in_app_notification.dart';
@@ -98,6 +103,40 @@ Future<List<InAppNotification>> fetchActivityNotifications(
   }
 
   try {
+    final reviewService = ref.read(reviewServiceProvider);
+    final likeService = ref.read(prestataireLikeServiceProvider);
+    if (reviewService != null && likeService != null) {
+      final prestaId = await likeService.currentPrestataireProfileId();
+      if (prestaId != null) {
+        final reviews = await reviewService.listRecentForPrestataire(
+          prestaId,
+          since: cutoff,
+        );
+        for (final review in reviews) {
+          out.add(
+            InAppNotification(
+              id: 'review_${review.id}',
+              title: DiscNotif.prestataireReviewTitle(review.note),
+              body: DiscNotif.prestataireReviewBody(
+                clientName: review.clientDisplayName ?? 'Une cliente',
+                note: review.note,
+                comment: review.commentaire,
+              ),
+              createdAt: review.createdAt,
+              read: false,
+              actionType: 'prestataire_review',
+              prestataireId: review.prestataireId,
+              reservationId: review.reservationId,
+            ),
+          );
+        }
+      }
+    }
+  } catch (_) {
+    /* Pas prestataire ou erreur réseau */
+  }
+
+  try {
     final verificationService = PrestataireVerificationService.fromEnv();
     final events = await verificationService.listRecentDecisionEvents(
       since: cutoff,
@@ -173,6 +212,66 @@ Future<List<InAppNotification>> fetchActivityNotifications(
     }
   } catch (_) {
     /* Pas client ou erreur réseau */
+  }
+
+  try {
+    final roles = await ref.read(myRolesProvider.future);
+    if (roles.contains(UserRole.admin)) {
+      final adminService = ref.read(adminBugReportsServiceProvider);
+      if (adminService != null) {
+        final pending = await adminService.listReports(
+          onlyPending: true,
+          limit: 15,
+        );
+        for (final bug in pending) {
+          out.add(
+            InAppNotification(
+              id: 'bug_report_admin_${bug.id}',
+              title: DiscNotif.bugReportNewTitle,
+              body: DiscNotif.bugReportNewBody(
+                category: DiscBug.categoryLabel(bug.category),
+                title: bug.title,
+              ),
+              createdAt: bug.createdAt,
+              read: false,
+              actionType: 'bug_report',
+              nav: 'admin_bug_reports',
+              bugReportId: bug.id,
+            ),
+          );
+        }
+      }
+    }
+  } catch (_) {
+    /* Pas admin ou erreur réseau */
+  }
+
+  try {
+    final bugService = ref.read(bugReportServiceProvider);
+    if (bugService != null) {
+      final mine = await bugService.listMine(limit: 20);
+      for (final bug in mine) {
+        if (!bug.isTerminal || bug.updatedAt.isBefore(cutoff)) continue;
+        out.add(
+          InAppNotification(
+            id: 'bug_report_status_${bug.id}_${bug.status}',
+            title: DiscNotif.bugReportStatusTitle,
+            body: DiscNotif.bugReportStatusBody(
+              title: bug.title,
+              statusLabel: DiscBug.statusLabel(bug.status).toLowerCase(),
+              reporterMessage: bug.reporterMessage,
+            ),
+            createdAt: bug.updatedAt,
+            read: false,
+            actionType: 'bug_report_status',
+            nav: 'my_bug_reports',
+            bugReportId: bug.id,
+          ),
+        );
+      }
+    }
+  } catch (_) {
+    /* Erreur réseau */
   }
 
   out.sort((a, b) => b.createdAt.compareTo(a.createdAt));

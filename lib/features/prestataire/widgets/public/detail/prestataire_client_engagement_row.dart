@@ -40,15 +40,7 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            DiscPrestaDetail.engagementSectionSubtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -63,7 +55,7 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
                   onTap: () => _toggleLike(context, ref, isLiked),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _EngagementChip(
                   icon: isFavorite
@@ -172,46 +164,43 @@ class _EngagementChip extends StatelessWidget {
         ? activeColor.withValues(alpha: 0.1)
         : theme.colorScheme.surfaceContainerLowest;
 
-    return Material(
-      color: background,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: DiscoveryStyles.cardBorderRadius,
-        side: BorderSide(color: borderColor),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: DiscoveryStyles.cardBorderRadius,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: active ? activeColor : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: active ? activeColor : theme.colorScheme.onSurface,
+    return Tooltip(
+      message: hint,
+      child: Material(
+        color: background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: DiscoveryStyles.cardBorderRadius,
+          side: BorderSide(color: borderColor),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: DiscoveryStyles.cardBorderRadius,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color:
+                      active ? activeColor : theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                hint,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.25,
-                  fontSize: 10,
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: active ? activeColor : theme.colorScheme.onSurface,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

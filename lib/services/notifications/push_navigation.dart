@@ -67,9 +67,27 @@ void navigateFromPushDataWithRouter(
     case 'prestataire_like':
       router.goNamed(AppRouteNames.prestataireDashboard);
       return;
+    case 'prestataire_review':
+      router.pushNamed(AppRouteNames.prestataireReceivedReviews);
+      return;
     case 'prestataire_verification_approved':
     case 'prestataire_verification_revoked':
       router.pushNamed(AppRouteNames.prestataireProfileEdit);
+      return;
+    case 'bug_report':
+      router.pushNamed(AppRouteNames.adminBugReports);
+      return;
+    case 'bug_report_status':
+      router.pushNamed(AppRouteNames.clientMyBugReports);
+      return;
+    case 'bug_report_message':
+      final bugReportId = _str(data, 'bug_report_id');
+      if (bugReportId != null) {
+        router.pushNamed(
+          AppRouteNames.bugReportChat,
+          pathParameters: {'id': bugReportId},
+        );
+      }
       return;
     case 'admin_broadcast':
       _openAdminNavTarget(router, nav, data);
@@ -94,6 +112,8 @@ Map<String, dynamic> _dataFromInApp(InAppNotification notification) {
     if (notification.bookingId != null) 'booking_id': notification.bookingId!,
     if (notification.role != null) 'role': notification.role!,
     if (notification.nav != null) 'nav': notification.nav!,
+    if (notification.bugReportId != null)
+      'bug_report_id': notification.bugReportId!,
   };
 }
 
@@ -119,6 +139,18 @@ void _openAdminNavTarget(
       router.pushNamed(AppRouteNames.prestataireProfileEdit);
     case 'booking':
       _openBookingWithRouter(router, data);
+    case 'admin_bug_reports':
+      router.pushNamed(AppRouteNames.adminBugReports);
+    case 'my_bug_reports':
+      router.pushNamed(AppRouteNames.clientMyBugReports);
+    case 'bug_report_chat':
+      final chatId = _str(data, 'bug_report_id');
+      if (chatId != null) {
+        router.pushNamed(
+          AppRouteNames.bugReportChat,
+          pathParameters: {'id': chatId},
+        );
+      }
     case 'none':
     case null:
     case '':

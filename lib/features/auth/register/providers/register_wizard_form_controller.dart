@@ -61,9 +61,6 @@ class RegisterWizardFormController extends ChangeNotifier {
   bool phoneRequiredOnExtras = false;
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
-  bool usePhoneSignUp = false;
-  bool signedUpViaPhone = false;
-  bool pendingPhoneVerification = false;
   bool pendingEmailVerification = false;
 
   bool get isPresta => roleChoice == UserRole.prestataire;
@@ -73,13 +70,12 @@ class RegisterWizardFormController extends ChangeNotifier {
         local: phone.text,
       );
 
+  /// Mot de passe exclu : jamais persisté sur disque.
   List<TextEditingController> get _autosaveControllers => [
     prenom,
     nom,
     phone,
     email,
-    password,
-    confirm,
     adresse,
     salon,
     ville,
@@ -106,8 +102,6 @@ class RegisterWizardFormController extends ChangeNotifier {
     nom.text = draft.nom;
     phone.text = draft.phone;
     email.text = draft.email;
-    password.text = draft.password;
-    confirm.text = draft.confirmPassword;
     adresse.text = draft.adresse;
     salon.text = draft.salon;
     nomAffiche.text = draft.nomAffiche;
@@ -119,13 +113,8 @@ class RegisterWizardFormController extends ChangeNotifier {
     roleChoice = draft.role;
     signedUpViaOAuth = draft.signedUpViaOAuth;
     pendingGoogleSignIn = draft.pendingGoogleSignIn;
-    signedUpViaPhone = draft.signedUpViaPhone;
     phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     pendingEmailVerification = draft.pendingEmailVerification;
-    pendingPhoneVerification = draft.pendingPhoneVerification;
-    if (draft.signedUpViaPhone) {
-      usePhoneSignUp = true;
-    }
     notifyListeners();
   }
 
@@ -136,8 +125,6 @@ class RegisterWizardFormController extends ChangeNotifier {
         phone: phone.text,
         phoneDialCode: phoneDialCode,
         email: email.text,
-        password: password.text,
-        confirmPassword: confirm.text,
         adresse: adresse.text,
         salon: salon.text,
         nomAffiche: nomAffiche.text,
@@ -147,29 +134,19 @@ class RegisterWizardFormController extends ChangeNotifier {
         bio: bio.text,
         signedUpViaOAuth: signedUpViaOAuth,
         pendingGoogleSignIn: pendingGoogleSignIn || googleLaunched,
-        signedUpViaPhone: signedUpViaPhone,
         phoneRequiredOnExtras: phoneRequiredOnExtras,
         pendingEmailVerification: pendingEmailVerification,
-        pendingPhoneVerification: pendingPhoneVerification,
         role: roleChoice,
       );
 
   Future<void> persistDraft({
     bool? pendingEmailVerification,
-    bool? pendingPhoneVerification,
     bool? pendingGoogleSignIn,
-    bool? signedUpViaPhone,
     int? step,
   }) async {
     if (!persistDraftOnDispose) return;
     if (pendingEmailVerification != null) {
       this.pendingEmailVerification = pendingEmailVerification;
-    }
-    if (pendingPhoneVerification != null) {
-      this.pendingPhoneVerification = pendingPhoneVerification;
-    }
-    if (signedUpViaPhone != null) {
-      this.signedUpViaPhone = signedUpViaPhone;
     }
     if (pendingGoogleSignIn != null) {
       this.pendingGoogleSignIn = pendingGoogleSignIn;
@@ -211,9 +188,6 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   String stepPrimaryLabel() {
     if (step >= 2) {
-      if (usePhoneSignUp && !signedUpViaOAuth && !signedUpViaPhone) {
-        return AuthStrings.loginActionSendOtp;
-      }
       return AuthStrings.registerWizardSubmit;
     }
     return AuthStrings.registerWizardNext;
@@ -296,19 +270,6 @@ class RegisterWizardFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUsePhoneSignUp(bool usePhone) {
-    if (signedUpViaOAuth || signedUpViaPhone) return;
-    usePhoneSignUp = usePhone;
-    pendingPhoneVerification = false;
-    if (!usePhone) {
-      phone.clear();
-      phoneError = null;
-    }
-    error = null;
-    clearFieldErrors();
-    notifyListeners();
-  }
-
   bool validateStep0() {
     final errors = RegisterWizardValidation.validateStep0(
       prenom: prenom.text.trim(),
@@ -319,8 +280,6 @@ class RegisterWizardFormController extends ChangeNotifier {
       password: password.text,
       confirmPassword: confirm.text,
       signedUpViaOAuth: signedUpViaOAuth,
-      usePhoneSignUp: usePhoneSignUp,
-      phoneRequiredOnExtras: phoneRequiredOnExtras,
     );
     prenomError = errors.prenomError;
     nomError = errors.nomError;
@@ -335,14 +294,10 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   bool validateExtrasStep() {
     final errors = RegisterWizardValidation.validateExtras(
-      phoneRequiredOnExtras: phoneRequiredOnExtras,
-      phone: phone.text,
-      dialCode: phoneDialCode,
       isPresta: isPresta,
       salon: salon.text.trim(),
       ville: ville.text.trim(),
     );
-    phoneError = errors.phoneError;
     salonError = errors.salonError;
     villeError = errors.villeError;
     error = null;
@@ -481,6 +436,15 @@ class RegisterWizardFormController extends ChangeNotifier {
   void resetGooglePending() {
     googleLaunched = false;
     pendingGoogleSignIn = false;
+    notifyListeners();
+  }
+
+  /// Efface le mot de passe de la mémoire (jamais écrit sur disque).
+  void clearPasswordFields() {
+    password.clear();
+    confirm.clear();
+    passwordError = null;
+    confirmError = null;
     notifyListeners();
   }
 }

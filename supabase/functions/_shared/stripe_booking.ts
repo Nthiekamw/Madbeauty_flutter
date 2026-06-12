@@ -155,6 +155,52 @@ export function clientPaymentReturnUrl(): string {
   return `${connectRedirectFunctionBase()}?to=client_payment_return`;
 }
 
+export type ClientProfileRow = {
+  id: string;
+  stripe_customer_id?: string | null;
+};
+
+/** Rôle client + ligne profil (création si manquante). */
+export async function ensureClientProfileRow(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<ClientProfileRow> {
+  const { data: roles } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  const hasClient = (roles ?? []).some((r) =>
+    String((r as { role?: string }).role) === "client"
+  );
+  if (!hasClient) {
+    const { error: roleErr } = await admin.from("user_roles").insert({
+      user_id: userId,
+      role: "client",
+    });
+    if (roleErr && roleErr.code !== "23505") throw roleErr;
+  }
+
+  const { data: existing } = await admin
+    .from("client_profiles")
+    .select("id, stripe_customer_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    return existing as ClientProfileRow;
+  }
+
+  const { data: inserted, error } = await admin
+    .from("client_profiles")
+    .insert({ user_id: userId })
+    .select("id, stripe_customer_id")
+    .single();
+
+  if (error) throw error;
+  return inserted as ClientProfileRow;
+}
+
 export async function ensureStripeCustomer(
   admin: SupabaseClient,
   stripe: Stripe,

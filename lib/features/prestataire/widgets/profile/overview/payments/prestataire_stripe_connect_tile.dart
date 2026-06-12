@@ -9,6 +9,7 @@ import '../../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../../shared/utils/app_url_launcher.dart';
 import '../../../../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../shared/prestataire_section_header.dart';
@@ -155,9 +156,9 @@ class _PrestataireStripeConnectTileState
             ),
             const SizedBox(height: 8),
             statusAsync.when(
-              loading: () => const Padding(
+              loading: () => const DiscoveryInlineSkeleton(
+                height: 72,
                 padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
               ),
               error: (_, __) => DiscoveryMenuTile(
                 icon: Icons.refresh_rounded,

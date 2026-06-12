@@ -61,6 +61,8 @@ class PrestataireDetailHero extends ConsumerWidget {
                   height: constraints.maxHeight,
                   fallbackDisplayName: displayTitle,
                   fallbackAvatarUrl: avatarUrl,
+                  imagesOnly: false,
+                  playVideos: true,
                 );
               },
             ),

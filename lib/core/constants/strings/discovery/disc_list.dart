@@ -44,7 +44,8 @@ abstract final class DiscList {
   static const mapOpenDetail = 'Voir la fiche';
   static const mapExpandHint = 'Agrandir la carte';
   static const mapCollapseHint = 'Réduire la carte';
-  static const emptyFilterTitle = 'Aucun prestataire ne correspond à ta recherche.';
+  static const emptyFilterTitle =
+      'Aucun prestataire trouvé pour ces critères';
   static const emptyFilterHint =
       'Modifie ta recherche ou retire un filtre de type de service.';
   static const emptyCatalogTitle =

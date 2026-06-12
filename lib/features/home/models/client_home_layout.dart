@@ -6,14 +6,15 @@ class ClientHomeLayout {
 
   final List<ClientHomeSectionId> order;
 
-  static const layoutVersion = 3;
+  static const layoutVersion = 5;
 
   static const defaultOrder = <ClientHomeSectionId>[
     ClientHomeSectionId.inspiration,
-    ClientHomeSectionId.feed,
+    ClientHomeSectionId.nextAppointment,
+    ClientHomeSectionId.promo,
     ClientHomeSectionId.nearby,
     ClientHomeSectionId.topRated,
-    ClientHomeSectionId.nextAppointment,
+    ClientHomeSectionId.feed,
   ];
 
   static final defaults = ClientHomeLayout(

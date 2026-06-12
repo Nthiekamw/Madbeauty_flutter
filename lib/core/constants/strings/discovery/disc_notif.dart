@@ -34,6 +34,26 @@ abstract final class DiscNotif {
   static String prestataireLikeBody(String clientName) =>
       '$clientName a aimé ton profil MadBeauty.';
 
+  static String prestataireReviewTitle(int note) => note <= 2
+      ? 'Avis à améliorer sur ton profil'
+      : 'Nouvel avis sur ton profil';
+
+  static String prestataireReviewBody({
+    required String clientName,
+    required int note,
+    String? comment,
+  }) {
+    final base = note <= 2
+        ? '$clientName t\'a donné $note/5.'
+        : '$clientName t\'a laissé $note/5 sur MadBeauty.';
+    final trimmed = comment?.trim() ?? '';
+    if (trimmed.isEmpty) return base;
+    final preview = trimmed.length > 80
+        ? '${trimmed.substring(0, 79)}…'
+        : trimmed;
+    return '$base « $preview »';
+  }
+
   static const verificationApprovedTitle = 'Profil vérifié';
   static const verificationApprovedBody =
       'Ton profil prestataire est approuvé sur MadBeauty.';
@@ -43,4 +63,28 @@ abstract final class DiscNotif {
       reason.trim().isEmpty
           ? 'L’équipe a retiré ta vérification. Consulte ton profil.'
           : 'Corrections demandées : $reason';
+
+  static const bugReportNewTitle = 'Nouveau bug signalé';
+  static String bugReportNewBody({
+    required String category,
+    required String title,
+  }) =>
+      '$category — $title';
+
+  static const bugReportStatusTitle = 'Signalement de bug traité';
+  static String bugReportStatusBody({
+    required String title,
+    required String statusLabel,
+    String? reporterMessage,
+  }) {
+    final note = reporterMessage?.trim() ?? '';
+    if (note.isNotEmpty) {
+      return '« $title » : $statusLabel. $note';
+    }
+    return '« $title » a été $statusLabel par l’équipe.';
+  }
+
+  static const bugReportMessageTitle = 'Nouveau message sur ton bug';
+  static const bugReportMessageAdminTitle = 'Nouveau message sur un bug';
+  static String bugReportMessageBody(String preview) => preview;
 }

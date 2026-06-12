@@ -9,6 +9,7 @@ import '../../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/utils/app_url_launcher.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../models/prestataire_subscription_status.dart';
 import '../../../logic/prestataire_subscription_refresh.dart';
 import '../../../providers/profile/prestataire_profile_form_provider.dart';
@@ -146,10 +147,7 @@ class _PrestataireSubscriptionCheckoutSectionState
     );
 
     return serviceCountAsync.when(
-      loading: () => const SizedBox(
-        height: 40,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
+      loading: () => const DiscoveryInlineSkeleton(height: 40),
       error: (_, __) => const SizedBox.shrink(),
       data: (serviceCount) {
         final tier = PrestataireSubscriptionConfig.tierForServiceCount(
@@ -157,10 +155,7 @@ class _PrestataireSubscriptionCheckoutSectionState
         );
 
         return statusAsync.when(
-          loading: () => const SizedBox(
-            height: 40,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
+          loading: () => const DiscoveryInlineSkeleton(height: 40),
           error: (_, __) => const SizedBox.shrink(),
           data: (status) {
             if (status.isActive) {

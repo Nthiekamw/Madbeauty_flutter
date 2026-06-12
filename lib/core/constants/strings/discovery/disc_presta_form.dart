@@ -46,11 +46,14 @@ abstract final class DiscPrestaForm {
       'Spécialité : $name';
   static const servicesWizardConfiguredBadge = 'Configuré';
   static const hubGalleryHint =
-      'Ajoute jusqu’à 10 photos de tes meilleures prestations '
-      '(JPEG, PNG ou WebP) pour valoriser ton savoir-faire et rassurer les clientes.';
+      'Ajoute jusqu’à 10 photos et 3 courtes vidéos de tes meilleures prestations '
+      '(JPEG, PNG, WebP, MP4 ou MOV) pour valoriser ton savoir-faire.';
   static const hubGalleryPick = 'Ajouter des photos';
-  static const hubGalleryEmpty = 'Aucune photo pour l’instant.';
-  static const hubGalleryUploading = 'Envoi des photos…';
+  static const hubGalleryPickVideo = 'Ajouter une vidéo';
+  static const hubGalleryMediaCount = 'médias';
+  static const hubGalleryVideoBadge = 'Vidéo';
+  static const hubGalleryEmpty = 'Aucun média pour l’instant.';
+  static const hubGalleryUploading = 'Envoi des médias…';
   static const skipStep = 'Passer';
   static const completeLater = 'Configurer plus tard';
   static const completeLaterSaved =

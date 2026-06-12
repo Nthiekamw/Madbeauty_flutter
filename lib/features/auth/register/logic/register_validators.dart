@@ -1,5 +1,6 @@
 ﻿import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
+import '../../logic/password_policy.dart';
 
 abstract final class RegisterValidators {
   RegisterValidators._();
@@ -16,10 +17,7 @@ abstract final class RegisterValidators {
     return null;
   }
 
-  static String? password(String value) {
-    if (value.isEmpty) return AuthStrings.registerValidationPasswordEmpty;
-    return null;
-  }
+  static String? password(String value) => PasswordPolicy.validate(value);
 
   static String? phoneLocal(String local, {required String dialCode}) {
     final trimmed = local.trim();

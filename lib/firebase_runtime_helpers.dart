@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
@@ -29,29 +28,22 @@ bool isFirebaseConfiguredForPush() {
   }
 }
 
-/// Initialise Firebase une seule fois (auth téléphone, FCM, etc.).
-Future<void> ensureFirebaseInitialized() async {
-  if (!isFirebaseConfiguredForPush()) return;
-  if (Firebase.apps.isEmpty) {
+/// Initialise Firebase une seule fois (notifications push FCM).
+///
+/// Ne lance pas : les erreurs sont loguées et ignorées (l'app reste utilisable
+/// sans push). N'utilise **pas** firebase_auth — Google Sign-In passe par Supabase.
+Future<bool> ensureFirebaseInitialized() async {
+  if (!isFirebaseConfiguredForPush()) return false;
+  if (Firebase.apps.isNotEmpty) return true;
+  try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  }
-  await _configureFirebasePhoneAuthIfNeeded();
-}
-
-bool _firebasePhoneAuthConfigured = false;
-
-/// Évite Play Integrity en dev (erreur 17028) : flux reCAPTCHA web à la place.
-Future<void> _configureFirebasePhoneAuthIfNeeded() async {
-  if (_firebasePhoneAuthConfigured || kIsWeb) return;
-  if (defaultTargetPlatform != TargetPlatform.android) return;
-  _firebasePhoneAuthConfigured = true;
-  if (kDebugMode) {
-    await fb.FirebaseAuth.instance.setSettings(forceRecaptchaFlow: true);
-    debugPrint(
-      '[FirebaseAuth] forceRecaptchaFlow=true (debug Android, évite Play Integrity)',
-    );
+    return true;
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('ensureFirebaseInitialized: échec (push désactivé) – $e\n$st');
+    }
+    return false;
   }
 }
-

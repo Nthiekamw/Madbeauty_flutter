@@ -2,7 +2,7 @@
 
 import '../../../../shared/theme/app_fonts.dart';
 
-/// Titre de section accueil + sous-titre + action optionnelle.
+/// Titre de section accueil + action optionnelle.
 class ClientHomeSectionHeader extends StatelessWidget {
   const ClientHomeSectionHeader({
     super.key,
@@ -10,19 +10,21 @@ class ClientHomeSectionHeader extends StatelessWidget {
     this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.compact = false,
   });
 
   final String title;
   final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
@@ -30,21 +32,23 @@ class ClientHomeSectionHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                  fontWeight: FontWeight.w800,
+                  fontSize: compact ? 13 : 14,
+                  letterSpacing: -0.2,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
+              if (!compact && subtitle != null) ...[
+                const SizedBox(height: 3),
                 Text(
                   subtitle!,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontFamily: AppFonts.body,
+                    fontSize: 11,
                     color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -55,9 +59,14 @@ class ClientHomeSectionHeader extends StatelessWidget {
           TextButton(
             onPressed: onAction,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: theme.colorScheme.primary,
+              ),
             ),
             child: Text(actionLabel!),
           ),
@@ -65,4 +74,3 @@ class ClientHomeSectionHeader extends StatelessWidget {
     );
   }
 }
-

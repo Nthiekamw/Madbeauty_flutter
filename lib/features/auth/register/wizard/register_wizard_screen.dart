@@ -18,8 +18,6 @@ import '../providers/register_wizard_form_controller.dart';
 import '../widgets/register_wizard_bottom_bar.dart';
 import '../widgets/register_wizard_progress_bar.dart';
 import '../widgets/register_wizard_screen_body.dart';
-import '../../../../shared/widgets/app/app_snack_bar.dart';
-
 /// Inscription en 3 étapes : identité → rôle → infos complémentaires.
 class RegisterWizardScreen extends ConsumerStatefulWidget {
   const RegisterWizardScreen({
@@ -50,14 +48,6 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       exitGuestMode(ref);
-      final phoneVerified =
-          GoRouterState.of(context).uri.queryParameters['phoneVerified'] == '1';
-      if (phoneVerified) {
-        AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
-        if (_form.signedUpViaPhone && _form.step == 2 && !_form.loading) {
-          unawaited(_submit());
-        }
-      }
       final hasSession =
           ref.read(authServiceProvider).currentSession?.user != null;
       if (widget.autoResumeFinalize &&

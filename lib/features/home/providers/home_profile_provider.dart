@@ -49,7 +49,8 @@ final homeProfileRemoteLoaderProvider =
       };
     });
 
-final homeProfileSnapshotProvider = FutureProvider<HomeProfileSnapshot?>((ref) async {
+final homeProfileSnapshotProvider =
+    FutureProvider.autoDispose<HomeProfileSnapshot?>((ref) async {
   final isOnline = await ref.read(connectivityServiceProvider).isOnline();
   final cache = LocalCacheService.instance;
 

@@ -9,15 +9,18 @@ import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
+import '../../client/widgets/workspace/client_workspace_header.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_lists.dart';
 import '../logic/client_reservation_ui_status.dart';
 import '../models/client_reservation_summary.dart';
 import '../../messaging/messaging_navigation.dart';
+import '../../messaging/models/messaging_inbox_role.dart';
 import '../../../services/notifications/booking_reminders_sync.dart';
 import '../widgets/reservation/client_reservation_card.dart';
 
@@ -140,6 +143,11 @@ class _ClientReservationsScreenState
         body: SafeArea(
           child: ClientWorkspaceShell(
             subtitle: DiscBk.reservationsSubtitle,
+            panelOverlap: -8,
+            header: const ClientWorkspaceHeader(
+              subtitle: DiscBk.reservationsSubtitle,
+              compact: true,
+            ),
             child: GuestAccountPrompt(
               icon: Icons.event_outlined,
               title: AuthStrings.guestReservationsTitle,
@@ -161,6 +169,11 @@ class _ClientReservationsScreenState
         body: SafeArea(
           child: ClientWorkspaceShell(
             subtitle: DiscBk.reservationsSubtitle,
+            panelOverlap: -8,
+            header: const ClientWorkspaceHeader(
+              subtitle: DiscBk.reservationsSubtitle,
+              compact: true,
+            ),
             top: Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: DiscoverySurfaceCard(
@@ -206,8 +219,9 @@ class _ClientReservationsScreenState
               ),
             ),
             child: reservationsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
+              loading: () => const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
               ),
               error: (_, __) => RefreshIndicator(
                 onRefresh: _refresh,
@@ -216,7 +230,7 @@ class _ClientReservationsScreenState
                   children: [
                     DiscoveryEmptyState(
                       icon: Icons.cloud_off_outlined,
-                      title: DiscBk.listErrTitle,
+                      title: CoreStrings.networkErrorTitle,
                       body: DiscBk.listErrBody,
                       iconColor: theme.colorScheme.error,
                       actionLabel: DiscList.retry,
@@ -285,7 +299,12 @@ class _ClientReservationsScreenState
             onTap: () => context.pushClientReservationDetail(item.id),
             cancelLoading: _cancellingId == item.id,
             onCancel: canCancel ? () => _confirmCancel(item) : null,
-            onMessage: () => openChatForReservation(context, ref, item.id),
+            onMessage: () => openChatForReservation(
+                  context,
+                  ref,
+                  item.id,
+                  viewerRole: MessagingInboxRole.client,
+                ),
           );
         },
       ),

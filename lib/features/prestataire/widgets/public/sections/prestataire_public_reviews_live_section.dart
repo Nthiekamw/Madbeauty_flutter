@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/models/domain/reviews/avis.dart';
 import '../../../../../core/models/domain/reviews/review.dart';
+import '../../../../../core/constants/app_strings.dart';
 import '../../../../../shared/theme/app_fonts.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../reviews/providers/review_provider.dart';
 import '../../../../reviews/widgets/review_photos_row.dart';
 import 'prestataire_public_reviews_section.dart';
@@ -16,12 +18,10 @@ class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
   const PrestatairePublicReviewsLiveSection({
     super.key,
     required this.prestataireId,
-    this.readOnly = false,
     this.onReviewTap,
   });
 
   final String prestataireId;
-  final bool readOnly;
   final void Function(Review review)? onReviewTap;
 
   @override
@@ -29,13 +29,17 @@ class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
     final reviewsAsync = ref.watch(reviewsByPrestataireProvider(prestataireId));
 
     return reviewsAsync.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
+      loading: () => const DiscoveryListSkeleton(
+        rowCount: 2,
+        rowHeight: 88,
+        padding: EdgeInsets.symmetric(vertical: 8),
+      ),
+      error: (_, __) => DiscoverySectionError(
+        message: CoreStrings.networkErrorBody,
+        onRetry: () => ref.invalidate(
+          reviewsByPrestataireProvider(prestataireId),
         ),
       ),
-      error: (_, __) => PrestatairePublicReviewsSection(reviews: const []),
       data: (reviews) {
         final avis = [
           for (final r in reviews)
@@ -59,7 +63,6 @@ class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
             for (var i = 0; i < reviews.length; i++) ...[
               _LiveReviewCard(
                 review: avis[i],
-                readOnly: readOnly,
                 onTap: onReviewTap == null
                     ? null
                     : () => onReviewTap!(reviews[i]),
@@ -76,12 +79,10 @@ class PrestatairePublicReviewsLiveSection extends ConsumerWidget {
 class _LiveReviewCard extends StatelessWidget {
   const _LiveReviewCard({
     required this.review,
-    this.readOnly = false,
     this.onTap,
   });
 
   final Avis review;
-  final bool readOnly;
   final VoidCallback? onTap;
 
   @override
@@ -129,26 +130,6 @@ class _LiveReviewCard extends StatelessWidget {
           if (review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 10),
             ReviewPhotosRow(urls: review.photoUrls),
-          ],
-          if (readOnly && onTap != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(
-                  Icons.visibility_outlined,
-                  size: 16,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  DiscReview.prestataireViewOnlyHint,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
           ],
         ],
       ),

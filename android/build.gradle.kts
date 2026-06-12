@@ -16,10 +16,16 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Aligner activity / activity-ktx / activity-compose (Stripe CustomerSheet + Compose).
+// Forcer uniquement `activity` en 1.10.1 cassait activity-compose 1.12.x (ActivityFlags manquant).
+val androidxActivityVersion = "1.12.4"
+
 subprojects {
     configurations.configureEach {
         resolutionStrategy {
-            force("androidx.activity:activity:1.10.1")
+            force("androidx.activity:activity:$androidxActivityVersion")
+            force("androidx.activity:activity-ktx:$androidxActivityVersion")
+            force("androidx.activity:activity-compose:$androidxActivityVersion")
         }
     }
 }

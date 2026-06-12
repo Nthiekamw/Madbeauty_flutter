@@ -62,21 +62,26 @@ class VerticalCatalogListCard extends StatelessWidget {
                   ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Stack(
-                children: [
-                  PrestataireCardPhotoHeader(
-                    prestataireId: profile.id,
-                    height: photoH,
-                    borderRadius: BorderRadius.only(
-                      topLeft: cardRadius.topLeft,
-                      topRight: cardRadius.topRight,
+              SizedBox(
+                height: photoH,
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    PrestataireCardPhotoHeader(
+                      prestataireId: profile.id,
+                      height: photoH,
+                      width: double.infinity,
+                      borderRadius: BorderRadius.only(
+                        topLeft: cardRadius.topLeft,
+                        topRight: cardRadius.topRight,
+                      ),
+                      fallbackDisplayName: safeDisplay,
+                      fallbackAvatarUrl: url,
+                      compactBadge: compact,
                     ),
-                    fallbackDisplayName: safeDisplay,
-                    fallbackAvatarUrl: url,
-                    compactBadge: compact,
-                  ),
                   if (rating != null)
                     Positioned(
                       left: compact ? 6 : 8,
@@ -86,158 +91,152 @@ class VerticalCatalogListCard extends StatelessWidget {
                         compact: compact,
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
               if (compact)
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
-                      child: Column(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  safeDisplay,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontFamily: AppFonts.display,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.1,
-                                    fontSize: 12.5,
-                                  ),
-                                ),
+                          Expanded(
+                            child: Text(
+                              safeDisplay,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                                height: 1.1,
+                                fontSize: 12.5,
                               ),
-                              if (profile.isVerified)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 2),
-                                  child: Icon(
-                                    Icons.verified_rounded,
-                                    color: primary,
-                                    size: 12,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          if (ville != null && ville.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_rounded,
-                                  size: 9,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 2),
-                                Expanded(
-                                  child: Text(
-                                    ville,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: 9,
-                                      height: 1.1,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
-                          ],
+                          ),
+                          if (profile.isVerified)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 2),
+                              child: Icon(
+                                Icons.verified_rounded,
+                                color: primary,
+                                size: 12,
+                              ),
+                            ),
                         ],
                       ),
-                    ),
+                      if (ville != null && ville.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: 9,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                ville,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 9,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 )
               else
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              safeDisplay,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                                height: 1.15,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                          if (profile.isVerified)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4, top: 1),
+                              child: Icon(
+                                Icons.verified_rounded,
+                                color: primary,
+                                size: 16,
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (ville != null && ville.isNotEmpty) ...[
+                        const SizedBox(height: 6),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: 14,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 3),
                             Expanded(
                               child: Text(
-                                safeDisplay,
-                                maxLines: 2,
+                                ville,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontFamily: AppFonts.display,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.15,
-                                  fontSize: 13.5,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 11,
+                                  height: 1.2,
                                 ),
                               ),
                             ),
-                            if (profile.isVerified)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4, top: 1),
-                                child: Icon(
-                                  Icons.verified_rounded,
-                                  color: primary,
-                                  size: 16,
+                          ],
+                        ),
+                      ],
+                      if (entry.specialtyNames.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 5,
+                          children: [
+                            ...entry.specialtyNames
+                                .take(kCatalogMaxChipsCompact)
+                                .map(
+                                  (n) => CatalogCardSpecialtyChip(label: n),
                                 ),
+                            if (entry.specialtyNames.length >
+                                kCatalogMaxChipsCompact)
+                              CatalogCardSpecialtyChip(
+                                label:
+                                    '+${entry.specialtyNames.length - kCatalogMaxChipsCompact}',
+                                muted: true,
                               ),
                           ],
                         ),
-                        if (ville != null && ville.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_rounded,
-                                size: 14,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  ville,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 11,
-                                    height: 1.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (entry.specialtyNames.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 5,
-                            runSpacing: 5,
-                            children: [
-                              ...entry.specialtyNames
-                                  .take(kCatalogMaxChipsCompact)
-                                  .map(
-                                    (n) => CatalogCardSpecialtyChip(label: n),
-                                  ),
-                              if (entry.specialtyNames.length >
-                                  kCatalogMaxChipsCompact)
-                                CatalogCardSpecialtyChip(
-                                  label:
-                                      '+${entry.specialtyNames.length - kCatalogMaxChipsCompact}',
-                                  muted: true,
-                                ),
-                            ],
-                          ),
-                        ],
-                        const Spacer(),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               Container(

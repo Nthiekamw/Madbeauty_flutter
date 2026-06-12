@@ -47,10 +47,15 @@ class ClientHomeLayoutNotifier extends Notifier<ClientHomeLayout> {
       final version = map['version'] as int? ?? 1;
       if (version != ClientHomeLayout.layoutVersion) return true;
 
-      // Ancien ordre par défaut (RDV en premier) → réappliquer le nouvel ordre.
       final order = layout.order;
+      if (!order.contains(ClientHomeSectionId.promo)) return true;
       if (order.isNotEmpty &&
           order.first == ClientHomeSectionId.nextAppointment) {
+        return true;
+      }
+      if (order.length >= 2 &&
+          order[1] == ClientHomeSectionId.promo &&
+          !order.contains(ClientHomeSectionId.nextAppointment)) {
         return true;
       }
     } catch (_) {
@@ -99,6 +104,8 @@ List<ClientHomeSectionId> visibleClientHomeSections({
         if (isLoggedIn && hasSupabase) out.add(id);
       case ClientHomeSectionId.inspiration:
         out.add(id);
+      case ClientHomeSectionId.promo:
+        out.add(id);
       case ClientHomeSectionId.feed:
         if (hasSupabase && hasFeedSelection) out.add(id);
       case ClientHomeSectionId.nearby:
@@ -121,6 +128,8 @@ List<ClientHomeSectionId> layoutSheetClientHomeSections({
       case ClientHomeSectionId.nextAppointment:
         if (isLoggedIn && hasSupabase) out.add(id);
       case ClientHomeSectionId.inspiration:
+        out.add(id);
+      case ClientHomeSectionId.promo:
         out.add(id);
       case ClientHomeSectionId.feed:
         if (hasSupabase) out.add(id);

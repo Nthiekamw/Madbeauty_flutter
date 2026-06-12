@@ -6,7 +6,10 @@ import '../../../../router/navigation_extensions.dart';
 import '../../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
-import '../../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../catalog/prestataire_catalog_section_empty.dart';
+import '../shared/client_home_section_header.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_lists.dart';
 
@@ -23,95 +26,38 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          DiscHome.nextAppointmentTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
-            letterSpacing: -0.3,
-          ),
+        ClientHomeSectionHeader(
+          title: DiscHome.nextAppointmentTitle,
+          compact: true,
+          actionLabel: DiscHome.nextAppointmentSeeAll,
+          onAction: () => context.goMyReservations(),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         reservationsAsync.when(
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
+          loading: () => DiscoveryShimmer.wrap(
+            context: context,
+            child: Container(
+              height: 64,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
-          error: (_, __) => DiscoveryEmptyState(
-            icon: Icons.event_busy_outlined,
-            title: DiscHome.nextAppointmentEmptyTitle,
-            body: DiscBk.listErrBody,
-            actionLabel: DiscList.retry,
-            onAction: () => ref.invalidate(clientReservationsProvider),
+          error: (_, __) => DiscoverySectionError(
+            message: DiscBk.listErrBody,
+            onRetry: () => ref.invalidate(clientReservationsProvider),
           ),
           data: (all) {
             final upcoming = clientUpcomingReservations(all);
             if (upcoming.isEmpty) {
-              return Material(
-                color: AppColors.cardSurfaceFor(theme.brightness),
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => context.goClientSearch(),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withValues(
-                          alpha: isDark ? 0.28 : 0.12,
-                        ),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.event_available_outlined,
-                            size: 20,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              DiscHome.nextAppointmentEmptyTitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => context.goClientSearch(),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            child: Text(
-                              DiscHome.nextAppointmentCta,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              return PrestataireCatalogSectionEmpty(
+                compact: true,
+                icon: Icons.event_available_outlined,
+                title: DiscHome.nextAppointmentEmptyTitle,
+                body: DiscHome.nextAppointmentEmptyBody,
+                actionLabel: DiscHome.nextAppointmentCta,
+                onAction: () => context.goClientSearch(),
               );
             }
 
@@ -123,59 +69,61 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
             return Material(
               color: AppColors.cardSurfaceFor(theme.brightness),
               elevation: 0,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 onTap: () => context.pushClientReservationDetail(next.id),
                 child: Ink(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: theme.colorScheme.outline.withValues(
-                        alpha: isDark ? 0.28 : 0.08,
+                        alpha: isDark ? 0.28 : 0.1,
                       ),
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: isDark
                                 ? AppColors.clientAppointmentIconBgDark
                                 : AppColors.clientAppointmentIconBg,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.calendar_month_outlined,
                             color: theme.colorScheme.primary,
-                            size: 22,
+                            size: 18,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '$dateLabel · $timeLabel',
-                                style: theme.textTheme.titleSmall?.copyWith(
+                                style: theme.textTheme.labelLarge?.copyWith(
                                   fontFamily: AppFonts.display,
                                   fontWeight: FontWeight.w800,
+                                  fontSize: 12,
                                   color: theme.colorScheme.onSurface,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 'chez $salon',
                                 style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 11,
                                   color: theme.colorScheme.onSurfaceVariant,
-                                  height: 1.3,
+                                  height: 1.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -183,33 +131,24 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        OutlinedButton(
+                        const SizedBox(width: 6),
+                        TextButton(
                           onPressed: () =>
                               context.pushClientReservationDetail(next.id),
-                          style: OutlinedButton.styleFrom(
+                          style: TextButton.styleFrom(
                             foregroundColor: theme.colorScheme.primary,
-                            side: BorderSide(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.55,
-                              ),
-                            ),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                              horizontal: 8,
+                              vertical: 4,
                             ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                            textStyle: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
                             ),
                           ),
-                          child: Text(
-                            DiscHome.nextAppointmentDetails,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: Text(DiscHome.nextAppointmentDetails),
                         ),
                       ],
                     ),

@@ -6,6 +6,8 @@ import '../../../../../core/errors/supabase_service_exception.dart';
 import '../../../../../core/models/domain/availability/indisponibilite.dart';
 import '../../../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../providers/agenda/disponibilite_provider.dart';
 import '../../../providers/resolve_prestataire_id.dart';
@@ -166,10 +168,14 @@ class _PrestataireIndisponibilitesEditorState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         itemsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => Text(
-            DiscPrestaHoraires.congesErr,
-            style: TextStyle(color: theme.colorScheme.error),
+          loading: () => const DiscoveryListSkeleton(
+            rowCount: 2,
+            rowHeight: 64,
+            padding: EdgeInsets.symmetric(vertical: 4),
+          ),
+          error: (_, __) => DiscoverySectionError(
+            message: DiscPrestaHoraires.congesErr,
+            onRetry: () => ref.invalidate(prestataireIndisponibilitesProvider),
           ),
           data: (items) {
             if (items.isEmpty) {

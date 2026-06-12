@@ -72,7 +72,7 @@ class ProfileAccountHeader extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Column(
             children: [
               Stack(
@@ -82,12 +82,12 @@ class ProfileAccountHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: primary.withValues(alpha: 0.3),
-                        width: 3,
+                        color: primary.withValues(alpha: 0.28),
+                        width: 2,
                       ),
                     ),
                     child: _ProfileAvatar(
-                      radius: 52,
+                      radius: 40,
                       imageUrl: profile?.avatarUrl,
                       displayName: normalizedDisplayName,
                       email: email,
@@ -122,10 +122,10 @@ class ProfileAccountHeader extends StatelessWidget {
                         onTap: onEditPhoto,
                         customBorder: const CircleBorder(),
                         child: const Padding(
-                          padding: EdgeInsets.all(9),
+                          padding: EdgeInsets.all(7),
                           child: Icon(
                             Icons.camera_alt_rounded,
-                            size: 20,
+                            size: 16,
                             color: AppColors.white,
                           ),
                         ),
@@ -133,21 +133,22 @@ class ProfileAccountHeader extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Text(
                 normalizedDisplayName.isEmpty ? displayName : normalizedDisplayName,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  letterSpacing: -0.3,
                 ),
               ),
               if (showAdminBadge || showAmbassadorBadge) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 8,
@@ -159,22 +160,25 @@ class ProfileAccountHeader extends StatelessWidget {
                 ),
               ],
               if (onEditName != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _EditChip(
                   icon: Icons.edit_rounded,
                   label: ShellStrings.profileEditName,
                   onTap: onEditName!,
                 ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(
                     alpha: isDark ? 0.22 : 0.72,
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const ProfileStatsRow(),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: ProfileStatsRow(compact: true),
+                ),
               ),
             ],
           ),

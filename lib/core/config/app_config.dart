@@ -1,7 +1,15 @@
-﻿/// Configuration : `--dart-define`, ou fichier `.env` via
+import 'share_link_config.dart';
+
+/// Configuration : `--dart-define`, ou fichier `.env` via
 /// `flutter run --dart-define-from-file=.env` (voir README).
 class AppConfig {
   AppConfig._();
+
+  /// Délai max des requêtes Supabase (REST, Auth, Storage, Edge Functions).
+  static const Duration supabaseHttpTimeout = Duration(seconds: 10);
+
+  /// Délai max des connexions / événements Realtime.
+  static const Duration supabaseRealtimeTimeout = Duration(seconds: 10);
 
   static bool? debugSupabaseEnabledOverride;
 
@@ -27,21 +35,19 @@ class AppConfig {
     defaultValue: '',
   );
 
-  /// Mot de passe base de donnees Supabase defini dans `.env`,
-  /// injecte au build avec `--dart-define-from-file=.env`.
-  static const String supabaseDatabasePassword = String.fromEnvironment(
-    'SUPABASE_DATABASE_PASSWORD',
-    defaultValue: '',
-  );
-
   static bool get hasSupabase =>
       debugSupabaseEnabledOverride ??
       (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty);
 
-  static bool get hasSupabaseDatabasePassword =>
-      supabaseDatabasePassword.isNotEmpty;
-
-  static String? get authEmailRedirectTo =>
-      supabaseEmailRedirectUrl.isEmpty ? null : supabaseEmailRedirectUrl;
+  /// Deep link de retour e-mail (confirmation, mot de passe oublié).
+  /// Fallback sur le schéma app si `.env` non renseigné.
+  static String? get authEmailRedirectTo {
+    final configured = supabaseEmailRedirectUrl.trim();
+    if (configured.isNotEmpty) return configured;
+    if (hasSupabase) {
+      return '${ShareLinkConfig.customScheme}://login-callback';
+    }
+    return null;
+  }
 }
 

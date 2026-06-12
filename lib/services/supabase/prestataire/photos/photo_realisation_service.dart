@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../storage/storage_service.dart';
 
 class PhotoRealisationService {
@@ -52,6 +53,7 @@ class PhotoRealisationService {
         url: url,
         caption: caption,
         categorieId: categorieId,
+        mediaType: file.mediaType,
       );
     },
   );
@@ -61,6 +63,7 @@ class PhotoRealisationService {
     required String url,
     String? caption,
     String? categorieId,
+    RealisationMediaType mediaType = RealisationMediaType.image,
   }) => SupabaseErrorHandler.run(
     operation: 'photoRealisation.create',
     action: () async {
@@ -69,6 +72,7 @@ class PhotoRealisationService {
           .insert({
             'prestataire_id': prestataireId,
             'url': url,
+            'media_type': mediaType.name,
             if (caption != null && caption.trim().isNotEmpty)
               'caption': caption.trim(),
             if (categorieId != null && categorieId.trim().isNotEmpty)

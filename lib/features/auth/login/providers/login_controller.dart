@@ -4,11 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
-import '../../phone_otp/models/phone_otp_flow.dart';
-import '../../phone_otp/providers/phone_otp_verification_controller.dart';
 import '../../providers/auth_notifier.dart';
 import '../logic/login_validators.dart';
-import '../models/login_credential_method.dart';
 import '../models/login_view_state.dart';
 
 final loginControllerProvider =
@@ -22,11 +19,6 @@ class LoginController extends Notifier<LoginViewState> {
 
   @override
   LoginViewState build() => const LoginViewState();
-
-  void setCredentialMethod(LoginCredentialMethod method) {
-    if (state.credentialMethod == method) return;
-    state = LoginViewState(credentialMethod: method);
-  }
 
   void onEmailChanged(String _) {
     state = state.copyWith(
@@ -46,16 +38,6 @@ class LoginController extends Notifier<LoginViewState> {
     );
   }
 
-  void onPhoneChanged(String _) {
-    state = state.copyWith(
-      clearPhoneError: true,
-      clearSubmitError: true,
-      clearInfoMessage: true,
-      requestSupabaseSnack: false,
-      shouldPopRoute: false,
-    );
-  }
-
   void acknowledgeSupabaseSnack() {
     state = state.copyWith(requestSupabaseSnack: false);
   }
@@ -64,107 +46,11 @@ class LoginController extends Notifier<LoginViewState> {
     state = state.copyWith(shouldPopRoute: false);
   }
 
-  void acknowledgePhoneOtpNavigation() {
-    state = state.copyWith(shouldNavigateToPhoneOtp: false);
-  }
-
   void acknowledgeSubmitError() {
     state = state.copyWith(clearSubmitError: true);
   }
 
-  void acknowledgeInfoMessage() {
-    state = state.copyWith(clearInfoMessage: true);
-  }
-
   Future<void> submit({
-    required String rawEmail,
-    required String rawPassword,
-    required String rawPhoneE164,
-  }) async {
-    if (state.isPhoneMode) {
-      await sendPhoneOtp(rawPhoneE164: rawPhoneE164);
-      return;
-    }
-    await _submitEmailPassword(rawEmail: rawEmail, rawPassword: rawPassword);
-  }
-
-  Future<void> sendPhoneOtp({required String rawPhoneE164}) async {
-    final now = DateTime.now();
-    final nextAllowed = _nextAllowedSubmitAt;
-    if (nextAllowed != null && now.isBefore(nextAllowed)) {
-      state = state.copyWith(submitError: AuthStrings.loginRetryCooldown);
-      return;
-    }
-
-    final phone = rawPhoneE164.trim();
-    final phErr = LoginValidators.phoneE164(phone);
-    if (phErr != null) {
-      state = LoginViewState(
-        credentialMethod: LoginCredentialMethod.phone,
-        phoneError: phErr,
-      );
-      return;
-    }
-
-    if (!AppConfig.hasSupabase) {
-      state = const LoginViewState(
-        credentialMethod: LoginCredentialMethod.phone,
-        requestSupabaseSnack: true,
-      );
-      return;
-    }
-
-    state = LoginViewState(
-      credentialMethod: LoginCredentialMethod.phone,
-      isBusy: true,
-    );
-
-    try {
-      final pending = await ref
-          .read(authNotifierProvider.notifier)
-          .sendPhoneOtp(phoneE164: phone, shouldCreateUser: false);
-      if (!ref.mounted) return;
-
-      if (pending.autoVerified) {
-        final user = ref.read(authServiceProvider).currentSession?.user;
-        state = LoginViewState(
-          credentialMethod: LoginCredentialMethod.phone,
-          shouldPopRoute: user != null,
-        );
-        return;
-      }
-
-      ref.read(phoneOtpVerificationControllerProvider.notifier).beginSession(
-            flow: PhoneOtpFlow.login,
-            phoneE164: phone,
-            pending: pending,
-          );
-
-      state = LoginViewState(
-        credentialMethod: LoginCredentialMethod.phone,
-        shouldNavigateToPhoneOtp: true,
-        infoMessage: AuthStrings.loginOtpSentSms,
-      );
-    } on AppFailure catch (e) {
-      if (!ref.mounted) return;
-      _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
-      state = LoginViewState(
-        credentialMethod: LoginCredentialMethod.phone,
-        submitError: e.message,
-        isBusy: false,
-      );
-    } catch (_) {
-      if (!ref.mounted) return;
-      _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
-      state = const LoginViewState(
-        credentialMethod: LoginCredentialMethod.phone,
-        submitError: CoreStrings.errorUnexpected,
-        isBusy: false,
-      );
-    }
-  }
-
-  Future<void> _submitEmailPassword({
     required String rawEmail,
     required String rawPassword,
   }) async {
@@ -181,7 +67,6 @@ class LoginController extends Notifier<LoginViewState> {
 
     if (eErr != null || pErr != null) {
       state = LoginViewState(
-        credentialMethod: LoginCredentialMethod.email,
         emailError: eErr,
         passwordError: pErr,
       );
@@ -193,10 +78,7 @@ class LoginController extends Notifier<LoginViewState> {
       return;
     }
 
-    state = const LoginViewState(
-      credentialMethod: LoginCredentialMethod.email,
-      isBusy: true,
-    );
+    state = const LoginViewState(isBusy: true);
 
     User? signedInUser;
     try {
@@ -208,7 +90,6 @@ class LoginController extends Notifier<LoginViewState> {
       if (!ref.mounted) return;
       _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
       state = LoginViewState(
-        credentialMethod: LoginCredentialMethod.email,
         submitError: e.message,
         isBusy: false,
       );
@@ -217,7 +98,6 @@ class LoginController extends Notifier<LoginViewState> {
       if (!ref.mounted) return;
       _nextAllowedSubmitAt = DateTime.now().add(_retryCooldown);
       state = const LoginViewState(
-        credentialMethod: LoginCredentialMethod.email,
         submitError: CoreStrings.errorUnexpected,
         isBusy: false,
       );
@@ -241,7 +121,6 @@ class LoginController extends Notifier<LoginViewState> {
     }
 
     state = LoginViewState(
-      credentialMethod: LoginCredentialMethod.email,
       submitError: submitErr,
       shouldPopRoute: user != null,
       isBusy: false,

@@ -49,26 +49,18 @@ abstract final class RegisterWizardValidation {
     required String password,
     required String confirmPassword,
     required bool signedUpViaOAuth,
-    required bool usePhoneSignUp,
-    required bool phoneRequiredOnExtras,
   }) {
     final pErr = prenom.isEmpty
         ? AuthStrings.registerValidationPrenomEmpty
         : null;
     final nErr =
         nom.isEmpty ? AuthStrings.registerValidationNomEmpty : null;
-
-    String? phErr;
-    final requirePhoneOnStep0 =
-        usePhoneSignUp || (signedUpViaOAuth && !phoneRequiredOnExtras);
-    if (requirePhoneOnStep0) {
-      phErr = RegisterValidators.phoneLocal(phone, dialCode: dialCode);
-    }
+    final phErr = RegisterValidators.phoneLocal(phone, dialCode: dialCode);
 
     String? emailErr;
     String? pwErr;
     String? confirmErr;
-    if (!signedUpViaOAuth && !usePhoneSignUp) {
+    if (!signedUpViaOAuth) {
       emailErr = RegisterValidators.email(email);
       pwErr = RegisterValidators.password(password);
       confirmErr = password != confirmPassword
@@ -87,18 +79,10 @@ abstract final class RegisterWizardValidation {
   }
 
   static RegisterWizardFieldErrors validateExtras({
-    required bool phoneRequiredOnExtras,
-    required String phone,
-    required String dialCode,
     required bool isPresta,
     required String salon,
     required String ville,
   }) {
-    String? phErr;
-    if (phoneRequiredOnExtras) {
-      phErr = RegisterValidators.phoneLocal(phone, dialCode: dialCode);
-    }
-
     String? salonErr;
     String? villeErr;
     if (isPresta) {
@@ -110,7 +94,6 @@ abstract final class RegisterWizardValidation {
     }
 
     return RegisterWizardFieldErrors(
-      phoneError: phErr,
       salonError: salonErr,
       villeError: villeErr,
     );

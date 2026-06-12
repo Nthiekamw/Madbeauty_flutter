@@ -2,11 +2,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/agenda/prestataire_agenda_provider.dart';
 import '../../messaging/messaging_navigation.dart';
+import '../../messaging/models/messaging_inbox_role.dart';
 import '../widgets/agenda/prestataire_reservation_detail_body.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
@@ -55,13 +57,15 @@ class _PrestataireReservationDetailScreenState
         title: const Text(DiscPrestaReservation.detailTitle),
       ),
       body: agendaAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const DiscoveryDetailSkeleton(),
         error: (_, __) => Center(
           child: DiscoveryEmptyState(
             icon: Icons.cloud_off_outlined,
-            title: DiscPrestaAgenda.loadErr,
-            body: DiscList.pullDownHint,
+            title: CoreStrings.networkErrorTitle,
+            body: DiscPrestaAgenda.loadErr,
             iconColor: theme.colorScheme.error,
+            actionLabel: DiscList.retry,
+            onAction: () => ref.invalidate(prestataireAgendaProvider),
           ),
         ),
         data: (reservations) {
@@ -84,6 +88,7 @@ class _PrestataireReservationDetailScreenState
               context,
               ref,
               item.id,
+              viewerRole: MessagingInboxRole.prestataire,
             ),
             onAccept: () => _runAction(() => _actions.accept(item.id)),
             onReject: () => _runAction(() => _actions.reject(item.id)),

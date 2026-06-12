@@ -8,9 +8,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../services/auth/auth_service.dart';
 import '../../../core/errors/app_failure.dart';
-import '../../../core/errors/failure_mapper.dart';
 import '../../../services/auth/google_auth_service.dart';
-import '../../../services/auth/phone_auth_service.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -30,10 +28,6 @@ final authServiceProvider = Provider<AuthService>((ref) {
     );
   }
   return AuthService.fromEnv();
-});
-
-final phoneAuthServiceProvider = Provider<PhoneAuthService>((ref) {
-  return PhoneAuthService(ref.watch(authServiceProvider));
 });
 
 final googleAuthServiceProvider = Provider<GoogleAuthService>((ref) {
@@ -235,79 +229,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
       // Échec d'inscription : ne pas bloquer le splash avec un état auth en erreur.
       state = AsyncData(previousUser);
       rethrow;
-    }
-  }
-
-  Future<void> verifyOtpEmailSignIn({
-    required String email,
-    required String token,
-  }) async {
-    if (!ref.read(authSupabaseEnabledProvider)) return;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final response = await _auth.verifyOtpEmailSignIn(email: email, token: token);
-      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
-      await _cacheCurrentEmail(user);
-      return user;
-    });
-  }
-
-  Future<void> verifyOtpSmsSignIn({
-    required String phone,
-    required String token,
-  }) async {
-    if (!ref.read(authSupabaseEnabledProvider)) return;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final response = await _auth.verifyOtpSmsSignIn(phone: phone, token: token);
-      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
-      await _cacheCurrentEmail(user);
-      return user;
-    });
-  }
-
-  /// Envoie un OTP SMS via Firebase uniquement.
-  Future<PhoneOtpPending> sendPhoneOtp({
-    required String phoneE164,
-    bool shouldCreateUser = true,
-  }) async {
-    if (!ref.read(authSupabaseEnabledProvider)) {
-      throw StateError('Supabase non configuré');
-    }
-    return ref.read(phoneAuthServiceProvider).sendOtp(
-          phoneE164: phoneE164,
-          shouldCreateUser: shouldCreateUser,
-        );
-  }
-
-  /// Vérifie l’OTP et ouvre une session Supabase.
-  Future<User?> verifyPhoneOtpAndSignIn({
-    required PhoneOtpPending pending,
-    required String token,
-  }) async {
-    if (!ref.read(authSupabaseEnabledProvider)) return null;
-    final previousUser = switch (state) {
-      AsyncData(:final value) => value,
-      _ => _auth.currentSession?.user ?? _auth.currentUser,
-    };
-    try {
-      final response = await ref.read(phoneAuthServiceProvider).verifyOtp(
-            pending: pending,
-            code: token,
-          );
-      final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
-      await _cacheCurrentEmail(user);
-      state = AsyncData(user);
-      return user;
-    } on AppFailure {
-      state = AsyncData(previousUser);
-      rethrow;
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('verifyPhoneOtpAndSignIn: $e\n$st');
-      }
-      state = AsyncData(previousUser);
-      throw FailureMapper.fromUnknown(e);
     }
   }
 

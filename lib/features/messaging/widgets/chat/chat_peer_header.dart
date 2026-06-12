@@ -2,10 +2,11 @@
 
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/utils/text_normalizer.dart';
+import '../../../../shared/utils/user_presence_formatter.dart';
 import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../../../shared/theme/app_colors.dart';
 
-/// En-tête chat : avatar + nom (+ sous-titre réservation).
+/// En-tête chat : avatar + nom (+ présence + sous-titre réservation).
 class ChatPeerHeader extends StatelessWidget {
   const ChatPeerHeader({
     super.key,
@@ -14,9 +15,11 @@ class ChatPeerHeader extends StatelessWidget {
     this.peerNom,
     this.avatarUrl,
     this.subtitle,
+    this.peerLastSeenAt,
     this.titleColor,
     this.subtitleColor,
     this.onLightGradient = false,
+    this.useSalonName = false,
   });
 
   final String displayName;
@@ -24,40 +27,72 @@ class ChatPeerHeader extends StatelessWidget {
   final String? peerNom;
   final String? avatarUrl;
   final String? subtitle;
+  final DateTime? peerLastSeenAt;
   final Color? titleColor;
   final Color? subtitleColor;
   final bool onLightGradient;
+  final bool useSalonName;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final normalizedName = normalizeSingleLineText(displayName);
     final title = normalizedName.isEmpty ? displayName : normalizedName;
-    final hasSplitName = peerPrenom?.trim().isNotEmpty == true &&
+    final hasSplitName = !useSalonName &&
+        peerPrenom?.trim().isNotEmpty == true &&
         peerNom?.trim().isNotEmpty == true;
     final primary = theme.colorScheme.primary;
+    final isOnline = UserPresenceFormatter.isOnline(peerLastSeenAt);
+    final presenceLabel = UserPresenceFormatter.label(peerLastSeenAt);
+    final presenceColor = isOnline
+        ? (onLightGradient ? const Color(0xFF86EFAC) : const Color(0xFF16A34A))
+        : (subtitleColor ?? theme.colorScheme.onSurfaceVariant);
 
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(2.5),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: onLightGradient
-                ? AppColors.onPrimarySurface22
-                : primary.withValues(alpha: 0.1),
-            border: Border.all(
-              color: onLightGradient
-                  ? AppColors.onPrimarySurface55
-                  : primary.withValues(alpha: 0.25),
-              width: 2,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: onLightGradient
+                    ? AppColors.onPrimarySurface22
+                    : primary.withValues(alpha: 0.1),
+                border: Border.all(
+                  color: onLightGradient
+                      ? AppColors.onPrimarySurface55
+                      : primary.withValues(alpha: 0.25),
+                  width: 2,
+                ),
+              ),
+              child: AppAvatar(
+                imageUrl: avatarUrl,
+                displayName: title,
+                radius: 21,
+              ),
             ),
-          ),
-          child: AppAvatar(
-            imageUrl: avatarUrl,
-            displayName: title,
-            radius: 21,
-          ),
+            if (isOnline)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 11,
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: onLightGradient
+                          ? primary
+                          : theme.colorScheme.surface,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -100,6 +135,18 @@ class ChatPeerHeader extends StatelessWidget {
                     color: titleColor,
                   ),
                 ),
+              const SizedBox(height: 2),
+              Text(
+                presenceLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: isOnline ? FontWeight.w700 : FontWeight.w500,
+                  color: presenceColor,
+                  height: 1.1,
+                ),
+              ),
               if (subtitle != null && subtitle!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Row(
@@ -135,4 +182,3 @@ class ChatPeerHeader extends StatelessWidget {
     );
   }
 }
-

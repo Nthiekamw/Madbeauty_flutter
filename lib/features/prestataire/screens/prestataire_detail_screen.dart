@@ -17,6 +17,7 @@ import '../providers/catalog/prestataire_detail_provider.dart';
 import '../widgets/profile/overview/sections/prestataire_client_experience_section.dart';
 import '../widgets/public/detail/prestataire_client_engagement_row.dart';
 import '../widgets/public/detail/prestataire_detail_sections.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/public/detail/prestataire_detail_shell.dart';
 import '../widgets/public/prestataire_detail_messaging_section.dart';
 import '../widgets/public/prestataire_public_horaires_section.dart';
@@ -229,7 +230,7 @@ class _PrestataireDetailScreenState
             context: context,
             title: const Text(DiscPrestaDetail.screenTitle),
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const DiscoveryDetailSkeleton(),
         ),
       ),
     );
@@ -365,7 +366,6 @@ class _DetailContent extends StatelessWidget {
             title: DiscPrestaDetail.reviewsTitle,
             child: PrestatairePublicReviewsLiveSection(
               prestataireId: data.profile.id,
-              readOnly: isOwnProfile,
               onReviewTap: isOwnProfile
                   ? (review) => showViewReviewSheet(
                         context,

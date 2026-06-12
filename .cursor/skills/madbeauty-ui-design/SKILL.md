@@ -4,7 +4,8 @@ description: >-
   Design UI MadBeauty (Flutter) : écrans et widgets ergonomiques, intuitifs,
   attrayants, alignés sur l’identité visuelle et AppColors. Utiliser pour tout
   ajout ou changement de design, bannière, carte, formulaire, état vide, CTA,
-  alerte, onboarding ou refonte visuelle.
+  alerte, onboarding, polish UX ou refonte visuelle. États async → skill
+  madbeauty-ux-states.
 ---
 
 # MadBeauty — design UI
@@ -19,7 +20,7 @@ Quand on ajoute ou change du design, ça doit **toujours** être :
 - **Aligné sur l’appli** — réutiliser les patterns et composants existants
 - **Aligné sur les couleurs** — priorité à `lib/shared/theme/app_colors.dart` (`AppColors`), puis `Theme.of(context).colorScheme`
 
-Compléter avec les skills **`madbeauty-responsive`** (toutes tailles d’écran) et **`madbeauty-ui-strings`** (textes dans les fichiers de constantes).
+Compléter avec les skills **`madbeauty-responsive`** (toutes tailles d’écran), **`madbeauty-ui-strings`** (textes dans les fichiers de constantes) et **`madbeauty-ux-states`** (shimmer, chargement, erreur, retry, snackbars).
 
 ## Avant de coder une UI
 
@@ -64,7 +65,18 @@ Compléter avec les skills **`madbeauty-responsive`** (toutes tailles d’écran
 | Bandeau urgent abonnement | `prestataire_catalog_visibility_banner.dart` |
 | État bloqué avec CTA | `prestataire_subscription_gate.dart` |
 | Formulaire auth / inscription | `AuthStepSection`, `AppTextField`, `DiscoveryFormScrollView` |
-| Liste vide | `DiscoveryEmptyState` |
+| Liste vide / erreur | `DiscoveryEmptyState` — voir **`madbeauty-ux-states`** |
+| Chargement liste | `DiscoveryListSkeleton` |
+| Erreur section + retry | `DiscoverySectionError` |
+| Feedback action | `AppSnackBar` |
+
+## États async (obligatoire)
+
+Tout écran Riverpod qui charge des données doit suivre **`madbeauty-ux-states`** :
+- Shimmer cohérent (pas de spinner plein écran)
+- Erreur avec `DiscList.retry` + `ref.invalidate`
+- Vide avec message métier et CTA
+- Succès via `AppSnackBar.success`
 
 ## Hiérarchie & ergonomie
 
@@ -78,6 +90,7 @@ Compléter avec les skills **`madbeauty-responsive`** (toutes tailles d’écran
 
 - [ ] Couleurs depuis `AppColors` / `colorScheme` (dark + light)
 - [ ] Responsive (`madbeauty-responsive`)
+- [ ] États async polis (`madbeauty-ux-states`)
 - [ ] Textes dans `lib/core/constants/strings/` (pas de chaînes en dur)
 - [ ] Réutilisation d’un composant existant quand possible
 - [ ] Contraste lisible, CTA visible au premier coup d’œil

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar rond : image réseau optionnelle, sinon initiales dérivées du nom ou de l'e-mail.
@@ -40,68 +41,53 @@ class AppAvatar extends StatelessWidget {
     return '?';
   }
 
+  Widget _initialsAvatar(BuildContext context, ColorScheme colorScheme) {
+    final initials = initialsFor(displayName: displayName, email: email);
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: colorScheme.primaryContainer,
+      foregroundColor: colorScheme.onPrimaryContainer,
+      child: Text(
+        initials,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onPrimaryContainer,
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final initials = initialsFor(displayName: displayName, email: email);
     final url = imageUrl?.trim();
     final size = radius * 2;
 
     if (url == null || url.isEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        child: Text(
-          initials,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onPrimaryContainer,
-              ),
-        ),
-      );
+      return _initialsAvatar(context, colorScheme);
     }
+
+    final memCacheSize =
+        (size * MediaQuery.devicePixelRatioOf(context)).round();
 
     return ClipOval(
       child: SizedBox(
         width: size,
         height: size,
-        child: Image.network(
-          url,
+        child: CachedNetworkImage(
+          imageUrl: url,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return CircleAvatar(
-              radius: radius,
-              backgroundColor: colorScheme.primaryContainer,
-              foregroundColor: colorScheme.onPrimaryContainer,
-              child: Text(
-                initials,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-              ),
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return ColoredBox(
-              color: colorScheme.surfaceContainerHighest,
-              child: Center(
-                child: SizedBox(
-                  width: radius,
-                  height: radius,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-            );
-          },
+          width: size,
+          height: size,
+          memCacheWidth: memCacheSize,
+          memCacheHeight: memCacheSize,
+          placeholder: (_, __) => ColoredBox(
+            color: colorScheme.surfaceContainerHighest,
+          ),
+          errorWidget: (_, __, ___) =>
+              _initialsAvatar(context, colorScheme),
         ),
       ),
     );
   }
 }
-

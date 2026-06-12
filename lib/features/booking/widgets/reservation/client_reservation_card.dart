@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
@@ -220,8 +220,10 @@ class ClientReservationCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
+                        flex: 3,
                         child: _InfoPill(
                           icon: Icons.calendar_month_rounded,
                           text: formatBookingDate(item.dateHeure),
@@ -231,6 +233,7 @@ class ClientReservationCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
+                        flex: 2,
                         child: _InfoPill(
                           icon: Icons.schedule_rounded,
                           text: formatBookingTime(item.dateHeure),
@@ -338,18 +341,22 @@ class _InfoPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: primary),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 16, color: primary),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: theme.textTheme.labelMedium?.copyWith(
                 fontFamily: AppFonts.body,
                 fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontSize: 11.5,
+                height: 1.25,
               ),
             ),
           ),

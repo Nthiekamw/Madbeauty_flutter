@@ -7,14 +7,40 @@ import '../../../../router/app_router.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/layout/auth_brand_background.dart';
 import '../../guest/guest_mode_provider.dart';
+import '../../providers/pending_ban_notice_provider.dart';
 import '../../widgets/auth_marketing_logo.dart';
+import '../../widgets/feedback/account_banned_dialog.dart';
 
 /// Hub avant connexion : Inscription / Connexion / mode invité.
-class AuthWelcomeScreen extends ConsumerWidget {
+class AuthWelcomeScreen extends ConsumerStatefulWidget {
   const AuthWelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthWelcomeScreen> createState() => _AuthWelcomeScreenState();
+}
+
+class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showPendingBanNotice());
+  }
+
+  Future<void> _showPendingBanNotice() async {
+    if (!mounted) return;
+    final notice = ref.read(pendingBanNoticeProvider.notifier).take();
+    if (notice == null || !mounted) return;
+    final action =
+        await AccountBannedDialog.show(context, reason: notice.reason);
+    if (!mounted) return;
+    if (action == AccountBannedDialogAction.contactSupport) {
+      ref.read(guestModeProvider.notifier).disable();
+      context.push(AppRoutes.login);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
 

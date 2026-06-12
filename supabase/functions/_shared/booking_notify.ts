@@ -162,6 +162,14 @@ export async function sendFcmNotification(opts: {
   return true;
 }
 
+/** Indique si l'échec vient du compte de service Firebase (clé révoquée / JSON invalide). */
+export function isFirebaseCredentialError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("invalid jwt signature") ||
+    lower.includes("invalid_grant") ||
+    lower.includes("firebase_service_account_json");
+}
+
 export function normalizeStatut(raw: unknown): string {
   if (raw == null) return "";
   return String(raw).trim().toLowerCase().replaceAll("é", "e").replaceAll(

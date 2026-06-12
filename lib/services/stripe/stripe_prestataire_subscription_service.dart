@@ -1,8 +1,15 @@
 ﻿import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/services.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/app_strings.dart';
+import '../../core/models/domain/payment/client_payment_method.dart';
 import '../../core/models/domain/prestataire/prestataire_subscription_status.dart';
+import 'stripe_service.dart';
 
 class StripePrestaSubscriptionException implements Exception {
   const StripePrestaSubscriptionException(this.message, {this.code});
@@ -52,6 +59,66 @@ class StripePrestaSubscriptionService {
       tier: data['tier'] as String? ?? tier,
       interval: data['interval'] as String? ?? interval,
     );
+  }
+
+  Future<List<ClientPaymentMethod>> listPaymentMethods() async {
+    final response = await _invoke('list_prestataire_payment_methods');
+    final data = _expectMap(response.data);
+    final raw = data['paymentMethods'];
+    if (raw is! List) return const [];
+    return raw
+        .map(
+          (e) => ClientPaymentMethod.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  Future<ClientCustomerSheetData> prepareCustomerSheet() async {
+    if (kIsWeb) {
+      throw const StripePrestaSubscriptionException(DiscPay.errWebUnsupported);
+    }
+    if (!StripeService.isConfigured) {
+      throw const StripePrestaSubscriptionException(DiscPrestaSub.payUnavailable);
+    }
+
+    final response = await _invoke('prepare_prestataire_customer_sheet');
+    final data = _expectMap(response.data);
+    return ClientCustomerSheetData.fromJson(data);
+  }
+
+  Future<void> presentCustomerSheet() async {
+    if (kIsWeb) {
+      throw const StripePrestaSubscriptionException(DiscPay.errWebUnsupported);
+    }
+
+    final sheet = await prepareCustomerSheet();
+
+    try {
+      await Stripe.instance.initCustomerSheet(
+        customerSheetInitParams: CustomerSheetInitParams.adapter(
+          customerId: sheet.customerId,
+          customerEphemeralKeySecret: sheet.ephemeralKey,
+          setupIntentClientSecret: sheet.setupIntentClientSecret,
+          merchantDisplayName: 'MadBeauty',
+          style: ThemeMode.system,
+          headerTextForSelectionScreen: DiscPaymentMethods.customerSheetTitle,
+          googlePayEnabled: false,
+          applePayEnabled: false,
+        ),
+      );
+      await Stripe.instance.presentCustomerSheet();
+    } on StripeException catch (e) {
+      if (e.error.code == FailureCode.Canceled) return;
+      throw StripePrestaSubscriptionException(
+        e.error.localizedMessage ??
+            e.error.message ??
+            DiscPaymentMethods.sheetErr,
+      );
+    } on PlatformException catch (e) {
+      throw StripePrestaSubscriptionException(e.message ?? e.code);
+    }
   }
 
   Future<String> createBillingPortalUrl() async {

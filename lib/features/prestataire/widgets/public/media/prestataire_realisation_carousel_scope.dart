@@ -1,7 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../shared/widgets/gallery/fullscreen_photo_gallery.dart';
+import '../../../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../../../shared/widgets/gallery/fullscreen_realisation_gallery.dart';
 import '../../../../../shared/widgets/prestataire/prestataire_realisation_carousel.dart';
 import '../../../providers/profile/prestataire_photos_provider.dart';
 
@@ -15,6 +17,8 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
     this.borderRadius = BorderRadius.zero,
     this.fallbackDisplayName,
     this.fallbackAvatarUrl,
+    this.playVideos = false,
+    this.imagesOnly = true,
   });
 
   final String prestataireId;
@@ -23,6 +27,9 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
   final BorderRadius borderRadius;
   final String? fallbackDisplayName;
   final String? fallbackAvatarUrl;
+  final bool playVideos;
+  /// `true` sur les cartes (accueil, catalogue, favoris) : masque les vidéos.
+  final bool imagesOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,9 +38,11 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
 
     return async.when(
       data: (photos) {
-        if (photos.isEmpty) {
+        final visible =
+            imagesOnly ? photos.realisationImagesOnly : photos;
+        if (visible.isEmpty) {
           return PrestataireRealisationCarousel(
-            photoUrls: const [],
+            items: const [],
             height: height,
             width: width,
             borderRadius: borderRadius,
@@ -43,16 +52,16 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
         }
 
         return PrestataireRealisationCarousel(
-          photoUrls: photos.map((p) => p.url).toList(),
+          items: visible.map(RealisationCarouselItem.fromPhoto).toList(),
           height: height,
           width: width,
           borderRadius: borderRadius,
           fallbackDisplayName: fallbackDisplayName,
           fallbackAvatarUrl: fallbackAvatarUrl,
-          onPhotoTap: (index) => FullscreenPhotoGallery.open(
+          playVideos: playVideos && !imagesOnly,
+          onItemTap: (index) => FullscreenRealisationGallery.open(
             context,
-            urls: photos.map((p) => p.url).toList(),
-            captions: photos.map((p) => p.caption).toList(),
+            items: visible,
             initialIndex: index,
           ),
         );
@@ -64,7 +73,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
         color: theme.colorScheme.surfaceContainerHighest,
       ),
       error: (_, __) => PrestataireRealisationCarousel(
-        photoUrls: const [],
+        items: const [],
         height: height,
         width: width,
         borderRadius: borderRadius,
@@ -95,15 +104,9 @@ class _LoadingFrame extends StatelessWidget {
       child: SizedBox(
         width: width,
         height: height,
-        child: ColoredBox(
-          color: color,
-          child: const Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+        child: DiscoveryShimmer.wrap(
+          context: context,
+          child: ColoredBox(color: color),
         ),
       ),
     );

@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
+import '../../../../router/app_router.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../navigation/post_auth_navigation.dart';
+import '../../providers/auth_redirect_providers.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/password_recovery_provider.dart';
 import '../logic/reset_password_validators.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../screens/reset_password_page.dart';
 
 class ResetPasswordRoute extends ConsumerStatefulWidget {
@@ -68,12 +71,17 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
       return;
     }
 
-    container.read(passwordRecoveryPendingProvider.notifier).clear();
-    if (!context.mounted) return;
-
     AppSnackBar.success(context, AuthStrings.resetPasswordSuccess);
 
-    await PostAuthNavigation.navigateWithContainer(context, container);
+    final target =
+        await PostAuthNavigation.resolveDestinationPath(container);
+    if (!context.mounted) return;
+
+    if (target != null) {
+      ref.read(splashRedirectTargetProvider.notifier).setTarget(target);
+    }
+    container.read(passwordRecoveryPendingProvider.notifier).clear();
+    ref.read(routerRedirectBumpProvider)();
   }
 
   @override
@@ -85,7 +93,7 @@ class _ResetPasswordRouteState extends ConsumerState<ResetPasswordRoute> {
 
     if (authAsync.isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: DiscoveryDetailSkeleton(),
       );
     }
 

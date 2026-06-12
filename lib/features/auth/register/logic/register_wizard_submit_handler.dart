@@ -14,105 +14,18 @@ import '../../../profile/storage/become_prestataire_draft_store.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
-import '../../phone_otp/models/phone_otp_flow.dart';
-import '../../phone_otp/providers/phone_otp_verification_controller.dart';
 import '../../../../services/auth/post_signup_profile_service.dart';
 import '../../../../services/auth/role_service.dart';
 import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
-import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';
 import '../../widgets/auth_success_dialog.dart';
 import '../providers/register_wizard_form_controller.dart';
 
-/// Soumission finale et OTP téléphone pour l'inscription wizard.
+/// Soumission finale de l'inscription wizard.
 class RegisterWizardSubmitHandler {
-  Future<void> sendRegisterPhoneOtp({
-    required WidgetRef ref,
-    required BuildContext context,
-    required bool Function() mounted,
-    required RegisterWizardFormController form,
-    required Future<void> Function() onSubmit,
-  }) async {
-    if (!await ensureOnline(context, ref)) return;
-
-    form.setLoading(true);
-    form.setError(null);
-
-    try {
-      final pending = await ref.read(authNotifierProvider.notifier).sendPhoneOtp(
-            phoneE164: form.phoneE164,
-            shouldCreateUser: true,
-          );
-      if (!mounted()) return;
-
-      if (pending.autoVerified) {
-        await updatePhoneSignupMetadata(ref: ref, form: form);
-        if (!mounted()) return;
-        form.signedUpViaPhone = true;
-        form.pendingPhoneVerification = false;
-        form.setLoading(false);
-        AppSnackBar.success(context, AuthStrings.registerPhoneVerified);
-        await form.persistDraft(
-          signedUpViaPhone: true,
-          pendingPhoneVerification: false,
-        );
-        if (!mounted()) return;
-        unawaited(onSubmit());
-        return;
-      }
-
-      ref.read(phoneOtpVerificationControllerProvider.notifier).beginSession(
-            flow: PhoneOtpFlow.register,
-            phoneE164: form.phoneE164,
-            pending: pending,
-          );
-      form.setLoading(false);
-      form.pendingPhoneVerification = true;
-      await form.persistDraft(pendingPhoneVerification: true);
-      if (!mounted()) return;
-      AppSnackBar.info(context, AuthStrings.loginOtpSentSms);
-      context.pushVerifyPhone(
-        flow: PhoneOtpFlow.register.queryValue,
-        phone: form.phoneE164,
-      );
-    } on AppFailure catch (e) {
-      if (mounted()) {
-        form.setLoading(false);
-        form.setError(e.message);
-      }
-    } catch (_) {
-      if (mounted()) {
-        form.setLoading(false);
-        form.setError(CoreStrings.errorUnexpected);
-      }
-    }
-  }
-
-  Future<void> updatePhoneSignupMetadata({
-    required WidgetRef ref,
-    required RegisterWizardFormController form,
-  }) async {
-    final prenom = form.prenom.text.trim();
-    final nom = form.nom.text.trim();
-    final phoneStored = PhoneNumberUtils.toStored(
-      dialCode: form.phoneDialCode,
-      local: form.phone.text,
-    );
-    await ref.read(authServiceProvider).updateUser(
-          UserAttributes(
-            data: <String, dynamic>{
-              'full_name': '$prenom $nom'.trim(),
-              if (prenom.isNotEmpty) 'prenom': prenom,
-              if (nom.isNotEmpty) 'nom': nom,
-              if (phoneStored.isNotEmpty) 'phone': phoneStored,
-            },
-          ),
-        );
-  }
-
   Future<void> submit({
     required WidgetRef ref,
     required BuildContext context,
@@ -130,24 +43,6 @@ class RegisterWizardSubmitHandler {
     }
 
     if (!form.validateExtrasStep()) return;
-
-    if (form.usePhoneSignUp &&
-        !form.signedUpViaOAuth &&
-        !form.signedUpViaPhone) {
-      unawaited(sendRegisterPhoneOtp(
-        ref: ref,
-        context: context,
-        mounted: mounted,
-        form: form,
-        onSubmit: () => submit(
-          ref: ref,
-          context: context,
-          mounted: mounted,
-          form: form,
-        ),
-      ));
-      return;
-    }
 
     form.setLoading(true);
 
@@ -169,7 +64,7 @@ class RegisterWizardSubmitHandler {
           .currentSession
           ?.user;
 
-      if (!form.signedUpViaOAuth && !form.signedUpViaPhone) {
+      if (!form.signedUpViaOAuth) {
         final hasActiveSession = sessionUser != null &&
             sessionUser.email?.trim().toLowerCase() == email.toLowerCase();
 
@@ -194,18 +89,11 @@ class RegisterWizardSubmitHandler {
         }
 
         if (sessionUser == null) {
+          form.clearPasswordFields();
           await form.persistDraft(pendingEmailVerification: true);
           if (!mounted()) return;
           form.setLoading(false);
           context.goRegisterVerifyEmail(email);
-          return;
-        }
-      } else if (form.signedUpViaPhone) {
-        sessionUser ??=
-            providerContainer.read(authServiceProvider).currentSession?.user;
-        if (sessionUser == null) {
-          form.setLoading(false);
-          form.setError(AuthStrings.authPhoneOtpSessionExpired);
           return;
         }
       } else {

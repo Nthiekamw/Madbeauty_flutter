@@ -6,6 +6,8 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../models/admin_reservation_filters.dart';
 import '../models/admin_reservation_summary.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../providers/admin_reservations_provider.dart';
 import '../widgets/admin_screen_scaffold.dart';
 
@@ -185,8 +187,17 @@ class _AdminReservationsScreenState extends ConsumerState<AdminReservationsScree
                   ),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              loading: () => const DiscoveryListSkeleton(rowCount: 6),
+              error: (_, __) => DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: CoreStrings.networkErrorBody,
+                iconColor: Theme.of(context).colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () {
+                  ref.invalidate(adminReservationsProvider(_filters));
+                },
+              ),
             ),
           ),
         ],

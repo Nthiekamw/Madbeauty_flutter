@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../providers/admin_audit_provider.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/admin_screen_scaffold.dart';
 
 class AdminAuditScreen extends ConsumerWidget {
@@ -53,9 +55,15 @@ class AdminAuditScreen extends ConsumerWidget {
                         await ref.read(adminAuditLogProvider.future);
                       },
                     ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('$e')),
+                    loading: () => const DiscoveryListSkeleton(rowCount: 5),
+                    error: (_, __) => DiscoveryEmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: CoreStrings.networkErrorTitle,
+                      body: CoreStrings.networkErrorBody,
+                      iconColor: Theme.of(context).colorScheme.error,
+                      actionLabel: DiscList.retry,
+                      onAction: () => ref.invalidate(adminAuditLogProvider),
+                    ),
                   ),
                   verificationAsync.when(
                     data: (items) => _AuditList(
@@ -75,9 +83,16 @@ class AdminAuditScreen extends ConsumerWidget {
                         await ref.read(adminVerificationEventsProvider.future);
                       },
                     ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('$e')),
+                    loading: () => const DiscoveryListSkeleton(rowCount: 5),
+                    error: (_, __) => DiscoveryEmptyState(
+                      icon: Icons.cloud_off_outlined,
+                      title: CoreStrings.networkErrorTitle,
+                      body: CoreStrings.networkErrorBody,
+                      iconColor: Theme.of(context).colorScheme.error,
+                      actionLabel: DiscList.retry,
+                      onAction: () =>
+                          ref.invalidate(adminVerificationEventsProvider),
+                    ),
                   ),
                 ],
               ),

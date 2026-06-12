@@ -16,6 +16,9 @@ abstract final class DiscFavori {
       'Connecte-toi pour enregistrer tes prestataires favoris.';
   static const toggleError =
       'Impossible de mettre à jour les favoris. Réessaie.';
+  static const loadErrorTitle = 'Impossible de charger vos favoris';
+  static const loadErrorBody =
+      'Vérifiez votre connexion et réessayez.';
   static const favoriteTooltip = 'Enregistrer dans Mes favoris';
   static const unfavoriteTooltip = 'Retirer de Mes favoris';
   static const addedFeedback =

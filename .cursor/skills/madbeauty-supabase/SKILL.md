@@ -45,6 +45,7 @@ npx supabase db reset         # local — rejoue toutes les migrations
 ## Côté Flutter
 
 - Client Supabase via services dans `lib/services/supabase/`
+- Init : `SupabaseService` avec `SupabaseTimeoutHttpClient` (10 s HTTP + Realtime) — voir skill `madbeauty-performance`
 - Modèles domaine + `SupabaseDomainCodec` — pas de Map bruts dans l’UI
 - Après changement de schéma : adapter modèles Freezed + `build_runner`
 

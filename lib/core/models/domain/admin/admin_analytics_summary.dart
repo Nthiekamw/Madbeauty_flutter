@@ -2,6 +2,7 @@ class AdminAnalyticsSummary {
   const AdminAnalyticsSummary({
     required this.usersTotal,
     required this.usersBanned,
+    required this.clientsTotal,
     required this.prestatairesTotal,
     required this.prestatairesVerified,
     required this.verificationPending,
@@ -14,6 +15,7 @@ class AdminAnalyticsSummary {
 
   final int usersTotal;
   final int usersBanned;
+  final int clientsTotal;
   final int prestatairesTotal;
   final int prestatairesVerified;
   final int verificationPending;
@@ -28,6 +30,7 @@ class AdminAnalyticsSummary {
     return AdminAnalyticsSummary(
       usersTotal: readInt('users_total'),
       usersBanned: readInt('users_banned'),
+      clientsTotal: readInt('clients_total'),
       prestatairesTotal: readInt('prestataires_total'),
       prestatairesVerified: readInt('prestataires_verified'),
       verificationPending: readInt('verification_pending'),

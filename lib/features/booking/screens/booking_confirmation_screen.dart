@@ -6,6 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_confirmation_submit.dart';
 import '../logic/booking_payment_flow.dart';
@@ -115,7 +116,7 @@ class _BookingConfirmationScreenState
         centerTitle: true,
       ),
       body: prestataireAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const DiscoveryDetailSkeleton(),
         error: (_, __) => const BookingMessage(
           icon: Icons.storefront_outlined,
           title: DiscBk.recapPrestaBadTitle,
@@ -210,6 +211,10 @@ class _BookingConfirmationScreenState
       _queuedOffline = result.queuedOffline;
       _paidWithStripe = result.paidWithStripe;
       _paidOnSite = result.paidOnSite;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      AppSnackBar.success(context, DiscBk.bookingCreatedSnack);
     });
   }
 

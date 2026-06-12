@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../services/notifications/in_app_notification.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/push_navigation.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 
 Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
   ref.invalidate(inAppNotificationsSyncProvider);
@@ -27,7 +29,11 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
           if (syncAsync.isLoading && items.isEmpty) {
             return SizedBox(
               height: sheetHeight.clamp(200, 360),
-              child: const Center(child: CircularProgressIndicator()),
+              child: const DiscoveryListSkeleton(
+                rowCount: 4,
+                rowHeight: 64,
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+              ),
             );
           }
 
@@ -116,9 +122,7 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                                     );
                                   },
                                   leading: Icon(
-                                    item.read
-                                        ? Icons.notifications_none_rounded
-                                        : Icons.notifications_active_rounded,
+                                    _iconForNotification(item),
                                     color: item.read
                                         ? theme.colorScheme.onSurfaceVariant
                                         : theme.colorScheme.primary,
@@ -174,6 +178,17 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
       );
     },
   );
+}
+
+IconData _iconForNotification(InAppNotification item) {
+  if (item.read) return Icons.notifications_none_rounded;
+  return switch (item.actionType) {
+    'bug_report' ||
+    'bug_report_status' ||
+    'bug_report_message' =>
+      Icons.bug_report_outlined,
+    _ => Icons.notifications_active_rounded,
+  };
 }
 
 class _NotificationReadBadge extends StatelessWidget {

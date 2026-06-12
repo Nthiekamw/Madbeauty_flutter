@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import '../../../../services/storage/local_cache_service.dart';
@@ -26,7 +27,16 @@ class RegisterWizardDraftStore {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
-      return RegisterWizardDraft.fromJson(Map<String, dynamic>.from(decoded));
+      final map = Map<String, dynamic>.from(decoded);
+      final draft = RegisterWizardDraft.fromJson(map);
+      if (draft == null) return null;
+
+      // Purge les anciens brouillons qui stockaient le mot de passe en clair.
+      if (RegisterWizardDraft.legacyPayloadContainsPassword(map) ||
+          map['v'] != 6) {
+        unawaited(save(draft));
+      }
+      return draft;
     } catch (_) {
       return null;
     }
@@ -45,4 +55,3 @@ class RegisterWizardDraftStore {
 
   Future<void> clear() => LocalCacheService.instance.remove(_key);
 }
-

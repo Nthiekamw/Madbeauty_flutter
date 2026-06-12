@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/app/app_network_image.dart';
+
 /// Galerie horizontale de photos d'avis.
 class ReviewPhotosRow extends StatelessWidget {
   const ReviewPhotosRow({super.key, required this.urls});
@@ -18,24 +20,15 @@ class ReviewPhotosRow extends StatelessWidget {
         itemCount: list.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          return ClipRRect(
+          return AppNetworkImage(
+            url: list[index],
+            width: 72,
+            height: 72,
+            fit: BoxFit.cover,
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              list[index],
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 72,
-                height: 72,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: const Icon(Icons.broken_image_outlined),
-              ),
-            ),
           );
         },
       ),
     );
   }
 }
-

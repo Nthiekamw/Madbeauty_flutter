@@ -5,12 +5,15 @@ import '../../../core/config/prestataire_subscription_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
+import '../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../logic/prestataire_subscription_refresh.dart';
 import '../providers/subscription/prestataire_subscription_provider.dart';
 import '../widgets/profile/subscription/prestataire_subscription_active_panel.dart';
 import '../widgets/profile/subscription/prestataire_subscription_checkout_section.dart';
+import '../widgets/subscription/prestataire_subscription_billing_cards_section.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 /// Grille d’abonnement + paiement Stripe Checkout.
@@ -107,17 +110,14 @@ class _PrestataireSubscriptionScreenState
               subtitle: DiscPrestaSub.heroBody,
             ),
             statusAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const DiscoveryDetailSkeleton(),
               error: (_, __) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  DiscPrestaDash.loadErr,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
+                child: DiscoverySectionError(
+                  message: DiscPrestaDash.loadErr,
+                  onRetry: () {
+                    ref.invalidate(prestataireSubscriptionStatusProvider);
+                  },
                 ),
               ),
               data: (status) {
@@ -136,18 +136,80 @@ class _PrestataireSubscriptionScreenState
                   );
                 }
 
+                if (status.needsAttention) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DiscoverySurfaceCard(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      DiscPaymentMethods.subscriptionStatusPastDue,
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        fontFamily: AppFonts.display,
+                                        fontWeight: FontWeight.w800,
+                                        color: theme.colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                DiscPrestaSub.statusPastDue,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const DiscoverySurfaceCard(
+                          padding: EdgeInsets.all(18),
+                          child: PrestataireSubscriptionBillingCardsSection(),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: _refreshing ? null : _refresh,
+                          icon: _refreshing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text(DiscPrestaSub.refreshStatus),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 return serviceCountAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                  loading: () => const DiscoveryDetailSkeleton(),
                   error: (_, __) => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      DiscPrestaDash.loadErr,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
+                    child: DiscoverySectionError(
+                      message: DiscPrestaDash.loadErr,
+                      onRetry: () {
+                        ref.invalidate(prestatairePublishedServiceCountProvider);
+                      },
                     ),
                   ),
                   data: (serviceCount) {

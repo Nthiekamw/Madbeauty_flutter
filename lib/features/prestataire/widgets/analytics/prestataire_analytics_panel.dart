@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../providers/analytics/prestataire_analytics_period_provider.dart';
 import '../../providers/analytics/prestataire_analytics_provider.dart';
@@ -35,15 +37,14 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
 
     if (dashboardCompact) {
       return analyticsAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 28),
-          child: Center(child: CircularProgressIndicator()),
+        loading: () => const DiscoveryListSkeleton(
+          rowCount: 2,
+          rowHeight: 72,
+          padding: EdgeInsets.symmetric(vertical: 8),
         ),
-        error: (_, __) => Text(
-          DiscPrestaAnalytics.loadErr,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.error,
-          ),
+        error: (_, __) => DiscoverySectionError(
+          message: DiscPrestaAnalytics.loadErr,
+          onRetry: () => ref.invalidate(prestataireAnalyticsProvider),
         ),
         data: (data) => PrestataireAnalyticsDashboardCompact(
           data: data,
@@ -79,20 +80,14 @@ class PrestataireAnalyticsPanel extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         analyticsAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator()),
+          loading: () => const DiscoveryListSkeleton(
+            rowCount: 3,
+            rowHeight: 88,
+            padding: EdgeInsets.symmetric(vertical: 8),
           ),
-          error: (_, __) => DiscoverySurfaceCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                DiscPrestaAnalytics.loadErr,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ),
+          error: (_, __) => DiscoverySectionError(
+            message: DiscPrestaAnalytics.loadErr,
+            onRetry: () => ref.invalidate(prestataireAnalyticsProvider),
           ),
           data: (data) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

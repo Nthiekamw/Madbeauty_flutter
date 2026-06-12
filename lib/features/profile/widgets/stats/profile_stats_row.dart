@@ -11,7 +11,9 @@ import '../../../../shared/theme/app_colors.dart';
 
 /// Statistiques profil (favoris synchronisés avec Supabase).
 class ProfileStatsRow extends ConsumerWidget {
-  const ProfileStatsRow({super.key});
+  const ProfileStatsRow({super.key, this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,38 +39,46 @@ class ProfileStatsRow extends ConsumerWidget {
           };
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 8 : 12,
+        compact ? 2 : 4,
+        compact ? 8 : 12,
+        compact ? 8 : 12,
+      ),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          Expanded(
-            child: _StatTile(
-              label: DiscProfile.statAppointments,
-              value: appointmentsValue,
-              icon: Icons.event_available_rounded,
-              color: primary,
+            Expanded(
+              child: _StatTile(
+                compact: compact,
+                label: DiscProfile.statAppointments,
+                value: appointmentsValue,
+                icon: Icons.event_available_rounded,
+                color: primary,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _StatTile(
-              label: DiscProfile.statFavorites,
-              value: favoritesValue,
-              icon: Icons.bookmark_rounded,
-              color: primary,
+            SizedBox(width: compact ? 6 : 8),
+            Expanded(
+              child: _StatTile(
+                compact: compact,
+                label: DiscProfile.statFavorites,
+                value: favoritesValue,
+                icon: Icons.bookmark_rounded,
+                color: primary,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _StatTile(
-              label: DiscProfile.statRating,
-              value: ratingValue,
-              icon: Icons.star_rounded,
-              color: AppColors.starRating,
+            SizedBox(width: compact ? 6 : 8),
+            Expanded(
+              child: _StatTile(
+                compact: compact,
+                label: DiscProfile.statRating,
+                value: ratingValue,
+                icon: Icons.star_rounded,
+                color: AppColors.starRating,
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );
@@ -81,19 +91,24 @@ class _StatTile extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.compact = false,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color color;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 4 : 6,
+        vertical: compact ? 6 : 10,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
@@ -102,19 +117,20 @@ class _StatTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 6),
+          Icon(icon, size: compact ? 15 : 18, color: color),
+          SizedBox(height: compact ? 4 : 6),
           Text(
             value,
             style: theme.textTheme.titleMedium?.copyWith(
               fontFamily: AppFonts.display,
               fontWeight: FontWeight.w900,
+              fontSize: compact ? 14 : null,
               color: color,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: compact ? 2 : 4),
           SizedBox(
-            height: 26,
+            height: compact ? 22 : 26,
             child: Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,

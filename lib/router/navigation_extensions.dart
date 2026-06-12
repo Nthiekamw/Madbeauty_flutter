@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,21 +40,6 @@ extension AppNavigationX on BuildContext {
   void goRegisterVerifyEmail(String email) => goNamed(
         AppRouteNames.registerVerifyEmail,
         queryParameters: {'email': email.trim()},
-      );
-  void pushVerifyPhone({
-    required String flow,
-    required String phone,
-  }) =>
-      pushNamed(
-        AppRouteNames.verifyPhone,
-        queryParameters: {
-          'flow': flow,
-          'phone': phone.trim(),
-        },
-      );
-  void goRegisterPhoneVerified() => goNamed(
-        AppRouteNames.register,
-        queryParameters: {'phoneVerified': '1'},
       );
   void goRoleChoice() => goNamed(AppRouteNames.role);
   void goPrestataire() => goNamed(AppRouteNames.prestataireProfile);
@@ -98,6 +86,23 @@ extension AppNavigationX on BuildContext {
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
   void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);
+  void pushReportBug() => pushNamed(AppRouteNames.clientReportBug);
+  void pushMyBugReports() => pushNamed(AppRouteNames.clientMyBugReports);
+  void pushBugReportChat(String bugReportId) => pushNamed(
+        AppRouteNames.bugReportChat,
+        pathParameters: {'id': bugReportId},
+      );
+  void pushBannedAccountSupport({String? reason}) {
+    final trimmed = reason?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      pushNamed(
+        AppRouteNames.bannedAccountSupport,
+        queryParameters: {'reason': trimmed},
+      );
+    } else {
+      pushNamed(AppRouteNames.bannedAccountSupport);
+    }
+  }
   void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
   void goAdminHome() => goNamed(AppRouteNames.adminHome);
   void goAdminVerifications() => goNamed(AppRouteNames.adminVerifications);
@@ -105,15 +110,22 @@ extension AppNavigationX on BuildContext {
   void goAdminProfile() => goNamed(AppRouteNames.adminProfile);
   void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
   void pushAdminReports() => pushNamed(AppRouteNames.adminReports);
+  void pushAdminBugReports() => pushNamed(AppRouteNames.adminBugReports);
   void pushAdminUsers() => pushNamed(AppRouteNames.adminUsers);
   void pushAdminReservations() => pushNamed(AppRouteNames.adminReservations);
   void pushAdminAudit() => pushNamed(AppRouteNames.adminAudit);
   void pushAdminPush() => pushNamed(AppRouteNames.adminPush);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
-  Future<T?> pushChat<T extends Object?>(String bookingId) => pushNamed<T>(
+  Future<T?> pushChat<T extends Object?>(
+    String bookingId, {
+    String? as,
+  }) =>
+      pushNamed<T>(
         AppRouteNames.chat,
         pathParameters: {'bookingId': bookingId},
+        queryParameters:
+            as != null && as.isNotEmpty ? {'as': as} : const {},
       );
   void goMyReservations() => goNamed(AppRouteNames.clientReservations);
   void pushClientReservationDetail(String reservationId) => pushNamed(
@@ -187,4 +199,49 @@ extension AppNavigationX on BuildContext {
   }
 
   void pushAsyncStateTest() => pushNamed(AppRouteNames.asyncStateTest);
+}
+
+/// Navigation différée : évite les clés de page dupliquées avec [GoRouter.redirect].
+extension GoRouterDeferredNavigation on GoRouter {
+  Future<void> goDeferred(String location) {
+    final normalized = location.trim();
+    if (normalized.isEmpty) return Future.value();
+    if (state.matchedLocation == normalized) return Future.value();
+
+    final completer = Completer<void>();
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          if (state.matchedLocation != normalized) {
+            go(normalized);
+          }
+        } finally {
+          if (!completer.isCompleted) completer.complete();
+        }
+      });
+    });
+    return completer.future;
+  }
+
+  Future<void> goNamedDeferred(
+    String name, {
+    Map<String, String> pathParameters = const {},
+    Map<String, String> queryParameters = const {},
+  }) {
+    final completer = Completer<void>();
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          goNamed(
+            name,
+            pathParameters: pathParameters,
+            queryParameters: queryParameters,
+          );
+        } finally {
+          if (!completer.isCompleted) completer.complete();
+        }
+      });
+    });
+    return completer.future;
+  }
 }

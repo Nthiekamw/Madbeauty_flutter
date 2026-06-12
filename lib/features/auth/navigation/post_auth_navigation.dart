@@ -1,23 +1,32 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../router/app_router.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../../profile/logic/become_prestataire_flow_resume.dart';
 import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../core/models/user_role.dart';
+import '../logic/account_ban_handler.dart';
 import '../logic/auth_role_cache.dart';
-import '../providers/auth_notifier.dart';
 import '../providers/my_roles_provider.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
-import '../../../services/supabase/profile/profile_service.dart';
-import '../../../services/supabase/supabase_service.dart';
 
 /// Destination après connexion, inscription ou splash (rôles serveur + cache).
 abstract final class PostAuthNavigation {
   PostAuthNavigation._();
+
+  static bool _navigationInFlight = false;
+
+  /// Bloque [appRouterRedirect] pendant une navigation manuelle post-login.
+  static bool get isInFlight => _navigationInFlight;
+
+  static GoRouter _router(ProviderContainer container) =>
+      container.read(goRouterProvider);
 
   static Future<String?> resolveEffectiveRole(WidgetRef ref) async {
     final roles = await ref.read(myRolesProvider.future);
@@ -40,122 +49,119 @@ abstract final class PostAuthNavigation {
   }
 
   /// Après login ou inscription client.
-  static Future<void> navigate(BuildContext context, WidgetRef ref) {
-    return navigateWithContainer(context, ref.container);
+  static Future<void> navigate(WidgetRef ref) {
+    return navigateWithContainer(ref.container);
   }
 
-  /// Splash / cold start : même logique, sans [WidgetRef].
-  static Future<void> navigateWithContainer(
-    BuildContext context,
+  /// Splash / cold start / login : navigation post-auth via [GoRouter] uniquement.
+  static Future<void> navigateWithContainer(ProviderContainer container) async {
+    if (_navigationInFlight) return;
+    _navigationInFlight = true;
+    try {
+      final target = await resolveDestinationPath(container);
+      if (target != null) {
+        await _router(container).goDeferred(target);
+      }
+      await _waitForRouterToSettle();
+    } finally {
+      _navigationInFlight = false;
+    }
+  }
+
+  /// Résout la destination post-auth sans naviguer (handoff redirect).
+  static Future<String?> resolveDestinationPath(
     ProviderContainer container,
   ) async {
-    if (!context.mounted) return;
+    return _resolveDestinationPath(container);
+  }
 
-    if (await _redirectIfBannedWithContainer(context, container)) return;
+  static Future<void> _waitForRouterToSettle() async {
+    final completer = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!completer.isCompleted) completer.complete();
+      });
+    });
+    return completer.future;
+  }
+
+  static Future<String?> _resolveDestinationPath(
+    ProviderContainer container,
+  ) async {
+    final router = _router(container);
+
+    if (await _redirectIfBannedWithContainer(router, container)) return null;
 
     final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
     if (becomeResume != null) {
       if (BecomePrestataireFlowResume.needsPrestataireRole) {
         await LocalCacheService.instance.setSelectedRole('prestataire');
       }
-      if (!context.mounted) return;
-      context.go(becomeResume);
-      return;
+      return becomeResume;
     }
 
     final roles = await container.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
-    if (!context.mounted) return;
 
     if (roles.any((r) => r == UserRole.admin)) {
       await LocalCacheService.instance.setSelectedRole('admin');
-      context.goAdminHome();
-      return;
+      return AppRoutes.adminHome;
     }
 
     if (roles.isEmpty) {
       final inferredRole = await _inferRoleFromProfilesWithContainer(container);
       if (inferredRole != null) {
         await LocalCacheService.instance.setSelectedRole(inferredRole);
-        if (!context.mounted) return;
         if (inferredRole == 'prestataire') {
-          await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
-            context,
-            container,
-          );
-        } else {
-          context.goHome();
+          return PrestataireNavigation.prestataireSpacePath(container);
         }
-        return;
+        return AppRoutes.clientHome;
       }
       final pending = LocalCacheService.instance.selectedRole;
       if (pending == 'prestataire') {
-        await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
-          context,
-          container,
-        );
-        return;
+        return PrestataireNavigation.prestataireSpacePath(container);
       }
       if (pending == 'client') {
-        context.goHome();
-        return;
+        return AppRoutes.clientHome;
       }
-      context.goRoleChoice();
-      return;
+      return AppRoutes.role;
     }
 
     final effective = AuthRoleCache.resolveEffectiveRole(
       serverRoleValues: roles.map((r) => r.value).toList(),
       cachedRole: LocalCacheService.instance.selectedRole,
     );
-    if (!context.mounted) return;
 
     if (effective == null) {
       final inferredRole = await _inferRoleFromProfilesWithContainer(container);
       if (inferredRole != null) {
         await LocalCacheService.instance.setSelectedRole(inferredRole);
-        if (!context.mounted) return;
         if (inferredRole == 'prestataire') {
-          await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
-            context,
-            container,
-          );
-        } else {
-          context.goHome();
+          return PrestataireNavigation.prestataireSpacePath(container);
         }
-        return;
+        return AppRoutes.clientHome;
       }
-      context.goRoleChoice();
-      return;
+      return AppRoutes.role;
     }
 
     await LocalCacheService.instance.setSelectedRole(effective);
-    if (!context.mounted) return;
 
-    if (effective == 'admin') {
-      context.goAdminHome();
-    } else if (effective == 'prestataire') {
-      await PrestataireNavigation.switchToPrestataireSpaceWithContainer(
-        context,
-        container,
-      );
-    } else {
-      context.goHome();
-    }
+    return switch (effective) {
+      'admin' => AppRoutes.adminHome,
+      'prestataire' => PrestataireNavigation.prestataireSpacePath(container),
+      _ => AppRoutes.clientHome,
+    };
   }
 
   static Future<bool> _redirectIfBannedWithContainer(
-    BuildContext context,
+    GoRouter router,
     ProviderContainer container,
   ) async {
-    final user = container.read(authNotifierProvider).value;
-    if (user == null) return false;
-    final banned = await ProfileService(SupabaseService.client)
-        .isUserBanned(user.id);
-    if (!banned) return false;
-    await container.read(authNotifierProvider.notifier).signOut();
-    if (context.mounted) context.goWelcome();
-    return true;
+    final allowed = await AccountBanHandler.ensureNotBanned(
+      container,
+      router: router,
+    );
+    return !allowed;
   }
 
   static Future<String?> _inferRoleFromProfilesWithContainer(
@@ -168,4 +174,3 @@ abstract final class PostAuthNavigation {
     return null;
   }
 }
-

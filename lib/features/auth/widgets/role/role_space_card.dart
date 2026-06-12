@@ -39,7 +39,7 @@ class RoleSpaceCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          height: compact ? 108 : null,
+          height: compact ? 92 : null,
           padding: EdgeInsets.all(pad),
           decoration: BoxDecoration(
             borderRadius: DiscoveryStyles.cardBorderRadius,

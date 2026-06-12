@@ -13,11 +13,17 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
     required this.entries,
     this.distanceOrigin,
     this.limit,
+    this.showDistanceOnPhoto = false,
+    this.showRatingOnPhoto = false,
+    this.dense = false,
   });
 
   final List<PrestataireCatalogEntry> entries;
   final GeoPoint? distanceOrigin;
   final int? limit;
+  final bool showDistanceOnPhoto;
+  final bool showRatingOnPhoto;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +38,8 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: visible.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) =>
+            SizedBox(width: DiscoveryResponsive.homeListCardGap),
         itemBuilder: (context, index) {
           return PrestataireHomeListCard(
             entry: visible[index],
@@ -40,6 +47,9 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
             cardWidth: layout.homeListCardWidth,
             cardHeight: layout.homeListCardHeight,
             photoHeight: layout.homeListPhotoHeight,
+            showDistanceOnPhoto: showDistanceOnPhoto,
+            showRatingOnPhoto: showRatingOnPhoto,
+            dense: dense,
           );
         },
       ),

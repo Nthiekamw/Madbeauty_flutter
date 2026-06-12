@@ -6,11 +6,13 @@ import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../messaging/messaging_navigation.dart';
+import '../../messaging/models/messaging_inbox_role.dart';
 import '../logic/client_reservation_lists.dart';
 import '../models/client_reservation_summary.dart';
 import '../widgets/reservation/client_reservation_card.dart';
@@ -79,7 +81,7 @@ class _ClientHistoryScreenState extends ConsumerState<ClientHistoryScreen> {
           ),
           Expanded(
             child: reservationsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
               error: (_, __) => RefreshIndicator(
                 onRefresh: _refresh,
                 child: ListView(
@@ -87,7 +89,7 @@ class _ClientHistoryScreenState extends ConsumerState<ClientHistoryScreen> {
                   children: [
                     DiscoveryEmptyState(
                       icon: Icons.cloud_off_outlined,
-                      title: DiscBk.listErrTitle,
+                      title: CoreStrings.networkErrorTitle,
                       body: DiscBk.listErrBody,
                       iconColor: Theme.of(context).colorScheme.error,
                       actionLabel: DiscList.retry,
@@ -99,7 +101,12 @@ class _ClientHistoryScreenState extends ConsumerState<ClientHistoryScreen> {
               data: (all) => _HistoryList(
                 items: clientPastReservations(all),
                 onRefresh: _refresh,
-                onMessage: (id) => openChatForReservation(context, ref, id),
+                onMessage: (id) => openChatForReservation(
+                      context,
+                      ref,
+                      id,
+                      viewerRole: MessagingInboxRole.client,
+                    ),
               ),
             ),
           ),

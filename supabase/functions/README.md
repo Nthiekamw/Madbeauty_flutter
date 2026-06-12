@@ -16,6 +16,29 @@ npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
 ```
 
+## Bugs signalés (push admins + e-mail)
+
+| Fonction | Déclencheur | Cible |
+|----------|-------------|--------|
+| `on_bug_report_created` | `INSERT bug_reports` (Database Webhook) | push FCM admins + e-mail équipe |
+| `on_bug_report_updated` | `UPDATE bug_reports` (statut résolu/classé) | push FCM reporter |
+| `on_bug_report_message_created` | `INSERT bug_report_messages` | push FCM admin ou reporter |
+
+Partagé : `_shared/bug_report_notify.ts`
+
+### Webhooks Supabase
+
+- Table `bug_reports`, event `INSERT` → `on_bug_report_created`
+- Table `bug_reports`, event `UPDATE` → `on_bug_report_updated`
+- Table `bug_report_messages`, event `INSERT` → `on_bug_report_message_created`
+- Header : `x-webhook-secret` = `CONTENT_REPORT_WEBHOOK_SECRET`
+
+```bash
+npx supabase functions deploy on_bug_report_created --no-verify-jwt
+npx supabase functions deploy on_bug_report_updated --no-verify-jwt
+npx supabase functions deploy on_bug_report_message_created --no-verify-jwt
+```
+
 ## Signalements (e-mail équipe)
 
 | Fonction | Déclencheur | Cible |
@@ -73,6 +96,11 @@ npx supabase functions deploy on_verification_requested --no-verify-jwt
 | `capture_booking_payment` | JWT prestataire | Capture après prestation terminée |
 | `prestataire_connect_onboarding` | JWT prestataire | Crée compte Express + lien onboarding |
 | `prestataire_connect_sync` | JWT prestataire | Synchronise statut Connect |
+| `list_client_payment_methods` | JWT client | Liste les cartes enregistrées |
+| `prepare_client_customer_sheet` | JWT client | Customer Sheet (ajout / suppression cartes) |
+| `create_client_billing_portal` | JWT client | Portail web (secours) |
+| `list_prestataire_payment_methods` | JWT prestataire | Cartes d’abonnement prestataire |
+| `prepare_prestataire_customer_sheet` | JWT prestataire | Customer Sheet abonnement prestataire |
 | `stripe_webhook` | Signature Stripe | Webhooks (réservations + comptes) |
 
 Partagé : `_shared/stripe_booking.ts`, `stripe_connect.ts`, `stripe_reservation.ts`
@@ -90,6 +118,11 @@ npx supabase functions deploy complete_booking_after_payment
 npx supabase functions deploy capture_booking_payment
 npx supabase functions deploy prestataire_connect_onboarding
 npx supabase functions deploy prestataire_connect_sync
+npx supabase functions deploy list_client_payment_methods
+npx supabase functions deploy prepare_client_customer_sheet
+npx supabase functions deploy create_client_billing_portal
+npx supabase functions deploy list_prestataire_payment_methods
+npx supabase functions deploy prepare_prestataire_customer_sheet
 npx supabase functions deploy stripe_webhook --no-verify-jwt
 ```
 

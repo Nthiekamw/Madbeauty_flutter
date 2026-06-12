@@ -3,10 +3,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/messaging/message.dart';
+import '../../../../shared/theme/app_fonts.dart';
 import '../../logic/chat_message_moderator.dart';
 import 'chat_bubble.dart';
+import 'chat_content_width.dart';
 
-/// Liste des messages avec séparateurs de date.
+/// Liste des messages avec séparateurs de date et regroupement par expéditeur.
 class ChatMessageList extends StatelessWidget {
   const ChatMessageList({
     super.key,
@@ -21,70 +23,95 @@ class ChatMessageList extends StatelessWidget {
   final ScrollController scrollController;
   final Widget? emptyPlaceholder;
 
+  static const _groupWindow = Duration(minutes: 5);
+
   @override
   Widget build(BuildContext context) {
     if (messages.isEmpty) {
       return emptyPlaceholder ??
           Center(
-            child: Text(
-              DiscChat.emptyBody,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 48,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.45),
                   ),
+                  const SizedBox(height: 14),
+                  Text(
+                    DiscChat.emptyBody,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                  ),
+                ],
+              ),
             ),
           );
     }
 
-    return ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-        final msg = messages[index];
-        final isMine = msg.senderId == currentUserId;
-        final showDate = index == 0 ||
-            !_sameDay(messages[index - 1].createdAt, msg.createdAt);
+    return ChatContentWidth(
+      child: ListView.builder(
+        controller: scrollController,
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          final msg = messages[index];
+          final isMine = msg.senderId == currentUserId;
+          final showDate = index == 0 ||
+              !_sameDay(messages[index - 1].createdAt, msg.createdAt);
+          final isFirstInGroup = _isFirstInGroup(messages, index, currentUserId);
+          final isLastInGroup = _isLastInGroup(messages, index, currentUserId);
 
-        return Column(
-          children: [
-            if (showDate)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    _dateLabel(msg.createdAt.toLocal()),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
+          return Column(
+            children: [
+              if (showDate) _DateSeparator(label: _dateLabel(msg.createdAt.toLocal())),
+              ChatBubble(
+                text: ChatMessageModerator.sanitizeForDisplay(msg.content),
+                isMine: isMine,
+                imageUrl: msg.imageUrl,
+                isReadByPeer: !isMine || msg.isRead,
+                isFirstInGroup: isFirstInGroup,
+                isLastInGroup: isLastInGroup,
+                timeLabel: DateFormat('HH:mm', 'fr_FR')
+                    .format(msg.createdAt.toLocal()),
               ),
-            ChatBubble(
-              text: ChatMessageModerator.sanitizeForDisplay(msg.content),
-              isMine: isMine,
-              imageUrl: msg.imageUrl,
-              isReadByPeer: !isMine || msg.isRead,
-              timeLabel:
-                  DateFormat('HH:mm', 'fr_FR').format(msg.createdAt.toLocal()),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 
   bool _sameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  bool _isFirstInGroup(List<Message> list, int index, String? userId) {
+    if (index == 0) return true;
+    final current = list[index];
+    final prev = list[index - 1];
+    if (prev.senderId != current.senderId) return true;
+    if (!_sameDay(prev.createdAt, current.createdAt)) return true;
+    return current.createdAt.difference(prev.createdAt) > _groupWindow;
+  }
+
+  bool _isLastInGroup(List<Message> list, int index, String? userId) {
+    if (index == list.length - 1) return true;
+    final current = list[index];
+    final next = list[index + 1];
+    if (next.senderId != current.senderId) return true;
+    if (!_sameDay(current.createdAt, next.createdAt)) return true;
+    return next.createdAt.difference(current.createdAt) > _groupWindow;
   }
 
   String _dateLabel(DateTime dt) {
@@ -99,3 +126,56 @@ class ChatMessageList extends StatelessWidget {
   }
 }
 
+class _DateSeparator extends StatelessWidget {
+  const _DateSeparator({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: theme.colorScheme.outline.withValues(alpha: 0.12),
+              thickness: 1,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh
+                    .withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              color: theme.colorScheme.outline.withValues(alpha: 0.12),
+              thickness: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

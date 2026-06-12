@@ -184,9 +184,11 @@ class MessagingService {
       peerDisplayName: peer?.displayName.trim().isNotEmpty == true
           ? peer!.displayName.trim()
           : fallbackName,
-      peerPrenom: peer?.prenom,
-      peerNom: peer?.nom,
+      peerPrenom: peerIsPrestataire ? null : peer?.prenom,
+      peerNom: peerIsPrestataire ? null : peer?.nom,
       peerAvatarUrl: peer?.avatarUrl,
+      peerLastSeenAt: peer?.lastSeenAt,
+      showSalonName: peerIsPrestataire,
       lastMessagePreview: _messagePreview(last),
       lastMessageAt: last?.createdAt ?? conv.lastMessageAt,
       unreadCount: unread,
@@ -267,58 +269,50 @@ class MessagingService {
 
     final userIds = <String>[];
     final labelByPresta = <String, String>{};
+    final userIdByPresta = <String, String>{};
 
     for (final raw in response as List<dynamic>) {
       final m = Map<String, dynamic>.from(raw as Map);
       final id = m['id'] as String;
       final salon = (m['nom_salon'] as String?)?.trim();
       final affiche = (m['nom_affiche'] as String?)?.trim();
-      if (affiche != null && affiche.isNotEmpty) {
-        labelByPresta[id] = affiche;
-      } else if (salon != null && salon.isNotEmpty) {
+      if (salon != null && salon.isNotEmpty) {
         labelByPresta[id] = salon;
+      } else if (affiche != null && affiche.isNotEmpty) {
+        labelByPresta[id] = affiche;
       }
       final uid = m['user_id'] as String?;
-      if (uid != null) userIds.add(uid);
+      if (uid != null) {
+        userIds.add(uid);
+        userIdByPresta[id] = uid;
+      }
     }
 
     final profiles = await _profileService.getByUserIds(userIds);
+    final lastSeenByUser = await _profileService.lastSeenByUserIds(userIds);
     final avatarByPresta = <String, String?>{};
+    final lastSeenByPresta = <String, DateTime?>{};
 
     for (final raw in response as List<dynamic>) {
       final m = Map<String, dynamic>.from(raw as Map);
       final id = m['id'] as String;
-      final uid = m['user_id'] as String?;
+      final uid = userIdByPresta[id];
       final p = uid != null ? profiles[uid] : null;
 
-      if (!labelByPresta.containsKey(id)) {
-        final parts =
-            [p?.prenom, p?.nom].whereType<String>().map((s) => s.trim());
-        final name = parts.where((s) => s.isNotEmpty).join(' ');
-        if (name.isNotEmpty) labelByPresta[id] = name;
-      }
+      labelByPresta.putIfAbsent(id, () => DiscBk.unknownPresta);
 
       avatarByPresta[id] = _normalizeAvatarUrl(p?.avatarUrl);
-    }
-
-    final prenomByPresta = <String, String?>{};
-    final nomByPresta = <String, String?>{};
-    for (final raw in response as List<dynamic>) {
-      final m = Map<String, dynamic>.from(raw as Map);
-      final id = m['id'] as String;
-      final uid = m['user_id'] as String?;
-      final p = uid != null ? profiles[uid] : null;
-      prenomByPresta[id] = p?.prenom?.trim();
-      nomByPresta[id] = p?.nom?.trim();
+      if (uid != null) {
+        lastSeenByPresta[id] = lastSeenByUser[uid];
+      }
     }
 
     return {
       for (final id in prestataireIds)
         id: _PeerInboxInfo(
           displayName: labelByPresta[id] ?? DiscBk.unknownPresta,
-          prenom: prenomByPresta[id],
-          nom: nomByPresta[id],
           avatarUrl: avatarByPresta[id],
+          lastSeenAt: lastSeenByPresta[id],
         ),
     };
   }
@@ -414,8 +408,9 @@ class MessagingService {
       userIdByClient[m['id'] as String] = m['user_id'] as String;
     }
 
-    final profiles =
-        await _profileService.getByUserIds(userIdByClient.values.toList());
+    final userIds = userIdByClient.values.toList();
+    final profiles = await _profileService.getByUserIds(userIds);
+    final lastSeenByUser = await _profileService.lastSeenByUserIds(userIds);
 
     return {
       for (final id in clientIds)
@@ -430,6 +425,7 @@ class MessagingService {
             prenom: p?.prenom?.trim(),
             nom: p?.nom?.trim(),
             avatarUrl: _normalizeAvatarUrl(p?.avatarUrl),
+            lastSeenAt: userId != null ? lastSeenByUser[userId] : null,
           );
         }(),
     };
@@ -475,11 +471,13 @@ class _PeerInboxInfo {
     this.prenom,
     this.nom,
     this.avatarUrl,
+    this.lastSeenAt,
   });
 
   final String displayName;
   final String? prenom;
   final String? nom;
   final String? avatarUrl;
+  final DateTime? lastSeenAt;
 }
 

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_strings.dart';
+import '../features/auth/providers/password_recovery_provider.dart';
 import '../services/auth/auth_deep_link_handler.dart';
 import '../services/storage/local_cache_service.dart';
+import 'app_routes.dart';
 import '../features/prestataire/logic/prestataire_subscription_refresh.dart';
 import '../shared/widgets/app/app_snack_bar.dart';
 import 'app_deep_links.dart';
@@ -102,7 +104,32 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   }
 
   Future<void> _handleAuthCallback(Uri uri) async {
-    await AuthDeepLinkHandler.handle(uri);
+    final result = await AuthDeepLinkHandler.handle(uri);
+    if (!mounted) return;
+
+    if (!result.handled) {
+      final params = AuthDeepLinkHandler.normalizedQueryParameters(uri);
+      final authError = params['error_description'] ?? params['error'];
+      if (authError != null && authError.trim().isNotEmpty) {
+        AppSnackBar.show(
+          context,
+          message: authError.trim(),
+          kind: AppSnackKind.error,
+        );
+      }
+      return;
+    }
+
+    if (!result.passwordRecovery) return;
+
+    ref.read(passwordRecoveryPendingProvider.notifier).activate();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final router = ref.read(goRouterProvider);
+      if (router.state.matchedLocation != AppRoutes.resetPassword) {
+        router.go(AppRoutes.resetPassword);
+      }
+    });
   }
 
   void _goSubscriptionReturn(String path, Uri uri) {

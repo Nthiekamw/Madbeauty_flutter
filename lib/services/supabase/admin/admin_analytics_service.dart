@@ -28,6 +28,7 @@ class AdminAnalyticsService {
         return const AdminAnalyticsSummary(
           usersTotal: 0,
           usersBanned: 0,
+          clientsTotal: 0,
           prestatairesTotal: 0,
           prestatairesVerified: 0,
           verificationPending: 0,

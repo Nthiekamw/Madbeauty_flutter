@@ -14,7 +14,18 @@ abstract final class DiscPaymentMethods {
   static const clientCardsTitle = 'Mes cartes bancaires';
   static const clientCardsHint =
       'Utilisées lors des réservations avec acompte ou paiement en ligne.';
-  static const clientCardsManage = 'Gérer mes moyens de paiement';
+  static const clientCardsManage = 'Ajouter ou gérer une carte';
+  static const customerSheetTitle = 'Mes cartes';
+  static const noCardsYet =
+      'Aucune carte enregistrée. Ajoute une carte pour payer plus vite lors de tes réservations.';
+  static const cardDefaultBadge = 'Par défaut';
+  static String cardExpires(String expiry) => 'Expire $expiry';
+  static const cardsUpdated = 'Cartes mises à jour.';
+  static const sheetErr = 'Impossible d’ouvrir la gestion des cartes.';
+  static const listErr = 'Impossible de charger tes cartes.';
+  static const portalFallback = 'Ouvrir le portail Stripe (secours)';
+  static const webFallbackHint =
+      'Sur le web, ouvre le portail sécurisé Stripe pour gérer tes cartes.';
 
   static const subscriptionTitle = 'Abonnement MadBeauty';
   static const subscriptionHint =

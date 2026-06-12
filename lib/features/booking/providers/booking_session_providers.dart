@@ -14,7 +14,8 @@ import '../../../services/supabase/booking/booking_service_core_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 
 /// Liste des réservations (`Reservation`) du client connecté.
-final bookingsClientProvider = FutureProvider<List<Booking>>((ref) async {
+final bookingsClientProvider =
+    FutureProvider.autoDispose<List<Booking>>((ref) async {
   final svc = ref.watch(bookingServiceProvider);
   final client = await ref.watch(currentClientProfileProvider.future);
   if (svc == null || client == null) return const [];
@@ -22,16 +23,17 @@ final bookingsClientProvider = FutureProvider<List<Booking>>((ref) async {
 });
 
 /// Liste des réservations du prestataire connecté (`prestataire_profiles.id`).
-final bookingsPrestataireProvider = FutureProvider<List<Booking>>((ref) async {
+final bookingsPrestataireProvider =
+    FutureProvider.autoDispose<List<Booking>>((ref) async {
   final svc = ref.watch(bookingServiceProvider);
   final presta = await ref.watch(currentPrestataireProvider.future);
   if (svc == null || presta == null) return const [];
   return svc.getByPrestataire(presta.id);
 });
 
-/// Liste des réservations client – conservée tant que le shell est monté.
+/// Liste des réservations client (auto-dispose hors écran ; invalidée à chaque action).
 final clientReservationsProvider =
-    FutureProvider<List<ClientReservationSummary>>((ref) async {
+    FutureProvider.autoDispose<List<ClientReservationSummary>>((ref) async {
       if (ref.watch(isGuestBrowsingProvider)) return const [];
 
       final service = ref.watch(bookingServiceProvider);

@@ -3,9 +3,10 @@
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../shared/widgets/gallery/fullscreen_photo_gallery.dart';
 
-/// Bulle style iMessage / WhatsApp.
+/// Bulle de message avec regroupement visuel (style messagerie moderne).
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
@@ -14,6 +15,8 @@ class ChatBubble extends StatelessWidget {
     required this.timeLabel,
     this.imageUrl,
     this.isReadByPeer = true,
+    this.isFirstInGroup = true,
+    this.isLastInGroup = true,
   });
 
   final String text;
@@ -21,154 +24,240 @@ class ChatBubble extends StatelessWidget {
   final String timeLabel;
   final String? imageUrl;
   final bool isReadByPeer;
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+
+  static const _largeRadius = 20.0;
+  static const _mediumRadius = 14.0;
+  static const _tailRadius = 6.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    final bg = isMine
-        ? theme.colorScheme.primary
-        : (isDark
-            ? theme.colorScheme.surfaceContainerHighest
-            : theme.colorScheme.surfaceContainerHigh);
-    final fg = isMine ? AppColors.white : theme.colorScheme.onSurface;
     final hasImage = imageUrl?.trim().isNotEmpty == true;
     final showText = text.trim().isNotEmpty &&
         !(hasImage && text.trim() == DiscChat.imageMessagePreview);
+    final showMeta = isLastInGroup;
+    final groupedGap = isFirstInGroup ? 6.0 : 2.0;
+
+    final fg = isMine ? AppColors.white : theme.colorScheme.onSurface;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
         padding: EdgeInsets.only(
-          left: isMine ? 48 : 12,
-          right: isMine ? 12 : 48,
-          top: 3,
-          bottom: 3,
+          left: isMine ? 56 : 14,
+          right: isMine ? 14 : 56,
+          top: groupedGap,
+          bottom: showMeta ? 2 : 0,
         ),
         child: Column(
           crossAxisAlignment:
               isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-              ),
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            DecoratedBox(
               decoration: BoxDecoration(
-                color: bg,
+                borderRadius: _radiusForGroup(isMine),
+                gradient: isMine
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.primary,
+                          Color.lerp(
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary,
+                            0.35,
+                          )!,
+                        ],
+                      )
+                    : null,
+                color: isMine
+                    ? null
+                    : (isDark
+                        ? theme.colorScheme.surfaceContainerHighest
+                        : theme.colorScheme.surface),
+                border: isMine
+                    ? null
+                    : Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      ),
                 boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? AppColors.scrimDark20
-                        : AppColors.scrimLight08,
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
+                  if (isLastInGroup)
+                    BoxShadow(
+                      color: isMine
+                          ? theme.colorScheme.primary.withValues(alpha: 0.22)
+                          : (isDark
+                              ? AppColors.scrimDark20
+                              : AppColors.scrimLight05),
+                      blurRadius: isMine ? 14 : 8,
+                      offset: const Offset(0, 3),
+                    ),
                 ],
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(22),
-                  topRight: const Radius.circular(22),
-                  bottomLeft: Radius.circular(isMine ? 22 : 8),
-                  bottomRight: Radius.circular(isMine ? 8 : 22),
-                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (hasImage) ...[
-                    GestureDetector(
-                      onTap: () => FullscreenPhotoGallery.open(
-                        context,
-                        urls: [imageUrl!.trim()],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.network(
-                          imageUrl!.trim(),
-                          width: MediaQuery.sizeOf(context).width * 0.62,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return SizedBox(
-                              width: MediaQuery.sizeOf(context).width * 0.62,
-                              height: 180,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: progress.expectedTotalBytes != null
-                                      ? progress.cumulativeBytesLoaded /
-                                          progress.expectedTotalBytes!
-                                      : null,
-                                  color: isMine
-                                      ? AppColors.white
-                                      : theme.colorScheme.primary,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (_, __, ___) => SizedBox(
-                            width: MediaQuery.sizeOf(context).width * 0.62,
-                            height: 120,
-                            child: Center(
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                color: fg.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (showText) const SizedBox(height: 8),
-                  ],
-                  if (showText)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        text,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontFamily: AppFonts.body,
-                          color: fg,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.76,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    14,
+                    isFirstInGroup ? 11 : 8,
+                    14,
+                    isLastInGroup ? 10 : 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        timeLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: isMine
-                              ? AppColors.onPrimaryMuted85
-                              : theme.colorScheme.outline,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (isMine) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          isReadByPeer
-                              ? DiscChat.readLabel
-                              : DiscChat.sentLabel,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppColors.onPrimaryMuted85,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                      if (hasImage) ...[
+                        _ChatBubbleImage(
+                          url: imageUrl!.trim(),
+                          errorColor: fg,
+                          onTap: () => FullscreenPhotoGallery.open(
+                            context,
+                            urls: [imageUrl!.trim()],
                           ),
                         ),
+                        if (showText) const SizedBox(height: 8),
                       ],
+                      if (showText)
+                        Text(
+                          text,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontFamily: AppFonts.body,
+                            color: fg,
+                            height: 1.38,
+                            fontSize: 15.5,
+                          ),
+                        ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
+            if (showMeta) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    timeLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.85),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (isMine) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      isReadByPeer
+                          ? Icons.done_all_rounded
+                          : Icons.check_rounded,
+                      size: 14,
+                      color: isReadByPeer
+                          ? theme.colorScheme.primary.withValues(alpha: 0.85)
+                          : theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.65),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
           ],
         ),
       ),
     );
   }
+
+  BorderRadius _radiusForGroup(bool mine) {
+    if (isFirstInGroup && isLastInGroup) {
+      return BorderRadius.only(
+        topLeft: const Radius.circular(_largeRadius),
+        topRight: const Radius.circular(_largeRadius),
+        bottomLeft: Radius.circular(mine ? _largeRadius : _tailRadius),
+        bottomRight: Radius.circular(mine ? _tailRadius : _largeRadius),
+      );
+    }
+    if (isFirstInGroup) {
+      return BorderRadius.only(
+        topLeft: const Radius.circular(_largeRadius),
+        topRight: const Radius.circular(_largeRadius),
+        bottomLeft: Radius.circular(mine ? _mediumRadius : _tailRadius),
+        bottomRight: Radius.circular(mine ? _tailRadius : _mediumRadius),
+      );
+    }
+    if (isLastInGroup) {
+      return BorderRadius.only(
+        topLeft: Radius.circular(mine ? _mediumRadius : _tailRadius),
+        topRight: Radius.circular(mine ? _tailRadius : _mediumRadius),
+        bottomLeft: Radius.circular(mine ? _largeRadius : _tailRadius),
+        bottomRight: Radius.circular(mine ? _tailRadius : _largeRadius),
+      );
+    }
+    return BorderRadius.only(
+      topLeft: Radius.circular(mine ? _mediumRadius : _tailRadius),
+      topRight: Radius.circular(mine ? _tailRadius : _mediumRadius),
+      bottomLeft: Radius.circular(mine ? _mediumRadius : _tailRadius),
+      bottomRight: Radius.circular(mine ? _tailRadius : _mediumRadius),
+    );
+  }
 }
 
+class _ChatBubbleImage extends StatelessWidget {
+  const _ChatBubbleImage({
+    required this.url,
+    required this.errorColor,
+    required this.onTap,
+  });
+
+  final String url;
+  final Color errorColor;
+  final VoidCallback onTap;
+
+  static const double _maxHeight = 260;
+  static const double _minHeight = 112;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.sizeOf(context).width * 0.58;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: _maxHeight),
+        child: AppNetworkImage(
+          url: url,
+          width: maxWidth,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          borderRadius: BorderRadius.circular(12),
+          placeholder: SizedBox(
+            width: maxWidth,
+            height: _minHeight,
+            child: const Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          error: SizedBox(
+            width: maxWidth,
+            height: _minHeight,
+            child: Center(
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: errorColor.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

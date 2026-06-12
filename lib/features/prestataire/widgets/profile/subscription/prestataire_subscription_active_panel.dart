@@ -3,16 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../router/navigation_extensions.dart';
-import '../../../../../services/stripe/stripe_prestataire_subscription_service.dart';
-import '../../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/theme/discovery_styles.dart';
-import '../../../../../shared/utils/app_url_launcher.dart';
-import '../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../models/prestataire_subscription_status.dart';
-import '../../../providers/profile/prestataire_profile_form_provider.dart';
+import '../../subscription/prestataire_subscription_billing_cards_section.dart';
 
 /// État abonnement actif sur l’écran « Mon abonnement ».
 class PrestataireSubscriptionActivePanel extends ConsumerStatefulWidget {
@@ -36,56 +32,10 @@ class PrestataireSubscriptionActivePanel extends ConsumerStatefulWidget {
 
 class _PrestataireSubscriptionActivePanelState
     extends ConsumerState<PrestataireSubscriptionActivePanel> {
-  bool _busyPortal = false;
-
-  Future<void> _openBillingPortal() async {
-    final stripeService = ref.read(stripePrestaSubscriptionServiceProvider);
-    if (stripeService == null) {
-      AppSnackBar.show(
-        context,
-        message: DiscPrestaSub.payUnavailable,
-        kind: AppSnackKind.error,
-      );
-      return;
-    }
-
-    setState(() => _busyPortal = true);
-    try {
-      final formService = ref.read(prestataireProfileFormServiceProvider);
-      if (formService != null) {
-        await formService.ensureProfileForBilling();
-      }
-      final url = await stripeService.createBillingPortalUrl();
-      if (!mounted) return;
-      final opened = await AppUrlLauncher.openInApp(context, url);
-      if (!mounted) return;
-      if (!opened) {
-        AppSnackBar.show(
-          context,
-          message: DiscPrestaSub.browserErr,
-          kind: AppSnackKind.error,
-        );
-      }
-    } on StripePrestaSubscriptionException catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(context, message: e.message, kind: AppSnackKind.error);
-    } catch (e) {
-      debugPrint('billing portal: $e');
-      if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        message: DiscPrestaSub.portalErr,
-        kind: AppSnackKind.error,
-      );
-    } finally {
-      if (mounted) setState(() => _busyPortal = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final busy = widget.refreshing || _busyPortal;
+    final busy = widget.refreshing;
     final period = widget.status.periodEnd;
     final periodText = period != null
         ? DiscPrestaSub.renewsOn.replaceFirst(
@@ -194,23 +144,21 @@ class _PrestataireSubscriptionActivePanelState
                         ),
                       ),
                     )
-                  else ...[
-                    FilledButton.icon(
-                      onPressed: _openBillingPortal,
-                      icon: const Icon(Icons.receipt_long_rounded, size: 20),
-                      label: const Text(DiscPrestaSub.manageBilling),
-                    ),
-                    const SizedBox(height: 8),
+                  else
                     OutlinedButton.icon(
                       onPressed: widget.onRefresh,
                       icon: const Icon(Icons.refresh_rounded, size: 18),
                       label: const Text(DiscPrestaSub.refreshStatus),
                     ),
-                  ],
                 ],
               ),
             ),
           ),
+        ),
+        const SizedBox(height: 14),
+        const DiscoverySurfaceCard(
+          padding: EdgeInsets.all(18),
+          child: PrestataireSubscriptionBillingCardsSection(),
         ),
         const SizedBox(height: 14),
         DiscoverySurfaceCard(

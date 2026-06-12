@@ -29,6 +29,7 @@ export 'discovery/disc_payment_methods.dart';
 export 'discovery/disc_help.dart';
 export 'discovery/disc_waitlist.dart';
 export 'discovery/disc_report.dart';
+export 'discovery/disc_bug.dart';
 export 'discovery/disc_referral.dart';
 export 'discovery/disc_client_workspace.dart';
 export 'discovery/disc_like.dart';

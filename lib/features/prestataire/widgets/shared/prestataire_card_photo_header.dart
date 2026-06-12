@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/prestataire/prestataire_favorite_button.dart';
 import '../agenda/prestataire_availability_badge.dart';
@@ -15,6 +15,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
     this.fallbackDisplayName,
     this.fallbackAvatarUrl,
     this.compactBadge = false,
+    this.microOverlay = false,
     this.showFavoriteButton = true,
   });
 
@@ -25,6 +26,8 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
   final String? fallbackDisplayName;
   final String? fallbackAvatarUrl;
   final bool compactBadge;
+  /// Pastilles encore plus petites (cartes accueil).
+  final bool microOverlay;
   final bool showFavoriteButton;
 
   @override
@@ -40,21 +43,23 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
           fallbackAvatarUrl: fallbackAvatarUrl,
         ),
         Positioned(
-          top: 8,
-          left: showFavoriteButton ? 8 : null,
-          right: showFavoriteButton ? null : 8,
+          top: microOverlay ? 5 : 8,
+          left: showFavoriteButton ? (microOverlay ? 5 : 8) : null,
+          right: showFavoriteButton ? null : (microOverlay ? 5 : 8),
           child: PrestataireAvailabilityBadge(
             prestataireId: prestataireId,
             compact: compactBadge,
+            micro: microOverlay,
           ),
         ),
         if (showFavoriteButton)
           Positioned(
-            top: 8,
-            right: 8,
+            top: microOverlay ? 5 : 8,
+            right: microOverlay ? 5 : 8,
             child: PrestataireFavoriteButton(
               prestataireId: prestataireId,
               compact: compactBadge,
+              micro: microOverlay,
             ),
           ),
       ],

@@ -1,35 +1,26 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_button.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
-import '../../../../shared/widgets/phone/phone_number_field.dart';
-import '../../widgets/auth_credential_method_toggle.dart';
 import '../../widgets/auth_error_banner.dart';
 import '../../widgets/auth_forgot_password_link.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';
 import '../../widgets/auth_google_button.dart';
 import '../../widgets/auth_or_divider.dart';
-import '../models/login_credential_method.dart';
 
-/// Page de connexion : Google, e-mail + mot de passe ou téléphone + OTP.
-class LoginPage extends StatelessWidget {
+/// Page de connexion : Google ou e-mail + mot de passe.
+class LoginPage extends StatefulWidget {
   const LoginPage({
     super.key,
     required this.showSupabaseConfigCard,
-    required this.credentialMethod,
     required this.emailController,
     required this.passwordController,
-    required this.phoneController,
-    required this.phoneDialCode,
-    required this.onPhoneDialCodeChanged,
     required this.emailError,
     required this.passwordError,
-    required this.phoneError,
     required this.submitError,
-    required this.infoMessage,
     required this.isLoading,
     required this.formEnabled,
     required this.onBack,
@@ -38,24 +29,16 @@ class LoginPage extends StatelessWidget {
     required this.onPasswordFieldSubmitted,
     required this.onEmailChanged,
     required this.onPasswordChanged,
-    required this.onPhoneChanged,
-    required this.onCredentialMethodChanged,
     required this.onGoogle,
     required this.onForgotPassword,
   });
 
   final bool showSupabaseConfigCard;
-  final LoginCredentialMethod credentialMethod;
   final TextEditingController emailController;
   final TextEditingController passwordController;
-  final TextEditingController phoneController;
-  final String phoneDialCode;
-  final ValueChanged<String> onPhoneDialCodeChanged;
   final String? emailError;
   final String? passwordError;
-  final String? phoneError;
   final String? submitError;
-  final String? infoMessage;
   final bool isLoading;
   final bool formEnabled;
   final VoidCallback onBack;
@@ -64,15 +47,15 @@ class LoginPage extends StatelessWidget {
   final VoidCallback onPasswordFieldSubmitted;
   final ValueChanged<String> onEmailChanged;
   final ValueChanged<String> onPasswordChanged;
-  final ValueChanged<String> onPhoneChanged;
-  final ValueChanged<bool> onCredentialMethodChanged;
   final VoidCallback onGoogle;
   final VoidCallback onForgotPassword;
 
-  bool get _isPhone => credentialMethod == LoginCredentialMethod.phone;
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
-  String get _primaryLabel =>
-      _isPhone ? AuthStrings.loginActionSendOtp : AuthStrings.loginActionSubmit;
+class _LoginPageState extends State<LoginPage> {
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -87,19 +70,19 @@ class LoginPage extends StatelessWidget {
       showTitle: true,
       centerTitle: true,
       scrollable: true,
-      onBack: onBack,
-      isBackEnabled: !isLoading,
+      onBack: widget.onBack,
+      isBackEnabled: !widget.isLoading,
       bottomBar: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppButton(
             variant: AppButtonVariant.primary,
-            isLoading: isLoading,
-            enabled: formEnabled,
-            onPressed: onSubmit,
+            isLoading: widget.isLoading,
+            enabled: widget.formEnabled,
+            onPressed: widget.onSubmit,
             child: Text(
-              _primaryLabel,
+              AuthStrings.loginActionSubmit,
               style: const TextStyle(
                 fontFamily: AppFonts.body,
                 fontWeight: FontWeight.w600,
@@ -110,7 +93,7 @@ class LoginPage extends StatelessWidget {
           const SizedBox(height: 8),
           Center(
             child: TextButton(
-              onPressed: isLoading ? null : onOpenRegister,
+              onPressed: widget.isLoading ? null : widget.onOpenRegister,
               child: Text.rich(
                 TextSpan(
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -136,7 +119,7 @@ class LoginPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (showSupabaseConfigCard) ...[
+          if (widget.showSupabaseConfigCard) ...[
             const _SupabaseConfigCard(),
             const SizedBox(height: 12),
           ],
@@ -144,60 +127,73 @@ class LoginPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AuthCredentialMethodToggle(
-                  emailLabel: AuthStrings.loginPasswordTabEmail,
-                  phoneLabel: AuthStrings.loginPasswordTabPhone,
-                  isPhoneSelected: _isPhone,
-                  enabled: formEnabled,
-                  compact: true,
-                  onChanged: onCredentialMethodChanged,
-                ),
-                const SizedBox(height: 16),
-                if (_isPhone)
-                  _PhoneCredentialsFields(
-                    phoneController: phoneController,
-                    phoneDialCode: phoneDialCode,
-                    onPhoneDialCodeChanged: onPhoneDialCodeChanged,
-                    phoneError: phoneError,
-                    formEnabled: formEnabled,
-                    onPhoneChanged: onPhoneChanged,
-                  )
-                else
-                  _EmailCredentialsFields(
-                    emailController: emailController,
-                    passwordController: passwordController,
-                    emailError: emailError,
-                    passwordError: passwordError,
-                    formEnabled: formEnabled,
-                    isLoading: isLoading,
-                    onEmailChanged: onEmailChanged,
-                    onPasswordChanged: onPasswordChanged,
-                    onPasswordFieldSubmitted: onPasswordFieldSubmitted,
-                    onForgotPassword: onForgotPassword,
-                    onSurfaceVariant: onSurfaceVariant,
+                AppTextField(
+                  controller: widget.emailController,
+                  onChanged: widget.onEmailChanged,
+                  enabled: widget.formEnabled,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
+                  autocorrect: false,
+                  textInputAction: TextInputAction.next,
+                  label: AuthStrings.loginFieldEmail,
+                  errorText: widget.emailError,
+                  prefixIcon: Icon(
+                    Icons.mail_outline,
+                    color: onSurfaceVariant,
                   ),
-                if (infoMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    infoMessage!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: AppFonts.body,
-                      color: theme.colorScheme.primary,
-                      height: 1.4,
+                ),
+                const SizedBox(height: 14),
+                AppTextField(
+                  controller: widget.passwordController,
+                  onChanged: widget.onPasswordChanged,
+                  enabled: widget.formEnabled,
+                  obscureText: _obscurePassword,
+                  autofillHints: const [AutofillHints.password],
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => widget.onPasswordFieldSubmitted(),
+                  label: AuthStrings.loginFieldPassword,
+                  errorText: widget.passwordError,
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: onSurfaceVariant,
+                  ),
+                  suffixIcon: IconButton(
+                    tooltip: _obscurePassword
+                        ? AuthStrings.loginShowPassword
+                        : AuthStrings.loginHidePassword,
+                    onPressed: widget.formEnabled
+                        ? () => setState(() => _obscurePassword = !_obscurePassword)
+                        : null,
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: onSurfaceVariant,
                     ),
                   ),
-                ],
-                if (submitError != null) ...[
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AuthForgotPasswordLink(
+                    enabled: widget.formEnabled && !widget.isLoading,
+                    onPressed: widget.onForgotPassword,
+                  ),
+                ),
+                if (widget.submitError != null) ...[
                   const SizedBox(height: 12),
-                  AuthErrorBanner(message: submitError!),
+                  AuthErrorBanner(message: widget.submitError!),
                 ],
-                if (formEnabled) ...[
+                if (widget.formEnabled) ...[
                   const SizedBox(height: 16),
                   const AuthOrDivider(compact: true),
                   AuthGoogleButton(
                     label: AuthStrings.loginActionGoogle,
-                    enabled: !isLoading,
-                    onPressed: onGoogle,
+                    enabled: !widget.isLoading,
+                    onPressed: widget.onGoogle,
                   ),
                 ],
               ],
@@ -205,116 +201,6 @@ class LoginPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _EmailCredentialsFields extends StatelessWidget {
-  const _EmailCredentialsFields({
-    required this.emailController,
-    required this.passwordController,
-    required this.emailError,
-    required this.passwordError,
-    required this.formEnabled,
-    required this.isLoading,
-    required this.onEmailChanged,
-    required this.onPasswordChanged,
-    required this.onPasswordFieldSubmitted,
-    required this.onForgotPassword,
-    required this.onSurfaceVariant,
-  });
-
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final String? emailError;
-  final String? passwordError;
-  final bool formEnabled;
-  final bool isLoading;
-  final ValueChanged<String> onEmailChanged;
-  final ValueChanged<String> onPasswordChanged;
-  final VoidCallback onPasswordFieldSubmitted;
-  final VoidCallback onForgotPassword;
-  final Color onSurfaceVariant;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppTextField(
-          controller: emailController,
-          onChanged: onEmailChanged,
-          enabled: formEnabled,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [
-            AutofillHints.username,
-            AutofillHints.email,
-          ],
-          autocorrect: false,
-          textInputAction: TextInputAction.next,
-          label: AuthStrings.loginFieldEmail,
-          errorText: emailError,
-          prefixIcon: Icon(
-            Icons.mail_outline,
-            color: onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 14),
-        AppTextField(
-          controller: passwordController,
-          onChanged: onPasswordChanged,
-          enabled: formEnabled,
-          obscureText: true,
-          autofillHints: const [AutofillHints.password],
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => onPasswordFieldSubmitted(),
-          label: AuthStrings.loginFieldPassword,
-          errorText: passwordError,
-          prefixIcon: Icon(
-            Icons.lock_outline,
-            color: onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Align(
-          alignment: Alignment.centerRight,
-          child: AuthForgotPasswordLink(
-            enabled: formEnabled && !isLoading,
-            onPressed: onForgotPassword,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PhoneCredentialsFields extends StatelessWidget {
-  const _PhoneCredentialsFields({
-    required this.phoneController,
-    required this.phoneDialCode,
-    required this.onPhoneDialCodeChanged,
-    required this.phoneError,
-    required this.formEnabled,
-    required this.onPhoneChanged,
-  });
-
-  final TextEditingController phoneController;
-  final String phoneDialCode;
-  final ValueChanged<String> onPhoneDialCodeChanged;
-  final String? phoneError;
-  final bool formEnabled;
-  final ValueChanged<String> onPhoneChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return PhoneNumberField(
-      localController: phoneController,
-      dialCode: phoneDialCode,
-      errorText: phoneError,
-      enabled: formEnabled,
-      dense: true,
-      onDialCodeChanged: onPhoneDialCodeChanged,
-      onLocalChanged: () => onPhoneChanged(phoneController.text),
     );
   }
 }

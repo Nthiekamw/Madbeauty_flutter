@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/booking/screens/client_reservation_detail_screen.dart';
+import '../../features/messaging/providers/messaging_inbox_providers.dart';
 import '../../features/messaging/screens/chat_screen.dart';
 import '../../features/prestataire/models/prestataire_profile_edit_section.dart';
 import '../../features/prestataire/screens/prestataire_detail_screen.dart';
@@ -19,7 +20,13 @@ List<RouteBase> buildDetailRoutes() => [
         path: '${AppRoutes.chat}/:bookingId',
         builder: (context, state) {
           final id = state.pathParameters['bookingId']!;
-          return ChatScreen(bookingId: id);
+          final as = state.uri.queryParameters['as'];
+          final viewerRole = switch (as) {
+            'client' => MessagingInboxRole.client,
+            'prestataire' => MessagingInboxRole.prestataire,
+            _ => null,
+          };
+          return ChatScreen(bookingId: id, viewerRole: viewerRole);
         },
       ),
       GoRoute(

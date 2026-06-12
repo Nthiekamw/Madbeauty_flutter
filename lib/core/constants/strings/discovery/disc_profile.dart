@@ -71,6 +71,9 @@ abstract final class DiscProfile {
   static const adminReportsIntroTitle = 'Modération des signalements';
   static const adminReportsIntroBody =
       'Consulte les rapports utilisateurs et marque-les comme traités.';
+  static const actionAdminBugReports = 'Bugs signalés';
+  static const actionAdminBugReportsHint =
+      'Dysfonctionnements techniques remontés par les utilisateurs.';
   static const actionAdminReports = 'Signalements';
   static const actionAdminReportsHint =
       'Consulter et traiter les signalements utilisateurs';
@@ -199,6 +202,8 @@ abstract final class DiscProfile {
       'Aucun événement de vérification.';
 
   static const adminHomeStatUsers = 'Utilisateurs';
+  static const adminHomeStatClients = 'Clients';
+  static const adminHomeStatPrestataires = 'Prestataires';
   static const adminHomeStatReservations = 'Réservations';
   static const adminHomeStatRevenue = 'Revenus capturés';
   static const adminHomeAnalyticsTitle = 'Vue d’ensemble';

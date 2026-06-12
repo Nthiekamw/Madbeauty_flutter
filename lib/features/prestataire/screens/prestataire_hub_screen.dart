@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +18,7 @@ import '../providers/profile/prestataire_profile_form_provider.dart';
 import '../providers/agenda/disponibilite_provider.dart';
 import '../../../services/stripe/stripe_subscription_providers.dart';
 import '../widgets/profile/hub/prestataire_hub_screen_body.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
@@ -226,6 +227,8 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 onSelectDefaultAvatar: _form.selectDefaultAvatar,
                 onPickGallery: () =>
                     PrestataireHubMediaActions.pickGallery(context, _form),
+                onPickGalleryVideo: () =>
+                    PrestataireHubMediaActions.pickGalleryVideo(context, _form),
                 onRemoveGalleryPhoto: (photo) =>
                     PrestataireHubMediaActions.removeGalleryPhoto(
                       ref,
@@ -250,7 +253,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
             error: (_, __) => PrestataireProfileLoadError(
               onRetry: () => ref.invalidate(prestataireProfileFormProvider),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const DiscoveryDetailSkeleton(),
           ),
         ),
       ),

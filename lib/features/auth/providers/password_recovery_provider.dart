@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../services/storage/local_cache_service.dart';
 import 'auth_notifier.dart';
 
 /// Indique qu'une session « réinitialisation mot de passe » est active (lien e-mail).
@@ -32,9 +35,9 @@ class PasswordRecoveryNotifier extends Notifier<bool> {
           data: (authState) {
             switch (authState.event) {
               case AuthChangeEvent.passwordRecovery:
-                state = true;
+                activate();
               case AuthChangeEvent.signedOut:
-                state = false;
+                clear();
               default:
                 break;
             }
@@ -45,9 +48,16 @@ class PasswordRecoveryNotifier extends Notifier<bool> {
       },
       fireImmediately: true,
     );
-    return false;
+    return LocalCacheService.instance.passwordRecoveryPending;
   }
 
-  void clear() => state = false;
-}
+  void activate() {
+    state = true;
+    unawaited(LocalCacheService.instance.setPasswordRecoveryPending(true));
+  }
 
+  void clear() {
+    state = false;
+    unawaited(LocalCacheService.instance.clearPasswordRecoveryPending());
+  }
+}

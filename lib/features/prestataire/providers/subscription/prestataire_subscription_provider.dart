@@ -4,7 +4,8 @@ import '../../../../services/supabase/supabase_service.dart';
 import '../profile/prestataire_profile_form_provider.dart';
 
 /// Services beauté publiés du prestataire connecté (pour le palier d’abonnement).
-final prestatairePublishedServiceCountProvider = FutureProvider<int>((ref) async {
+final prestatairePublishedServiceCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
   final data = await ref.watch(prestataireProfileFormProvider.future);
   final prestaId = data.prestataireId;
   if (prestaId == null || prestaId.isEmpty) {

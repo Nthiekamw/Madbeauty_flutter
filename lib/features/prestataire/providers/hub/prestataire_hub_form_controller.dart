@@ -507,6 +507,17 @@ class PrestataireHubFormController extends ChangeNotifier {
     _schedulePersistHubDraft();
   }
 
+  void setGalleryError(String? message) {
+    galleryError = message;
+    notifyListeners();
+  }
+
+  void clearGalleryError() {
+    if (galleryError == null) return;
+    galleryError = null;
+    notifyListeners();
+  }
+
   void addPendingGallery(StorageUploadFile file) {
     pendingGallery.add(file);
     galleryError = null;

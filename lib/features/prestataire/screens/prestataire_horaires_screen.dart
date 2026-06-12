@@ -10,6 +10,8 @@ import '../../../services/supabase/disponibilite/disponibilite_service_providers
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../widgets/profile/schedule/prestataire_indisponibilites_editor.dart';
 import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
+import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
@@ -109,12 +111,14 @@ class _PrestataireHorairesScreenState
         title: const Text(DiscPrestaHoraires.title),
       ),
       body: horairesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
-          child: Text(
-            DiscPrestaHoraires.loadErr,
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
+        loading: () => const DiscoveryDetailSkeleton(),
+        error: (_, __) => DiscoveryEmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: CoreStrings.networkErrorTitle,
+          body: DiscPrestaHoraires.loadErr,
+          iconColor: theme.colorScheme.error,
+          actionLabel: DiscList.retry,
+          onAction: () => ref.invalidate(prestataireHorairesProvider),
         ),
         data: (horaires) {
           if (!_hydrated) {
@@ -125,11 +129,11 @@ class _PrestataireHorairesScreenState
                 _hydrated = true;
               });
             });
-            return const Center(child: CircularProgressIndicator());
+            return const DiscoveryDetailSkeleton();
           }
           final jours = _jours;
           if (jours == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const DiscoveryDetailSkeleton();
           }
 
           return ListView(

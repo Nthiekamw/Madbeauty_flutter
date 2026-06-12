@@ -54,6 +54,9 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    // Requis par image_picker (PickVisualMedia / pickMultiImage).
-    implementation("androidx.activity:activity:1.10.1")
+    // image_picker + Stripe CustomerSheet (BackHandler / activity-compose).
+    val activityVersion = "1.12.4"
+    implementation("androidx.activity:activity:$activityVersion")
+    implementation("androidx.activity:activity-ktx:$activityVersion")
+    implementation("androidx.activity:activity-compose:$activityVersion")
 }

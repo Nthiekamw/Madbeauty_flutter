@@ -9,6 +9,8 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../models/admin_user_summary.dart';
 import '../providers/admin_push_provider.dart';
 import '../providers/admin_users_provider.dart';
@@ -162,15 +164,25 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         serviceId: _serviceIdController.text.trim(),
       );
       if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        message: DiscProfile.adminPushSentSummary(
-          result.sent,
-          result.failed,
-          result.recipients,
-        ),
-        kind: AppSnackKind.success,
+      final summary = DiscProfile.adminPushSentSummary(
+        result.sent,
+        result.failed,
+        result.recipients,
       );
+      if (result.credentialError != null) {
+        AppSnackBar.error(context, result.credentialError!);
+      } else if (result.failed > 0 && result.sent == 0) {
+        AppSnackBar.warning(
+          context,
+          result.firstError != null ? '$summary\n${result.firstError}' : summary,
+        );
+      } else {
+        AppSnackBar.show(
+          context,
+          message: summary,
+          kind: AppSnackKind.success,
+        );
+      }
       _titleController.clear();
       _bodyController.clear();
       await _refreshPreview();
@@ -286,13 +298,17 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                       }).toList(),
                     );
                   },
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  loading: () => const DiscoveryListSkeleton(
+                    rowCount: 3,
+                    rowHeight: 56,
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                  ),
+                  error: (e, _) => DiscoverySectionError(
+                    message: DiscProfile.adminUsersSearchErr,
+                    onRetry: () => ref.invalidate(
+                      adminUsersSearchProvider(_userQuery),
                     ),
                   ),
-                  error: (e, _) => Text('$e'),
                 ) ??
                 const SizedBox.shrink(),
           ],

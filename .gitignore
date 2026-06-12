@@ -27,6 +27,9 @@ migrate_working_dir/
 .env
 .env.*
 !.env.example
+supabase/firebase-service-account.json
+**/firebase-service-account.json
+!**/firebase-service-account.json.example
 
 # Flutter/Dart/Pub related
 **/doc/api/

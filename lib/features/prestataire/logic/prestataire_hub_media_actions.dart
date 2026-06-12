@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../logic/prestataire_hub_constants.dart';
@@ -50,8 +51,7 @@ abstract final class PrestataireHubMediaActions {
     );
     if (picked.isEmpty) return;
     for (final file in picked) {
-      if (form.galleryPhotos.length + form.pendingGallery.length >=
-          PrestataireHubConstants.galleryMaxPhotos) {
+      if (_galleryMediaCount(form) >= PrestataireHubConstants.galleryMaxPhotos) {
         break;
       }
       final uploadFile = await StorageUploadFile.fromXFile(file);
@@ -59,10 +59,57 @@ abstract final class PrestataireHubMediaActions {
         StorageService.validateImageFile(uploadFile);
         if (!context.mounted) return;
         form.addPendingGallery(uploadFile);
-      } on AppFailure {
-        // ignore
+      } on AppFailure catch (e) {
+        if (!context.mounted) return;
+        form.setGalleryError(e.message);
       }
     }
+  }
+
+  static Future<void> pickGalleryVideo(
+    BuildContext context,
+    PrestataireHubFormController form,
+  ) async {
+    if (_galleryVideoCount(form) >= PrestataireHubConstants.galleryMaxVideos) {
+      form.setGalleryError(
+        'Tu peux ajouter au maximum ${PrestataireHubConstants.galleryMaxVideos} vidéos.',
+      );
+      return;
+    }
+    if (_galleryMediaCount(form) >= PrestataireHubConstants.galleryMaxPhotos) {
+      form.setGalleryError(
+        'Tu as atteint la limite de ${PrestataireHubConstants.galleryMaxPhotos} médias.',
+      );
+      return;
+    }
+
+    final picked = await ImagePicker().pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(minutes: 2),
+    );
+    if (picked == null) return;
+
+    final uploadFile = await StorageUploadFile.fromXFile(picked);
+    try {
+      StorageService.validateVideoFile(uploadFile);
+    } on AppFailure catch (e) {
+      if (!context.mounted) return;
+      form.setGalleryError(e.message);
+      return;
+    }
+    if (!context.mounted) return;
+    form.clearGalleryError();
+    form.addPendingGallery(uploadFile);
+  }
+
+  static int _galleryMediaCount(PrestataireHubFormController form) =>
+      form.galleryPhotos.length + form.pendingGallery.length;
+
+  static int _galleryVideoCount(PrestataireHubFormController form) {
+    final existing =
+        form.galleryPhotos.where((p) => p.mediaType.isVideo).length;
+    final pending = form.pendingGallery.where((f) => f.isVideo).length;
+    return existing + pending;
   }
 
   static Future<void> removeGalleryPhoto(

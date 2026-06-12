@@ -14,6 +14,7 @@ class InAppNotification {
     this.bookingId,
     this.role,
     this.nav,
+    this.bugReportId,
   });
 
   final String id;
@@ -29,6 +30,7 @@ class InAppNotification {
   final String? bookingId;
   final String? role;
   final String? nav;
+  final String? bugReportId;
 
   InAppNotification copyWith({
     String? id,
@@ -44,6 +46,7 @@ class InAppNotification {
     String? bookingId,
     String? role,
     String? nav,
+    String? bugReportId,
   }) {
     return InAppNotification(
       id: id ?? this.id,
@@ -59,6 +62,7 @@ class InAppNotification {
       bookingId: bookingId ?? this.bookingId,
       role: role ?? this.role,
       nav: nav ?? this.nav,
+      bugReportId: bugReportId ?? this.bugReportId,
     );
   }
 
@@ -76,6 +80,7 @@ class InAppNotification {
         if (bookingId != null) 'bookingId': bookingId,
         if (role != null) 'role': role,
         if (nav != null) 'nav': nav,
+        if (bugReportId != null) 'bugReportId': bugReportId,
       };
 
   factory InAppNotification.fromJson(Map<String, dynamic> json) {
@@ -94,6 +99,7 @@ class InAppNotification {
       bookingId: json['bookingId'] as String?,
       role: json['role'] as String?,
       nav: json['nav'] as String?,
+      bugReportId: json['bugReportId'] as String?,
     );
   }
 }

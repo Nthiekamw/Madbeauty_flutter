@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../services/stripe/stripe_connect_providers.dart';
 import '../../../../../../services/stripe/stripe_connect_service.dart';
-import '../../../../../../services/stripe/stripe_prestataire_subscription_service.dart';
 import '../../../../../../services/stripe/stripe_service.dart';
 import '../../../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../../../../shared/theme/app_colors.dart';
@@ -13,7 +12,7 @@ import '../../../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../../logic/prestataire_subscription_refresh.dart';
 import '../../../../models/prestataire_subscription_status.dart';
-import '../../../../providers/profile/prestataire_profile_form_provider.dart';
+import '../../../subscription/prestataire_subscription_billing_cards_section.dart';
 import '../../../shared/prestataire_section_header.dart';
 
 /// Abonnement (carte) + encaissement (Stripe Connect) dans le profil.
@@ -59,52 +58,6 @@ class _PrestatairePaymentMethodsSectionState
 
   void _snack(String message, {AppSnackKind kind = AppSnackKind.info}) {
     AppSnackBar.show(context, message: message, kind: kind);
-  }
-
-  Future<bool> _ensureProfileForBilling() async {
-    final formService = ref.read(prestataireProfileFormServiceProvider);
-    if (formService == null) {
-      _snack(DiscPrestaSub.payUnavailable, kind: AppSnackKind.error);
-      return false;
-    }
-    try {
-      await formService.ensureProfileForBilling();
-      ref.invalidate(prestataireProfileFormProvider);
-      ref.invalidate(prestataireSubscriptionStatusProvider);
-      return true;
-    } catch (_) {
-      _snack(DiscPrestaSub.profileRequired, kind: AppSnackKind.error);
-      return false;
-    }
-  }
-
-  Future<void> _openBillingPortal() async {
-    final service = ref.read(stripePrestaSubscriptionServiceProvider);
-    if (service == null) {
-      _snack(DiscPrestaSub.payUnavailable, kind: AppSnackKind.error);
-      return;
-    }
-
-    setState(() => _busySubscription = true);
-    try {
-      if (!await _ensureProfileForBilling()) return;
-      final url = await service.createBillingPortalUrl();
-      if (!context.mounted) return;
-      final opened = await AppUrlLauncher.openInApp(context, url);
-      if (!context.mounted) return;
-      if (!opened) {
-        _snack(DiscPrestaSub.browserErr, kind: AppSnackKind.error);
-      } else {
-        _snack(DiscPaymentMethods.portalOpened);
-      }
-    } on StripePrestaSubscriptionException catch (e) {
-      _snack(e.message, kind: AppSnackKind.error);
-    } catch (e) {
-      debugPrint('billing portal: $e');
-      _snack(DiscPrestaSub.portalErr, kind: AppSnackKind.error);
-    } finally {
-      if (mounted) setState(() => _busySubscription = false);
-    }
   }
 
   Future<void> _syncSubscription({bool showSnack = false}) async {
@@ -179,16 +132,6 @@ class _PrestatairePaymentMethodsSectionState
     }
   }
 
-  String _subscriptionStatusLabel(PrestataireSubscriptionStatus status) {
-    if (status.isActive) return DiscPaymentMethods.subscriptionStatusActive;
-    return switch (status.status) {
-      'past_due' => DiscPaymentMethods.subscriptionStatusPastDue,
-      'canceled' => DiscPrestaSub.statusCanceled,
-      'incomplete' => DiscPrestaSub.statusIncomplete,
-      _ => DiscPaymentMethods.subscriptionStatusNone,
-    };
-  }
-
   String _connectStatusLabel(StripeConnectStatus? status) {
     if (status == null) return DiscPaymentMethods.payoutNotStarted;
     if (status.canAcceptPayments) return DiscPaymentMethods.payoutActive;
@@ -197,6 +140,56 @@ class _PrestatairePaymentMethodsSectionState
       'restricted' => DiscStripeConnect.statusRestricted,
       _ => DiscPaymentMethods.payoutNotStarted,
     };
+  }
+
+  Widget _buildSubscriptionBillingSection(
+    ThemeData theme,
+    PrestataireSubscriptionStatus? status,
+  ) {
+    if (!widget.standalone &&
+        (status == null || (!status.isActive && !status.needsAttention))) {
+      return const SizedBox.shrink();
+    }
+
+    final pastDue = status?.status == 'past_due';
+    final showStatus =
+        status != null && (status.isActive || status.needsAttention);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showStatus)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _SubscriptionStatusChip(
+              label: status.isActive
+                  ? DiscPaymentMethods.subscriptionStatusActive
+                  : pastDue
+                      ? DiscPaymentMethods.subscriptionStatusPastDue
+                      : DiscPaymentMethods.subscriptionStatusNone,
+              color: status.isActive
+                  ? AppColors.success
+                  : pastDue
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        const PrestataireSubscriptionBillingCardsSection(),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed:
+                _busySubscription ? null : () => _syncSubscription(showSnack: true),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(DiscStripeConnect.ctaRefresh),
+          ),
+        ),
+        Divider(
+          height: 24,
+          color: theme.colorScheme.outline.withValues(alpha: 0.12),
+        ),
+      ],
+    );
   }
 
   @override
@@ -245,39 +238,13 @@ class _PrestatairePaymentMethodsSectionState
           ),
           const SizedBox(height: 14),
           subscriptionAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (status) {
-              if (!status.isActive && !status.needsAttention) {
-                return const SizedBox.shrink();
-              }
-              final active = status.isActive;
-              final pastDue = status.status == 'past_due';
-              return Column(
-                children: [
-                  _PaymentMethodBlock(
-                    icon: Icons.credit_card_rounded,
-                    title: DiscPaymentMethods.subscriptionTitle,
-                    hint: DiscPaymentMethods.subscriptionHint,
-                    status: _subscriptionStatusLabel(status),
-                    statusColor: active
-                        ? AppColors.success
-                        : pastDue
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.onSurfaceVariant,
-                    busy: _busySubscription,
-                    primaryLabel: DiscPaymentMethods.subscriptionManage,
-                    onPrimary: _openBillingPortal,
-                    secondaryLabel: DiscStripeConnect.ctaRefresh,
-                    onSecondary: () => _syncSubscription(showSnack: true),
-                  ),
-                  Divider(
-                    height: 24,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.12),
-                  ),
-                ],
-              );
-            },
+            loading: () => widget.standalone
+                ? _buildSubscriptionBillingSection(theme, null)
+                : const SizedBox.shrink(),
+            error: (_, __) => widget.standalone
+                ? _buildSubscriptionBillingSection(theme, null)
+                : const SizedBox.shrink(),
+            data: (status) => _buildSubscriptionBillingSection(theme, status),
           ),
           connectAsync.when(
             loading: () => const _PaymentMethodSkeleton(),
@@ -465,6 +432,35 @@ class _PaymentMethodBlock extends StatelessWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+class _SubscriptionStatusChip extends StatelessWidget {
+  const _SubscriptionStatusChip({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
+      ),
     );
   }
 }

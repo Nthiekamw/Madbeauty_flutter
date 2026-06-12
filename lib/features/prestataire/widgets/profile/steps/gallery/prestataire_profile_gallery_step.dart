@@ -4,20 +4,24 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/catalog/photo_realisation.dart';
+import '../../../../../../core/models/domain/catalog/realisation_media_type.dart';
+import '../../../../../../services/supabase/storage/storage_service.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../../shared/theme/app_colors.dart';
+import '../../../../../../shared/widgets/prestataire/realisation_media_cover.dart';
 import '../../hub/prestataire_hub_layout.dart';
 
 class PrestataireProfileGalleryStep extends StatelessWidget {
   const PrestataireProfileGalleryStep({
     super.key,
     required this.photos,
-    required this.pendingPreviews,
+    required this.pendingFiles,
     required this.errorText,
     required this.uploading,
     required this.uploadProgress,
     required this.onPick,
+    required this.onPickVideo,
     required this.onRemoveExisting,
     required this.onRemovePending,
     this.maxPhotos = 10,
@@ -25,11 +29,12 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
   });
 
   final List<PhotoRealisation> photos;
-  final List<Uint8List> pendingPreviews;
+  final List<StorageUploadFile> pendingFiles;
   final String? errorText;
   final bool uploading;
   final double? uploadProgress;
   final VoidCallback onPick;
+  final VoidCallback onPickVideo;
   final ValueChanged<PhotoRealisation> onRemoveExisting;
   final ValueChanged<int> onRemovePending;
   final int maxPhotos;
@@ -39,7 +44,7 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final total = photos.length + pendingPreviews.length;
+    final total = photos.length + pendingFiles.length;
     final canAdd = total < maxPhotos && !uploading;
 
     return Column(
@@ -47,8 +52,8 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
       children: [
         if (embeddedInHub)
           PrestataireHubMetricBanner(
-            icon: Icons.photo_library_outlined,
-            label: 'Photos ajoutées',
+            icon: Icons.perm_media_outlined,
+            label: 'Médias ajoutés',
             value: '$total / $maxPhotos',
             progress: maxPhotos > 0 ? total / maxPhotos : 0,
           )
@@ -57,7 +62,7 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$total / $maxPhotos photos',
+                  '$total / $maxPhotos ${DiscPrestaForm.hubGalleryMediaCount}',
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
@@ -86,7 +91,10 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
           ),
         SizedBox(height: embeddedInHub ? 12 : 12),
         if (total == 0)
-          _GalleryEmptyState(onPick: canAdd ? onPick : null)
+          _GalleryEmptyState(
+            onPickPhotos: canAdd ? onPick : null,
+            onPickVideo: canAdd ? onPickVideo : null,
+          )
         else ...[
           GridView.builder(
             shrinkWrap: true,
@@ -99,18 +107,22 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
             itemCount: total + (canAdd ? 1 : 0),
             itemBuilder: (context, index) {
               if (canAdd && index == total) {
-                return _AddPhotoTile(onTap: onPick);
+                return _AddMediaTile(onPickPhotos: onPick, onPickVideo: onPickVideo);
               }
               final isPending = index >= photos.length;
               if (isPending) {
                 final pendingIndex = index - photos.length;
-                return _PhotoTile(
-                  memoryBytes: pendingPreviews[pendingIndex],
+                final file = pendingFiles[pendingIndex];
+                return _MediaTile(
+                  mediaType: file.mediaType,
+                  memoryBytes: file.isVideo ? null : file.bytes,
+                  localVideoPath: file.isVideo ? file.localPath : null,
                   onRemove: () => onRemovePending(pendingIndex),
                 );
               }
               final photo = photos[index];
-              return _PhotoTile(
+              return _MediaTile(
+                mediaType: photo.mediaType,
                 imageUrl: photo.url,
                 onRemove: () => onRemoveExisting(photo),
               );
@@ -118,10 +130,24 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
           ),
           if (canAdd) ...[
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: const Text(DiscPrestaForm.hubGalleryPick),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onPick,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: const Text(DiscPrestaForm.hubGalleryPick),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onPickVideo,
+                    icon: const Icon(Icons.videocam_outlined),
+                    label: const Text(DiscPrestaForm.hubGalleryPickVideo),
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -151,9 +177,13 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
 }
 
 class _GalleryEmptyState extends StatelessWidget {
-  const _GalleryEmptyState({required this.onPick});
+  const _GalleryEmptyState({
+    required this.onPickPhotos,
+    required this.onPickVideo,
+  });
 
-  final VoidCallback? onPick;
+  final VoidCallback? onPickPhotos;
+  final VoidCallback? onPickVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +200,7 @@ class _GalleryEmptyState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.photo_library_outlined,
+            Icons.perm_media_outlined,
             size: 48,
             color: primary.withValues(alpha: 0.85),
           ),
@@ -192,10 +222,24 @@ class _GalleryEmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: onPick,
-            icon: const Icon(Icons.add_a_photo_outlined),
-            label: const Text(DiscPrestaForm.hubGalleryPick),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onPickPhotos,
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: const Text(DiscPrestaForm.hubGalleryPick),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPickVideo,
+                  icon: const Icon(Icons.videocam_outlined),
+                  label: const Text(DiscPrestaForm.hubGalleryPickVideo),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -203,10 +247,14 @@ class _GalleryEmptyState extends StatelessWidget {
   }
 }
 
-class _AddPhotoTile extends StatelessWidget {
-  const _AddPhotoTile({required this.onTap});
+class _AddMediaTile extends StatelessWidget {
+  const _AddMediaTile({
+    required this.onPickPhotos,
+    required this.onPickVideo,
+  });
 
-  final VoidCallback onTap;
+  final VoidCallback onPickPhotos;
+  final VoidCallback onPickVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +269,8 @@ class _AddPhotoTile extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: onPickPhotos,
+        onLongPress: onPickVideo,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -241,29 +290,58 @@ class _AddPhotoTile extends StatelessWidget {
   }
 }
 
-class _PhotoTile extends StatelessWidget {
-  const _PhotoTile({this.imageUrl, this.memoryBytes, required this.onRemove});
+class _MediaTile extends StatelessWidget {
+  const _MediaTile({
+    required this.mediaType,
+    this.imageUrl,
+    this.memoryBytes,
+    this.localVideoPath,
+    required this.onRemove,
+  });
 
+  final RealisationMediaType mediaType;
   final String? imageUrl;
   final Uint8List? memoryBytes;
+  final String? localVideoPath;
   final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
-    final bytes = memoryBytes;
-    final url = imageUrl;
-
     return ClipRRect(
       borderRadius: DiscoveryStyles.chipBorderRadius,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (bytes != null)
-            Image.memory(bytes, fit: BoxFit.cover)
-          else if (url != null)
-            Image.network(url, fit: BoxFit.cover)
-          else
-            const ColoredBox(color: AppColors.scrimDark12),
+          RealisationMediaCover(
+            mediaType: mediaType,
+            imageUrl: imageUrl,
+            memoryBytes: memoryBytes,
+            localVideoPath: localVideoPath,
+            playVideoPreview: mediaType.isVideo,
+            showPlayBadge: mediaType.isVideo,
+          ),
+          if (mediaType.isVideo)
+            Positioned(
+              left: 4,
+              bottom: 4,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  child: Text(
+                    DiscPrestaForm.hubGalleryVideoBadge,
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             top: 4,
             right: 4,

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/utils/text_normalizer.dart';
+import '../../../../shared/utils/user_presence_formatter.dart';
 import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../models/conversation_inbox_item.dart';
 import 'conversation_read_status_badge.dart';
@@ -24,13 +25,18 @@ class ConversationListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final hasUnread = item.hasUnread;
+    final isPeerOnline = UserPresenceFormatter.isOnline(item.peerLastSeenAt);
+    final presenceLabel = UserPresenceFormatter.label(item.peerLastSeenAt);
     final peerName = normalizeSingleLineText(
-      item.peerPrenom?.trim().isNotEmpty == true &&
-              item.peerNom?.trim().isNotEmpty == true
-          ? '${item.peerPrenom!.trim()} ${item.peerNom!.trim()}'
-          : item.peerDisplayName,
+      item.showSalonName
+          ? item.peerDisplayName
+          : (item.peerPrenom?.trim().isNotEmpty == true &&
+                  item.peerNom?.trim().isNotEmpty == true
+              ? '${item.peerPrenom!.trim()} ${item.peerNom!.trim()}'
+              : item.peerDisplayName),
     );
-    final hasSplitPeerName = item.peerPrenom?.trim().isNotEmpty == true &&
+    final hasSplitPeerName = !item.showSalonName &&
+        item.peerPrenom?.trim().isNotEmpty == true &&
         item.peerNom?.trim().isNotEmpty == true;
     final preview = item.lastMessagePreview?.trim();
     final subtitle = preview == null || preview.isEmpty
@@ -39,72 +45,45 @@ class ConversationListTile extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         color: hasUnread
-            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.32)
-            : theme.colorScheme.surface.withValues(alpha: 0.92),
+            ? primary.withValues(alpha: 0.06)
+            : theme.colorScheme.surface,
         border: Border.all(
           color: hasUnread
-              ? primary.withValues(alpha: 0.28)
-              : theme.colorScheme.outline.withValues(alpha: 0.14),
+              ? primary.withValues(alpha: 0.22)
+              : theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.scrimLight05,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: hasUnread
+                ? primary.withValues(alpha: 0.08)
+                : AppColors.scrimLight05,
+            blurRadius: hasUnread ? 14 : 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Material(
         color: AppColors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(1.8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: hasUnread
-                              ? primary.withValues(alpha: 0.55)
-                              : theme.colorScheme.outline.withValues(alpha: 0.24),
-                        ),
-                      ),
-                      child: AppAvatar(
-                        imageUrl: item.peerAvatarUrl,
-                        displayName: peerName.isEmpty ? item.peerDisplayName : peerName,
-                        radius: 28,
-                      ),
-                    ),
-                    if (hasUnread)
-                      Positioned(
-                        right: 1,
-                        top: 1,
-                        child: Container(
-                          width: 11,
-                          height: 11,
-                          decoration: BoxDecoration(
-                            color: primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: theme.colorScheme.surface,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                _AvatarWithStatus(
+                  imageUrl: item.peerAvatarUrl,
+                  displayName:
+                      peerName.isEmpty ? item.peerDisplayName : peerName,
+                  hasUnread: hasUnread,
+                  unreadCount: item.unreadCount,
+                  isOnline: isPeerOnline,
+                  primary: primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 13),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,29 +100,24 @@ class ConversationListTile extends StatelessWidget {
                                       Text(
                                         item.peerPrenom!.trim(),
                                         maxLines: 1,
-                                        softWrap: false,
                                         overflow: TextOverflow.ellipsis,
                                         style: theme.textTheme.titleSmall
                                             ?.copyWith(
                                           fontFamily: AppFonts.display,
-                                          fontWeight: hasUnread
-                                              ? FontWeight.w800
-                                              : FontWeight.w700,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.2,
                                         ),
                                       ),
                                       Text(
                                         item.peerNom!.trim(),
                                         maxLines: 1,
-                                        softWrap: false,
                                         overflow: TextOverflow.ellipsis,
                                         style: theme.textTheme.labelMedium
                                             ?.copyWith(
                                           fontFamily: AppFonts.display,
                                           fontWeight: FontWeight.w600,
-                                          color: hasUnread
-                                              ? theme.colorScheme.onSurface
-                                              : theme
-                                                  .colorScheme.onSurfaceVariant,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -153,32 +127,49 @@ class ConversationListTile extends StatelessWidget {
                                         ? item.peerDisplayName
                                         : peerName,
                                     maxLines: 2,
-                                    softWrap: false,
                                     overflow: TextOverflow.ellipsis,
                                     style:
                                         theme.textTheme.titleSmall?.copyWith(
                                       fontFamily: AppFonts.display,
-                                      fontWeight: hasUnread
-                                          ? FontWeight.w800
-                                          : FontWeight.w700,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.2,
+                                      height: 1.15,
                                     ),
                                   ),
                           ),
-                          const SizedBox(width: 8),
-                          if (item.lastMessageAt != null)
+                          if (item.lastMessageAt != null) ...[
+                            const SizedBox(width: 8),
                             Text(
                               _formatTime(item.lastMessageAt!.toLocal()),
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: hasUnread
                                     ? primary
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight:
-                                    hasUnread ? FontWeight.w700 : FontWeight.w500,
+                                fontWeight: hasUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
+                          ],
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
+                      Text(
+                        presenceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          fontWeight:
+                              isPeerOnline ? FontWeight.w700 : FontWeight.w500,
+                          color: isPeerOnline
+                              ? const Color(0xFF16A34A)
+                              : theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.85),
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       Text(
                         subtitle,
                         maxLines: 2,
@@ -187,12 +178,14 @@ class ConversationListTile extends StatelessWidget {
                           color: hasUnread
                               ? theme.colorScheme.onSurface
                               : theme.colorScheme.onSurfaceVariant,
-                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
-                          height: 1.25,
+                          fontWeight:
+                              hasUnread ? FontWeight.w600 : FontWeight.w400,
+                          height: 1.3,
+                          fontSize: 14,
                         ),
                       ),
                       if (item.hasConversationActivity) ...[
-                        const SizedBox(height: 9),
+                        const SizedBox(height: 8),
                         ConversationReadStatusBadge(
                           unreadCount: item.unreadCount,
                           showReadWhenZero: !item.isOutgoingUnread,
@@ -201,6 +194,13 @@ class ConversationListTile extends StatelessWidget {
                       ],
                     ],
                   ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.45),
                 ),
               ],
             ),
@@ -240,3 +240,94 @@ class ConversationListTile extends StatelessWidget {
   }
 }
 
+class _AvatarWithStatus extends StatelessWidget {
+  const _AvatarWithStatus({
+    required this.imageUrl,
+    required this.displayName,
+    required this.hasUnread,
+    required this.unreadCount,
+    required this.isOnline,
+    required this.primary,
+  });
+
+  final String? imageUrl;
+  final String displayName;
+  final bool hasUnread;
+  final int unreadCount;
+  final bool isOnline;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primary.withValues(alpha: hasUnread ? 0.55 : 0.28),
+                primary.withValues(alpha: hasUnread ? 0.25 : 0.1),
+              ],
+            ),
+          ),
+          child: AppAvatar(
+            imageUrl: imageUrl,
+            displayName: displayName,
+            radius: 27,
+          ),
+        ),
+        if (isOnline)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: const Color(0xFF22C55E),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: theme.colorScheme.surface,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        if (hasUnread && unreadCount > 0)
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: primary,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: theme.colorScheme.surface,
+                  width: 2,
+                ),
+              ),
+              child: Text(
+                unreadCount > 9 ? '9+' : '$unreadCount',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 10,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}

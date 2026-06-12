@@ -5,14 +5,14 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/widgets/app/app_network_image.dart';
 import '../../providers/home_feed_provider.dart';
-import '../shared/client_home_section_header.dart';
 
-/// Filtres horizontaux par service (Inspirations).
+/// Filtres horizontaux par service (catégories accueil).
 class ClientHomeExploreRow extends ConsumerWidget {
   const ClientHomeExploreRow({super.key});
 
-  static const _chipHeight = 40.0;
+  static const _chipHeight = 34.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,44 +20,36 @@ class ClientHomeExploreRow extends ConsumerWidget {
     final selectedAll = selection?.allServices ?? true;
     final selectedMain = selection?.mainService;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const ClientHomeSectionHeader(
-          title: DiscHome.inspireTitle,
-          subtitle: DiscHome.inspireSub,
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: _chipHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: 1 + PrestaMainService.values.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _ServiceFilterChip(
-                  label: DiscHome.filterAll,
-                  icon: Icons.grid_view_rounded,
-                  selected: selectedAll,
-                  onTap: () => ref
-                      .read(homeFeedSelectionProvider.notifier)
-                      .setMainServiceFilter(allServices: true),
-                );
-              }
-              final service = PrestaMainService.values[index - 1];
-              return _ServiceFilterChip(
-                label: PrestataireServiceCatalog.label(service),
-                icon: PrestataireServiceCatalog.icon(service),
-                selected: !selectedAll && selectedMain == service,
-                onTap: () => ref
-                    .read(homeFeedSelectionProvider.notifier)
-                    .setMainServiceFilter(mainService: service),
-              );
-            },
-          ),
-        ),
-      ],
+    return SizedBox(
+      height: _chipHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 1 + PrestaMainService.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _ServiceFilterChip(
+              label: DiscHome.filterAll,
+              imageUrl: null,
+              icon: Icons.grid_view_rounded,
+              selected: selectedAll,
+              onTap: () => ref
+                  .read(homeFeedSelectionProvider.notifier)
+                  .setMainServiceFilter(allServices: true),
+            );
+          }
+          final service = PrestaMainService.values[index - 1];
+          return _ServiceFilterChip(
+            label: PrestataireServiceCatalog.label(service),
+            imageUrl: PrestataireServiceCatalog.coverImageUrl(service),
+            icon: PrestataireServiceCatalog.icon(service),
+            selected: !selectedAll && selectedMain == service,
+            onTap: () => ref
+                .read(homeFeedSelectionProvider.notifier)
+                .setMainServiceFilter(mainService: service),
+          );
+        },
+      ),
     );
   }
 }
@@ -68,23 +60,26 @@ class _ServiceFilterChip extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String label;
   final IconData icon;
+  final String? imageUrl;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final fill = selected
-        ? Theme.of(context).colorScheme.primary
+        ? theme.colorScheme.primary
         : (isDark
             ? AppColors.darkSurfaceContainerHigh
             : AppColors.filterChipInactive);
     final fg = selected
-        ? Theme.of(context).colorScheme.onPrimary
+        ? theme.colorScheme.onPrimary
         : (isDark
             ? AppColors.darkOnSurface
             : AppColors.filterChipInactiveText);
@@ -96,19 +91,33 @@ class _ServiceFilterChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: fg),
+              if (imageUrl != null && !selected)
+                ClipOval(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: AppNetworkImage(
+                      url: imageUrl!,
+                      fit: BoxFit.cover,
+                      error: Icon(icon, size: 12, color: fg),
+                    ),
+                  ),
+                )
+              else
+                Icon(icon, size: 14, color: fg),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontFamily: AppFonts.body,
-                      fontWeight: FontWeight.w600,
-                      color: fg,
-                    ),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  color: fg,
+                ),
               ),
             ],
           ),

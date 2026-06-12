@@ -17,6 +17,7 @@ import '../widgets/dashboard/requests/prestataire_pending_request_card.dart';
 import '../providers/dashboard/prestataire_dashboard_overview_provider.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_overview_grid.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_reorderable_sections.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
 import '../widgets/subscription/prestataire_catalog_trial_banner.dart';
 import '../widgets/subscription/prestataire_catalog_visibility_banner.dart';
@@ -142,7 +143,7 @@ class _PrestataireDashboardScreenState
             onRetry: () => ref.invalidate(prestataireProfileFormProvider),
           ),
           loading: () => const PrestataireWorkspaceShell(
-            child: Center(child: CircularProgressIndicator()),
+            child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 110),
           ),
         ),
     );

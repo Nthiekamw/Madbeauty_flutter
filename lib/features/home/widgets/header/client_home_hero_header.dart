@@ -5,8 +5,8 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/user/user_profile.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../../../services/notifications/in_app_notifications_provider.dart';
-import '../../../notifications/widgets/in_app_notifications_sheet.dart' show showInAppNotificationsSheet;
-import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../notifications/widgets/in_app_notifications_sheet.dart'
+    show showInAppNotificationsSheet;
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_avatar.dart';
@@ -16,10 +16,10 @@ import '../../../profile/providers/current_user_profile_provider.dart';
 import '../../models/home_feed_selection.dart';
 import '../../providers/home_feed_provider.dart';
 import '../../providers/home_profile_provider.dart';
-import '../shared/client_home_search_card.dart';
 import '../layout/client_home_settings_sheet.dart';
+import '../shared/client_home_search_card.dart';
 
-/// En-tête accueil : paramètres, logo, notifications, salutation, recherche.
+/// En-tête accueil : avatar, salutation, notifications, recherche + filtres.
 class ClientHomeHeroHeader extends ConsumerStatefulWidget {
   const ClientHomeHeroHeader({super.key});
 
@@ -72,7 +72,8 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
     final isGuest = ref.watch(isGuestBrowsingProvider);
     final userProfile = ref.watch(currentUserProfileProvider).asData?.value;
     final authUser = ref.watch(authNotifierProvider).asData?.value;
-    final profileSnapshot = ref.watch(homeProfileSnapshotProvider).asData?.value;
+    final profileSnapshot =
+        ref.watch(homeProfileSnapshotProvider).asData?.value;
     final unreadNotif = ref.watch(unreadInAppNotificationsCountProvider);
 
     final greetingName = _greetingName(
@@ -83,11 +84,7 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
       authFullName: authUser?.userMetadata?['full_name'] as String?,
     );
     final greetingLine = DiscHome.clientHomeGreeting(greetingName);
-    final responsive = DiscoveryResponsive.of(context);
-    final avatarRadius = responsive.isCompact
-        ? 40.0
-        : (responsive.isTablet ? 48.0 : 44.0);
-    final headerBandHeight = avatarRadius * 2 + 12;
+    const avatarRadius = 22.0;
     final avatarUrl = userProfile?.avatarUrl ??
         (authUser?.userMetadata?['avatar_url'] as String?);
     final avatarDisplayName = _avatarDisplayName(
@@ -99,55 +96,66 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: headerBandHeight,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: _HomeHeaderIconButton(
-                    icon: Icons.settings_rounded,
-                    tooltip: DiscHome.settingsTooltip,
-                    onPressed: () => showClientHomeSettingsSheet(context, ref),
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _HomeProfileAvatar(
+                radius: avatarRadius,
+                imageUrl: avatarUrl,
+                displayName: avatarDisplayName,
+                email: authUser?.email,
+                isGuest: isGuest,
+                onTap: isGuest ? null : () => context.goClientProfile(),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      greetingLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DiscHome.greetingSubtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _HomeHeaderIconButton(
-                    icon: Icons.notifications_outlined,
-                    tooltip: DiscHome.notificationsTooltip,
-                    badgeCount: unreadNotif,
-                    onPressed: () => showInAppNotificationsSheet(context, ref),
-                  ),
-                ),
-                _HomeProfileAvatar(
-                  radius: avatarRadius,
-                  imageUrl: avatarUrl,
-                  displayName: avatarDisplayName,
-                  email: authUser?.email,
-                  isGuest: isGuest,
-                  onTap: isGuest ? null : () => context.goClientProfile(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            greetingLine,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-              color: theme.colorScheme.onSurface,
-              height: 1.25,
-              letterSpacing: -0.2,
-            ),
+              ),
+              const SizedBox(width: 4),
+              _HomeHeaderIconButton(
+                icon: Icons.settings_rounded,
+                tooltip: DiscHome.settingsTooltip,
+                onPressed: () => showClientHomeSettingsSheet(context, ref),
+              ),
+              const SizedBox(width: 4),
+              _HomeHeaderIconButton(
+                icon: Icons.notifications_outlined,
+                tooltip: DiscHome.notificationsTooltip,
+                badgeCount: unreadNotif,
+                onPressed: () => showInAppNotificationsSheet(context, ref),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           ClientHomeSearchCard(
@@ -155,6 +163,11 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
             hint: DiscHome.hintSearch,
             searchTooltip: DiscHome.actionSearch,
             onSubmit: _submitSearch,
+            onFilter: () => context.goClientSearch(
+              query: _searchController.text.trim().isEmpty
+                  ? null
+                  : _searchController.text.trim(),
+            ),
           ),
         ],
       ),
@@ -228,27 +241,25 @@ class _HomeHeaderIconButton extends StatelessWidget {
   final VoidCallback onPressed;
   final int badgeCount;
 
-  static const _size = 40.0;
-  static const _iconSize = 22.0;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final iconWidget = Icon(icon, size: _iconSize);
+    const size = 36.0;
+    const iconSize = 20.0;
+    final iconWidget = Icon(icon, size: iconSize);
 
     return SizedBox(
-      width: _size,
-      height: _size,
+      width: size,
+      height: size,
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
         style: IconButton.styleFrom(
-          backgroundColor: theme.colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.65),
+          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.85),
           foregroundColor: theme.colorScheme.onSurface,
           shape: const CircleBorder(),
-          minimumSize: const Size(_size, _size),
-          maximumSize: const Size(_size, _size),
+          minimumSize: const Size(size, size),
+          maximumSize: const Size(size, size),
           padding: EdgeInsets.zero,
         ),
         icon: badgeCount > 0
@@ -257,7 +268,7 @@ class _HomeHeaderIconButton extends StatelessWidget {
                 label: Text(
                   badgeCount > 99 ? '99+' : '$badgeCount',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -289,7 +300,6 @@ class _HomeProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ring = theme.colorScheme.primary.withValues(alpha: 0.35);
     final hasPhoto = imageUrl != null && imageUrl!.trim().isNotEmpty;
 
     final Widget face = hasPhoto || !isGuest
@@ -308,11 +318,9 @@ class _HomeProfileAvatar extends StatelessWidget {
 
     final avatar = Material(
       color: theme.colorScheme.surface,
-      elevation: 2,
-      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.18),
-      shape: CircleBorder(
-        side: BorderSide(color: ring, width: 2.5),
-      ),
+      elevation: 1,
+      shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.12),
+      shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: face,
     );

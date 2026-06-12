@@ -3,23 +3,10 @@ abstract final class AuthStrings {
   AuthStrings._();
 
   static const String loginTitle = 'Connexion';
-  static String get loginDescription =>
-      'Choisis E-mail ou Téléphone juste en dessous, puis remplis le formulaire.';
   static const String loginActionOpenRegister = 'Créer un compte';
 
-  static const String loginMethodPassword = 'Mot de passe';
-  static const String loginMethodEmailOtp = 'Code e-mail';
-  static const String loginMethodPhoneOtp = 'Code SMS';
-  static const String loginFieldPhone = 'Téléphone (E.164, ex. +33612345678)';
-  static const String loginFieldOtp = 'Code à 6 chiffres';
-  static const String loginActionSendOtp = 'Envoyer le code';
-  static const String loginActionVerifyOtp = 'Vérifier le code';
   static const String loginActionGoogle = 'Continuer avec Google';
   static const String loginActionForgotPassword = 'Mot de passe oublié ?';
-  static const String loginOtpSentEmail =
-      'Si cette adresse est valide, un code vient de t’être envoyé par e-mail.';
-  static const String loginOtpSentSms =
-      'Si ce numéro est valide, un SMS vient de t’être envoyé.';
   static const String loginGoogleStarted =
       'Complète la connexion dans la fenêtre qui s’ouvre, puis reviens dans l’app.';
   static const String authGoogleSignInCanceled =
@@ -87,10 +74,14 @@ abstract final class AuthStrings {
       'Les deux mots de passe ne correspondent pas.';
   static const String resetPasswordValidationTooShort =
       'Le mot de passe doit contenir au moins 8 caractères.';
+  static const String passwordValidationTooShort =
+      'Le mot de passe doit contenir au moins 8 caractères.';
+  static const String passwordValidationRequiresLetterAndDigit =
+      'Le mot de passe doit contenir au moins une lettre et un chiffre.';
 
   static const String registerTitle = 'Inscription';
   static const String registerDescription =
-      'Crée ton compte avec ton nom, ton e-mail ou ton téléphone.';
+      'Crée ton compte avec ton nom et ton e-mail.';
   static const String registerFieldName = 'Nom';
   static const String registerActionSubmit = 'Créer mon compte';
   static const String registerActionBackToLogin = 'J’ai déjà un compte';
@@ -215,7 +206,8 @@ abstract final class AuthStrings {
       'Numéro de téléphone invalide.';
   static const String registerWizardBack = 'Retour';
   static const String registerFieldPhoneHint = 'Ex. 6 12 34 56 78';
-  static const String registerFieldPasswordHint = '8 caractères minimum';
+  static const String registerFieldPasswordHint =
+      '8 caractères min., une lettre et un chiffre';
   static const String registerFieldPrenom = 'Prénom';
   static const String registerFieldNom = 'Nom';
   static const String registerFieldPhone = 'Téléphone';
@@ -286,43 +278,27 @@ abstract final class AuthStrings {
       'Tu es connecté(e). Retrouve tes prestataires et tes réservations sur MadBeauty.';
   static const String loginSuccessCta = 'Continuer';
 
-  static const String loginPasswordTabEmail = 'E-mail';
-  static const String loginPasswordTabPhone = 'Téléphone';
-  static const String authCredentialMethodLabel = 'Méthode de connexion';
-  static const String registerCredentialMethodLabel = 'Méthode d’inscription';
-  static const String authPhoneOtpInvalid =
-      'Code incorrect ou expiré. Demande un nouveau code.';
-  static const String authPhoneOtpSessionExpired =
-      'La vérification a expiré. Renvoie un code.';
-  static const String authPhoneFirebaseTokenMissing =
-      'Connexion Firebase incomplète. Réessaie.';
-  static const String authPhoneFirebaseAppNotConfigured =
-      'SMS Firebase non configuré sur cet appareil. '
-      'Vérifie que « Phone » est activé dans Firebase Auth et que les empreintes '
-      'SHA sont enregistrées dans la console Firebase.';
-  static const String authPhoneSupabaseLinkFailed =
-      'Le code SMS est valide mais la session n’a pas pu s’ouvrir. '
-      'Active le fournisseur Firebase dans Supabase (Authentication → Providers).';
-  static const String authPhoneOtpAlreadyUsed =
-      'Ce code a déjà été utilisé ou a expiré. Appuie sur « Envoyer le code » '
-      'pour en recevoir un nouveau.';
-  static const String authPhoneRateLimitExceeded =
-      'Trop de SMS envoyés. Réessaie dans quelques minutes.';
-  static const String authPhoneProviderUnsupported =
-      'L’envoi de SMS téléphone n’est pas disponible. '
-      'Active « Phone » dans Firebase Auth et le fournisseur Firebase dans Supabase.';
-  static const String authPhoneOtpHint =
-      'Un code à 6 chiffres t’a été envoyé par SMS.';
-  static const String phoneOtpVerifyTitle = 'Vérifie ton numéro';
-  static String phoneOtpVerifySubtitle(String phone) =>
-      phone.trim().isEmpty
-          ? 'Saisis le code reçu par SMS'
-          : 'Code envoyé au ${phone.trim()}';
-  static const String phoneOtpVerifyBody =
-      'Saisis le code à 6 chiffres reçu par SMS. Tu peux demander un nouveau code si besoin.';
-  static const String phoneOtpVerifyResendLabel = 'Renvoyer le code';
-  static const String registerPhoneVerified =
-      'Numéro vérifié. Tu peux passer à l’étape suivante.';
+  static const String accountBannedTitle = 'Compte suspendu';
+  static const String accountBannedBody =
+      'Ton accès à MadBeauty a été suspendu par notre équipe. '
+      'Tu peux contacter le support depuis l’application si tu penses qu’il s’agit d’une erreur.';
+  static String accountBannedReason(String reason) => 'Motif : $reason';
+  static const String accountBannedContactSupport = 'Contacter le support';
+  static const String accountBannedCta = 'Compris';
+
+  static const String bannedSupportTitle = 'Contacter le support';
+  static const String bannedSupportSubtitle =
+      'Explique ta situation. Tu pourras échanger avec l’équipe dans une discussion, '
+      'comme pour un signalement de bug.';
+  static const String bannedSupportDescriptionLabel = 'Ton message';
+  static const String bannedSupportDescriptionHint =
+      'Pourquoi demandes-tu la réouverture de ton compte ?';
+  static const String bannedSupportSubmit = 'Envoyer ma demande';
+  static const String bannedSupportDefaultTitle = 'Contestation suspension de compte';
+  static const String bannedSupportSuccess =
+      'Demande envoyée. Ouvre la discussion pour suivre les échanges.';
+  static const String bannedSupportSessionExpired =
+      'Ta session a expiré. Reconnecte-toi pour envoyer ta demande au support.';
 
   static const String profileBecomePresta = 'Devenir prestataire';
   static const String profileSwitchToPresta = 'Espace prestataire';

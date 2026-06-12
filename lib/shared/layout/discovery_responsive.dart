@@ -27,18 +27,20 @@ class DiscoveryResponsive {
     return width;
   }
 
-  /// Cartes horizontales accueil : ~2,2 cartes visibles sur téléphone.
+  static const double homeListCardGap = 8;
+
+  /// Cartes horizontales accueil : 3 cartes visibles sur téléphone.
   double get homeListCardWidth {
     final inner = width - horizontalPadding * 2;
     if (isTablet) {
-      return (inner / 3.2).clamp(168.0, 210.0);
+      return (inner / 3.8).clamp(148.0, 188.0);
     }
-    return (inner / 2.15).clamp(152.0, 188.0);
+    return ((inner - homeListCardGap * 2) / 3).clamp(98.0, 130.0);
   }
 
-  double get homeListCardHeight => homeListCardWidth * 1.62;
+  double get homeListCardHeight => homeListCardWidth * 1.48;
 
-  double get homeListPhotoHeight => homeListCardHeight * 0.55;
+  double get homeListPhotoHeight => homeListCardHeight * 0.48;
 
   /// Colonnes catalogue en mode grille.
   int get catalogGridColumns => 2;

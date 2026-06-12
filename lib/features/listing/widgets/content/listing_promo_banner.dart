@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/widgets/app/app_network_image.dart';
 
 class _PromoSlide {
   const _PromoSlide({
@@ -316,16 +317,13 @@ class _PromoNetworkImage extends StatelessWidget {
       );
     }
 
-    return Image.network(
-      slide.url,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return fallback();
-      },
-      errorBuilder: (_, __, ___) => fallback(),
+    return SizedBox.expand(
+      child: AppNetworkImage(
+        url: slide.url,
+        fit: BoxFit.cover,
+        placeholder: fallback(),
+        error: fallback(),
+      ),
     );
   }
 }

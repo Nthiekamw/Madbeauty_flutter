@@ -15,6 +15,8 @@ class ConversationInboxItem {
     this.serviceName,
     this.isLastMessageMine = false,
     this.isLastMessageReadByPeer = true,
+    this.peerLastSeenAt,
+    this.showSalonName = false,
   });
 
   final Conversation conversation;
@@ -22,6 +24,9 @@ class ConversationInboxItem {
   final String? peerPrenom;
   final String? peerNom;
   final String? peerAvatarUrl;
+  final DateTime? peerLastSeenAt;
+  /// Côté cliente : afficher le salon plutôt que le nom du pro.
+  final bool showSalonName;
   final String? lastMessagePreview;
   final DateTime? lastMessageAt;
   final int unreadCount;

@@ -71,16 +71,18 @@ Exemple :
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_ANON_KEY=eyJhbGci...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
-SUPABASE_DATABASE_PASSWORD="ton_mot_de_passe"
 SUPABASE_EMAIL_REDIRECT_URL=com.madbeauty.madbeauty://login-callback
 ```
 
 Important pour la confirmation e-mail Supabase:
 
+- Checklist complete : `supabase/AUTH_PRODUCTION_CHECKLIST.md`
 - Dans Supabase Dashboard -> Authentication -> URL Configuration:
   - **Site URL**: ne pas laisser `http://localhost:3000` en production/mobile.
   - **Redirect URLs**: ajouter la valeur de `SUPABASE_EMAIL_REDIRECT_URL`
     (ex: `com.madbeauty.madbeauty://login-callback`).
+  - **Confirm email** : active en production.
+  - **Password** : minimum 8 caracteres, `letters_digits`.
 
 Pour lancer l'app avec ce fichier :
 
@@ -102,8 +104,7 @@ Tu peux aussi definir les valeurs une par une :
 flutter run \
   --dart-define=SUPABASE_URL=https://xxxx.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=eyJhbGci... \
-  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_... \
-  --dart-define=SUPABASE_DATABASE_PASSWORD="ton_mot_de_passe"
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### 3. Installer les dependances
@@ -324,9 +325,9 @@ chore: mise a jour flutter pub
 | `SUPABASE_URL` | URL du projet Supabase | Oui pour l'app complete |
 | `SUPABASE_ANON_KEY` | Cle publique Supabase | Oui pour l'app complete |
 | `STRIPE_PUBLISHABLE_KEY` | Cle publique Stripe | Oui pour les paiements |
-| `SUPABASE_DATABASE_PASSWORD` | Mot de passe base Supabase | Selon ton infra |
+| `SUPABASE_EMAIL_REDIRECT_URL` | Deep link auth (confirmation e-mail, recovery) | Oui en production |
 
-> La cle secrete Stripe (`sk_...`) et la cle `service_role` Supabase ne doivent jamais figurer dans le code Flutter ni dans un depot public. En production, privilegie des secrets cote serveur plutot qu'un mot de passe de base dans l'app mobile.
+> La cle secrete Stripe (`sk_...`) et la cle `service_role` Supabase ne doivent jamais figurer dans le code Flutter ni dans un depot public.
 
 ---
 

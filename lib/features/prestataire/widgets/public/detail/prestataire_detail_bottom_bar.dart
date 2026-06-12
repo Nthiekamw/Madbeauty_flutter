@@ -70,10 +70,20 @@ class PrestataireDetailBottomBar extends StatelessWidget {
             Expanded(
               child: FilledButton.icon(
                 onPressed: onBook,
-                icon: const Icon(Icons.calendar_month_rounded, size: 20),
-                label: Text(DiscPrestaDetail.actionBook),
+                icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                label: Text(
+                  DiscPrestaDetail.actionBook,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  minimumSize: const Size(0, 40),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: theme.textTheme.labelLarge?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

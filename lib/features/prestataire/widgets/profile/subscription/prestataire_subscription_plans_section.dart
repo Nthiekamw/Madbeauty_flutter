@@ -8,6 +8,8 @@ import '../../../../../services/stripe/stripe_service.dart';
 import '../../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import '../../shared/prestataire_section_header.dart';
@@ -38,20 +40,14 @@ class PrestataireSubscriptionPlansSection extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           serviceCountAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
+            loading: () => const DiscoveryInlineSkeleton(
+              height: 72,
+              padding: EdgeInsets.symmetric(vertical: 12),
             ),
-            error: (_, __) => Text(
-              DiscPrestaDash.loadErr,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+            error: (_, __) => DiscoverySectionError(
+              message: DiscPrestaDash.loadErr,
+              onRetry: () => ref.invalidate(
+                prestatairePublishedServiceCountProvider,
               ),
             ),
             data: (serviceCount) {

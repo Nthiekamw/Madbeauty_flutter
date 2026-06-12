@@ -76,13 +76,16 @@ abstract final class DiscBk {
   static const badgeCancelled = 'Annulé';
   static const badgeUnknown = 'Statut';
 
-  static const emptyFutureTitle = 'Aucune réservation à venir';
+  static const emptyFutureTitle =
+      'Vous n’avez pas encore de réservation';
   static const emptyFutureBody =
-      'Réserve un créneau avec un prestataire pour le voir ici.';
+      'Parcourez le catalogue et réservez votre première séance beauté.';
   static const emptyPastTitle = 'Aucune réservation passée';
   static const emptyPastBody =
       'Tes rendez-vous déjà effectués apparaîtront ici.';
-  static const browsePresta = 'Trouver un prestataire';
+  static const browsePresta = 'Rechercher un prestataire';
+  static const bookingCreatedSnack =
+      'Réservation confirmée. Retrouvez-la dans Mes réservations.';
 
   static const revokeLabel = 'Annuler';
   static const revokeAskTitle = 'Annuler la réservation ?';

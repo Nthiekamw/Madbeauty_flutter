@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -75,7 +76,7 @@ class ClientReviewsScreen extends ConsumerWidget {
           ),
           Expanded(
             child: reviewsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 96),
               error: (_, __) => RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(clientReviewsForCurrentClientProvider);
@@ -86,7 +87,7 @@ class ClientReviewsScreen extends ConsumerWidget {
                   children: [
                     DiscoveryEmptyState(
                       icon: Icons.cloud_off_outlined,
-                      title: DiscBk.listErrTitle,
+                      title: CoreStrings.networkErrorTitle,
                       body: DiscBk.listErrBody,
                       iconColor: Theme.of(context).colorScheme.error,
                       actionLabel: DiscList.retry,

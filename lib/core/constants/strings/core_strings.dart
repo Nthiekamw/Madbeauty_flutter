@@ -11,4 +11,8 @@ abstract final class CoreStrings {
 
   static const String errorUnexpected =
       'Une erreur inattendue s’est produite. Réessaie dans un instant.';
+
+  static const String networkErrorTitle = 'Connexion indisponible';
+  static const String networkErrorBody =
+      'Vérifie ta connexion internet et réessaie.';
 }

@@ -187,30 +187,30 @@ class _EditReviewSheetState extends ConsumerState<EditReviewSheet> {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            widget.readOnly
-                ? DiscReview.prestataireViewOnlyHint
-                : blockedOnOwnBusiness
-                    ? DiscReview.editBlockedOnOwnBusiness
-                    : canEdit
-                        ? (widget.item.daysLeftToEditFor(
+          if (!widget.readOnly) ...[
+            const SizedBox(height: 8),
+            Text(
+              blockedOnOwnBusiness
+                  ? DiscReview.editBlockedOnOwnBusiness
+                  : canEdit
+                      ? (widget.item.daysLeftToEditFor(
+                              clientId,
+                              ownPrestataireId: ownPrestaId,
+                            ) !=
+                            null
+                          ? DiscReview.daysLeftToEdit(
+                              widget.item.daysLeftToEditFor(
                                 clientId,
                                 ownPrestataireId: ownPrestaId,
-                              ) !=
-                              null
-                            ? DiscReview.daysLeftToEdit(
-                                widget.item.daysLeftToEditFor(
-                                  clientId,
-                                  ownPrestataireId: ownPrestaId,
-                                )!,
-                              )
-                            : DiscReview.editDeadlineHint)
-                        : DiscReview.editExpiredLabel,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+                              )!,
+                            )
+                          : DiscReview.editDeadlineHint)
+                      : DiscReview.editExpiredLabel,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

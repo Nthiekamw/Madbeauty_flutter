@@ -64,9 +64,10 @@ class BookingConfirmationRecapBody extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + bottomInset),
       children: [
         BookingConfirmationHeroCard(
           prestataireName: prestataireName,
@@ -315,6 +316,7 @@ class BookingConfirmationRecapBody extends StatelessWidget {
             child: Text(ctaLabel),
           ),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }

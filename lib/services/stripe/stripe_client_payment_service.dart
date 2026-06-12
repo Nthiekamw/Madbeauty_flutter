@@ -1,6 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/services.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../core/constants/app_strings.dart';
+import '../../core/models/domain/payment/client_payment_method.dart';
+import 'stripe_service.dart';
 
 class StripeClientPaymentException implements Exception {
   const StripeClientPaymentException(this.message, {this.code});
@@ -12,12 +20,73 @@ class StripeClientPaymentException implements Exception {
   String toString() => message;
 }
 
-/// Portail Stripe client (cartes enregistrées pour les réservations).
+/// Cartes clientes : liste + Customer Sheet (dans l’app).
 class StripeClientPaymentService {
   StripeClientPaymentService(this._client);
 
   final SupabaseClient _client;
 
+  Future<List<ClientPaymentMethod>> listPaymentMethods() async {
+    final response = await _invoke('list_client_payment_methods');
+    final data = _expectMap(response.data);
+    final raw = data['paymentMethods'];
+    if (raw is! List) return const [];
+    return raw
+        .map(
+          (e) => ClientPaymentMethod.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
+        .toList();
+  }
+
+  Future<ClientCustomerSheetData> prepareCustomerSheet() async {
+    if (kIsWeb) {
+      throw const StripeClientPaymentException(DiscPay.errWebUnsupported);
+    }
+    if (!StripeService.isConfigured) {
+      throw const StripeClientPaymentException(DiscPaymentMethods.unavailable);
+    }
+
+    final response = await _invoke('prepare_client_customer_sheet');
+    final data = _expectMap(response.data);
+    return ClientCustomerSheetData.fromJson(data);
+  }
+
+  Future<void> presentCustomerSheet() async {
+    if (kIsWeb) {
+      throw const StripeClientPaymentException(DiscPay.errWebUnsupported);
+    }
+
+    final sheet = await prepareCustomerSheet();
+
+    try {
+      await Stripe.instance.initCustomerSheet(
+        customerSheetInitParams: CustomerSheetInitParams.adapter(
+          customerId: sheet.customerId,
+          customerEphemeralKeySecret: sheet.ephemeralKey,
+          setupIntentClientSecret: sheet.setupIntentClientSecret,
+          merchantDisplayName: 'MadBeauty',
+          style: ThemeMode.system,
+          headerTextForSelectionScreen: DiscPaymentMethods.customerSheetTitle,
+          googlePayEnabled: false,
+          applePayEnabled: false,
+        ),
+      );
+      await Stripe.instance.presentCustomerSheet();
+    } on StripeException catch (e) {
+      if (e.error.code == FailureCode.Canceled) return;
+      throw StripeClientPaymentException(
+        e.error.localizedMessage ??
+            e.error.message ??
+            DiscPaymentMethods.sheetErr,
+      );
+    } on PlatformException catch (e) {
+      throw StripeClientPaymentException(e.message ?? e.code);
+    }
+  }
+
+  /// Portail web (secours si Customer Sheet indisponible).
   Future<String> createBillingPortalUrl() async {
     final response = await _invoke('create_client_billing_portal');
     final data = _expectMap(response.data);
@@ -67,7 +136,7 @@ class StripeClientPaymentService {
       return const StripeClientPaymentException('Session expirée');
     }
     return const StripeClientPaymentException(
-      'Impossible d’ouvrir le portail de paiement',
+      DiscPaymentMethods.portalErr,
     );
   }
 }

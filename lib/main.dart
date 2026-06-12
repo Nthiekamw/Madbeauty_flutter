@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'firebase_runtime_helpers.dart';
 import 'core/providers/offline_sync_hooks.dart';
 import 'features/offline/providers/offline_booking_sync_invalidation.dart';
 import 'services/auth/google_auth_service.dart';
@@ -35,7 +36,15 @@ Future<void> main() async {
   }
 
   if (!kIsWeb) {
-    await GoogleAuthService.warmUp();
+    try {
+      await GoogleAuthService.warmUp();
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('GoogleAuthService.warmUp ignoré au démarrage: $e\n$st');
+      }
+    }
+    // FCM uniquement — best-effort, ne bloque pas le démarrage.
+    await ensureFirebaseInitialized();
   }
 
   if (!kIsWeb && StripeService.isConfigured) {

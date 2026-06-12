@@ -6,6 +6,8 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import 'prestataire_subscription_checkout_section.dart';
@@ -32,15 +34,13 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
     );
 
     return serviceCountAsync.when(
-      loading: () => const Padding(
+      loading: () => const DiscoveryInlineSkeleton(
+        height: 120,
         padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => Text(
-        DiscPrestaDash.loadErr,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.error,
-        ),
+      error: (_, __) => DiscoverySectionError(
+        message: DiscPrestaDash.loadErr,
+        onRetry: () => ref.invalidate(prestatairePublishedServiceCountProvider),
       ),
       data: (serviceCount) {
         final currentTier = PrestataireSubscriptionConfig.tierForServiceCount(

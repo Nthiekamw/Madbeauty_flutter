@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../booking/logic/booking_formatters.dart';
 import '../logic/prestataire_agenda_filters.dart';
@@ -121,7 +122,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     return PrestataireBrandScaffold(
       body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
-          child: Center(child: CircularProgressIndicator()),
+          child: DiscoveryListSkeleton(rowCount: 5, rowHeight: 96),
         ),
         error: (_, __) => PrestataireWorkspaceShell(
           onRefresh: _reload,

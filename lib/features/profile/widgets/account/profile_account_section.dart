@@ -89,6 +89,13 @@ class ProfileAccountSection extends ConsumerWidget {
               ),
               _divider(context),
               DiscoveryMenuTile(
+                icon: Icons.bug_report_outlined,
+                title: DiscBug.actionReport,
+                subtitle: DiscBug.actionReportHint,
+                onTap: isGuest ? null : () => context.pushReportBug(),
+              ),
+              _divider(context),
+              DiscoveryMenuTile(
                 icon: Icons.help_outline_rounded,
                 title: DiscProfile.actionHelp,
                 onTap: () => context.pushClientHelp(),

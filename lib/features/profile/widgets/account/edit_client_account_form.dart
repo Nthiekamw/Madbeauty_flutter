@@ -13,10 +13,12 @@ class EditClientAccountForm extends StatelessWidget {
     required this.phoneController,
     required this.phoneDialCode,
     required this.onPhoneDialCodeChanged,
+    this.onPhoneChanged,
     required this.cityController,
     required this.email,
     this.prenomError,
     this.nomError,
+    this.phoneError,
     this.errorText,
   });
 
@@ -25,10 +27,12 @@ class EditClientAccountForm extends StatelessWidget {
   final TextEditingController phoneController;
   final String phoneDialCode;
   final ValueChanged<String> onPhoneDialCodeChanged;
+  final VoidCallback? onPhoneChanged;
   final TextEditingController cityController;
   final String email;
   final String? prenomError;
   final String? nomError;
+  final String? phoneError;
   final String? errorText;
 
   @override
@@ -84,7 +88,9 @@ class EditClientAccountForm extends StatelessWidget {
                 dense: true,
                 localController: phoneController,
                 dialCode: phoneDialCode,
+                errorText: phoneError,
                 onDialCodeChanged: onPhoneDialCodeChanged,
+                onLocalChanged: onPhoneChanged,
               ),
               const SizedBox(height: 8),
               InputDecorator(

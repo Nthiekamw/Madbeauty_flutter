@@ -28,8 +28,8 @@ abstract final class DiscPrestaDetail {
       '$current / $total';
   static const svcTitle = 'Services';
   static const reviewsTitle = 'Avis clients';
-  static const actionBook = 'Réserver un service';
-  static const actionBookSvc = 'Réserver';
+  static const actionBook = 'Réserver';
+  static const actionBookSvc = actionBook;
   static const fromPrice = 'À partir de';
   static const statRating = 'Note';
   static const statServices = 'Services';
