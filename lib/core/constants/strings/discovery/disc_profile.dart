@@ -136,6 +136,47 @@ abstract final class DiscProfile {
   static const actionAdminPush = 'Notifications push';
   static const actionAdminPushHint =
       'Envoyer une annonce ou un message aux utilisateurs';
+
+  static const actionAdminSubscriptionTrial = 'Essai abonnement prestataire';
+  static const actionAdminSubscriptionTrialHint =
+      'Durée d’essai gratuit catalogue (3 mois par défaut) et prolongations';
+  static const adminTrialIntroTitle = 'Essai catalogue prestataire';
+  static const adminTrialIntroBody =
+      'Les nouveaux prestataires bénéficient d’un essai gratuit pour apparaître dans le catalogue. '
+      'Tu peux modifier la durée par défaut et prolonger l’essai d’un prestataire.';
+  static const adminTrialDefaultLabel = 'Durée par défaut (jours)';
+  static const adminTrialDefaultHint =
+      'Appliquée aux nouveaux profils prestataires (90 jours = 3 mois).';
+  static const adminTrialPreset3Months = '3 mois (90 j)';
+  static const adminTrialPreset1Month = '1 mois (30 j)';
+  static const adminTrialPreset6Months = '6 mois (180 j)';
+  static const adminTrialSaveAction = 'Enregistrer la durée';
+  static const adminTrialSaved = 'Durée d’essai mise à jour.';
+  static const adminTrialApplyAllTitle = 'Prolonger tous les non abonnés';
+  static const adminTrialApplyAllBody =
+      'Réinitialise l’essai catalogue à la durée par défaut pour tous les prestataires sans abonnement actif.';
+  static const adminTrialApplyAllAction = 'Appliquer à tous';
+  static String adminTrialApplyAllDone(int count) =>
+      'Essai prolongé pour $count prestataire${count > 1 ? 's' : ''}.';
+  static const adminTrialStatsInTrial = 'En essai actif';
+  static const adminTrialStatsExpired = 'Essai expiré (sans abo.)';
+  static const adminTrialSearchHint = 'Email, nom ou ID prestataire…';
+  static const adminTrialSearchEmpty = 'Aucun prestataire trouvé.';
+  static const adminTrialSearchEmptyBody =
+      'Recherche par email, nom ou identifiant prestataire.';
+  static const adminTrialExtendAction = 'Prolonger';
+  static const adminTrialExtendDaysLabel = 'Jours à ajouter';
+  static const adminTrialExtendDaysHint = 'Ex. 30';
+  static String adminTrialExtendDialogTitle(String name) =>
+      'Prolonger l’essai — $name';
+  static const adminTrialExtendConfirm = 'Prolonger';
+  static const adminTrialExtendDone = 'Essai prolongé.';
+  static const adminTrialEndsAt = 'Fin d’essai';
+  static const adminTrialStatusActive = 'Essai actif';
+  static const adminTrialStatusExpired = 'Essai expiré';
+  static const adminTrialStatusSubscribed = 'Abonné';
+  static const adminTrialInvalidDays = 'Indique une durée entre 1 et 730 jours.';
+
   static const adminPushIntroTitle = 'Envoi de notifications push';
   static const adminPushIntroBody =
       'Diffuse un message sur les appareils des utilisateurs ayant activé les notifications. Les comptes admin sont exclus.';
@@ -207,6 +248,13 @@ abstract final class DiscProfile {
   static const adminHomeStatReservations = 'Réservations';
   static const adminHomeStatRevenue = 'Revenus capturés';
   static const adminHomeAnalyticsTitle = 'Vue d’ensemble';
+  static const adminCountryStatsTitle = 'Réservations par pays';
+  static const adminCountryStatsEmpty =
+      'Aucune réservation enregistrée pour le moment.';
+  static const adminCountryStatsThisMonth = 'Ce mois';
+  static const adminCountryStatsSalons = 'Salons';
+  static const adminCountryStatsRevenue = 'Revenus';
+  static const adminCountryUnknown = 'Non renseigné';
 
   static const prestataireVerificationRequestTitle = 'Badge vérifié';
   static const prestataireVerificationRequestBody =

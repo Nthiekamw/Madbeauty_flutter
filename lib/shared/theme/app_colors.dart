@@ -87,6 +87,9 @@ class AppColors {
 
   static const Color notificationDot = Color(0xFFFF6B35);
 
+  /// Accusé de lecture (double check bleu) dans les chats.
+  static const Color chatReadReceipt = Color(0xFF53B3F6);
+
   static const List<Color> categoryPastels = [
     Color(0xFFFFE8DC),
     Color(0xFFFFE4EC),

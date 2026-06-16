@@ -34,6 +34,13 @@ class PrestatairesFilterNotifier extends Notifier<PrestatairesFilterState> {
     );
   }
 
+  void setVille(String? ville) {
+    final trimmed = ville?.trim();
+    state = state.copyWith(
+      ville: trimmed == null || trimmed.isEmpty ? null : trimmed,
+    );
+  }
+
   void setSort(PrestatairesSort sort) {
     state = state.copyWith(
       sort: sort,

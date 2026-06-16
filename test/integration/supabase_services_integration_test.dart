@@ -107,6 +107,7 @@ void main() {
             ville: 'Paris',
             adresse: '10 rue de Test',
             codePostal: '75001',
+            pays: 'FR',
             lieuTravail: LieuTravail.both,
             avatarBytes: _onePixelPng,
             avatarFileName: 'form_avatar_$runId.png',

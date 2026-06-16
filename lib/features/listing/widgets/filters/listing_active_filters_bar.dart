@@ -118,6 +118,13 @@ class ListingActiveFiltersBar extends ConsumerWidget {
       });
     }
 
+    final ville = filters.ville?.trim();
+    if (ville != null && ville.isNotEmpty) {
+      addChip(ville, () {
+        ref.read(prestatairesFilterProvider.notifier).setVille(null);
+      });
+    }
+
     if (filters.categoryId != null) {
       final matches =
           categories.where((c) => c.id == filters.categoryId);

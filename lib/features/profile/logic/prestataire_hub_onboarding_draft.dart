@@ -49,6 +49,7 @@ abstract final class PrestataireHubOnboardingDraft {
             ville: existing.ville,
             codePostal: existing.codePostal,
             adresse: existing.adresse,
+            pays: existing.pays,
             lieuTravail: existing.lieuTravail,
             avatarUrl: existing.avatarUrl,
             suggestionCategorieNom: existing.suggestionCategorieNom,
@@ -75,6 +76,7 @@ abstract final class PrestataireHubOnboardingDraft {
     required String ville,
     required String codePostal,
     required String adresse,
+    required String pays,
     required LieuTravail? lieuTravail,
     required String? avatarUrl,
     required String suggestionCategorieNom,
@@ -104,6 +106,7 @@ abstract final class PrestataireHubOnboardingDraft {
       ville: ville,
       codePostal: codePostal,
       adresse: adresse,
+      pays: pays,
       lieuTravail: lieuTravail?.value,
       avatarUrl: avatarUrl,
       suggestionCategorieNom: suggestionCategorieNom,
@@ -172,6 +175,7 @@ abstract final class PrestataireHubOnboardingDraft {
     required TextEditingController villeController,
     required TextEditingController codePostalController,
     required TextEditingController adresseController,
+    required void Function(String code) setPays,
     required void Function(LieuTravail? value) setLieuTravail,
     required void Function(String? url) setAvatarUrl,
     required TextEditingController suggestionNomController,
@@ -192,6 +196,7 @@ abstract final class PrestataireHubOnboardingDraft {
     villeController.text = hub.ville;
     codePostalController.text = hub.codePostal;
     adresseController.text = hub.adresse;
+    setPays(hub.pays);
     setLieuTravail(LieuTravail.fromValue(hub.lieuTravail));
     setAvatarUrl(hub.avatarUrl);
     suggestionNomController.text = hub.suggestionCategorieNom;

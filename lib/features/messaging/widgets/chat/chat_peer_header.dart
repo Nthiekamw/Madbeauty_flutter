@@ -38,9 +38,11 @@ class ChatPeerHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final normalizedName = normalizeSingleLineText(displayName);
     final title = normalizedName.isEmpty ? displayName : normalizedName;
-    final hasSplitName = !useSalonName &&
-        peerPrenom?.trim().isNotEmpty == true &&
-        peerNom?.trim().isNotEmpty == true;
+    final singleLineTitle = (!useSalonName &&
+            peerPrenom?.trim().isNotEmpty == true &&
+            peerNom?.trim().isNotEmpty == true)
+        ? normalizeSingleLineText('${peerPrenom!.trim()} ${peerNom!.trim()}')
+        : title;
     final primary = theme.colorScheme.primary;
     final isOnline = UserPresenceFormatter.isOnline(peerLastSeenAt);
     final presenceLabel = UserPresenceFormatter.label(peerLastSeenAt);
@@ -69,7 +71,7 @@ class ChatPeerHeader extends StatelessWidget {
               ),
               child: AppAvatar(
                 imageUrl: avatarUrl,
-                displayName: title,
+                displayName: singleLineTitle,
                 radius: 21,
               ),
             ),
@@ -100,41 +102,17 @@ class ChatPeerHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (hasSplitName) ...[
-                Text(
-                  peerPrenom!.trim(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
-                    height: 1.1,
-                    color: titleColor,
-                  ),
+              Text(
+                singleLineTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: titleColor,
                 ),
-                Text(
-                  peerNom!.trim(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                    color: titleColor?.withValues(alpha: 0.92) ?? titleColor,
-                  ),
-                ),
-              ] else
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                    color: titleColor,
-                  ),
-                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 presenceLabel,

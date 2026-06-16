@@ -151,7 +151,7 @@ Future<void> showClientHomeLayoutSheet(BuildContext context, WidgetRef ref) {
 ) {
   return switch (id) {
     ClientHomeSectionId.nextAppointment => (
-        Icons.event_available_rounded,
+        Icons.upcoming_rounded,
         DiscHome.sectionNextAppointment,
         theme.colorScheme.primary,
       ),

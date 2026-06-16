@@ -189,6 +189,24 @@ class MessageService {
     return controller.stream;
   }
 
+  /// Marque comme livrés les messages reçus sur ce booking.
+  Future<void> markAsDelivered({
+    required String bookingId,
+    required String userId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.markAsDelivered',
+        action: () async {
+          final now = DateTime.now().toUtc().toIso8601String();
+          await _client
+              .from('messages')
+              .update({'delivered_at': now})
+              .eq('booking_id', bookingId)
+              .neq('sender_id', userId)
+              .isFilter('delivered_at', null);
+        },
+      );
+
   /// Marque comme lus les messages reçus sur ce booking.
   Future<void> markAsRead({
     required String bookingId,
@@ -197,6 +215,7 @@ class MessageService {
       SupabaseErrorHandler.run(
         operation: 'message.markAsRead',
         action: () async {
+          await markAsDelivered(bookingId: bookingId, userId: userId);
           await _client
               .from('messages')
               .update({'is_read': true})
@@ -271,16 +290,46 @@ class MessageService {
         .from('messages')
         .select()
         .eq('booking_id', bookingId)
+        .isFilter('deleted_at', null)
         .order('created_at', ascending: true);
     return _decodeMessages(response as List<dynamic>);
   }
 
+  /// Supprime un message envoyé par l’utilisateur connecté.
+  Future<void> deleteMessage({
+    required String messageId,
+    required String bookingId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.deleteMessage',
+        action: () async {
+          await _client
+              .from('messages')
+              .delete()
+              .eq('id', messageId)
+              .eq('booking_id', bookingId);
+        },
+      );
+
+  /// Supprime tous les messages et le fil metadata de la réservation.
+  Future<void> deleteChat({required String bookingId}) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.deleteChat',
+        action: () async {
+          await _client.rpc(
+            'delete_booking_chat',
+            params: {'p_booking_id': bookingId},
+          );
+        },
+      );
+
   List<Message> _decodeMessages(List<dynamic> rows) {
     return [
       for (final raw in rows)
-        SupabaseDomainCodec.message(
-          Map<String, dynamic>.from(raw as Map),
-        ),
+        if ((raw as Map)['deleted_at'] == null)
+          SupabaseDomainCodec.message(
+            Map<String, dynamic>.from(raw),
+          ),
     ];
   }
 

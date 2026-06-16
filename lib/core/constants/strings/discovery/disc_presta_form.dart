@@ -7,7 +7,7 @@ abstract final class DiscPrestaForm {
   static const stepBasics = 'Vitrine & salon';
   static const stepLocation = 'Adresse & lieu';
   static const stepServices = 'Mes services';
-  static const stepGallery = 'Réalisations';
+  static const stepGallery = 'Mes réalisations';
   static const stepComfort = 'Confort & conditions';
   static const stepHoraires = 'Horaires';
   static const stepSubscription = 'Abonnement';
@@ -54,6 +54,23 @@ abstract final class DiscPrestaForm {
   static const hubGalleryVideoBadge = 'Vidéo';
   static const hubGalleryEmpty = 'Aucun média pour l’instant.';
   static const hubGalleryUploading = 'Envoi des médias…';
+  static const hubGalleryAddTile = 'Ajouter';
+  static const galleryPolicyTitle = 'Interdiction stricte';
+  static const galleryPolicyBodyPrefix =
+      'Il est formellement interdit d’ajouter des images ';
+  static const galleryPolicyBodyBold = 'contenant du texte';
+  static const galleryPolicyBodySuffix =
+      ' (prix, promotions, coordonnées, liens réseaux sociaux, etc.). '
+      'Seules les photos de coiffures sont autorisées. '
+      'Les comptes ne respectant pas cette règle seront suspendus.';
+  static const galleryPolicyTextDetected =
+      'Cette photo semble contenir du texte (flyer, prix, promo…). '
+      'Ajoute une photo de coiffure sans texte ni overlay.';
+  static const galleryPolicyPromoDetected =
+      'Cette photo semble contenir une promotion ou des coordonnées. '
+      'Seules les photos de coiffures sans texte sont autorisées.';
+  static const galleryPolicyScanHint =
+      'Les photos sont vérifiées automatiquement : pas de texte, prix ni promo.';
   static const skipStep = 'Passer';
   static const completeLater = 'Configurer plus tard';
   static const completeLaterSaved =
@@ -76,7 +93,7 @@ abstract final class DiscPrestaForm {
   static const hubGoalHoraires =
       'Indique tes créneaux habituels pour recevoir des réservations.';
   static const hubGoalSubscription =
-      'Active ton abonnement pour publier tes services dans le catalogue.';
+      'Profite de l’essai gratuit ou active ton abonnement pour publier tes services dans le catalogue.';
   static const hubSectionWorkPlace = 'Où travailles-tu ?';
   static const hubSectionWorkPlaceHint =
       'Les clientes savent si tu les reçois chez toi, à domicile ou les deux.';
@@ -89,14 +106,14 @@ abstract final class DiscPrestaForm {
   static const hubTipServices =
       'Commence par 2–3 prestations bien définies, tu pourras en ajouter plus tard.';
   static const hubTipGallery =
-      '3 à 5 photos suffisent pour démarrer. Tu peux passer cette étape et revenir plus tard.';
+      '3 à 5 photos de coiffures suffisent pour démarrer — sans texte ni promo sur l’image.';
   static const hubTipComfort =
       'Ces détails rassurent les clientes (accès, ambiance, conditions).';
   static const hubTipHoraires =
       'Active au moins un jour avec des horaires cohérents. '
       'Les congés sont optionnels : tu peux les ajouter maintenant ou plus tard.';
   static const hubTipSubscription =
-      'Sans abonnement actif, ton profil reste invisible dans le catalogue.';
+      'Tu bénéficies d’un essai catalogue gratuit. Tu peux t’abonner maintenant ou à la fin de l’essai.';
   static String hubStepTip(int stepIndex) => switch (stepIndex) {
         0 => hubTipBasics,
         1 => hubTipLocation,
@@ -158,6 +175,8 @@ abstract final class DiscPrestaForm {
   static const city = 'Ville';
   static const postalCode = 'Code postal';
   static const postalCodeHint = 'ex. 75000';
+  static const country = 'Pays';
+  static const reqCountry = 'Choisis ton pays.';
   static const salonAddress = 'Adresse';
   static const salonAddressHint = 'Salon ou domicile — numéro et rue';
   static const workLocationTitle = 'Où travaillez-vous ?';
@@ -189,13 +208,22 @@ abstract final class DiscPrestaForm {
       'Choisis au moins une spécialité pour chaque activité — les tarifs apparaîtront ici.';
   static const reqPricing =
       'Renseigne un prix valide (≥ 1 €) et une durée pour chaque prestation.';
+  static const reqPricingOneConfigured =
+      'Configure au moins une prestation avec un prix et une durée.';
   static const svcAdd = 'Ajouter un service';
   static const svcName = 'Nom du service';
   static const svcDescription = 'Description';
   static const svcCategory = 'Catégorie';
   static const svcCategoryPick = 'Choisir une catégorie';
   static const svcPrice = 'Prix (€)';
-  static const svcDuration = 'Durée (min)';
+  static const svcDuration = 'Durée';
+  static const svcDuration30 = '30 min';
+  static const svcDuration1h = '1 h';
+  static const svcDuration1h30 = '1 h 30';
+  static const svcDuration2h = '2 h';
+  static const svcDurationMore = 'Plus…';
+  static const svcDurationCustomHint = 'Durée personnalisée (minutes)';
+  static String svcDurationCustomValue(int minutes) => '$minutes min';
   static const svcDelete = 'Supprimer ce service';
   static const suggestionTitle = 'Suggérer une catégorie';
   static const suggestionNom = 'Nom de la catégorie suggérée';

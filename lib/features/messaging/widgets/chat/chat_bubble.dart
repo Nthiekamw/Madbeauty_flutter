@@ -5,6 +5,7 @@ import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../shared/widgets/gallery/fullscreen_photo_gallery.dart';
+import '../../logic/chat_message_receipt.dart';
 
 /// Bulle de message avec regroupement visuel (style messagerie moderne).
 class ChatBubble extends StatelessWidget {
@@ -14,7 +15,7 @@ class ChatBubble extends StatelessWidget {
     required this.isMine,
     required this.timeLabel,
     this.imageUrl,
-    this.isReadByPeer = true,
+    this.receiptStatus,
     this.isFirstInGroup = true,
     this.isLastInGroup = true,
   });
@@ -23,7 +24,7 @@ class ChatBubble extends StatelessWidget {
   final bool isMine;
   final String timeLabel;
   final String? imageUrl;
-  final bool isReadByPeer;
+  final ChatMessageReceiptStatus? receiptStatus;
   final bool isFirstInGroup;
   final bool isLastInGroup;
 
@@ -150,15 +151,15 @@ class ChatBubble extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (isMine) ...[
+                  if (isMine && receiptStatus != null) ...[
                     const SizedBox(width: 4),
                     Icon(
-                      isReadByPeer
-                          ? Icons.done_all_rounded
-                          : Icons.check_rounded,
+                      receiptStatus == ChatMessageReceiptStatus.sent
+                          ? Icons.check_rounded
+                          : Icons.done_all_rounded,
                       size: 14,
-                      color: isReadByPeer
-                          ? theme.colorScheme.primary.withValues(alpha: 0.85)
+                      color: receiptStatus == ChatMessageReceiptStatus.read
+                          ? AppColors.chatReadReceipt
                           : theme.colorScheme.onSurfaceVariant
                               .withValues(alpha: 0.65),
                     ),

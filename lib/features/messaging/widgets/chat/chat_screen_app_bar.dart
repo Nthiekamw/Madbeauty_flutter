@@ -16,6 +16,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.peerLastSeenAt,
     this.useSalonName = false,
     this.onReport,
+    this.onDeleteChat,
   });
 
   final String displayName;
@@ -26,6 +27,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final DateTime? peerLastSeenAt;
   final bool useSalonName;
   final VoidCallback? onReport;
+  final VoidCallback? onDeleteChat;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 18);
@@ -84,12 +86,44 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     onLightGradient: true,
                   ),
                 ),
-                if (onReport != null)
-                  IconButton(
-                    onPressed: onReport,
-                    icon: const Icon(Icons.flag_outlined, size: 22),
+                if (onReport != null || onDeleteChat != null)
+                  PopupMenuButton<_ChatMenuAction>(
+                    icon: const Icon(Icons.more_vert_rounded, size: 22),
                     color: AppColors.white,
-                    tooltip: DiscReport.action,
+                    iconColor: AppColors.white,
+                    tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
+                    onSelected: (action) {
+                      switch (action) {
+                        case _ChatMenuAction.report:
+                          onReport?.call();
+                        case _ChatMenuAction.deleteChat:
+                          onDeleteChat?.call();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (onDeleteChat != null)
+                        const PopupMenuItem(
+                          value: _ChatMenuAction.deleteChat,
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded, size: 20),
+                              SizedBox(width: 10),
+                              Text(DiscChat.deleteChatAction),
+                            ],
+                          ),
+                        ),
+                      if (onReport != null)
+                        const PopupMenuItem(
+                          value: _ChatMenuAction.report,
+                          child: Row(
+                            children: [
+                              Icon(Icons.flag_outlined, size: 20),
+                              SizedBox(width: 10),
+                              Text(DiscReport.action),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
               ],
             ),
@@ -99,4 +133,6 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
+
+enum _ChatMenuAction { deleteChat, report }
 

@@ -9,7 +9,7 @@ import '../../../../shared/theme/auth_form_styles.dart';
 import '../../../../shared/widgets/layout/auth_brand_background.dart';
 import '../../widgets/onboarding_page_content.dart';
 
-/// Tour d'horizon (3 pages) avant l'écran Bienvenue.
+/// Tour d'horizon (4 pages) avant l'écran Bienvenue.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,7 +21,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   int _index = 0;
 
-  static const _pageCount = 3;
+  static const _pageCount = 4;
 
   static const _slides = [
     OnboardingSlide(
@@ -38,6 +38,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.storefront_outlined,
       title: AuthStrings.onboardingPage3Title,
       body: AuthStrings.onboardingPage3Body,
+    ),
+    OnboardingSlide(
+      icon: Icons.insights_outlined,
+      title: AuthStrings.onboardingPage4Title,
+      body: AuthStrings.onboardingPage4Body,
+      stats: [
+        OnboardingStatItem(
+          value: AuthStrings.onboardingStatClientsValue,
+          label: AuthStrings.onboardingStatClientsLabel,
+          icon: Icons.people_outline_rounded,
+        ),
+        OnboardingStatItem(
+          value: AuthStrings.onboardingStatPrestatairesValue,
+          label: AuthStrings.onboardingStatPrestatairesLabel,
+          icon: Icons.storefront_outlined,
+        ),
+        OnboardingStatItem(
+          value: AuthStrings.onboardingStatReservationsValue,
+          label: AuthStrings.onboardingStatReservationsLabel,
+          icon: Icons.event_available_outlined,
+        ),
+        OnboardingStatItem(
+          value: AuthStrings.onboardingStatRatingValue,
+          label: AuthStrings.onboardingStatRatingLabel,
+          icon: Icons.star_rounded,
+        ),
+      ],
     ),
   ];
 

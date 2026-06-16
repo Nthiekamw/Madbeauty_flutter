@@ -35,6 +35,39 @@ String formatBookingDate(DateTime day) {
   return '${weekdays[day.weekday - 1]} ${day.day} ${months[day.month - 1]}';
 }
 
+/// Abréviation mois (badge calendrier compact).
+String formatBookingMonthShort(DateTime day) {
+  const months = [
+    'JAN',
+    'FÉV',
+    'MAR',
+    'AVR',
+    'MAI',
+    'JUN',
+    'JUL',
+    'AOÛ',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DÉC',
+  ];
+  return months[day.toLocal().month - 1];
+}
+
+/// Jour de la semaine seul (ex. « mercredi »).
+String formatBookingWeekday(DateTime day) {
+  const weekdays = [
+    'lundi',
+    'mardi',
+    'mercredi',
+    'jeudi',
+    'vendredi',
+    'samedi',
+    'dimanche',
+  ];
+  return weekdays[day.toLocal().weekday - 1];
+}
+
 String formatBookingSlot(BookingSlot slot) => slot.label;
 
 String formatBookingTime(DateTime dt) {

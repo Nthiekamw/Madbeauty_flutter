@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/profile/providers/app_version_provider.dart';
-import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../../services/supabase/bug_report/bug_report_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
@@ -110,6 +109,7 @@ class _ReportBugScreenState extends ConsumerState<ReportBugScreen> {
       }
 
       if (!mounted) return;
+      ref.invalidate(myBugReportsProvider);
       AppSnackBar.success(context, DiscBug.submitSuccess);
       context.pop();
     } catch (_) {
@@ -156,8 +156,8 @@ class _ReportBugScreenState extends ConsumerState<ReportBugScreen> {
             ),
           ),
           const DiscoveryFeatureHeader(
-            title: DiscBug.screenTitle,
-            subtitle: DiscBug.screenSubtitle,
+            title: DiscBug.newReportTitle,
+            subtitle: DiscBug.newReportSubtitle,
             icon: Icons.bug_report_outlined,
           ),
           Expanded(
@@ -278,14 +278,7 @@ class _ReportBugScreenState extends ConsumerState<ReportBugScreen> {
                           )
                         : const Text(DiscBug.submit),
                   ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _submitting
-                        ? null
-                        : () => context.pushMyBugReports(),
-                    child: const Text(DiscBug.actionMyReports),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     DiscHelp.contactSupport,
                     style: theme.textTheme.bodySmall?.copyWith(

@@ -22,6 +22,7 @@ class PrestataireUpsertData {
     required this.ville,
     this.adresse,
     this.codePostal,
+    this.pays,
     this.nomAffiche,
     this.lieuTravail,
     this.anneesExperience,
@@ -39,6 +40,7 @@ class PrestataireUpsertData {
   final String ville;
   final String? adresse;
   final String? codePostal;
+  final String? pays;
   final String? nomAffiche;
   final LieuTravail? lieuTravail;
   final String? anneesExperience;

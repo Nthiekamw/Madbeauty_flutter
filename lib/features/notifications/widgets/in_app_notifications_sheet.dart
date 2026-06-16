@@ -64,11 +64,15 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                         children: [
                           if (unreadCount > 0)
                             TextButton(
-                              onPressed: notifier.markAllRead,
+                              onPressed: () async {
+                                await notifier.markAllRead();
+                              },
                               child: const Text(DiscNotif.markAllRead),
                             ),
                           TextButton(
-                            onPressed: notifier.clear,
+                            onPressed: () async {
+                              await notifier.clear();
+                            },
                             child: const Text(DiscNotif.clearAll),
                           ),
                         ],

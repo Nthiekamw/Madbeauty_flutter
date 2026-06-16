@@ -18,6 +18,8 @@ import '../widgets/inbox/conversation_list_tile.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/inbox/conversations_empty_state.dart';
+import '../widgets/chat/chat_delete_confirmation.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
 
 /// Liste des conversations (onglet Messages).
 class ConversationsInboxScreen extends ConsumerStatefulWidget {
@@ -216,6 +218,9 @@ class _ConversationsInboxScreenState
                       item: item,
                       onTap: () =>
                           _openChat(item.conversation.reservationId),
+                      onLongPress: () => _confirmDeleteChat(
+                        item.conversation.reservationId,
+                      ),
                     );
                   },
                 ),
@@ -241,5 +246,32 @@ class _ConversationsInboxScreenState
     if (!mounted) return;
     ref.invalidate(conversationsInboxProvider(widget.role));
     ref.invalidate(messagingUnreadCountProvider(widget.role));
+  }
+
+  Future<void> _confirmDeleteChat(String bookingId) async {
+    final confirmed = await confirmChatDeletion(
+      context,
+      title: DiscChat.deleteChatTitle,
+      body: DiscChat.deleteChatBody,
+    );
+    if (!confirmed || !mounted) return;
+
+    final service = ref.read(messageServiceProvider);
+    if (service == null) return;
+
+    try {
+      await service.deleteChat(bookingId: bookingId);
+      ref.invalidate(conversationsInboxProvider(widget.role));
+      ref.invalidate(messagingUnreadCountProvider(widget.role));
+      if (!mounted) return;
+      AppSnackBar.show(context, message: DiscChat.deleteChatSuccess);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: DiscChat.deleteChatError,
+        kind: AppSnackKind.error,
+      );
+    }
   }
 }

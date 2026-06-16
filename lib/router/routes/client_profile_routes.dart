@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/booking/screens/client_history_screen.dart';
 import '../../features/favorites/screens/client_favorites_screen.dart';
 import '../../features/bug_report/screens/bug_report_chat_screen.dart';
-import '../../features/bug_report/screens/my_bug_reports_screen.dart';
+import '../../features/bug_report/screens/bug_reports_hub_screen.dart';
 import '../../features/bug_report/screens/report_bug_screen.dart';
 import '../../features/help/screens/help_center_screen.dart';
 import '../../features/listing/screens/all_prestataires_screen.dart';
@@ -53,12 +53,19 @@ List<RouteBase> buildClientProfileRoutes() => [
       GoRoute(
         name: AppRouteNames.clientReportBug,
         path: AppRoutes.clientReportBug,
-        builder: (context, state) => const ReportBugScreen(),
+        builder: (context, state) => const BugReportsHubScreen(),
+        routes: [
+          GoRoute(
+            name: AppRouteNames.clientNewBugReport,
+            path: 'new',
+            builder: (context, state) => const ReportBugScreen(),
+          ),
+        ],
       ),
       GoRoute(
         name: AppRouteNames.clientMyBugReports,
         path: AppRoutes.clientMyBugReports,
-        builder: (context, state) => const MyBugReportsScreen(),
+        redirect: (context, state) => AppRoutes.clientReportBug,
       ),
       GoRoute(
         name: AppRouteNames.bugReportChat,

@@ -1,6 +1,8 @@
 /// <reference path="../types.d.ts" />
 /** Notifications e-mail équipe (signalements, modération). */
 
+import { timingSafeEqualBytes } from "./timing_safe_equal.ts";
+
 export interface WebhookPayload {
   type?: string;
   table?: string;
@@ -25,8 +27,7 @@ export function verifyReportWebhookSecret(req: Request): boolean {
   const enc = new TextEncoder();
   const a = enc.encode(provided);
   const b = enc.encode(expected);
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  return timingSafeEqualBytes(a, b);
 }
 
 function parseNotifyEmails(): string[] {

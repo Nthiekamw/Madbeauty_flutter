@@ -6,6 +6,7 @@ import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../shared/widgets/app/app_text_field.dart';
 import '../../../../models/prestataire_service_field_set.dart';
+import 'prestataire_service_duration_field.dart';
 import '../../hub/prestataire_hub_layout.dart';
 import 'service_wizard_shine.dart';
 
@@ -238,40 +239,29 @@ class _PricingCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    controller: service.prixController,
-                    label: DiscPrestaForm.svcPrice,
-                    errorText: service.prixError,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
-                    ],
-                    onChanged: (_) {
-                      service.prixError = null;
-                      onChanged();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppTextField(
-                    controller: service.dureeController,
-                    label: DiscPrestaForm.svcDuration,
-                    errorText: service.dureeError,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (_) {
-                      service.dureeError = null;
-                      onChanged();
-                    },
-                  ),
-                ),
+            AppTextField(
+              controller: service.prixController,
+              label: DiscPrestaForm.svcPrice,
+              errorText: service.prixError,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
               ],
+              onChanged: (_) {
+                service.prixError = null;
+                onChanged();
+              },
+            ),
+            const SizedBox(height: 12),
+            PrestataireServiceDurationField(
+              controller: service.dureeController,
+              errorText: service.dureeError,
+              onChanged: () {
+                service.dureeError = null;
+                onChanged();
+              },
             ),
           ],
         );

@@ -13,6 +13,7 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
   const ListingQuickFiltersStrip({
     super.key,
     this.onStyleQuerySelected,
+    this.onClearSearchField,
     this.dense = true,
     this.showTitle = true,
     this.embedded = false,
@@ -22,6 +23,10 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
   });
 
   final ValueChanged<String>? onStyleQuerySelected;
+
+  /// Vide le champ recherche sans réinitialiser les filtres rapides actifs.
+  final VoidCallback? onClearSearchField;
+
   final bool dense;
   final bool showTitle;
   final bool embedded;
@@ -92,7 +97,7 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                         ref
                             .read(prestatairesFilterProvider.notifier)
                             .resetQuickFilters();
-                        onStyleQuerySelected?.call('');
+                        onClearSearchField?.call();
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -123,7 +128,9 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                         (activeId == null &&
                             state.query.isEmpty &&
                             state.categoryId == null &&
-                            !state.availableOnly)
+                            !state.availableOnly &&
+                            !state.favoritesOnly &&
+                            !state.likedOnly)
                     : activeId == filter.id;
                 final accent = accents[index % accents.length];
 
@@ -133,13 +140,18 @@ class ListingQuickFiltersStrip extends ConsumerWidget {
                   accentColor: accent,
                   outlined: outlined,
                   onTap: () {
-                    ref
-                        .read(prestatairesFilterProvider.notifier)
-                        .applyQuickFilter(filter);
+                    final notifier =
+                        ref.read(prestatairesFilterProvider.notifier);
+                    if (selected && filter.id != 'all') {
+                      notifier.resetQuickFilters();
+                      onClearSearchField?.call();
+                      return;
+                    }
+                    notifier.applyQuickFilter(filter);
                     if (filter.kind == ListingQuickFilterKind.styleQuery) {
                       onStyleQuerySelected?.call(filter.query ?? '');
                     } else {
-                      onStyleQuerySelected?.call('');
+                      onClearSearchField?.call();
                     }
                   },
                 );
@@ -175,56 +187,65 @@ class _QuickFilterChip extends StatelessWidget {
 
     final fill = outlined
         ? (selected
-            ? primary.withValues(alpha: isDark ? 0.22 : 0.1)
+            ? primary
             : AppColors.cardSurfaceFor(theme.brightness))
         : (selected
             ? primary
             : accentColor.withValues(alpha: isDark ? 0.18 : 0.1));
     final border = outlined
         ? (selected
-            ? primary.withValues(alpha: 0.55)
+            ? primary
             : theme.colorScheme.outline.withValues(alpha: isDark ? 0.28 : 0.22))
         : (selected ? primary : accentColor.withValues(alpha: 0.35));
-    final fg = selected && !outlined
+    final fg = selected
         ? theme.colorScheme.onPrimary
         : theme.colorScheme.onSurface;
-    final iconColor = outlined
-        ? (selected ? primary : theme.colorScheme.onSurfaceVariant)
-        : (selected ? theme.colorScheme.onPrimary : accentColor);
+    final iconColor = selected
+        ? theme.colorScheme.onPrimary
+        : (outlined ? theme.colorScheme.onSurfaceVariant : accentColor);
 
-    return Material(
-      color: fill,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(outlined ? 20 : 16),
-        side: BorderSide(color: border, width: selected ? 1.5 : 1),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(outlined ? 20 : 16),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: outlined ? 12 : 10,
-            vertical: outlined ? 7 : 5,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                filter.icon,
-                size: outlined ? 14 : 13,
-                color: iconColor,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                filter.label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w600,
-                  fontSize: outlined ? 11 : 10,
-                  color: fg,
+    return AnimatedScale(
+      scale: selected ? 1.03 : 1,
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+      child: Material(
+        elevation: selected ? 2.5 : 0,
+        shadowColor: selected
+            ? primary.withValues(alpha: 0.4)
+            : Colors.transparent,
+        color: fill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(outlined ? 20 : 16),
+          side: BorderSide(color: border, width: selected ? 2 : 1),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(outlined ? 20 : 16),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: outlined ? 12 : 10,
+              vertical: outlined ? 7 : 5,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  filter.icon,
+                  size: outlined ? 14 : 13,
+                  color: iconColor,
                 ),
-              ),
-            ],
+                const SizedBox(width: 5),
+                Text(
+                  filter.label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: AppFonts.body,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    fontSize: outlined ? 11 : 10,
+                    color: fg,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

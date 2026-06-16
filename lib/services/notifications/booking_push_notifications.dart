@@ -15,6 +15,7 @@ import '../storage/local_cache_service.dart';
 
 /// Canal Android pour les notifications locales (premier plan).
 const String madBeautyBookingAndroidChannelId = 'madbeauty_booking_channel';
+const String madBeautyMessagingAndroidChannelId = 'madbeauty_messaging_channel';
 
 /// Firebase + FCM + notifications locales (demandes de réservation, statuts).
 class BookingPushNotifications {
@@ -189,16 +190,23 @@ class BookingPushNotifications {
     );
 
     if (Platform.isAndroid) {
-      const channel = AndroidNotificationChannel(
+      const bookingChannel = AndroidNotificationChannel(
         madBeautyBookingAndroidChannelId,
         'MadBeauty – réservations',
         description: 'Demandes et statuts de réservation.',
         importance: Importance.high,
       );
+      const messagingChannel = AndroidNotificationChannel(
+        madBeautyMessagingAndroidChannelId,
+        'MadBeauty – messages',
+        description: 'Nouveaux messages et discussions.',
+        importance: Importance.high,
+      );
       final androidImplementation = _local
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
-      await androidImplementation?.createNotificationChannel(channel);
+      await androidImplementation?.createNotificationChannel(bookingChannel);
+      await androidImplementation?.createNotificationChannel(messagingChannel);
     }
 
     _localNotificationsReady = true;
@@ -269,25 +277,44 @@ class BookingPushNotifications {
 
   Future<void> _onForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;
-    if (notification != null) {
-      final androidDetails = AndroidNotificationDetails(
-        madBeautyBookingAndroidChannelId,
-        'MadBeauty – réservations',
-        channelDescription: 'Demandes et statuts de réservation.',
-        importance: Importance.high,
-        priority: Priority.high,
-      );
+    final data = message.data;
+    final type = data['type']?.toString() ?? '';
+    final isMessaging = type == 'message' || type == 'bug_report_message';
+    final channelId = isMessaging
+        ? madBeautyMessagingAndroidChannelId
+        : madBeautyBookingAndroidChannelId;
+    final channelName = isMessaging
+        ? 'MadBeauty – messages'
+        : 'MadBeauty – réservations';
+    final channelDescription = isMessaging
+        ? 'Nouveaux messages et discussions.'
+        : 'Demandes et statuts de réservation.';
 
-      const iosDetails = DarwinNotificationDetails();
+    final title = notification?.title ??
+        (isMessaging ? 'Nouveau message' : 'MadBeauty');
+    final body = notification?.body ??
+        (data['body'] as String?) ??
+        (isMessaging ? 'Tu as reçu un message.' : '');
 
-      await _local.show(
-        notification.hashCode,
-        notification.title ?? 'MadBeauty',
-        notification.body,
-        NotificationDetails(android: androidDetails, iOS: iosDetails),
-        payload: _payloadFromData(message.data),
-      );
-    }
+    if (body.trim().isEmpty && notification == null) return;
+
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const iosDetails = DarwinNotificationDetails();
+
+    await _local.show(
+      Object.hash(type, body).hashCode,
+      title,
+      body.trim().isEmpty ? 'MadBeauty' : body,
+      NotificationDetails(android: androidDetails, iOS: iosDetails),
+      payload: _payloadFromData(data),
+    );
   }
 
   Future<void> _persistToken({

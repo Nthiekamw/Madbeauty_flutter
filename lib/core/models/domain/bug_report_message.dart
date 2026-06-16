@@ -5,6 +5,8 @@ class BugReportMessage {
     required this.senderId,
     required this.content,
     required this.createdAt,
+    this.isRead = false,
+    this.deliveredAt,
   });
 
   final String id;
@@ -12,6 +14,8 @@ class BugReportMessage {
   final String senderId;
   final String content;
   final DateTime createdAt;
+  final bool isRead;
+  final DateTime? deliveredAt;
 
   factory BugReportMessage.fromRow(Map<String, dynamic> row) {
     return BugReportMessage(
@@ -22,6 +26,8 @@ class BugReportMessage {
       createdAt:
           DateTime.tryParse((row['created_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      isRead: row['is_read'] as bool? ?? false,
+      deliveredAt: DateTime.tryParse((row['delivered_at'] as String?) ?? ''),
     );
   }
 }

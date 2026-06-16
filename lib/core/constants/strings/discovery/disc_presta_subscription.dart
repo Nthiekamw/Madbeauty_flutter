@@ -1,3 +1,5 @@
+import '../../../utils/trial_duration_format.dart';
+
 /// Abonnement prestataire (Stripe Billing).
 abstract final class DiscPrestaSub {
   DiscPrestaSub._();
@@ -13,6 +15,10 @@ abstract final class DiscPrestaSub {
   static const tierMulti = '2 services ou plus';
   static const monthly = 'Mensuel';
   static const yearly = 'Annuel';
+  static const yearlyBestValueBadge = 'PLUS ÉCONOMIQUE';
+  static String yearlyMonthlyEquivalent(int eurosPerMonth) =>
+      'Soit ${eurosPerMonth}€/mois';
+  static String yearlySavings(int euros) => '💰 Économisez ${euros}€';
   static const perMonth = '/ mois';
   static const perYear = '/ an';
   static const currentTier = 'Ton palier actuel';
@@ -30,22 +36,21 @@ abstract final class DiscPrestaSub {
   static const dashboardBannerBody =
       'Gère ton abonnement et consulte ton palier.';
   static const onboardingTitle = 'Ton abonnement MadBeauty';
-  static const onboardingBody =
-      'Tu bénéficies de 5 jours d’essai gratuit pour apparaître dans le catalogue. '
-      'Ensuite, active ton abonnement pour rester visible et gérer tes réservations.';
+  static String onboardingBody(int days) => TrialDurationFormat.onboardingBody(days);
   static const trialBannerTitle = 'Essai gratuit en cours';
   static String trialBannerBody(int days) =>
       'Il te reste $days jour${days > 1 ? 's' : ''} pour tester le catalogue gratuitement. '
       'Pense à t’abonner avant la fin pour rester visible.';
   static const trialBannerCta = 'Voir les offres';
-  static const trialBadge = 'Essai 5 jours';
-  static const checkoutTrialHint =
-      '5 jours d’essai offerts à l’abonnement — aucun prélèvement avant la fin de l’essai.';
+  static String trialBadge(int days) => TrialDurationFormat.trialBadge(days);
+  static String checkoutTrialHint(int days) =>
+      TrialDurationFormat.checkoutTrialHint(days);
   static const statusTrialing = 'Période d’essai Stripe en cours';
   static const statusCatalogTrial = 'Essai catalogue actif';
   static const skipForNow = 'Passer pour l’instant';
-  static const onboardingCompactHint =
-      'Abonnement obligatoire pour être visible dans le catalogue et gérer tes réservations.';
+  static String onboardingCompactHint(int days) =>
+      '${TrialDurationFormat.labelShort(days)} d’essai gratuit pour apparaître dans le catalogue. '
+      'Tu peux t’abonner maintenant ou appuyer sur « Enregistrer mon profil » pour continuer.';
   static const subscriptionRequiredForCatalog =
       'Active ton abonnement pour terminer et être visible dans le catalogue.';
   static const notVisibleBannerTitle = 'Les clientes ne te voient pas';
@@ -107,4 +112,15 @@ abstract final class DiscPrestaSub {
   static const plansSectionTitle = 'Comparer les offres';
   static const plansSectionSubtitle =
       'Le palier dépend du nombre de services que tu publies.';
+
+  static const testimonialsTitle = 'Ce que disent nos coiffeurs Pro';
+  static const testimonialSophieQuote =
+      'Depuis que je suis passé Pro, j’ai 3 à 4 nouvelles réservations par semaine. '
+      'La plateforme m’a vraiment aidé à développer ma clientèle.';
+  static const testimonialSophieAuthor =
+      'Sophie L., coiffeuse à Paris 11ème';
+  static const testimonialMarcQuote =
+      'Super pratique pour gérer mon planning. Les clients peuvent réserver directement '
+      'et je reçois tout de suite une notification. Ça me fait gagner beaucoup de temps.';
+  static const testimonialMarcAuthor = 'Marc D., barbier à Lyon 3ème';
 }

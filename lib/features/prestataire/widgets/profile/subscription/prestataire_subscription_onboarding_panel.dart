@@ -10,7 +10,9 @@ import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
+import '../../../providers/subscription/platform_catalog_trial_provider.dart';
 import 'prestataire_subscription_checkout_section.dart';
+import 'prestataire_subscription_tier_cards.dart';
 
 /// Etape ou encart abonnement (inscription / hub) avec paiement Stripe.
 class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
@@ -32,6 +34,7 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
     final serviceCountAsync = ref.watch(
       prestatairePublishedServiceCountProvider,
     );
+    final trialDaysAsync = ref.watch(platformCatalogTrialDaysProvider);
 
     return serviceCountAsync.when(
       loading: () => const DiscoveryInlineSkeleton(
@@ -71,11 +74,31 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        DiscPrestaSub.onboardingCompactHint,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          height: 1.35,
-                          fontWeight: FontWeight.w600,
+                      child: trialDaysAsync.when(
+                        data: (days) => Text(
+                          DiscPrestaSub.onboardingCompactHint(days),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        loading: () => Text(
+                          DiscPrestaSub.onboardingCompactHint(
+                            PrestataireSubscriptionConfig.catalogTrialDays,
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        error: (_, __) => Text(
+                          DiscPrestaSub.onboardingCompactHint(
+                            PrestataireSubscriptionConfig.catalogTrialDays,
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -92,11 +115,31 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                DiscPrestaSub.onboardingBody,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.45,
+              trialDaysAsync.when(
+                data: (days) => Text(
+                  DiscPrestaSub.onboardingBody(days),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                loading: () => Text(
+                  DiscPrestaSub.onboardingBody(
+                    PrestataireSubscriptionConfig.catalogTrialDays,
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                error: (_, __) => Text(
+                  DiscPrestaSub.onboardingBody(
+                    PrestataireSubscriptionConfig.catalogTrialDays,
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -110,25 +153,8 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
               embeddedInHub: embeddedInHub,
             ),
             const SizedBox(height: 10),
-            _TierRow(
-              theme: theme,
-              primary: primary,
-              title: DiscPrestaSub.tierSolo,
-              monthly: PrestataireSubscriptionConfig.solo.monthlyEur,
-              yearly: PrestataireSubscriptionConfig.solo.yearlyEur,
-              highlighted:
-                  currentTier.id == PrestataireSubscriptionConfig.solo.id,
-              compact: compact,
-            ),
-            const SizedBox(height: 8),
-            _TierRow(
-              theme: theme,
-              primary: primary,
-              title: DiscPrestaSub.tierMulti,
-              monthly: PrestataireSubscriptionConfig.multi.monthlyEur,
-              yearly: PrestataireSubscriptionConfig.multi.yearlyEur,
-              highlighted:
-                  currentTier.id == PrestataireSubscriptionConfig.multi.id,
+            PrestataireSubscriptionTierCards(
+              currentTierId: currentTier.id,
               compact: compact,
             ),
             const SizedBox(height: 12),
@@ -203,64 +229,4 @@ Widget _buildTierSummaryCard({
     );
   }
   return DiscoverySurfaceCard(padding: const EdgeInsets.all(14), child: body);
-}
-
-class _TierRow extends StatelessWidget {
-  const _TierRow({
-    required this.theme,
-    required this.primary,
-    required this.title,
-    required this.monthly,
-    required this.yearly,
-    required this.highlighted,
-    required this.compact,
-  });
-
-  final ThemeData theme;
-  final Color primary;
-  final String title;
-  final double monthly;
-  final double yearly;
-  final bool highlighted;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: highlighted
-            ? Border.all(color: primary.withValues(alpha: 0.45))
-            : Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.12),
-              ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            '${monthly.toStringAsFixed(2)} EUR${DiscPrestaSub.perMonth}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${yearly.toStringAsFixed(0)} EUR${DiscPrestaSub.perYear}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

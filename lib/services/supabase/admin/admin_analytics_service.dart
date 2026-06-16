@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/admin/admin_analytics_summary.dart';
+import '../../../core/models/domain/admin/admin_country_reservation_stats.dart';
 import '../supabase_service.dart';
 
 class AdminAnalyticsService {
@@ -38,6 +39,25 @@ class AdminAnalyticsService {
           revenueCapturedCents: 0,
           revenueThisMonthCents: 0,
         );
+      },
+    );
+  }
+
+  Future<List<AdminCountryReservationStats>> getReservationsByCountry() async {
+    return SupabaseErrorHandler.run(
+      operation: 'adminAnalytics.getReservationsByCountry',
+      action: () async {
+        final result = await _client.rpc('admin_get_reservations_by_country');
+        if (result is List) {
+          return result
+              .map(
+                (entry) => AdminCountryReservationStats.fromJson(
+                  Map<String, dynamic>.from(entry as Map),
+                ),
+              )
+              .toList();
+        }
+        return const <AdminCountryReservationStats>[];
       },
     );
   }

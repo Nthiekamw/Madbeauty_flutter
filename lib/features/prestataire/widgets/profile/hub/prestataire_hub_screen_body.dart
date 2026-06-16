@@ -39,6 +39,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.villeController,
     required this.codePostalController,
     required this.adresseController,
+    required this.paysCode,
     required this.lieuTravail,
     required this.avatarUrl,
     required this.avatarBytes,
@@ -73,6 +74,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.onCompleteLater,
     required this.onBasicsChanged,
     required this.onLieuTravailChanged,
+    required this.onPaysChanged,
     required this.onPickAvatar,
     required this.defaultAvatarUrls,
     required this.selectedDefaultAvatarUrl,
@@ -109,6 +111,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final TextEditingController villeController;
   final TextEditingController codePostalController;
   final TextEditingController adresseController;
+  final String paysCode;
   final LieuTravail? lieuTravail;
   final String? avatarUrl;
   final Uint8List? avatarBytes;
@@ -143,6 +146,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final VoidCallback onCompleteLater;
   final VoidCallback onBasicsChanged;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
+  final ValueChanged<String> onPaysChanged;
   final VoidCallback onPickAvatar;
   final List<String> defaultAvatarUrls;
   final String? selectedDefaultAvatarUrl;
@@ -193,6 +197,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
         villeController: villeController,
         codePostalController: codePostalController,
         adresseController: adresseController,
+        paysCode: paysCode,
         lieuTravail: lieuTravail,
         avatarUrl: avatarUrl,
         avatarBytes: avatarBytes,
@@ -211,6 +216,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
         selectedDefaultAvatarUrl: selectedDefaultAvatarUrl,
         onSelectDefaultAvatar: onSelectDefaultAvatar,
         onLieuTravailChanged: onLieuTravailChanged,
+        onPaysChanged: onPaysChanged,
         onChanged: onBasicsChanged,
         vitrineOnly: true,
       ),
@@ -225,6 +231,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
         villeController: villeController,
         codePostalController: codePostalController,
         adresseController: adresseController,
+        paysCode: paysCode,
         lieuTravail: lieuTravail,
         avatarUrl: avatarUrl,
         avatarBytes: avatarBytes,
@@ -243,6 +250,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
         selectedDefaultAvatarUrl: selectedDefaultAvatarUrl,
         onSelectDefaultAvatar: onSelectDefaultAvatar,
         onLieuTravailChanged: onLieuTravailChanged,
+        onPaysChanged: onPaysChanged,
         onChanged: onBasicsChanged,
         locationOnly: true,
       ),

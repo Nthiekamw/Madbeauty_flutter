@@ -167,6 +167,7 @@ abstract final class PrestataireHubValidation {
   static ({bool valid, PrestataireHubFieldErrors errors}) validateServices({
     required PrestataireServiceCatalogSelection catalogSelection,
     required List<PrestataireServiceFieldSet> services,
+    bool requireAllPriced = true,
   }) {
     if (!catalogSelection.isValid) {
       return (
@@ -188,6 +189,26 @@ abstract final class PrestataireHubValidation {
         ),
       );
     }
+
+    if (!requireAllPriced) {
+      final hasConfigured =
+          services.any(isServiceWizardConfigured);
+      if (hasConfigured) {
+        return (
+          valid: true,
+          errors: const PrestataireHubFieldErrors(),
+        );
+      }
+      final pricing = validatePricing(services);
+      return (
+        valid: false,
+        errors: PrestataireHubFieldErrors(
+          pricingError: DiscPrestaForm.reqPricingOneConfigured,
+          servicesError: pricing.errors.servicesError,
+        ),
+      );
+    }
+
     final pricing = validatePricing(services);
     return (valid: pricing.valid, errors: pricing.errors);
   }

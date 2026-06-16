@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../../../../../core/logic/media/realisation_image_moderator.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../../../core/models/domain/catalog/realisation_media_type.dart';
@@ -11,6 +12,8 @@ import '../../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/widgets/prestataire/realisation_media_cover.dart';
 import '../../hub/prestataire_hub_layout.dart';
+
+import 'realisation_gallery_policy_banner.dart';
 
 class PrestataireProfileGalleryStep extends StatelessWidget {
   const PrestataireProfileGalleryStep({
@@ -50,6 +53,18 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const RealisationGalleryPolicyBanner(),
+        const SizedBox(height: 12),
+        if (RealisationImageModerator.supportsOnDeviceScan) ...[
+          Text(
+            DiscPrestaForm.galleryPolicyScanHint,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         if (embeddedInHub)
           PrestataireHubMetricBanner(
             icon: Icons.perm_media_outlined,
@@ -277,7 +292,7 @@ class _AddMediaTile extends StatelessWidget {
             Icon(Icons.add_rounded, color: primary, size: 28),
             const SizedBox(height: 4),
             Text(
-              'Ajouter',
+              DiscPrestaForm.hubGalleryAddTile,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: primary,
                 fontWeight: FontWeight.w700,

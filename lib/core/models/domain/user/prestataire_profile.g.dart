@@ -15,6 +15,7 @@ _PrestataireProfile _$PrestataireProfileFromJson(Map<String, dynamic> json) =>
       ville: json['ville'] as String?,
       adresse: json['adresse'] as String?,
       codePostal: json['code_postal'] as String?,
+      pays: json['pays'] as String?,
       nomAffiche: json['nom_affiche'] as String?,
       lieuTravail: const LieuTravailConverter().fromJson(
         json['lieu_travail'] as String?,
@@ -46,6 +47,7 @@ Map<String, dynamic> _$PrestataireProfileToJson(_PrestataireProfile instance) =>
       'ville': instance.ville,
       'adresse': instance.adresse,
       'code_postal': instance.codePostal,
+      'pays': instance.pays,
       'nom_affiche': instance.nomAffiche,
       'lieu_travail': const LieuTravailConverter().toJson(instance.lieuTravail),
       'annees_experience': instance.anneesExperience,

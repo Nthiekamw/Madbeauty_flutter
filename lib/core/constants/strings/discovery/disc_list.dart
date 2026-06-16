@@ -13,6 +13,7 @@ abstract final class DiscList {
   static const quickFiltersSub =
       'Les mêmes univers que sur l’accueil : tresses, locks, coupe…';
   static const quickFiltersReset = 'Effacer';
+  static const citiesFilterTitle = 'Par ville';
   static const advancedFiltersTitle = 'Affichage & filtres';
   static const filtersTitle = 'Filtres';
   static const hintSearch =

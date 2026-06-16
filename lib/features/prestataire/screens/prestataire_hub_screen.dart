@@ -16,7 +16,6 @@ import '../navigation/prestataire_hub_wizard_navigation.dart';
 import '../providers/hub/prestataire_hub_form_controller.dart';
 import '../providers/profile/prestataire_profile_form_provider.dart';
 import '../providers/agenda/disponibilite_provider.dart';
-import '../../../services/stripe/stripe_subscription_providers.dart';
 import '../widgets/profile/hub/prestataire_hub_screen_body.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
@@ -83,16 +82,6 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     if (widget.focusedSection != null) {
       unawaited(_save.save());
       return;
-    }
-    if (_form.currentStep == 6) {
-      final status = ref.read(prestataireSubscriptionStatusProvider).value;
-      if (status == null || !status.isActive) {
-        _showSnack(
-          DiscPrestaSub.subscriptionRequiredForCatalog,
-          kind: AppSnackKind.error,
-        );
-        return;
-      }
     }
     if (_form.currentStep == 2) {
       FocusScope.of(context).unfocus();
@@ -181,6 +170,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 villeController: _form.villeController,
                 codePostalController: _form.codePostalController,
                 adresseController: _form.adresseController,
+                paysCode: _form.paysCode,
                 lieuTravail: _form.lieuTravail,
                 avatarUrl: _form.avatarUrl,
                 avatarBytes: _form.avatarBytes,
@@ -219,6 +209,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 onCompleteLater: _save.completeLater,
                 onBasicsChanged: _form.clearBasicsErrors,
                 onLieuTravailChanged: _form.setLieuTravail,
+                onPaysChanged: _form.setPays,
                 onPickAvatar: () =>
                     PrestataireHubMediaActions.pickAvatar(context, _form),
                 defaultAvatarUrls: PrestataireHubConstants.defaultAvatarUrls,

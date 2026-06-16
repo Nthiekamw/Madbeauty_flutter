@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/screens/admin_subscription_trial_screen.dart';
 import '../../features/admin/screens/admin_audit_screen.dart';
 import '../../features/admin/screens/admin_push_screen.dart';
 import '../../features/admin/screens/admin_bug_reports_screen.dart';
@@ -94,5 +95,10 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminBugReports,
         path: AppRoutes.adminBugReports,
         builder: (context, state) => const AdminBugReportsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminSubscriptionTrial,
+        path: AppRoutes.adminSubscriptionTrial,
+        builder: (context, state) => const AdminSubscriptionTrialScreen(),
       ),
     ];

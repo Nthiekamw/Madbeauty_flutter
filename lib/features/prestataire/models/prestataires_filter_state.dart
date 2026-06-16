@@ -4,6 +4,7 @@ class PrestatairesFilterState {
   const PrestatairesFilterState({
     this.query = '',
     this.categoryId,
+    this.ville,
     this.sort = PrestatairesSort.distance,
     this.availableOnly = false,
     this.favoritesOnly = false,
@@ -13,6 +14,9 @@ class PrestatairesFilterState {
 
   final String query;
   final String? categoryId;
+
+  /// Filtre exact sur [PrestataireProfile.ville] (insensible à la casse).
+  final String? ville;
   final PrestatairesSort sort;
   final bool availableOnly;
   final bool favoritesOnly;
@@ -24,6 +28,7 @@ class PrestatairesFilterState {
   bool get hasActiveFilters =>
       query.trim().isNotEmpty ||
       categoryId != null ||
+      (ville != null && ville!.trim().isNotEmpty) ||
       availableOnly ||
       favoritesOnly ||
       likedOnly ||
@@ -32,6 +37,7 @@ class PrestatairesFilterState {
   PrestatairesFilterState copyWith({
     String? query,
     Object? categoryId = _unset,
+    Object? ville = _unset,
     PrestatairesSort? sort,
     bool? availableOnly,
     bool? favoritesOnly,
@@ -43,6 +49,7 @@ class PrestatairesFilterState {
       categoryId: identical(categoryId, _unset)
           ? this.categoryId
           : categoryId as String?,
+      ville: identical(ville, _unset) ? this.ville : ville as String?,
       sort: sort ?? this.sort,
       availableOnly: availableOnly ?? this.availableOnly,
       favoritesOnly: favoritesOnly ?? this.favoritesOnly,

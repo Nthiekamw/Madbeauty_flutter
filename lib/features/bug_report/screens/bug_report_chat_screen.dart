@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +18,7 @@ import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../messaging/logic/chat_message_receipt.dart';
 import '../../messaging/widgets/chat/chat_bubble.dart';
 import '../../messaging/widgets/chat/chat_composer.dart';
 
@@ -35,6 +38,27 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
   bool _closing = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_syncReceipts());
+    });
+  }
+
+  Future<void> _syncReceipts() async {
+    final service = ref.read(bugReportMessageServiceProvider);
+    final userId = ref.read(authNotifierProvider).maybeWhen(
+          data: (u) => u?.id,
+          orElse: () => null,
+        );
+    if (service == null || userId == null) return;
+    await service.markAsRead(
+      bugReportId: widget.bugReportId,
+      userId: userId,
+    );
+  }
+
+  @override
   void dispose() {
     _composer.dispose();
     super.dispose();
@@ -50,6 +74,7 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
     try {
       await service.send(bugReportId: widget.bugReportId, content: text);
       _composer.clear();
+      ref.invalidate(bugReportMessagesProvider(widget.bugReportId));
     } catch (_) {
       if (mounted) AppSnackBar.error(context, DiscBug.chatSendErr);
     } finally {
@@ -111,6 +136,10 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
         isAdmin ? DiscBug.chatTitleAdmin : DiscBug.chatTitleReporter;
     final summary = summaryAsync.asData?.value;
     final isClosed = summary?.isTerminal ?? false;
+
+    ref.listen(bugReportMessagesProvider(widget.bugReportId), (_, __) {
+      unawaited(_syncReceipts());
+    });
 
     return Scaffold(
       backgroundColor: isDark
@@ -253,18 +282,15 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
             child: messagesAsync.when(
               data: (messages) {
                 if (messages.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: DiscoveryEmptyState(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: DiscBug.chatEmpty,
-                        body: isClosed
-                            ? DiscBug.chatClosedBanner
-                            : DiscBug.chatAdminHint,
-                        iconColor: AppColors.adminAccentMid,
-                      ),
-                    ),
+                  return DiscoveryEmptyState(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: DiscBug.chatEmpty,
+                    body: isClosed
+                        ? DiscBug.chatClosedBanner
+                        : (isAdmin
+                            ? DiscBug.chatAdminHint
+                            : DiscBug.chatEmptyReporterHint),
+                    iconColor: AppColors.adminAccentMid,
                   );
                 }
                 return ListView.builder(
@@ -279,6 +305,12 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
                     return ChatBubble(
                       text: message.content,
                       isMine: isMine,
+                      receiptStatus: isMine
+                          ? chatOutgoingReceiptStatus(
+                              isRead: message.isRead,
+                              deliveredAt: message.deliveredAt,
+                            )
+                          : null,
                       timeLabel: timeFormat.format(message.createdAt.toLocal()),
                     );
                   },

@@ -3,6 +3,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { JWT } from "npm:google-auth-library@9.15.1";
 
+import { timingSafeEqualBytes } from "./timing_safe_equal.ts";
+
 export interface WebhookPayload {
   type?: string;
   table?: string;
@@ -25,8 +27,7 @@ export function verifyWebhookSecret(req: Request): boolean {
   const enc = new TextEncoder();
   const a = enc.encode(provided);
   const b = enc.encode(expected);
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  return timingSafeEqualBytes(a, b);
 }
 
 export function createServiceClient() {

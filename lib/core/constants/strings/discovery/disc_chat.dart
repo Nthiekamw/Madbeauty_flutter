@@ -76,6 +76,26 @@ abstract final class DiscChat {
   static const today = 'Aujourd\'hui';
   static const yesterday = 'Hier';
 
+  static const deleteCancel = 'Annuler';
+  static const deleteConfirm = 'Supprimer';
+  static const deleteChatAction = 'Supprimer la conversation';
+  static const deleteChatTitle = 'Supprimer la conversation ?';
+  static const deleteChatBody =
+      'Tous les messages de cette conversation seront définitivement supprimés pour toi et ton interlocuteur. Cette action est irréversible.';
+  static const deleteChatSuccess = 'Conversation supprimée.';
+  static const deleteChatError =
+      'Impossible de supprimer la conversation. Réessaie.';
+
+  static const deleteMessageAction = 'Supprimer le message';
+  static const deleteMessageTitle = 'Supprimer ce message ?';
+  static const deleteMessageBody =
+      'Ce message sera définitivement supprimé. Cette action est irréversible.';
+  static const deleteMessageSuccess = 'Message supprimé.';
+  static const deleteMessageError =
+      'Impossible de supprimer ce message. Réessaie.';
+  static const deleteMessageOwnOnly =
+      'Tu ne peux supprimer que tes propres messages.';
+
   static const presenceOnline = 'En ligne';
   static const presenceUnknown = 'Dernière activité inconnue';
   static const presenceJustNow = 'Vu à l\'instant';

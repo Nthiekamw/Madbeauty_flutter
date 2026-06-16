@@ -11,6 +11,8 @@ class ClientHomeSectionHeader extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.compact = false,
+    this.icon,
+    this.iconColor,
   });
 
   final String title;
@@ -18,14 +20,31 @@ class ClientHomeSectionHeader extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final bool compact;
+  final IconData? icon;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = iconColor ?? theme.colorScheme.primary;
+    final iconSize = compact ? 32.0 : 36.0;
+    final glyphSize = compact ? 17.0 : 19.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        if (icon != null) ...[
+          Container(
+            width: iconSize,
+            height: iconSize,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(compact ? 10 : 12),
+            ),
+            child: Icon(icon, color: accent, size: glyphSize),
+          ),
+          SizedBox(width: compact ? 8 : 10),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

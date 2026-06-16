@@ -11,6 +11,7 @@ abstract final class AdminRoutePolicy {
   static bool isBugReportPath(String location) =>
       location.startsWith('/bug-report/') ||
       location == AppRoutes.clientReportBug ||
+      location == AppRoutes.clientNewBugReport ||
       location == AppRoutes.clientMyBugReports ||
       location == AppRoutes.bannedAccountSupport;
 

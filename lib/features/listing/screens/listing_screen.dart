@@ -23,6 +23,7 @@ import '../widgets/filters/listing_filters_panel.dart';
 import '../widgets/filters/listing_filters_sheet.dart';
 import '../widgets/header/listing_main_services_strip.dart';
 import '../widgets/content/listing_promo_banner.dart';
+import '../widgets/filters/listing_cities_strip.dart';
 import '../widgets/filters/listing_quick_filters_strip.dart';
 import '../widgets/header/listing_results_header.dart';
 import '../widgets/content/listing_map_view.dart';
@@ -94,6 +95,13 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
 
   Future<void> _onRefresh() async {
     await ref.read(listingCatalogNotifierProvider.notifier).refresh();
+  }
+
+  void _clearSearchFieldOnly() {
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
+      setState(() {});
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -251,7 +259,13 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               ref.watch(prestatairesFilterProvider).hasActiveFilters,
           compact: true,
         ),
-        if (!mapMode) const ListingMainServicesStrip(),
+        if (!mapMode) ...[
+          const ListingMainServicesStrip(),
+          const SizedBox(height: 8),
+        ] else
+          const SizedBox(height: 6),
+        const ListingCitiesStrip(outlined: true),
+        const SizedBox(height: 4),
       ],
     );
   }
@@ -261,15 +275,21 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const SizedBox(height: 10),
         ListingQuickFiltersStrip(
           showTitle: false,
           outlined: true,
           filters: ListingQuickFilter.catalogTop,
+          onClearSearchField: _clearSearchFieldOnly,
           onStyleQuerySelected: (query) {
             if (_searchController.text != query) {
               _searchController.text = query;
             }
-            _onSearchChanged(query);
+            if (query.trim().isNotEmpty) {
+              _onSearchChanged(query);
+            } else {
+              setState(() {});
+            }
           },
         ),
         ListingActiveFiltersBar(
@@ -286,15 +306,21 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const ListingPromoBanner(),
+        const SizedBox(height: 12),
         ListingQuickFiltersStrip(
           showTitle: false,
           outlined: true,
           filters: ListingQuickFilter.catalogTop,
+          onClearSearchField: _clearSearchFieldOnly,
           onStyleQuerySelected: (query) {
             if (_searchController.text != query) {
               _searchController.text = query;
             }
-            _onSearchChanged(query);
+            if (query.trim().isNotEmpty) {
+              _onSearchChanged(query);
+            } else {
+              setState(() {});
+            }
           },
         ),
         ListingActiveFiltersBar(

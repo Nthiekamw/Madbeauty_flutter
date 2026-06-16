@@ -13,7 +13,9 @@ import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../models/prestataire_subscription_status.dart';
 import '../../../logic/prestataire_subscription_refresh.dart';
 import '../../../providers/profile/prestataire_profile_form_provider.dart';
+import '../../../providers/subscription/platform_catalog_trial_provider.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
+import 'prestataire_subscription_interval_cards.dart';
 import 'prestataire_payout_setup_hint.dart';
 
 /// Boutons d'abonnement / portail Stripe pour le palier courant.
@@ -145,6 +147,10 @@ class _PrestataireSubscriptionCheckoutSectionState
     final serviceCountAsync = ref.watch(
       prestatairePublishedServiceCountProvider,
     );
+    final trialDays = ref.watch(platformCatalogTrialDaysProvider).maybeWhen(
+          data: (days) => days,
+          orElse: () => PrestataireSubscriptionConfig.catalogTrialDays,
+        );
 
     return serviceCountAsync.when(
       loading: () => const DiscoveryInlineSkeleton(height: 40),
@@ -153,6 +159,9 @@ class _PrestataireSubscriptionCheckoutSectionState
         final tier = PrestataireSubscriptionConfig.tierForServiceCount(
           serviceCount,
         );
+        final tierPricing = tier.id == PrestataireSubscriptionConfig.multi.id
+            ? PrestataireSubscriptionConfig.multi
+            : PrestataireSubscriptionConfig.solo;
 
         return statusAsync.when(
           loading: () => const DiscoveryInlineSkeleton(height: 40),
@@ -181,28 +190,21 @@ class _PrestataireSubscriptionCheckoutSectionState
                   const SizedBox(height: 10),
                 ],
                 Text(
-                  DiscPrestaSub.checkoutTrialHint,
+                  DiscPrestaSub.checkoutTrialHint(trialDays),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 10),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 'month',
-                      label: Text(DiscPrestaSub.monthly),
-                    ),
-                    ButtonSegment(
-                      value: 'year',
-                      label: Text(DiscPrestaSub.yearly),
-                    ),
-                  ],
-                  selected: {_selectedInterval},
-                  onSelectionChanged: _busy
-                      ? null
-                      : (s) => setState(() => _selectedInterval = s.first),
+                PrestataireSubscriptionIntervalCards(
+                  monthlyEur: tierPricing.monthlyEur,
+                  yearlyEur: tierPricing.yearlyEur,
+                  selectedInterval: _selectedInterval,
+                  enabled: !_busy,
+                  compact: widget.compact,
+                  onChanged: (interval) =>
+                      setState(() => _selectedInterval = interval),
                 ),
                 SizedBox(height: widget.compact ? 10 : 14),
                 FilledButton.icon(

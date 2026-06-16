@@ -78,7 +78,7 @@ void navigateFromPushDataWithRouter(
       router.pushNamed(AppRouteNames.adminBugReports);
       return;
     case 'bug_report_status':
-      router.pushNamed(AppRouteNames.clientMyBugReports);
+      router.pushNamed(AppRouteNames.clientReportBug);
       return;
     case 'bug_report_message':
       final bugReportId = _str(data, 'bug_report_id');
@@ -142,7 +142,7 @@ void _openAdminNavTarget(
     case 'admin_bug_reports':
       router.pushNamed(AppRouteNames.adminBugReports);
     case 'my_bug_reports':
-      router.pushNamed(AppRouteNames.clientMyBugReports);
+      router.pushNamed(AppRouteNames.clientReportBug);
     case 'bug_report_chat':
       final chatId = _str(data, 'bug_report_id');
       if (chatId != null) {

@@ -87,7 +87,8 @@ extension AppNavigationX on BuildContext {
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);
   void pushClientHelp() => pushNamed(AppRouteNames.clientHelp);
   void pushReportBug() => pushNamed(AppRouteNames.clientReportBug);
-  void pushMyBugReports() => pushNamed(AppRouteNames.clientMyBugReports);
+  void pushNewBugReport() => pushNamed(AppRouteNames.clientNewBugReport);
+  void pushMyBugReports() => pushNamed(AppRouteNames.clientReportBug);
   void pushBugReportChat(String bugReportId) => pushNamed(
         AppRouteNames.bugReportChat,
         pathParameters: {'id': bugReportId},
@@ -115,6 +116,8 @@ extension AppNavigationX on BuildContext {
   void pushAdminReservations() => pushNamed(AppRouteNames.adminReservations);
   void pushAdminAudit() => pushNamed(AppRouteNames.adminAudit);
   void pushAdminPush() => pushNamed(AppRouteNames.adminPush);
+  void pushAdminSubscriptionTrial() =>
+      pushNamed(AppRouteNames.adminSubscriptionTrial);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
   Future<T?> pushChat<T extends Object?>(

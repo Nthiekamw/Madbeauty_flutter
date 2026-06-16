@@ -60,6 +60,7 @@ class PostSignupProfileService {
     required String ville,
     String? adresse,
     String? codePostal,
+    String? pays,
     String? nomAffiche,
     LieuTravail? lieuTravail,
     String? bio,
@@ -84,6 +85,8 @@ class PostSignupProfileService {
             'adresse': adresse.trim(),
           if (codePostal != null && codePostal.trim().isNotEmpty)
             'code_postal': codePostal.trim(),
+          if (pays != null && pays.trim().isNotEmpty)
+            'pays': pays.trim().toUpperCase(),
           if (nomAffiche != null && nomAffiche.trim().isNotEmpty)
             'nom_affiche': nomAffiche.trim(),
           if (lieuTravail != null) 'lieu_travail': lieuTravail.value,

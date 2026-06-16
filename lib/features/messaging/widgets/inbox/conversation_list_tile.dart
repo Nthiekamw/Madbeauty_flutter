@@ -15,10 +15,12 @@ class ConversationListTile extends StatelessWidget {
     super.key,
     required this.item,
     required this.onTap,
+    this.onLongPress,
   });
 
   final ConversationInboxItem item;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,7 @@ class ConversationListTile extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
             child: Row(

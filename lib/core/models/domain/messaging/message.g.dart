@@ -13,6 +13,9 @@ _Message _$MessageFromJson(Map<String, dynamic> json) => _Message(
   content: json['content'] as String,
   imageUrl: json['image_url'] as String?,
   isRead: json['is_read'] as bool? ?? false,
+  deliveredAt: const NullableIsoDateTimeConverter().fromJson(
+    json['delivered_at'],
+  ),
   createdAt: const IsoDateTimeConverter().fromJson(json['created_at']),
 );
 
@@ -23,5 +26,8 @@ Map<String, dynamic> _$MessageToJson(_Message instance) => <String, dynamic>{
   'content': instance.content,
   'image_url': instance.imageUrl,
   'is_read': instance.isRead,
+  'delivered_at': const NullableIsoDateTimeConverter().toJson(
+    instance.deliveredAt,
+  ),
   'created_at': const IsoDateTimeConverter().toJson(instance.createdAt),
 };

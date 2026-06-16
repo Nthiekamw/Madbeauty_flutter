@@ -52,6 +52,13 @@ class PrestataireCatalogEntry {
     return specialtyCategoryIds.contains(categorieId);
   }
 
+  bool matchesVilleFilter(String? villeFilter) {
+    if (villeFilter == null || villeFilter.trim().isEmpty) return true;
+    final profileVille = profile.ville?.trim().toLowerCase();
+    if (profileVille == null || profileVille.isEmpty) return false;
+    return profileVille == villeFilter.trim().toLowerCase();
+  }
+
   bool matchesSearch(String rawQuery) {
     final q = rawQuery.trim().toLowerCase();
     if (q.isEmpty) return true;

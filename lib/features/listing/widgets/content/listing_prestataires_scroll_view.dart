@@ -168,9 +168,11 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SizedBox(
+            height: cardH,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Expanded(
                 child: _GridTile(
                   entry: left,
@@ -199,6 +201,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                       ),
               ),
             ],
+            ),
           ),
         );
       }

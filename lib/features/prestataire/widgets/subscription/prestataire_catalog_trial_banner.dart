@@ -6,10 +6,11 @@ import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../providers/subscription/prestataire_subscription_gate_provider.dart';
+import '../../providers/subscription/platform_catalog_trial_provider.dart';
 import '../profile/overview/layout/prestataire_profile_insets.dart';
 import '../shared/prestataire_section_header.dart';
 
-/// Bandeau informatif pendant l’essai catalogue gratuit (5 jours).
+/// Bandeau informatif pendant l’essai catalogue gratuit.
 class PrestataireCatalogTrialBanner extends ConsumerWidget {
   const PrestataireCatalogTrialBanner({super.key});
 
@@ -17,6 +18,10 @@ class PrestataireCatalogTrialBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final inTrial = ref.watch(prestataireIsInCatalogTrialProvider);
     final days = ref.watch(prestataireCatalogTrialDaysRemainingProvider);
+    final platformTrialDays = ref.watch(platformCatalogTrialDaysProvider).maybeWhen(
+          data: (d) => d,
+          orElse: () => days ?? 90,
+        );
     if (!inTrial || days == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
@@ -59,7 +64,7 @@ class PrestataireCatalogTrialBanner extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          DiscPrestaSub.trialBadge,
+                          DiscPrestaSub.trialBadge(platformTrialDays),
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontFamily: AppFonts.body,
                             fontWeight: FontWeight.w800,

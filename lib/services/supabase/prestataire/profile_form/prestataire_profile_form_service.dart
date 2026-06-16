@@ -47,6 +47,7 @@ class PrestataireProfileFormData {
     required this.ville,
     this.adresse = '',
     this.codePostal = '',
+    this.pays = 'FR',
     this.lieuTravail,
     this.avatarUrl,
     required this.categories,
@@ -70,6 +71,7 @@ class PrestataireProfileFormData {
   final String ville;
   final String adresse;
   final String codePostal;
+  final String pays;
   final LieuTravail? lieuTravail;
   final String? avatarUrl;
   final List<ServiceCategory> categories;
@@ -92,6 +94,7 @@ class PrestataireProfileFormData {
     ville: '',
     adresse: '',
     codePostal: '',
+    pays: 'FR',
     lieuTravail: null,
     avatarUrl: null,
     categories: [],
@@ -117,6 +120,7 @@ class PrestataireProfileSavePayload {
     required this.ville,
     required this.adresse,
     required this.codePostal,
+    required this.pays,
     required this.lieuTravail,
     this.avatarBytes,
     this.avatarFileName,
@@ -140,6 +144,7 @@ class PrestataireProfileSavePayload {
   final String ville;
   final String adresse;
   final String codePostal;
+  final String pays;
   final LieuTravail lieuTravail;
   final Uint8List? avatarBytes;
   final String? avatarFileName;
@@ -264,6 +269,9 @@ class PrestataireProfileFormService {
         ville: prestataire.ville?.trim() ?? '',
         adresse: prestataire.adresse?.trim() ?? '',
         codePostal: prestataire.codePostal?.trim() ?? '',
+        pays: prestataire.pays?.trim().toUpperCase().isNotEmpty == true
+            ? prestataire.pays!.trim().toUpperCase()
+            : 'FR',
         lieuTravail: prestataire.lieuTravail,
         avatarUrl: userProfile?.avatarUrl,
         categories: categories,
@@ -331,7 +339,9 @@ class PrestataireProfileFormService {
           adresse: payload.adresse,
           codePostal: payload.codePostal,
           ville: payload.ville,
+          pays: payload.pays,
         ),
+        countryIsoCode: payload.pays,
       );
 
       final prestataireId = await _prestataireService.upsert(
@@ -343,6 +353,9 @@ class PrestataireProfileFormService {
           adresse: payload.adresse.trim().isEmpty ? null : payload.adresse.trim(),
           codePostal:
               payload.codePostal.trim().isEmpty ? null : payload.codePostal.trim(),
+          pays: payload.pays.trim().isEmpty
+              ? null
+              : payload.pays.trim().toUpperCase(),
           nomAffiche:
               payload.nomAffiche.trim().isEmpty ? null : payload.nomAffiche.trim(),
           lieuTravail: payload.lieuTravail,
@@ -415,6 +428,7 @@ class PrestataireProfileFormService {
     required String adresse,
     required String codePostal,
     required String ville,
+    required String pays,
   }) {
     final parts = <String>[
       if (adresse.trim().isNotEmpty) adresse.trim(),

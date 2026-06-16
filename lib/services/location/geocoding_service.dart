@@ -1,15 +1,21 @@
 import 'package:geocoding/geocoding.dart';
 
 import '../../core/geo/geo_point.dart';
+import '../../shared/utils/phone_number_utils.dart';
 
-/// Géocodage texte â†’ coordonnées (ville, adresse).
+/// Géocodage texte → coordonnées (ville, adresse).
 class GeocodingService {
-  Future<GeoPoint?> geocodeAddress(String address) async {
+  Future<GeoPoint?> geocodeAddress(
+    String address, {
+    String? countryIsoCode,
+  }) async {
     final query = address.trim();
     if (query.isEmpty) return null;
 
     try {
-      final locations = await locationFromAddress(_normalizeQuery(query));
+      final locations = await locationFromAddress(
+        _normalizeQuery(query, countryIsoCode: countryIsoCode),
+      );
       if (locations.isEmpty) return null;
       final first = locations.first;
       return GeoPoint(latitude: first.latitude, longitude: first.longitude);
@@ -41,15 +47,20 @@ class GeocodingService {
     }
   }
 
-  String _normalizeQuery(String query) {
+  String _normalizeQuery(String query, {String? countryIsoCode}) {
+    final countryLabel = _countryLabelForGeocode(countryIsoCode);
+    if (countryLabel == null) return query;
     final lower = query.toLowerCase();
-    if (lower.contains('france') ||
-        lower.contains('réunion') ||
-        lower.contains('martinique') ||
-        lower.contains('guadeloupe')) {
-      return query;
+    if (lower.contains(countryLabel.toLowerCase())) return query;
+    return '$query, $countryLabel';
+  }
+
+  String? _countryLabelForGeocode(String? countryIsoCode) {
+    final code = countryIsoCode?.trim().toUpperCase();
+    if (code == null || code.isEmpty) return 'France';
+    for (final option in PhoneNumberUtils.dialOptions) {
+      if (option.isoCode == code) return option.label;
     }
-    return '$query, France';
+    return 'France';
   }
 }
-

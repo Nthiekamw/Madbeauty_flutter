@@ -18,7 +18,7 @@ abstract final class DiscHome {
   static const feedAllSub =
       'Des professionnels passionnés, prêts à vous accueillir.';
 
-  static const nextAppointmentTitle = '📅 Vos prochains rendez-vous';
+  static const nextAppointmentTitle = 'Vos prochains rendez-vous';
   static const nextAppointmentSub = 'Ta prochaine visite chez un·e pro';
   static const nextAppointmentDetails = 'Voir détails';
   static const nextAppointmentEmptyTitle = 'Aucun rendez-vous à venir';

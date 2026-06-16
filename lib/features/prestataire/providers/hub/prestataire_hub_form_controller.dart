@@ -16,6 +16,7 @@ import '../../models/prestataire_profile_edit_section.dart';
 import '../../models/prestataire_service_catalog_selection.dart';
 import '../../models/prestataire_service_field_set.dart';
 import '../../models/weekly_jour_horaire.dart';
+import '../../widgets/profile/steps/services/service_wizard_shine.dart';
 
 /// État formulaire hub prestataire (contrôleurs, validation, brouillon).
 class PrestataireHubFormController extends ChangeNotifier {
@@ -65,6 +66,8 @@ class PrestataireHubFormController extends ChangeNotifier {
   var saving = false;
   double? uploadProgress;
   LieuTravail? lieuTravail;
+  String paysCode = 'FR';
+  String? paysError;
   Uint8List? avatarBytes;
   String? avatarFileName;
   String? avatarMimeType;
@@ -177,6 +180,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       ville: villeController.text,
       codePostal: codePostalController.text,
       adresse: adresseController.text,
+      pays: paysCode,
       lieuTravail: lieuTravail,
       avatarUrl: avatarUrl,
       suggestionCategorieNom: suggestionNomController.text,
@@ -209,6 +213,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       villeController: villeController,
       codePostalController: codePostalController,
       adresseController: adresseController,
+      setPays: setPays,
       setLieuTravail: (value) => lieuTravail = value,
       setAvatarUrl: (url) => avatarUrl = url,
       suggestionNomController: suggestionNomController,
@@ -284,6 +289,7 @@ class PrestataireHubFormController extends ChangeNotifier {
     villeController.text = data.ville;
     codePostalController.text = data.codePostal;
     adresseController.text = data.adresse;
+    paysCode = data.pays.trim().isEmpty ? 'FR' : data.pays.trim().toUpperCase();
     lieuTravail = data.lieuTravail;
     selectedComfortIds
       ..clear()
@@ -363,7 +369,9 @@ class PrestataireHubFormController extends ChangeNotifier {
     return PrestataireHubValidation.validateHoraires(horaireWeek: horaireWeek);
   }
 
-  PrestataireHubFieldErrors _validateServicesFields() {
+  PrestataireHubFieldErrors _validateServicesFields({
+    bool forWizardAdvance = false,
+  }) {
     FocusManager.instance.primaryFocus?.unfocus();
     if (catalogSelection.isValid &&
         (services.isEmpty ||
@@ -373,6 +381,7 @@ class PrestataireHubFormController extends ChangeNotifier {
     final result = PrestataireHubValidation.validateServices(
       catalogSelection: catalogSelection,
       services: services,
+      requireAllPriced: !forWizardAdvance,
     );
     return PrestataireHubFieldErrors(
       servicesError: result.errors.servicesError,
@@ -398,8 +407,8 @@ class PrestataireHubFormController extends ChangeNotifier {
     return errors.horairesValid;
   }
 
-  bool validateServices() {
-    final errors = _validateServicesFields();
+  bool validateServices({bool forWizardAdvance = false}) {
+    final errors = _validateServicesFields(forWizardAdvance: forWizardAdvance);
     applyFieldErrors(errors);
     return errors.servicesValid;
   }
@@ -445,6 +454,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       ville: villeController.text.trim(),
       adresse: adresseController.text.trim(),
       codePostal: codePostalController.text.trim(),
+      pays: paysCode,
       lieuTravail: lieuTravail ?? loadedData?.lieuTravail ?? LieuTravail.both,
       avatarBytes: avatarBytes,
       avatarFileName: avatarFileName,
@@ -475,6 +485,13 @@ class PrestataireHubFormController extends ChangeNotifier {
   void setLieuTravail(LieuTravail value) {
     lieuTravail = value;
     lieuTravailError = null;
+    notifyListeners();
+    _schedulePersistHubDraft();
+  }
+
+  void setPays(String code) {
+    paysCode = code.trim().toUpperCase();
+    paysError = null;
     notifyListeners();
     _schedulePersistHubDraft();
   }
@@ -578,7 +595,9 @@ class PrestataireHubFormController extends ChangeNotifier {
   }
 
   void onPricingChanged() {
-    pricingError = null;
+    if (services.any(isServiceWizardConfigured)) {
+      pricingError = null;
+    }
     notifyListeners();
   }
 
@@ -629,7 +648,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       if (!validateLocation()) return false;
       _currentStep = 2;
     } else if (step == 2) {
-      if (!validateServices()) return false;
+      if (!validateServices(forWizardAdvance: true)) return false;
       _currentStep = 3;
     } else if (step == 3) {
       if (!validateHoraires()) return false;

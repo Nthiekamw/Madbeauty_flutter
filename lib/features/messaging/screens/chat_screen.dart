@@ -35,6 +35,7 @@ import '../widgets/chat/chat_message_list.dart';
 import '../../trust/widgets/report_content_sheet.dart';
 import '../../../services/supabase/trust/content_report_service.dart';
 import '../widgets/chat/chat_screen_app_bar.dart';
+import '../widgets/chat/chat_delete_confirmation.dart';
 import '../models/chat_inbox_key.dart';
 import '../providers/messaging_inbox_providers.dart';
 
@@ -68,6 +69,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   bool _sending = false;
   bool _attachingImage = false;
+  bool _deleting = false;
 
   int _lastMessageCount = 0;
   ConversationInboxItem? _lastHeader;
@@ -158,7 +160,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return tail.map((m) => m.content).toList();
   }
 
-  Future<void> _markRead() async {
+  Future<void> _syncReceipts() async {
 
     final service = ref.read(messageServiceProvider);
 
@@ -189,6 +191,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
 
   }
+
+
+
+  Future<void> _markRead() async => _syncReceipts();
 
 
 
@@ -267,6 +273,105 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     }
 
+  }
+
+  void _invalidateInbox() {
+    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
+    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
+    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.client));
+    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.prestataire));
+  }
+
+  Future<void> _confirmDeleteChat() async {
+    if (_deleting) return;
+    final confirmed = await confirmChatDeletion(
+      context,
+      title: DiscChat.deleteChatTitle,
+      body: DiscChat.deleteChatBody,
+    );
+    if (!confirmed || !mounted) return;
+
+    final service = ref.read(messageServiceProvider);
+    if (service == null) return;
+
+    setState(() => _deleting = true);
+    try {
+      await service.deleteChat(bookingId: widget.bookingId);
+      _invalidateInbox();
+      if (!mounted) return;
+      AppSnackBar.show(context, message: DiscChat.deleteChatSuccess);
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: DiscChat.deleteChatError,
+        kind: AppSnackKind.error,
+      );
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
+  Future<void> _handleMessageLongPress(Message message) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(
+                Icons.delete_outline_rounded,
+                color: Theme.of(ctx).colorScheme.error,
+              ),
+              title: Text(
+                DiscChat.deleteMessageAction,
+                style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+              ),
+              onTap: () => Navigator.of(ctx).pop('delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == 'delete' && mounted) {
+      await _confirmDeleteMessage(message);
+    }
+  }
+
+  Future<void> _confirmDeleteMessage(Message message) async {
+    if (_deleting) return;
+    final confirmed = await confirmChatDeletion(
+      context,
+      title: DiscChat.deleteMessageTitle,
+      body: DiscChat.deleteMessageBody,
+    );
+    if (!confirmed || !mounted) return;
+
+    final service = ref.read(messageServiceProvider);
+    if (service == null) return;
+
+    setState(() => _deleting = true);
+    try {
+      await service.deleteMessage(
+        messageId: message.id,
+        bookingId: widget.bookingId,
+      );
+      _invalidateInbox();
+      if (!mounted) return;
+      AppSnackBar.show(context, message: DiscChat.deleteMessageSuccess);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: DiscChat.deleteMessageError,
+        kind: AppSnackKind.error,
+      );
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
   }
 
   Future<void> _sendImage() async {
@@ -473,6 +578,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   targetType: ContentReportTargetType.conversation,
                   targetId: header.conversation.id,
                 ),
+        onDeleteChat: _confirmDeleteChat,
       ),
 
       body: DecoratedBox(
@@ -560,6 +666,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   currentUserId: userId,
 
                   scrollController: _scrollController,
+
+                  onDeleteMessage: userId == null ? null : _handleMessageLongPress,
 
                 );
 

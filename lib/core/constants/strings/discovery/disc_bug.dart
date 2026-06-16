@@ -6,9 +6,15 @@ abstract final class DiscBug {
   static const actionReportHint =
       'Décris un problème technique pour que l’équipe le corrige.';
   static const actionMyReports = 'Mes signalements de bugs';
+  static const actionNewReport = 'Nouveau signalement';
+  static const actionNewReportHint =
+      'Décris le bug rencontré : l’équipe sera notifiée.';
+  static const hubSubtitle =
+      'Consulte tes signalements ou en crée un nouveau.';
 
   static const screenTitle = 'Signaler un bug';
-  static const screenSubtitle =
+  static const newReportTitle = 'Nouveau signalement';
+  static const newReportSubtitle =
       'Décris le problème le plus précisément possible. '
       'L’équipe MadBeauty sera notifiée.';
 
@@ -45,8 +51,17 @@ abstract final class DiscBug {
       'Connecte-toi pour signaler un bug.';
 
   static const myReportsTitle = 'Mes signalements';
+  static const myReportsSectionTitle = 'Mes signalements';
   static const myReportsEmpty =
       'Tu n’as pas encore signalé de bug.';
+  static const myReportsEmptyBody =
+      'Utilise le bouton ci-dessus pour créer ton premier signalement.';
+
+  static String myReportsCountLabel(int count) {
+    if (count <= 0) return myReportsEmpty;
+    if (count == 1) return '1 signalement';
+    return '$count signalements';
+  }
   static const statusPending = 'En attente';
   static const statusInProgress = 'En cours';
   static const statusResolved = 'Résolu';
@@ -90,9 +105,12 @@ abstract final class DiscBug {
       'Échange avec l’utilisateur pour comprendre ou corriger le problème.';
   static const chatEmpty =
       'Aucun message pour l’instant. Envoie le premier message.';
+  static const chatEmptyReporterHint =
+      'L’équipe te répondra ici.';
   static const chatSendErr = 'Impossible d’envoyer le message.';
   static const chatLoadErr = 'Impossible de charger la discussion.';
   static const openChat = 'Ouvrir la discussion';
+  static const tileOpenDiscussion = 'Discuter avec l’équipe';
   static const adminActionInProgress = 'Prendre en charge';
   static const adminActionResolved = 'Marquer résolu';
   static const adminActionClosed = 'Classer sans suite';

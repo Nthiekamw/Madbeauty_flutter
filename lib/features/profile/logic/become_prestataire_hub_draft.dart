@@ -13,6 +13,7 @@ class BecomePrestataireHubDraft {
     this.ville = '',
     this.codePostal = '',
     this.adresse = '',
+    this.pays = 'FR',
     this.lieuTravail,
     this.avatarUrl,
     this.suggestionCategorieNom = '',
@@ -33,6 +34,7 @@ class BecomePrestataireHubDraft {
   final String ville;
   final String codePostal;
   final String adresse;
+  final String pays;
   final String? lieuTravail;
   final String? avatarUrl;
   final String suggestionCategorieNom;
@@ -64,6 +66,7 @@ class BecomePrestataireHubDraft {
         'ville': ville,
         'codePostal': codePostal,
         'adresse': adresse,
+        'pays': pays,
         if (lieuTravail != null) 'lieuTravail': lieuTravail,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
         'suggestionCategorieNom': suggestionCategorieNom,
@@ -105,6 +108,9 @@ class BecomePrestataireHubDraft {
       ville: json['ville'] as String? ?? '',
       codePostal: json['codePostal'] as String? ?? '',
       adresse: json['adresse'] as String? ?? '',
+      pays: (json['pays'] as String?)?.trim().toUpperCase().isNotEmpty == true
+          ? (json['pays'] as String).trim().toUpperCase()
+          : 'FR',
       lieuTravail: json['lieuTravail'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
       suggestionCategorieNom: json['suggestionCategorieNom'] as String? ?? '',

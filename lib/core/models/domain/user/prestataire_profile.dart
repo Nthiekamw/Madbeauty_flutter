@@ -29,6 +29,8 @@ abstract class PrestataireProfile with _$PrestataireProfile {
     String? ville,
     String? adresse,
     @JsonKey(name: 'code_postal') String? codePostal,
+    /// Code ISO 3166-1 alpha-2 (ex. FR, BE).
+    String? pays,
     @JsonKey(name: 'nom_affiche') String? nomAffiche,
     @JsonKey(name: 'lieu_travail')
     @LieuTravailConverter()

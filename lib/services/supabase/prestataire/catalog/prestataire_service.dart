@@ -194,6 +194,9 @@ class PrestataireService {
                 if (prestataire.codePostal != null &&
                     prestataire.codePostal!.trim().isNotEmpty)
                   'code_postal': prestataire.codePostal!.trim(),
+                if (prestataire.pays != null &&
+                    prestataire.pays!.trim().isNotEmpty)
+                  'pays': prestataire.pays!.trim().toUpperCase(),
                 if (prestataire.nomAffiche != null &&
                     prestataire.nomAffiche!.trim().isNotEmpty)
                   'nom_affiche': prestataire.nomAffiche!.trim(),

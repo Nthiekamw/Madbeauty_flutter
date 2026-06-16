@@ -35,6 +35,7 @@ abstract final class AppRoutes {
   static const String clientHistory = '/client/history';
   static const String clientHelp = '/client/help';
   static const String clientReportBug = '/client/report-bug';
+  static const String clientNewBugReport = '/client/report-bug/new';
   static const String clientMyBugReports = '/client/my-bug-reports';
   static const String bugReportChat = '/bug-report/:id/chat';
   static const String clientReferral = '/client/referral';
@@ -47,6 +48,7 @@ abstract final class AppRoutes {
   static const String adminReservations = '/admin/reservations';
   static const String adminAudit = '/admin/audit';
   static const String adminPush = '/admin/push';
+  static const String adminSubscriptionTrial = '/admin/subscription-trial';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -101,6 +103,7 @@ abstract final class AppRouteNames {
   static const String clientHistory = 'client-history';
   static const String clientHelp = 'client-help';
   static const String clientReportBug = 'client-report-bug';
+  static const String clientNewBugReport = 'client-new-bug-report';
   static const String clientMyBugReports = 'client-my-bug-reports';
   static const String bugReportChat = 'bug-report-chat';
   static const String clientReferral = 'client-referral';
@@ -113,6 +116,7 @@ abstract final class AppRouteNames {
   static const String adminReservations = 'admin-reservations';
   static const String adminAudit = 'admin-audit';
   static const String adminPush = 'admin-push';
+  static const String adminSubscriptionTrial = 'admin-subscription-trial';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';

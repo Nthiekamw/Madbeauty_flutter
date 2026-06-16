@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/logic/media/realisation_image_moderator.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/catalog/realisation_media_type.dart';
@@ -57,7 +58,18 @@ abstract final class PrestataireHubMediaActions {
       final uploadFile = await StorageUploadFile.fromXFile(file);
       try {
         StorageService.validateImageFile(uploadFile);
+        final moderation = uploadFile.isVideo
+            ? const RealisationImageModerationResult.allowed()
+            : await RealisationImageModerator.validateLocalImagePath(
+                uploadFile.localPath,
+              );
+        if (moderation.isBlocked) {
+          if (!context.mounted) return;
+          form.setGalleryError(moderation.message);
+          continue;
+        }
         if (!context.mounted) return;
+        form.clearGalleryError();
         form.addPendingGallery(uploadFile);
       } on AppFailure catch (e) {
         if (!context.mounted) return;

@@ -10,6 +10,7 @@ import '../../../prestataire/models/prestataires_filter_state.dart';
 import '../../../prestataire/providers/catalog/prestataire_filters_provider.dart';
 import '../../models/listing_catalog_layout.dart';
 import '../../models/listing_quick_filter.dart';
+import '../../providers/catalog_cities_provider.dart';
 import '../../providers/listing_view_preferences_provider.dart';
 import 'listing_filters_panel.dart';
 
@@ -39,6 +40,7 @@ class _ListingFiltersSheetBody extends ConsumerWidget {
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
     final filters = ref.watch(prestatairesFilterProvider);
     final prefs = ref.watch(listingViewPreferencesProvider);
+    final cities = ref.watch(catalogCitiesProvider);
     final maxH = MediaQuery.sizeOf(context).height * 0.82;
 
     return Padding(
@@ -164,9 +166,14 @@ class _ListingFiltersSheetBody extends ConsumerWidget {
                             icon: filter.icon,
                             selected: selected,
                             onTap: () {
-                              ref
-                                  .read(prestatairesFilterProvider.notifier)
-                                  .applyQuickFilter(filter);
+                              final notifier = ref.read(
+                                prestatairesFilterProvider.notifier,
+                              );
+                              if (selected) {
+                                notifier.resetQuickFilters();
+                              } else {
+                                notifier.applyQuickFilter(filter);
+                              }
                             },
                           );
                         }).toList(),
@@ -196,6 +203,42 @@ class _ListingFiltersSheetBody extends ConsumerWidget {
                                       .read(prestatairesFilterProvider.notifier)
                                       .setCategoryId(
                                         filters.categoryId == c.id ? null : c.id,
+                                      );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (cities.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _SheetSection(
+                        title: DiscList.citiesFilterTitle,
+                        child: _AlignedFilterChips(
+                          children: [
+                            _SheetFilterChip(
+                              label: DiscList.chipAll,
+                              icon: Icons.location_city_outlined,
+                              selected: filters.ville == null ||
+                                  filters.ville!.trim().isEmpty,
+                              onTap: () => ref
+                                  .read(prestatairesFilterProvider.notifier)
+                                  .setVille(null),
+                            ),
+                            for (final city in cities)
+                              _SheetFilterChip(
+                                label: city,
+                                icon: Icons.location_on_outlined,
+                                selected: filters.ville?.toLowerCase() ==
+                                    city.toLowerCase(),
+                                onTap: () {
+                                  ref
+                                      .read(prestatairesFilterProvider.notifier)
+                                      .setVille(
+                                        filters.ville?.toLowerCase() ==
+                                                city.toLowerCase()
+                                            ? null
+                                            : city,
                                       );
                                 },
                               ),

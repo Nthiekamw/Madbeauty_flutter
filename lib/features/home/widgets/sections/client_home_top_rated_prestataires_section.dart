@@ -37,7 +37,6 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
               : PrestataireHomeHorizontalList(
                   entries: value,
                   showRatingOnPhoto: true,
-                  dense: true,
                 ),
           error: (_, __) => DiscoverySectionError(
             message: DiscHome.topRatedLoadFail,

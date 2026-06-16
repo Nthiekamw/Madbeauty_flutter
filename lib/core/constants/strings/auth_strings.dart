@@ -135,6 +135,19 @@ abstract final class AuthStrings {
   static const String onboardingPage3Title = 'Côté prestataire';
   static const String onboardingPage3Body =
       'Agenda, demandes et profil : pilote ton activité beauté depuis le même compte.';
+  static const String onboardingPage4Title = 'MadBeauty en chiffres';
+  static const String onboardingPage4Body =
+      'Une communauté beauté qui grandit chaque jour.';
+  static const String onboardingStatClientsValue = '10K+';
+  static const String onboardingStatClientsLabel = 'Clientes';
+  static const String onboardingStatPrestatairesValue = '500+';
+  static const String onboardingStatPrestatairesLabel = 'Prestataires';
+  static const String onboardingStatReservationsValue = '50K+';
+  static const String onboardingStatReservationsLabel = 'Réservations';
+  static const String onboardingStatRatingValue = '4.8★';
+  static const String onboardingStatRatingLabel = 'Note moyenne';
+  static const String onboardingStatsDisclaimer =
+      'Chiffres indicatifs de la plateforme.';
 
   static const String welcomeTitle = 'Bienvenue';
   static const String welcomeSubtitle =

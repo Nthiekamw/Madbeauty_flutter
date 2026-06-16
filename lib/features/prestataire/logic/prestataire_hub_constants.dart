@@ -40,7 +40,7 @@ const List<PrestataireHubStepMeta> kPrestataireHubSteps = [
   ),
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepGallery,
-    icon: Icons.photo_library_outlined,
+    icon: Icons.photo_camera_outlined,
   ),
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepComfort,

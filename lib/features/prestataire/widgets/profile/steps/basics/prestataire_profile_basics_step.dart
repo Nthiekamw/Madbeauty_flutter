@@ -8,6 +8,7 @@ import '../../../../../../shared/widgets/app/app_avatar.dart';
 import '../../../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../../../shared/widgets/app/app_text_field.dart';
 import '../../hub/prestataire_hub_layout.dart';
+import 'prestataire_country_selector.dart';
 import 'prestataire_work_location_selector.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 
@@ -23,6 +24,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     required this.villeController,
     required this.codePostalController,
     required this.adresseController,
+    required this.paysCode,
     required this.lieuTravail,
     required this.avatarUrl,
     required this.avatarBytes,
@@ -33,6 +35,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     required this.villeError,
     required this.codePostalError,
     required this.adresseError,
+    this.paysError,
     required this.lieuTravailError,
     required this.avatarError,
     required this.uploadProgress,
@@ -41,6 +44,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     this.selectedDefaultAvatarUrl,
     this.onSelectDefaultAvatar,
     required this.onLieuTravailChanged,
+    required this.onPaysChanged,
     required this.onChanged,
     this.vitrineOnly = false,
     this.locationOnly = false,
@@ -60,6 +64,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final TextEditingController villeController;
   final TextEditingController codePostalController;
   final TextEditingController adresseController;
+  final String paysCode;
   final LieuTravail? lieuTravail;
   final String? avatarUrl;
   final Uint8List? avatarBytes;
@@ -70,6 +75,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final String? villeError;
   final String? codePostalError;
   final String? adresseError;
+  final String? paysError;
   final String? lieuTravailError;
   final String? avatarError;
   final double? uploadProgress;
@@ -78,6 +84,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final String? selectedDefaultAvatarUrl;
   final ValueChanged<String>? onSelectDefaultAvatar;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
+  final ValueChanged<String> onPaysChanged;
   final VoidCallback onChanged;
 
   String? _dropdownValueFor(
@@ -418,6 +425,15 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        PrestataireCountrySelector(
+          value: paysCode,
+          errorText: paysError,
+          onChanged: (code) {
+            onPaysChanged(code);
+            onChanged();
+          },
+        ),
+        const SizedBox(height: 12),
         AppTextField(
           controller: adresseController,
           label: DiscPrestaForm.salonAddress,

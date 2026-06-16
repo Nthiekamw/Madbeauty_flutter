@@ -2,7 +2,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   ensurePrestataireBillingCustomer,
   ensurePrestataireProfileRow,
-  PRESTATAIRE_TRIAL_DAYS,
+  getCatalogTrialDays,
   subscriptionCancelUrl,
   subscriptionPriceId,
   subscriptionSuccessUrl,
@@ -100,6 +100,10 @@ Deno.serve(async (req) => {
       prestataire.stripe_subscription_id?.trim(),
     );
 
+    const trialDays = hadStripeSubscription
+      ? 0
+      : await getCatalogTrialDays(admin);
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -108,9 +112,9 @@ Deno.serve(async (req) => {
       cancel_url: subscriptionCancelUrl(),
       client_reference_id: prestataireId,
       subscription_data: {
-        ...(hadStripeSubscription
+        ...(hadStripeSubscription || trialDays <= 0
           ? {}
-          : { trial_period_days: PRESTATAIRE_TRIAL_DAYS }),
+          : { trial_period_days: trialDays }),
         metadata: {
           prestataire_id: prestataireId,
           supabase_user_id: user.id,

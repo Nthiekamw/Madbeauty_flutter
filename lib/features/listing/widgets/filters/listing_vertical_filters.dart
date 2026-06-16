@@ -14,9 +14,11 @@ class ListingVerticalFilters extends ConsumerWidget {
   const ListingVerticalFilters({
     super.key,
     this.onStyleQuerySelected,
+    this.onClearSearchField,
   });
 
   final ValueChanged<String>? onStyleQuerySelected;
+  final VoidCallback? onClearSearchField;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +47,7 @@ class ListingVerticalFilters extends ConsumerWidget {
                   ref
                       .read(prestatairesFilterProvider.notifier)
                       .resetQuickFilters();
-                  onStyleQuerySelected?.call('');
+                  onClearSearchField?.call();
                 },
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
@@ -110,11 +112,17 @@ class ListingVerticalFilters extends ConsumerWidget {
         filter: filter,
         selected: selected,
         onTap: () {
-          ref.read(prestatairesFilterProvider.notifier).applyQuickFilter(filter);
+          final notifier = ref.read(prestatairesFilterProvider.notifier);
+          if (selected && filter.id != 'all') {
+            notifier.resetQuickFilters();
+            onClearSearchField?.call();
+            return;
+          }
+          notifier.applyQuickFilter(filter);
           if (filter.kind == ListingQuickFilterKind.styleQuery) {
             onStyleQuerySelected?.call(filter.query ?? '');
           } else {
-            onStyleQuerySelected?.call('');
+            onClearSearchField?.call();
           }
         },
       ),

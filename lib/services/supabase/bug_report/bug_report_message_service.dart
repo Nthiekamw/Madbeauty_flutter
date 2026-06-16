@@ -42,6 +42,40 @@ class BugReportMessageService {
         },
       );
 
+  Future<void> markAsDelivered({
+    required String bugReportId,
+    required String userId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'bugReportMessage.markAsDelivered',
+        action: () async {
+          final now = DateTime.now().toUtc().toIso8601String();
+          await _client
+              .from('bug_report_messages')
+              .update({'delivered_at': now})
+              .eq('bug_report_id', bugReportId)
+              .neq('sender_id', userId)
+              .isFilter('delivered_at', null);
+        },
+      );
+
+  Future<void> markAsRead({
+    required String bugReportId,
+    required String userId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'bugReportMessage.markAsRead',
+        action: () async {
+          await markAsDelivered(bugReportId: bugReportId, userId: userId);
+          await _client
+              .from('bug_report_messages')
+              .update({'is_read': true})
+              .eq('bug_report_id', bugReportId)
+              .neq('sender_id', userId)
+              .eq('is_read', false);
+        },
+      );
+
   Stream<List<BugReportMessage>> watchMessages(String bugReportId) {
     final controller = StreamController<List<BugReportMessage>>.broadcast();
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;

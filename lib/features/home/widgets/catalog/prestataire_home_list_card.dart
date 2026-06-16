@@ -4,6 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/geo/geo_point.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/utils/text_normalizer.dart';
@@ -38,6 +39,7 @@ class PrestataireHomeListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final layout = DiscoveryResponsive.of(context);
     final profile = entry.profile;
     final title = normalizeSingleLineText(entry.displayName);
     final safeTitle = title.isEmpty ? 'Salon' : title;
@@ -52,80 +54,71 @@ class PrestataireHomeListCard extends StatelessWidget {
         : null;
     final rating = profile.noteMoyenne;
     final radius = HomeStyles.cardBorderRadius;
-    final w = cardWidth ?? HomeStyles.listCardWidth;
-    final h = cardHeight;
-    final rawPhotoH = photoHeight ?? HomeStyles.listCardPhotoHeight;
+    final w = cardWidth ?? layout.homeListCardWidth;
+    final h = cardHeight ?? layout.homeListCardHeight;
+    final rawPhotoH = photoHeight ?? layout.homeListPhotoHeight;
+    final textPadV = dense ? 2.0 : 3.0;
+    final textPadH = dense ? 5.0 : 6.0;
+    final textZoneH = h - rawPhotoH - textPadV;
 
-    return Material(
-      color: AppColors.cardSurfaceFor(theme.brightness),
-      elevation: isDark ? 0 : 1,
-      shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
-      borderRadius: radius,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.pushPrestataireDetail(profile.id),
+    return SizedBox(
+      width: w,
+      height: h,
+      child: Material(
+        color: AppColors.cardSurfaceFor(theme.brightness),
+        elevation: isDark ? 0 : 1,
+        shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
         borderRadius: radius,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(
-                alpha: isDark ? 0.28 : 0.08,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.pushPrestataireDetail(profile.id),
+          borderRadius: radius,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(
+                  alpha: isDark ? 0.28 : 0.08,
+                ),
               ),
             ),
-          ),
-          child: SizedBox(
-            width: w,
-            height: h,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (h != null)
-                  Expanded(
-                    child: _PhotoSection(
-                      profileId: profile.id,
-                      width: w,
-                      radius: radius,
+                _PhotoSection(
+                  profileId: profile.id,
+                  width: w,
+                  radius: radius,
+                  safeTitle: safeTitle,
+                  avatarUrl: entry.avatarUrl,
+                  showDistanceOnPhoto: showDistanceOnPhoto,
+                  showRatingOnPhoto: showRatingOnPhoto,
+                  distanceLabel: distanceLabel,
+                  rating: rating,
+                  height: rawPhotoH,
+                ),
+                SizedBox(
+                  height: textZoneH,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      textPadH,
+                      dense ? 1 : 2,
+                      textPadH,
+                      dense ? 2 : 2,
+                    ),
+                    child: _CardTextBody(
+                      theme: theme,
                       safeTitle: safeTitle,
-                      avatarUrl: entry.avatarUrl,
+                      isVerified: profile.isVerified,
+                      specialty: specialty,
+                      rating: rating,
+                      reviewCount: entry.reviewCount,
+                      ville: ville,
+                      km: km,
+                      dense: dense,
                       showDistanceOnPhoto: showDistanceOnPhoto,
                       showRatingOnPhoto: showRatingOnPhoto,
-                      distanceLabel: distanceLabel,
-                      rating: rating,
                     ),
-                  )
-                else
-                  _PhotoSection(
-                    profileId: profile.id,
-                    width: w,
-                    radius: radius,
-                    safeTitle: safeTitle,
-                    avatarUrl: entry.avatarUrl,
-                    showDistanceOnPhoto: showDistanceOnPhoto,
-                    showRatingOnPhoto: showRatingOnPhoto,
-                    distanceLabel: distanceLabel,
-                    rating: rating,
-                    fixedHeight: rawPhotoH,
-                  ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    dense ? 6 : 7,
-                    dense ? 2 : 3,
-                    dense ? 6 : 7,
-                    dense ? 3 : 4,
-                  ),
-                  child: _CardTextBody(
-                    theme: theme,
-                    safeTitle: safeTitle,
-                    isVerified: profile.isVerified,
-                    specialty: specialty,
-                    rating: rating,
-                    reviewCount: entry.reviewCount,
-                    ville: ville,
-                    km: km,
-                    dense: dense,
-                    showDistanceOnPhoto: showDistanceOnPhoto,
-                    showRatingOnPhoto: showRatingOnPhoto,
                   ),
                 ),
               ],
@@ -148,7 +141,7 @@ class _PhotoSection extends StatelessWidget {
     required this.showRatingOnPhoto,
     required this.distanceLabel,
     required this.rating,
-    this.fixedHeight,
+    required this.height,
   });
 
   final String profileId;
@@ -160,58 +153,50 @@ class _PhotoSection extends StatelessWidget {
   final bool showRatingOnPhoto;
   final String? distanceLabel;
   final double? rating;
-  final double? fixedHeight;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxH = constraints.maxHeight;
-        final photoH = fixedHeight ??
-            (maxH.isFinite && maxH > 0 ? maxH : HomeStyles.listCardPhotoHeight);
-
-        return SizedBox(
-          height: photoH,
-          width: width,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-            PrestataireCardPhotoHeader(
-              prestataireId: profileId,
-              height: photoH,
-              width: width,
-              borderRadius: BorderRadius.only(
-                topLeft: radius.topLeft,
-                topRight: radius.topRight,
-              ),
-              fallbackDisplayName: safeTitle,
-              fallbackAvatarUrl: avatarUrl,
-              compactBadge: true,
-              microOverlay: true,
+    return SizedBox(
+      height: height,
+      width: width,
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          PrestataireCardPhotoHeader(
+            prestataireId: profileId,
+            height: height,
+            width: width,
+            borderRadius: BorderRadius.only(
+              topLeft: radius.topLeft,
+              topRight: radius.topRight,
             ),
-            if (showDistanceOnPhoto && distanceLabel != null)
-              Positioned(
-                left: 5,
-                bottom: 5,
-                child: _PhotoPill(
-                  icon: Icons.near_me_rounded,
-                  label: distanceLabel!,
-                ),
-              ),
-            if (showRatingOnPhoto && rating != null)
-              Positioned(
-                left: 5,
-                bottom: 5,
-                child: _PhotoPill(
-                  icon: Icons.star_rounded,
-                  label: rating!.toStringAsFixed(1),
-                  iconColor: AppColors.starRating,
-                ),
-              ),
-            ],
+            fallbackDisplayName: safeTitle,
+            fallbackAvatarUrl: avatarUrl,
+            compactBadge: true,
+            microOverlay: true,
           ),
-        );
-      },
+          if (showDistanceOnPhoto && distanceLabel != null)
+            Positioned(
+              left: 5,
+              bottom: 5,
+              child: _PhotoPill(
+                icon: Icons.near_me_rounded,
+                label: distanceLabel!,
+              ),
+            ),
+          if (showRatingOnPhoto && rating != null)
+            Positioned(
+              left: 5,
+              bottom: 5,
+              child: _PhotoPill(
+                icon: Icons.star_rounded,
+                label: rating!.toStringAsFixed(1),
+                iconColor: AppColors.starRating,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -245,8 +230,8 @@ class _CardTextBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleSize = dense ? 8.5 : 9.0;
-    final bodySize = dense ? 7.5 : 8.0;
+    final titleSize = dense ? 8.5 : 8.5;
+    final bodySize = dense ? 7.0 : 7.5;
     final showSpecialty = specialty != null && specialty!.isNotEmpty;
     final locationLine =
         showDistanceOnPhoto ? null : _locationLine();
@@ -254,7 +239,8 @@ class _CardTextBody extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +248,8 @@ class _CardTextBody extends StatelessWidget {
             Expanded(
               child: Text(
                 safeTitle,
-                softWrap: true,
+                maxLines: dense ? 1 : 2,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w800,
@@ -284,10 +271,11 @@ class _CardTextBody extends StatelessWidget {
           ],
         ),
         if (showSpecialty) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             specialty!,
-            softWrap: true,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontSize: bodySize,
@@ -296,7 +284,7 @@ class _CardTextBody extends StatelessWidget {
           ),
         ],
         if (showRating) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -309,7 +297,8 @@ class _CardTextBody extends StatelessWidget {
               Expanded(
                 child: Text(
                   DiscHome.ratingWithReviews(rating!, reviewCount),
-                  softWrap: true,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
@@ -323,7 +312,7 @@ class _CardTextBody extends StatelessWidget {
           ),
         ],
         if (locationLine != null) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -336,7 +325,8 @@ class _CardTextBody extends StatelessWidget {
               Expanded(
                 child: Text(
                   locationLine,
-                  softWrap: true,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontSize: bodySize,

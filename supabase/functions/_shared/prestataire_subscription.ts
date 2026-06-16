@@ -4,8 +4,21 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 export type SubscriptionTier = "solo" | "multi";
 export type SubscriptionInterval = "month" | "year";
 
-/** Jours d’essai catalogue (plateforme) et Stripe Checkout (premier abonnement). */
-export const PRESTATAIRE_TRIAL_DAYS = 5;
+/** Jours d’essai catalogue (plateforme) — repli si réglage DB indisponible. */
+export const PRESTATAIRE_TRIAL_DAYS_FALLBACK = 90;
+
+export async function getCatalogTrialDays(
+  admin: SupabaseClient,
+): Promise<number> {
+  const { data, error } = await admin.rpc("get_catalog_trial_days");
+  if (error) {
+    console.warn("get_catalog_trial_days:", error.message);
+    return PRESTATAIRE_TRIAL_DAYS_FALLBACK;
+  }
+  const days = typeof data === "number" ? data : Number(data);
+  if (Number.isFinite(days) && days > 0 && days <= 730) return days;
+  return PRESTATAIRE_TRIAL_DAYS_FALLBACK;
+}
 
 function connectRedirectFunctionBase(): string {
   const explicit = Deno.env.get("STRIPE_CONNECT_REDIRECT_BASE_URL")?.trim();

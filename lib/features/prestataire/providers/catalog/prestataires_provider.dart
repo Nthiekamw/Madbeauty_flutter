@@ -71,6 +71,7 @@ List<PrestataireCatalogEntry> filterPrestataireEntries(
   final list = entries
       .where((e) => e.matchesSearch(filters.query))
       .where((e) => e.matchesCategoryFilter(filters.categoryId))
+      .where((e) => e.matchesVilleFilter(filters.ville))
       .toList();
 
   switch (filters.sort) {

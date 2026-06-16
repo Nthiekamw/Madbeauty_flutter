@@ -8,6 +8,7 @@ import 'in_app_notification.dart';
 import 'in_app_notifications_sync.dart';
 
 const _prefsKey = 'in_app_notifications.v1';
+const _dismissedIdsKey = 'in_app_notifications_dismissed.v1';
 const _maxItems = 50;
 
 /// Liste des notifications reçues (push + ouverture depuis la barre système).
@@ -28,11 +29,29 @@ final inAppNotificationsSyncProvider = FutureProvider.autoDispose<void>((ref) as
 
 class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   bool _hydrated = false;
+  bool _dismissedHydrated = false;
+  final Set<String> _dismissedIds = {};
+  Set<String> _lastSyncedIds = const {};
 
   @override
   List<InAppNotification> build() {
     Future.microtask(_hydrateOnce);
     return const [];
+  }
+
+  Future<void> _hydrateDismissedIds() async {
+    if (_dismissedHydrated) return;
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_dismissedIdsKey);
+    _dismissedIds
+      ..clear()
+      ..addAll(raw ?? const []);
+    _dismissedHydrated = true;
+  }
+
+  Future<void> _persistDismissedIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_dismissedIdsKey, _dismissedIds.toList());
   }
 
   Future<void> _hydrateOnce() async {
@@ -59,7 +78,11 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   Future<void> purgeForLogout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsKey);
+    await prefs.remove(_dismissedIdsKey);
     _hydrated = true;
+    _dismissedHydrated = true;
+    _dismissedIds.clear();
+    _lastSyncedIds = const {};
     state = const [];
   }
 
@@ -72,8 +95,14 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   }
 
   Future<void> clear() async {
+    await _hydrateOnce();
+    await _hydrateDismissedIds();
+    _dismissedIds
+      ..addAll(state.map((e) => e.id))
+      ..addAll(_lastSyncedIds);
     state = const [];
     await _persist();
+    await _persistDismissedIds();
   }
 
   Future<void> markRead(String id) async {
@@ -91,19 +120,29 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   }
 
   Future<void> dismiss(String id) async {
+    await _hydrateDismissedIds();
+    _dismissedIds.add(id);
     state = state.where((e) => e.id != id).toList();
     await _persist();
+    await _persistDismissedIds();
   }
 
   /// Fusionne les alertes issues de l'activité Supabase (réservations).
   Future<void> mergeSynced(List<InAppNotification> incoming) async {
     await _hydrateOnce();
+    await _hydrateDismissedIds();
+    _lastSyncedIds = incoming.map((e) => e.id).toSet();
     if (incoming.isEmpty) return;
+
+    final filtered = incoming
+        .where((n) => !_dismissedIds.contains(n.id))
+        .toList();
+    if (filtered.isEmpty && state.isEmpty) return;
 
     final byId = <String, InAppNotification>{
       for (final n in state) n.id: n,
     };
-    for (final n in incoming) {
+    for (final n in filtered) {
       final existing = byId[n.id];
       byId[n.id] = existing == null
           ? n

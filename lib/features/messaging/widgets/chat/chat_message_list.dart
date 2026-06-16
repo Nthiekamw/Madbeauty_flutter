@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/messaging/message.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../logic/chat_message_moderator.dart';
+import '../../logic/chat_message_receipt.dart';
 import 'chat_bubble.dart';
 import 'chat_content_width.dart';
 
@@ -16,12 +17,14 @@ class ChatMessageList extends StatelessWidget {
     required this.currentUserId,
     required this.scrollController,
     this.emptyPlaceholder,
+    this.onDeleteMessage,
   });
 
   final List<Message> messages;
   final String? currentUserId;
   final ScrollController scrollController;
   final Widget? emptyPlaceholder;
+  final void Function(Message message)? onDeleteMessage;
 
   static const _groupWindow = Duration(minutes: 5);
 
@@ -71,19 +74,28 @@ class ChatMessageList extends StatelessWidget {
               !_sameDay(messages[index - 1].createdAt, msg.createdAt);
           final isFirstInGroup = _isFirstInGroup(messages, index, currentUserId);
           final isLastInGroup = _isLastInGroup(messages, index, currentUserId);
+          final canDelete = isMine && onDeleteMessage != null;
 
           return Column(
             children: [
               if (showDate) _DateSeparator(label: _dateLabel(msg.createdAt.toLocal())),
-              ChatBubble(
-                text: ChatMessageModerator.sanitizeForDisplay(msg.content),
-                isMine: isMine,
-                imageUrl: msg.imageUrl,
-                isReadByPeer: !isMine || msg.isRead,
-                isFirstInGroup: isFirstInGroup,
-                isLastInGroup: isLastInGroup,
-                timeLabel: DateFormat('HH:mm', 'fr_FR')
-                    .format(msg.createdAt.toLocal()),
+              GestureDetector(
+                onLongPress: canDelete ? () => onDeleteMessage!(msg) : null,
+                child: ChatBubble(
+                  text: ChatMessageModerator.sanitizeForDisplay(msg.content),
+                  isMine: isMine,
+                  imageUrl: msg.imageUrl,
+                  receiptStatus: isMine
+                      ? chatOutgoingReceiptStatus(
+                          isRead: msg.isRead,
+                          deliveredAt: msg.deliveredAt,
+                        )
+                      : null,
+                  isFirstInGroup: isFirstInGroup,
+                  isLastInGroup: isLastInGroup,
+                  timeLabel: DateFormat('HH:mm', 'fr_FR')
+                      .format(msg.createdAt.toLocal()),
+                ),
               ),
             ],
           );

@@ -11,6 +11,7 @@ import '../models/admin_analytics_summary.dart';
 import '../providers/admin_analytics_provider.dart';
 import '../providers/admin_pending_counts_provider.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
+import '../widgets/admin_country_stats_section.dart';
 import '../widgets/admin_screen_scaffold.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/utils/currency_format.dart';
@@ -63,6 +64,8 @@ class AdminHomeScreen extends ConsumerWidget {
               error: (_, __) => const _StatsLoading(),
             ),
           ),
+          const SizedBox(height: 20),
+          const AdminCountryStatsSection(),
           const SizedBox(height: 16),
           Text(
             DiscProfile.adminHomeActionsTitle,
@@ -108,6 +111,13 @@ class AdminHomeScreen extends ConsumerWidget {
             title: DiscProfile.actionAdminReservations,
             subtitle: DiscProfile.actionAdminReservationsHint,
             onTap: () => context.pushAdminReservations(),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
+            icon: Icons.card_giftcard_outlined,
+            title: DiscProfile.actionAdminSubscriptionTrial,
+            subtitle: DiscProfile.actionAdminSubscriptionTrialHint,
+            onTap: () => context.pushAdminSubscriptionTrial(),
           ),
           const SizedBox(height: 10),
           _ActionCard(

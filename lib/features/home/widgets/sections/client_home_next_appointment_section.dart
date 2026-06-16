@@ -12,6 +12,7 @@ import '../catalog/prestataire_catalog_section_empty.dart';
 import '../shared/client_home_section_header.dart';
 import '../../../booking/logic/booking_formatters.dart';
 import '../../../booking/logic/client_reservation_lists.dart';
+import '../../../booking/widgets/shared/appointment_date_badge.dart';
 
 /// Prochains rendez-vous client sur l'accueil.
 class ClientHomeNextAppointmentSection extends ConsumerWidget {
@@ -28,6 +29,7 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
       children: [
         ClientHomeSectionHeader(
           title: DiscHome.nextAppointmentTitle,
+          icon: Icons.upcoming_rounded,
           compact: true,
           actionLabel: DiscHome.nextAppointmentSeeAll,
           onAction: () => context.goMyReservations(),
@@ -62,7 +64,8 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
             }
 
             final next = upcoming.first;
-            final dateLabel = _capitalize(formatBookingDate(next.dateHeure));
+            final weekday =
+                _capitalize(formatBookingWeekday(next.dateHeure));
             final timeLabel = formatBookingTime(next.dateHeure);
             final salon = next.prestataireName ?? DiscBk.unknownPresta;
 
@@ -86,28 +89,14 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.clientAppointmentIconBgDark
-                                : AppColors.clientAppointmentIconBg,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.calendar_month_outlined,
-                            color: theme.colorScheme.primary,
-                            size: 18,
-                          ),
-                        ),
+                        AppointmentDateBadge(date: next.dateHeure),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '$dateLabel · $timeLabel',
+                                '$weekday · $timeLabel',
                                 style: theme.textTheme.labelLarge?.copyWith(
                                   fontFamily: AppFonts.display,
                                   fontWeight: FontWeight.w800,
