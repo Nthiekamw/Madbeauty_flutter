@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
 
 
@@ -16,6 +15,7 @@ import '../../../core/models/domain/messaging/message.dart';
 
 import '../../../features/auth/providers/auth_notifier.dart';
 
+import '../../booking/logic/booking_formatters.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../services/supabase/messaging/message_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
@@ -460,31 +460,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
   String? _headerSubtitle(ConversationInboxItem? header) {
-
     if (header == null) return null;
 
     final parts = <String>[];
-
     if (header.serviceName?.trim().isNotEmpty == true) {
-
       parts.add(header.serviceName!.trim());
-
     }
-
     if (header.reservationDate != null) {
-
+      final local = header.reservationDate!.toLocal();
       parts.add(
-
-        DateFormat('d MMM yyyy • HH:mm', 'fr_FR')
-
-            .format(header.reservationDate!.toLocal()),
-
+        '${local.day}/${local.month} · ${formatBookingTime(local)}',
       );
-
     }
-
     return parts.isEmpty ? null : parts.join(' · ');
-
   }
 
 

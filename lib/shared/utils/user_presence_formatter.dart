@@ -38,7 +38,7 @@ abstract final class UserPresenceFormatter {
     }
 
     return DiscChat.presenceOnDate(
-      DateFormat('d MMM yyyy • HH:mm', 'fr_FR').format(seen),
+      DateFormat('d MMM • HH:mm', 'fr_FR').format(seen),
     );
   }
 }

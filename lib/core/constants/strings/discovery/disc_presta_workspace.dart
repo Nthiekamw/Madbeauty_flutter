@@ -15,6 +15,8 @@ abstract final class DiscPrestaWorkspace {
   static const messagesShort = 'Messages';
   static const messagesInboxSubtitle =
       'Échanges liés à tes réservations acceptées';
+  /// Sous-titre court de l'en-tête (onglet Messages).
+  static const messagesInboxHeaderSubtitle = 'Messages clients';
   static const agendaSubtitle = 'Planning et demandes de réservation';
   static const clientsSubtitle = 'Historique et fidélisation';
   static const profileHeaderSubtitle = 'Compte, paiements et réglages pro';

@@ -115,6 +115,8 @@ class ClientWorkspaceHeader extends ConsumerWidget {
                 SizedBox(height: compact ? 2 : 4),
                 Text(
                   lineSubtitle,
+                  maxLines: compact ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.body,

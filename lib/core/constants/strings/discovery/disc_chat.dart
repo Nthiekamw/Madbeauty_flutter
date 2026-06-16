@@ -21,6 +21,8 @@ abstract final class DiscChat {
   static const profileShortcut = 'Chat';
   static const profileSectionTitle = 'Chat';
   static const profileShortcutHint = 'Conversations liées à tes réservations';
+  /// Sous-titre court de l'en-tête workspace (onglet Messages).
+  static const inboxHeaderSubtitleClient = 'Tes conversations';
   static const inputHint = 'Message';
   static const send = 'Envoyer';
   static const loadError = 'Impossible de charger les messages.';
@@ -97,7 +99,7 @@ abstract final class DiscChat {
       'Tu ne peux supprimer que tes propres messages.';
 
   static const presenceOnline = 'En ligne';
-  static const presenceUnknown = 'Dernière activité inconnue';
+  static const presenceUnknown = 'Hors ligne';
   static const presenceJustNow = 'Vu à l\'instant';
   static String presenceMinutesAgo(int minutes) =>
       'Vu il y a $minutes min';

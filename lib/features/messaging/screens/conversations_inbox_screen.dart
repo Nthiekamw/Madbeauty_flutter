@@ -74,8 +74,8 @@ class _ConversationsInboxScreenState
     final headerSubtitle = totalUnread > 0
         ? DiscChat.unreadCountLabel(totalUnread)
         : (widget.role == MessagingInboxRole.prestataire
-            ? DiscPrestaWorkspace.messagesInboxSubtitle
-            : DiscChat.emptyBodyClient);
+            ? DiscPrestaWorkspace.messagesInboxHeaderSubtitle
+            : DiscChat.inboxHeaderSubtitleClient);
 
     if (widget.role == MessagingInboxRole.client) {
       return Scaffold(
