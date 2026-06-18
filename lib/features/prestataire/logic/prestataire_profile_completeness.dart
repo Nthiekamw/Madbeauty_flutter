@@ -33,7 +33,6 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
   bool get isProfessionallyComplete {
     final hasAvatar = avatarUrl != null && avatarUrl!.trim().isNotEmpty;
     return hasMinimalPrestaIdentity &&
-        hasDisplayName &&
         hasSalonAddress &&
         hasPostalCode &&
         hasWorkLocation &&
@@ -45,7 +44,6 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
   List<PrestaCompletionChecklistItem> get missingChecklistItems {
     final items = <PrestaCompletionChecklistItem>[];
     if (!hasMinimalPrestaIdentity ||
-        !hasDisplayName ||
         !hasSalonAddress ||
         !hasPostalCode ||
         !hasWorkLocation ||
@@ -119,7 +117,7 @@ int prestataireProfileCompletionPercent(
 }) {
   const steps = 8;
   var done = 0;
-  if (data.hasMinimalPrestaIdentity && data.hasDisplayName) done++;
+  if (data.hasMinimalPrestaIdentity) done++;
   if (data.hasSalonAddress && data.hasPostalCode && data.hasWorkLocation) {
     done++;
   }

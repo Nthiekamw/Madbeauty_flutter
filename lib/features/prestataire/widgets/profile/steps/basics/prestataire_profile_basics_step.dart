@@ -7,8 +7,10 @@ import '../../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../../shared/widgets/app/app_avatar.dart';
 import '../../../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../../../shared/widgets/app/app_text_field.dart';
+import 'package:madbeauty/features/auth/widgets/postal_address_form.dart';
 import '../../hub/prestataire_hub_layout.dart';
-import 'prestataire_country_selector.dart';
+import '../../../../logic/professional_experience_entries.dart';
+import 'prestataire_professional_experience_picker.dart';
 import 'prestataire_work_location_selector.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 
@@ -20,11 +22,20 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     required this.descriptionController,
     required this.experienceProController,
     required this.anneesExperienceController,
+    required this.professionalExperiences,
+    required this.onToggleProfessionalExperience,
+    required this.onProfessionalExperienceYearsChanged,
+    required this.onRemoveProfessionalExperience,
     required this.bioController,
     required this.villeController,
     required this.codePostalController,
     required this.adresseController,
-    required this.paysCode,
+    required this.voieType,
+    required this.onVoieTypeChanged,
+    required this.voieNomController,
+    required this.numeroRueController,
+    required this.paysController,
+    required this.onPostalAddressChanged,
     required this.lieuTravail,
     required this.avatarUrl,
     required this.avatarBytes,
@@ -35,7 +46,6 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     required this.villeError,
     required this.codePostalError,
     required this.adresseError,
-    this.paysError,
     required this.lieuTravailError,
     required this.avatarError,
     required this.uploadProgress,
@@ -44,7 +54,6 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     this.selectedDefaultAvatarUrl,
     this.onSelectDefaultAvatar,
     required this.onLieuTravailChanged,
-    required this.onPaysChanged,
     required this.onChanged,
     this.vitrineOnly = false,
     this.locationOnly = false,
@@ -60,11 +69,20 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final TextEditingController descriptionController;
   final TextEditingController experienceProController;
   final TextEditingController anneesExperienceController;
+  final List<ProfessionalExperienceEntry> professionalExperiences;
+  final ValueChanged<String> onToggleProfessionalExperience;
+  final void Function(String role, String years) onProfessionalExperienceYearsChanged;
+  final ValueChanged<String> onRemoveProfessionalExperience;
   final TextEditingController bioController;
   final TextEditingController villeController;
   final TextEditingController codePostalController;
   final TextEditingController adresseController;
-  final String paysCode;
+  final String voieType;
+  final ValueChanged<String> onVoieTypeChanged;
+  final TextEditingController voieNomController;
+  final TextEditingController numeroRueController;
+  final TextEditingController paysController;
+  final VoidCallback onPostalAddressChanged;
   final LieuTravail? lieuTravail;
   final String? avatarUrl;
   final Uint8List? avatarBytes;
@@ -75,7 +93,6 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final String? villeError;
   final String? codePostalError;
   final String? adresseError;
-  final String? paysError;
   final String? lieuTravailError;
   final String? avatarError;
   final double? uploadProgress;
@@ -84,17 +101,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
   final String? selectedDefaultAvatarUrl;
   final ValueChanged<String>? onSelectDefaultAvatar;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
-  final ValueChanged<String> onPaysChanged;
   final VoidCallback onChanged;
-
-  String? _dropdownValueFor(
-    TextEditingController controller,
-    List<String> options,
-  ) {
-    final value = controller.text.trim();
-    if (value.isEmpty) return null;
-    return options.contains(value) ? value : null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +136,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
       hasAvatar: hasAvatar,
     );
     final presentationBlock = _buildPresentationBlock();
-    final locationBlock = _buildLocationBlock(layout);
+    final locationBlock = _buildLocationBlock(context, layout);
 
     if (!guidedMode) {
       return Column(
@@ -176,7 +183,7 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
             title: DiscPrestaForm.hubSectionAddress,
             subtitle: DiscPrestaForm.hubSectionAddressHint,
             icon: Icons.location_on_outlined,
-            child: _buildAddressFieldsOnly(layout),
+            child: _buildAddressFieldsOnly(context, layout),
           ),
         ],
       ],
@@ -323,82 +330,12 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           child: Text('${descriptionController.text.characters.length}/200'),
         ),
         const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: _dropdownValueFor(
-            experienceProController,
-            DiscPrestaForm.experienceProSuggestions,
-          ),
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: DiscPrestaForm.experiencePro,
-            hintText: DiscPrestaForm.experienceProHint,
-            errorText: experienceProError,
-            border: const OutlineInputBorder(),
-          ),
-          selectedItemBuilder: (context) => [
-            for (final option in DiscPrestaForm.experienceProSuggestions)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  option,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          items: [
-            for (final option in DiscPrestaForm.experienceProSuggestions)
-              DropdownMenuItem<String>(
-                value: option,
-                child: Text(
-                  option,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (value) {
-            experienceProController.text = value ?? '';
-            onChanged();
-          },
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: _dropdownValueFor(
-            anneesExperienceController,
-            DiscPrestaForm.experienceYearsSuggestions,
-          ),
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: DiscPrestaForm.experienceYears,
-            border: const OutlineInputBorder(),
-          ),
-          selectedItemBuilder: (context) => [
-            for (final option in DiscPrestaForm.experienceYearsSuggestions)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  option,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          items: [
-            for (final option in DiscPrestaForm.experienceYearsSuggestions)
-              DropdownMenuItem<String>(
-                value: option,
-                child: Text(
-                  option,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (value) {
-            anneesExperienceController.text = value ?? '';
-            onChanged();
-          },
+        PrestataireProfessionalExperiencePicker(
+          entries: professionalExperiences,
+          errorText: experienceProError,
+          onToggleRole: onToggleProfessionalExperience,
+          onYearsChanged: onProfessionalExperienceYearsChanged,
+          onRemove: onRemoveProfessionalExperience,
         ),
         const SizedBox(height: 12),
         AppTextField(
@@ -421,87 +358,59 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressFieldsOnly(DiscoveryResponsive layout) {
+  Widget _buildAddressFieldsOnly(
+    BuildContext context,
+    DiscoveryResponsive layout,
+  ) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PrestataireCountrySelector(
-          value: paysCode,
-          errorText: paysError,
-          onChanged: (code) {
-            onPaysChanged(code);
+        PostalAddressForm(
+          voieType: voieType,
+          onVoieTypeChanged: onVoieTypeChanged,
+          voieNomController: voieNomController,
+          numeroController: numeroRueController,
+          codePostalController: codePostalController,
+          villeController: villeController,
+          paysController: paysController,
+          villeError: villeError,
+          codePostalError: codePostalError,
+          onVilleChanged: () {
+            onPostalAddressChanged();
             onChanged();
           },
+          onCodePostalChanged: () {
+            onPostalAddressChanged();
+            onChanged();
+          },
+          villeRequired: true,
+          showSectionHeader: false,
+          dense: true,
         ),
-        const SizedBox(height: 12),
-        AppTextField(
-          controller: adresseController,
-          label: DiscPrestaForm.salonAddress,
-          hint: DiscPrestaForm.salonAddressHint,
-          errorText: adresseError,
-          maxLines: 2,
-          textInputAction: TextInputAction.next,
-          onChanged: (_) => onChanged(),
-        ),
-        const SizedBox(height: 12),
-        if (layout.useSideBySideFormRows)
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: AppTextField(
-                  controller: codePostalController,
-                  label: DiscPrestaForm.postalCode,
-                  hint: DiscPrestaForm.postalCodeHint,
-                  errorText: codePostalError,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (_) => onChanged(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: AppTextField(
-                  controller: villeController,
-                  label: DiscPrestaForm.city,
-                  errorText: villeError,
-                  textInputAction: TextInputAction.done,
-                  onChanged: (_) => onChanged(),
-                ),
-              ),
-            ],
-          )
-        else ...[
-          AppTextField(
-            controller: codePostalController,
-            label: DiscPrestaForm.postalCode,
-            hint: DiscPrestaForm.postalCodeHint,
-            errorText: codePostalError,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (_) => onChanged(),
-          ),
-          const SizedBox(height: 12),
-          AppTextField(
-            controller: villeController,
-            label: DiscPrestaForm.city,
-            errorText: villeError,
-            textInputAction: TextInputAction.done,
-            onChanged: (_) => onChanged(),
+        if (adresseError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            adresseError!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildLocationBlock(DiscoveryResponsive layout) {
+  Widget _buildLocationBlock(
+    BuildContext context,
+    DiscoveryResponsive layout,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildWorkLocationOnly(),
         const SizedBox(height: 12),
-        _buildAddressFieldsOnly(layout),
+        _buildAddressFieldsOnly(context, layout),
       ],
     );
   }

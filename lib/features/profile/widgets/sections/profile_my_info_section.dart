@@ -29,7 +29,10 @@ class ProfileMyInfoSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ProfileSectionTitle(title: DiscProfile.sectionMyInfo),
+        const ProfileSectionTitle(
+          title: DiscProfile.sectionMyInfo,
+          icon: Icons.person_outline_rounded,
+        ),
         DiscoverySurfaceCard(
           child: Column(
             children: [

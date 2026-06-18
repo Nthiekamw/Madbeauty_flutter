@@ -78,6 +78,7 @@ class BugReportMessageService {
 
   Stream<List<BugReportMessage>> watchMessages(String bugReportId) {
     final controller = StreamController<List<BugReportMessage>>.broadcast();
+    RealtimeChannel? channel;
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;
 
     Future<void> emitLatest() async {
@@ -103,10 +104,30 @@ class BugReportMessageService {
             },
             onError: controller.addError,
           );
+
+      channel = _client
+          .channel('bug-report-messages-$bugReportId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'bug_report_messages',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'bug_report_id',
+              value: bugReportId,
+            ),
+            callback: (_) => unawaited(emitLatest()),
+          )
+          .subscribe();
     };
 
     controller.onCancel = () async {
       await streamSub?.cancel();
+      final ch = channel;
+      if (ch != null) {
+        await _client.removeChannel(ch);
+      }
+      if (!controller.isClosed) await controller.close();
     };
 
     return controller.stream;

@@ -10,6 +10,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/booking/providers/booking_session_providers.dart'
     show clientReservationsProvider, invalidateClientReservations;
+import '../../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
 import '../../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../../features/referral/logic/referral_pending_apply.dart';
 import '../../../router/app_router.dart';
@@ -89,22 +90,18 @@ class _BookingPushCoordinatorState
         if (uid != null) {
           ref.invalidate(inAppNotificationsSyncProvider);
           unawaited(ref.read(inAppNotificationsSyncProvider.future));
-          unawaited(_syncRemindersForCurrentUser());
+          unawaited(
+            syncAllBookingRemindersWithLoader(
+              loadClient: () => ref.read(clientReservationsProvider.future),
+              loadPresta: () => ref.read(prestataireAgendaProvider.future),
+            ),
+          );
           unawaited(applyPendingReferralCode(ref));
         }
       },
       loading: () async {},
       error: (_, __) async {},
     );
-  }
-
-  Future<void> _syncRemindersForCurrentUser() async {
-    try {
-      final list = await ref.read(clientReservationsProvider.future);
-      await syncClientBookingReminders(list);
-    } catch (_) {
-      // Réservations pas encore disponibles.
-    }
   }
 
   Future<void> _onBookingPushSideEffects(RemoteMessage msg) async {
@@ -117,7 +114,14 @@ class _BookingPushCoordinatorState
     if (!isBookingStatus) return;
 
     invalidateClientReservations(ref);
-    await _syncRemindersForCurrentUser();
+    await syncClientBookingRemindersWithLoader(
+      () => ref.read(clientReservationsProvider.future),
+    );
+    unawaited(
+      syncPrestataireBookingRemindersWithLoader(
+        () => ref.read(prestataireAgendaProvider.future),
+      ),
+    );
     ref.invalidate(inAppNotificationsSyncProvider);
     unawaited(ref.read(inAppNotificationsSyncProvider.future));
   }

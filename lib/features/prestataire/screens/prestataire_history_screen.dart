@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../logic/prestataire_clients_grouping.dart';
@@ -85,12 +86,12 @@ class _PrestataireHistoryScreenState
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                      child: Text(
-                        DiscPrestaClients.pageTitle,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      child: DiscoverySectionHeader(
+                        title: DiscPrestaClients.pageTitle,
+                        subtitle: DiscPrestaWorkspace.clientsSubtitle,
+                        icon: Icons.groups_rounded,
+                        compact: true,
+                        showSubtitleWhenCompact: true,
                       ),
                     ),
                   ),
@@ -99,12 +100,14 @@ class _PrestataireHistoryScreenState
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest
-                              .withValues(alpha: 0.55),
+                          color: AppColors.cardSurfaceFor(theme.brightness),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: theme.colorScheme.outline
-                                .withValues(alpha: 0.12),
+                            color: theme.colorScheme.outline.withValues(
+                              alpha: theme.brightness == Brightness.dark
+                                  ? 0.28
+                                  : 0.1,
+                            ),
                           ),
                         ),
                         child: TextField(
@@ -151,32 +154,23 @@ class _PrestataireHistoryScreenState
                       ),
                     )
                   else
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                      sliver: SliverList.separated(
+                        itemCount: clients.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
                           final summary = clients[index];
-                          return Column(
-                            children: [
-                              if (index > 0)
-                                Divider(
-                                  height: 1,
-                                  indent: 76,
-                                  color: theme.colorScheme.outline
-                                      .withValues(alpha: 0.1),
-                                ),
-                              PrestataireClientRowCard(
-                                summary: summary,
-                                onTap: () {
-                                  final latest = summary.reservations.first;
-                                  context.pushPrestataireReservationDetail(
-                                    latest.id,
-                                  );
-                                },
-                              ),
-                            ],
+                          return PrestataireClientRowCard(
+                            summary: summary,
+                            onTap: () {
+                              final latest = summary.reservations.first;
+                              context.pushPrestataireReservationDetail(
+                                latest.id,
+                              );
+                            },
                           );
                         },
-                        childCount: clients.length,
                       ),
                     ),
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),

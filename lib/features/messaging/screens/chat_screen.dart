@@ -22,6 +22,7 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../providers/message_provider.dart';
 
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
@@ -484,7 +485,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
 
     final isDark = theme.brightness == Brightness.dark;
-    final appBarStart = theme.colorScheme.primary;
     final scaffoldBg = theme.colorScheme.surface;
 
     final userId = switch (ref.watch(authNotifierProvider)) {
@@ -549,7 +549,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
 
-      backgroundColor: scaffoldBg,
+      backgroundColor: isDark ? scaffoldBg : AppColors.lightSurface,
 
       appBar: ChatScreenAppBar(
         displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
@@ -569,31 +569,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         onDeleteChat: _confirmDeleteChat,
       ),
 
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              appBarStart.withValues(alpha: isDark ? 0.12 : 0.08),
-              scaffoldBg,
-            ],
-          ),
-        ),
+      body: ColoredBox(
+        color: isDark ? scaffoldBg : AppColors.lightSurface,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
               child: Center(
                 child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHigh
-                      .withValues(alpha: 0.65),
+                  color: AppColors.cardSurfaceFor(theme.brightness),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                    color: theme.colorScheme.outline.withValues(
+                      alpha: isDark ? 0.2 : 0.1,
+                    ),
                   ),
                 ),
                 child: Row(

@@ -2,6 +2,9 @@
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/catalog/service_beaute.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../logic/booking_formatters.dart';
 import '../../models/booking_availability_rules.dart';
 import '../../models/booking_selection_state.dart';
@@ -10,7 +13,6 @@ import 'availability_calendar.dart';
 import 'booking_continue_button.dart';
 import '../shared/booking_section_title.dart';
 import 'selected_service_header.dart';
-import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import 'service_choice_card.dart';
 import 'booking_waitlist_card.dart';
 import 'slot_choice_wrap.dart';
@@ -53,95 +55,80 @@ class BookingStepOneContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pad = DiscoveryResponsive.of(context).horizontalPadding;
     final slots = daySlots;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: EdgeInsets.fromLTRB(pad, 12, pad, 24),
       children: [
         SelectedServiceHeader(service: selectedService),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         BookingSectionTitle(
+          icon: Icons.content_cut_rounded,
           title: DiscBk.stepService,
           subtitle: DiscBk.svcCountLabel(services.length),
         ),
-        const SizedBox(height: 10),
-        for (final service in services) ...[
-          ServiceChoiceCard(
-            service: service,
-            selected: service.id == selectedService.id,
-            onTap: () => onServiceSelected(service.id),
-          ),
-          const SizedBox(height: 10),
-        ],
         const SizedBox(height: 8),
+        DiscoverySurfaceCard(
+          includeHorizontalMargin: false,
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+              for (var i = 0; i < services.length; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                ServiceChoiceCard(
+                  service: services[i],
+                  selected: services[i].id == selectedService.id,
+                  onTap: () => onServiceSelected(services[i].id),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         const BookingSectionTitle(
+          icon: Icons.calendar_month_rounded,
           title: DiscBk.stepDate,
           subtitle: DiscBk.stepDateSub,
         ),
-        const SizedBox(height: 10),
-        AvailabilityCalendar(
-          rules: availabilityRules,
-          focusedDay: selection.focusedDay,
-          selectedDay: selection.selectedDay,
-          onDaySelected: (selectedDay, focusedDay) {
-            if (!availabilityRules.isAvailableDay(selectedDay)) return;
-            onDaySelected(selectedDay, focusedDay);
-          },
-          onPageChanged: onPageChanged,
+        const SizedBox(height: 8),
+        DiscoverySurfaceCard(
+          includeHorizontalMargin: false,
+          padding: const EdgeInsets.all(12),
+          child: AvailabilityCalendar(
+            rules: availabilityRules,
+            focusedDay: selection.focusedDay,
+            selectedDay: selection.selectedDay,
+            onDaySelected: (selectedDay, focusedDay) {
+              if (!availabilityRules.isAvailableDay(selectedDay)) return;
+              onDaySelected(selectedDay, focusedDay);
+            },
+            onPageChanged: onPageChanged,
+          ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         BookingSectionTitle(
+          icon: Icons.schedule_rounded,
           title: DiscBk.stepSlots,
           subtitle: formatBookingDate(selection.selectedDay),
         ),
-        const SizedBox(height: 10),
-        if (daySlotsLoading)
-          DiscoveryShimmer.wrap(
-            context: context,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: List.generate(
-                8,
-                (_) => Container(
-                  width: 72,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          )
-        else if (slots.isEmpty) ...[
-          Text(
-            DiscBk.noSlotsDay,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          if (prestataireId != null &&
-              prestataireId!.trim().isNotEmpty) ...[
-            const SizedBox(height: 14),
-            BookingWaitlistCard(
-              prestataireId: prestataireId!,
-              serviceId: selectedService.id,
-              day: selection.selectedDay,
-            ),
-          ],
-        ] else
-          SlotChoiceWrap(
+        const SizedBox(height: 8),
+        DiscoverySurfaceCard(
+          includeHorizontalMargin: false,
+          padding: const EdgeInsets.all(12),
+          child: _SlotsBody(
+            daySlotsLoading: daySlotsLoading,
             slots: slots,
             bookedSlots: bookedSlots,
-            selectedSlot: selection.selectedSlot,
-            onSelected: onSlotSelected,
+            bookedSlotsLoading: bookedSlotsLoading,
+            selection: selection,
+            prestataireId: prestataireId,
+            selectedService: selectedService,
+            selectedDay: selection.selectedDay,
+            onSlotSelected: onSlotSelected,
           ),
-        if (bookedSlotsLoading) ...[
-          const SizedBox(height: 10),
-          const LinearProgressIndicator(),
-        ],
-        const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 20),
         BookingContinueButton(
           enabled: canConfirm,
           selectedSlot: selection.selectedSlot,
@@ -152,3 +139,89 @@ class BookingStepOneContent extends StatelessWidget {
   }
 }
 
+class _SlotsBody extends StatelessWidget {
+  const _SlotsBody({
+    required this.daySlotsLoading,
+    required this.slots,
+    required this.bookedSlots,
+    required this.bookedSlotsLoading,
+    required this.selection,
+    required this.prestataireId,
+    required this.selectedService,
+    required this.selectedDay,
+    required this.onSlotSelected,
+  });
+
+  final bool daySlotsLoading;
+  final List<BookingSlot> slots;
+  final Set<BookingSlot> bookedSlots;
+  final bool bookedSlotsLoading;
+  final BookingSelectionState selection;
+  final String? prestataireId;
+  final ServiceBeaute selectedService;
+  final DateTime selectedDay;
+  final ValueChanged<BookingSlot> onSlotSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (daySlotsLoading) {
+      return DiscoveryShimmer.wrap(
+        context: context,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: List.generate(
+            8,
+            (_) => Container(
+              width: 72,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (slots.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            DiscBk.noSlotsDay,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+          ),
+          if (prestataireId != null && prestataireId!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            BookingWaitlistCard(
+              prestataireId: prestataireId!,
+              serviceId: selectedService.id,
+              day: selectedDay,
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SlotChoiceWrap(
+          slots: slots,
+          bookedSlots: bookedSlots,
+          selectedSlot: selection.selectedSlot,
+          onSelected: onSlotSelected,
+        ),
+        if (bookedSlotsLoading) ...[
+          const SizedBox(height: 10),
+          const LinearProgressIndicator(),
+        ],
+      ],
+    );
+  }
+}

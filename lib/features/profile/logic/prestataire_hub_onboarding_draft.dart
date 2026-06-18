@@ -6,6 +6,8 @@ import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../prestataire/models/horaire_day_draft.dart';
 import '../../prestataire/models/prestataire_service_field_set.dart';
 import '../../prestataire/models/weekly_jour_horaire.dart';
+import '../../../core/logic/address/postal_country_format.dart';
+import 'become_prestataire_draft.dart';
 import 'become_prestataire_hub_draft.dart';
 import '../storage/become_prestataire_draft_store.dart';
 
@@ -37,7 +39,7 @@ abstract final class PrestataireHubOnboardingDraft {
     final clamped = step.clamp(0, maxHubStepIndex);
     final existing = current.hub;
     final hub = existing == null
-        ? BecomePrestataireHubDraft(currentStep: clamped)
+        ? hubDraftFromBecomeDraft(current, currentStep: clamped)
         : BecomePrestataireHubDraft(
             currentStep: clamped,
             nomSalon: existing.nomSalon,
@@ -137,30 +139,105 @@ abstract final class PrestataireHubOnboardingDraft {
     return BecomePrestataireDraftStore.instance.read()?.hub;
   }
 
-  /// Reprend les champs saisis à l'inscription (étape 3) si le hub n'a pas encore de brouillon.
+  /// Reprend les champs saisis à l'inscription (étape 3) dans les champs vides.
   static void seedBasicsFromBecomeDraft({
     required TextEditingController nomController,
     required TextEditingController villeController,
     required TextEditingController bioController,
     required TextEditingController nomAfficheController,
+    TextEditingController? descriptionController,
+    TextEditingController? codePostalController,
+    TextEditingController? adresseController,
   }) {
-    if (readHub() != null) return;
     final draft = BecomePrestataireDraftStore.instance.read();
     if (draft == null) return;
 
-    if (nomController.text.trim().isEmpty && draft.salon.trim().isNotEmpty) {
-      nomController.text = draft.salon.trim();
+    void seedIfEmpty(TextEditingController controller, String value) {
+      if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+        controller.text = value.trim();
+      }
     }
-    if (villeController.text.trim().isEmpty && draft.ville.trim().isNotEmpty) {
-      villeController.text = draft.ville.trim();
+
+    seedIfEmpty(nomController, draft.salon);
+    seedIfEmpty(villeController, draft.ville);
+    seedIfEmpty(bioController, draft.bio);
+    final affiche = draft.nomAffiche.trim().isNotEmpty
+        ? draft.nomAffiche
+        : draft.salon;
+    seedIfEmpty(nomAfficheController, affiche);
+    if (descriptionController != null) {
+      seedIfEmpty(descriptionController, draft.description);
     }
-    if (bioController.text.trim().isEmpty && draft.bio.trim().isNotEmpty) {
-      bioController.text = draft.bio.trim();
+    if (codePostalController != null) {
+      seedIfEmpty(codePostalController, draft.codePostal);
     }
-    if (nomAfficheController.text.trim().isEmpty &&
-        draft.salon.trim().isNotEmpty) {
-      nomAfficheController.text = draft.salon.trim();
+    if (adresseController != null) {
+      final address = draft.adresse.trim().isNotEmpty
+          ? draft.adresse
+          : draft.postalAddress.streetLine;
+      seedIfEmpty(adresseController, address);
     }
+  }
+
+  /// Reprend l'adresse structurée de l'inscription (étape 3) dans le formulaire hub.
+  static void seedLocationFromBecomeDraft({
+    required TextEditingController villeController,
+    required TextEditingController codePostalController,
+    required TextEditingController voieNomController,
+    required TextEditingController numeroRueController,
+    required TextEditingController paysController,
+    required void Function(String voieType) setVoieType,
+    required void Function(String isoCode) setPaysCode,
+  }) {
+    final draft = BecomePrestataireDraftStore.instance.read();
+    if (draft == null) return;
+
+    final address = draft.postalAddress;
+    if (address.isEmpty) return;
+
+    void seedIfEmpty(TextEditingController controller, String value) {
+      if (controller.text.trim().isEmpty && value.trim().isNotEmpty) {
+        controller.text = value.trim();
+      }
+    }
+
+    seedIfEmpty(villeController, address.ville);
+    seedIfEmpty(codePostalController, address.codePostal);
+    seedIfEmpty(voieNomController, address.voieNom);
+    seedIfEmpty(numeroRueController, address.numero);
+
+    if (voieNomController.text.trim().isNotEmpty ||
+        numeroRueController.text.trim().isNotEmpty) {
+      setVoieType(address.voieType);
+    }
+
+    if (paysController.text.trim().isEmpty && address.pays.trim().isNotEmpty) {
+      paysController.text = address.pays.trim();
+    }
+    setPaysCode(postalCountryIso2(address.pays));
+  }
+
+  static BecomePrestataireHubDraft hubDraftFromBecomeDraft(
+    BecomePrestataireDraft draft, {
+    required int currentStep,
+  }) {
+    final address = draft.postalAddress;
+    return BecomePrestataireHubDraft(
+      currentStep: currentStep,
+      nomSalon: draft.salon,
+      nomAffiche:
+          draft.nomAffiche.trim().isNotEmpty ? draft.nomAffiche : draft.salon,
+      bio: draft.bio,
+      description: draft.description,
+      ville: draft.ville,
+      codePostal: draft.codePostal,
+      adresse: draft.adresse.trim().isNotEmpty
+          ? draft.adresse
+          : address.streetLine,
+      pays: address.pays.trim().isEmpty
+          ? 'FR'
+          : address.pays.trim().toUpperCase(),
+    );
   }
 
   static void applyHubDraft({

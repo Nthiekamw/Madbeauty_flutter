@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/app_url_launcher.dart';
 import '../app/app_network_image.dart';
+import '../app/app_snack_bar.dart';
 import '../prestataire/network_video_preview.dart';
 
 /// Galerie plein écran mixte photos + vidéos de réalisations.
@@ -67,6 +70,19 @@ class _FullscreenRealisationGalleryState
     return text != null && text.isNotEmpty ? text : null;
   }
 
+  Future<void> _downloadCurrent() async {
+    if (_pageIndex < 0 || _pageIndex >= widget.items.length) return;
+    final url = widget.items[_pageIndex].url;
+    final opened = await AppUrlLauncher.openInApp(context, url);
+    if (!opened && mounted) {
+      AppSnackBar.show(
+        context,
+        message: DiscPrestaDetail.galleryDownloadErr,
+        kind: AppSnackKind.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -77,7 +93,19 @@ class _FullscreenRealisationGalleryState
       appBar: AppBar(
         backgroundColor: Colors.black.withValues(alpha: 0.55),
         foregroundColor: AppColors.white,
-        title: Text('${_pageIndex + 1} / ${widget.items.length}'),
+        title: Text(
+          DiscPrestaDetail.galleryPhotoCounter(
+            _pageIndex + 1,
+            widget.items.length,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: DiscPrestaDetail.galleryDownloadTooltip,
+            icon: const Icon(Icons.download_outlined),
+            onPressed: _downloadCurrent,
+          ),
+        ],
       ),
       body: Column(
         children: [

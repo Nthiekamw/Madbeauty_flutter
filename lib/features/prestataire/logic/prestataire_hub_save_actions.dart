@@ -15,6 +15,7 @@ import '../models/weekly_jour_horaire.dart';
 import '../providers/profile/current_prestataire_provider.dart';
 import '../providers/agenda/disponibilite_provider.dart';
 import '../providers/hub/prestataire_hub_form_controller.dart';
+import '../models/pending_realisation_upload.dart';
 import '../providers/profile/prestataire_profile_form_provider.dart';
 import '../providers/resolve_prestataire_id.dart';
 import '../widgets/dialogs/prestataire_onboarding_finish_dialog.dart';
@@ -79,22 +80,37 @@ class PrestataireHubSaveActions {
   }
 
   Future<bool> uploadPendingGalleryIfNeeded() async {
+    if (form.pendingGallery.isEmpty) return true;
+
+    final batch = List<PendingRealisationUpload>.from(form.pendingGallery);
     final updated = await ref.read(prestataireProfileFormProvider.future);
-    final prestataireId = updated.prestataireId;
+    var prestataireId = updated.prestataireId;
+    prestataireId ??= await resolveConnectedPrestataireId(ref.container);
     final photoService = ref.read(photoRealisationServiceProvider);
-    if (prestataireId == null ||
-        photoService == null ||
-        form.pendingGallery.isEmpty) {
-      return true;
+    if (prestataireId == null || photoService == null) {
+      return false;
     }
 
-    for (final file in form.pendingGallery) {
-      await photoService.uploadAndCreate(
-        prestataireId: prestataireId,
-        file: file,
-      );
+    for (final upload in batch) {
+      if (!form.pendingGallery.contains(upload)) continue;
+      try {
+        final categorieId = upload.categorieId.trim();
+        final caption = upload.specialtyLabel.trim();
+        final photo = await photoService.uploadAndCreate(
+          prestataireId: prestataireId,
+          file: upload.file,
+          categorieId: categorieId.isEmpty ? null : categorieId,
+          caption: caption.isEmpty ? null : caption,
+        );
+        form.removePendingGallery(upload);
+        form.addGalleryPhoto(photo);
+      } on AppFailure catch (e) {
+        if (mounted()) {
+          showSnack(e.message, kind: AppSnackKind.error);
+        }
+        return false;
+      }
     }
-    form.pendingGallery.clear();
     ref.invalidate(prestataireProfileFormProvider);
     return true;
   }
@@ -164,6 +180,9 @@ class PrestataireHubSaveActions {
 
     if (!mounted()) return;
     if (profileSaved) {
+      if (PrestataireHubOnboardingDraft.isActive) {
+        await PrestataireHubOnboardingDraft.clearAfterProfileComplete();
+      }
       showSnack(DiscPrestaForm.completeLaterSaved, kind: AppSnackKind.success);
     } else if (failed != null) {
       form.setCurrentStep(failed);
@@ -234,8 +253,7 @@ class PrestataireHubSaveActions {
       form.setUploadProgress(null);
       form.hydrate(updated, force: true);
       showSnack(DiscPrestaForm.savedToast, kind: AppSnackKind.success);
-      if (PrestataireHubOnboardingDraft.isActive &&
-          updated.isProfessionallyComplete) {
+      if (PrestataireHubOnboardingDraft.isActive && wizard) {
         await PrestataireHubOnboardingDraft.clearAfterProfileComplete();
       }
       await maybeShowFinishSummary(updated);

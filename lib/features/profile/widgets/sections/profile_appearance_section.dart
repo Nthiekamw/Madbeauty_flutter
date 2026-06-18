@@ -20,7 +20,10 @@ class ProfileAppearanceSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ProfileSectionTitle(title: DiscAppearance.sectionTitle(locale)),
+        ProfileSectionTitle(
+          title: DiscAppearance.sectionTitle(locale),
+          icon: Icons.palette_outlined,
+        ),
         DiscoverySurfaceCard(
           child: DiscoveryMenuTile(
             icon: Icons.palette_outlined,

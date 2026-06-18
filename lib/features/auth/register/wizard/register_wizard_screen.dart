@@ -3,14 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/errors/app_failure.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
 import '../../widgets/auth_form_scaffold.dart';
+import '../../../../services/supabase/storage/storage_service.dart';
+import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../logic/register_wizard_constants.dart';
 import '../logic/register_wizard_oauth_handler.dart';
 import '../logic/register_wizard_submit_handler.dart';
@@ -140,6 +144,34 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
         form: _form,
       );
 
+  Future<void> _pickClientAvatar() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+    try {
+      final file = await StorageUploadFile.fromXFile(picked);
+      StorageService.validateImageFile(file);
+      _form.setClientAvatarFile(
+        bytes: file.bytes,
+        fileName: file.fileName ?? 'avatar.jpg',
+        mimeType: file.mimeType ?? 'image/jpeg',
+      );
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(context, message: e.message, kind: AppSnackKind.error);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: CoreStrings.errorUnexpected,
+        kind: AppSnackKind.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(authNotifierProvider, (previous, next) {
@@ -233,6 +265,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
         theme: theme,
         onSurfaceVariant: onSurfaceVariant,
         onGoogleSignIn: _form.googleSigningIn ? null : _googleSignIn,
+        onPickClientAvatar: _pickClientAvatar,
       ),
     );
   }

@@ -74,6 +74,13 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
       } else {
         AppSnackBar.error(context, messageForApplyResult(result));
       }
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.error(
+          context,
+          messageForApplyResult(ApplyReferralResult.unknown),
+        );
+      }
     } finally {
       if (mounted) setState(() => _applying = false);
     }

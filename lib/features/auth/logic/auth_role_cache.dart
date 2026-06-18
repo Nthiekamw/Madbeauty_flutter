@@ -1,6 +1,7 @@
 import '../../../core/models/user_role.dart';
 import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
 import '../../../features/profile/storage/become_prestataire_draft_store.dart';
+import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 
@@ -98,10 +99,30 @@ abstract final class AuthRoleCache {
       return AppRoutes.adminHome;
     }
 
+    final registerDraft = RegisterWizardDraftStore.instance.read();
+    if (registerDraft?.role != null && cachedRoles.isEmpty) {
+      final intent = registerDraft!.role!.value;
+      return switch (intent) {
+        'prestataire' => AppRoutes.prestataireDashboard,
+        'client' => AppRoutes.clientHome,
+        _ => AppRoutes.clientHome,
+      };
+    }
+
     final effective = resolveEffectiveRole(
       serverRoleValues: cachedRoles,
       cachedRole: LocalCacheService.instance.selectedRole,
     );
+
+    final becomeDraft = BecomePrestataireDraftStore.instance.read();
+    if (becomeDraft != null &&
+        becomeDraft.step1Submitted &&
+        becomeDraft.step2Started &&
+        (effective == 'prestataire' ||
+            LocalCacheService.instance.signupShellRole == 'prestataire')) {
+      return AppRoutes.prestataireProfileEdit;
+    }
+
     return switch (effective) {
       'admin' => AppRoutes.adminHome,
       'prestataire' => AppRoutes.prestataireDashboard,

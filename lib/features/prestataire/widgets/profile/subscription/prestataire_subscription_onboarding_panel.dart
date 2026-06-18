@@ -9,6 +9,7 @@ import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../logic/prestataire_subscription_service_count.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import '../../../providers/subscription/platform_catalog_trial_provider.dart';
 import 'prestataire_subscription_checkout_section.dart';
@@ -21,11 +22,14 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
     this.compact = false,
     this.showViewDetailsLink = true,
     this.embeddedInHub = false,
+    this.plannedServiceCount,
   });
 
   final bool compact;
   final bool showViewDetailsLink;
   final bool embeddedInHub;
+  /// Services configurés dans le hub (avant publication en base).
+  final int? plannedServiceCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +49,11 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
         message: DiscPrestaDash.loadErr,
         onRetry: () => ref.invalidate(prestatairePublishedServiceCountProvider),
       ),
-      data: (serviceCount) {
+      data: (publishedCount) {
+        final serviceCount = PrestataireSubscriptionServiceCount.resolve(
+          publishedCount: publishedCount,
+          plannedCount: plannedServiceCount,
+        );
         final currentTier = PrestataireSubscriptionConfig.tierForServiceCount(
           serviceCount,
         );
@@ -158,7 +166,10 @@ class PrestataireSubscriptionOnboardingPanel extends ConsumerWidget {
               compact: compact,
             ),
             const SizedBox(height: 12),
-            PrestataireSubscriptionCheckoutSection(compact: compact),
+            PrestataireSubscriptionCheckoutSection(
+              compact: compact,
+              plannedServiceCount: plannedServiceCount,
+            ),
             if (showViewDetailsLink) ...[
               const SizedBox(height: 12),
               Align(

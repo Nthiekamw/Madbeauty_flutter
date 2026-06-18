@@ -6,12 +6,14 @@ import '../../../../../features/auth/providers/auth_notifier.dart';
 import '../../../../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../../../../features/likes/providers/client_prestataire_likes_provider.dart';
 import '../../../../../router/navigation_extensions.dart';
+import '../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
-import '../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
+import 'sections/prestataire_detail_section_layout.dart';
+import 'sections/prestataire_detail_surface.dart';
 
-/// Like (public) vs favori (privé) — actions explicites sur la fiche prestataire.
+/// Like (public) vs favori (privé) — carte style accueil.
 class PrestataireClientEngagementRow extends ConsumerWidget {
   const PrestataireClientEngagementRow({
     super.key,
@@ -25,52 +27,53 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final pad = DiscoveryResponsive.of(context).horizontalPadding;
     final isLiked = ref.watch(isPrestataireLikedProvider(prestataireId));
     final isFavorite = ref.watch(isPrestataireFavoriteProvider(prestataireId));
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            DiscPrestaDetail.engagementSectionTitle,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
+      padding: EdgeInsets.fromLTRB(pad, 18, pad, 0),
+      child: PrestataireDetailSurface.cardMaterial(
+        theme: theme,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PrestataireDetailSectionHeader(
+              icon: Icons.favorite_outline_rounded,
+              title: DiscPrestaDetail.engagementSectionTitle,
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _EngagementChip(
-                  icon: isLiked
-                      ? Icons.thumb_up_rounded
-                      : Icons.thumb_up_outlined,
-                  label: DiscLike.engagementLabel,
-                  hint: DiscLike.engagementHint,
-                  active: isLiked,
-                  activeColor: _likeColor,
-                  onTap: () => _toggleLike(context, ref, isLiked),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _EngagementChip(
+                    icon: isLiked
+                        ? Icons.thumb_up_rounded
+                        : Icons.thumb_up_outlined,
+                    label: DiscLike.engagementLabel,
+                    hint: DiscLike.engagementHint,
+                    active: isLiked,
+                    activeColor: _likeColor,
+                    onTap: () => _toggleLike(context, ref, isLiked),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _EngagementChip(
-                  icon: isFavorite
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  label: DiscFavori.engagementLabel,
-                  hint: DiscFavori.engagementHint,
-                  active: isFavorite,
-                  activeColor: AppColors.favorite,
-                  onTap: () => _toggleFavorite(context, ref, isFavorite),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _EngagementChip(
+                    icon: isFavorite
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    label: DiscFavori.engagementLabel,
+                    hint: DiscFavori.engagementHint,
+                    active: isFavorite,
+                    activeColor: AppColors.favorite,
+                    onTap: () => _toggleFavorite(context, ref, isFavorite),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -157,25 +160,21 @@ class _EngagementChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final borderColor = active
-        ? activeColor.withValues(alpha: 0.55)
-        : theme.colorScheme.outline.withValues(alpha: 0.2);
-    final background = active
-        ? activeColor.withValues(alpha: 0.1)
-        : theme.colorScheme.surfaceContainerLowest;
+    final isDark = theme.brightness == Brightness.dark;
+    final fill = active
+        ? activeColor.withValues(alpha: 0.12)
+        : (isDark
+            ? AppColors.darkSurfaceContainerHigh
+            : AppColors.filterChipInactive);
 
     return Tooltip(
       message: hint,
       child: Material(
-        color: background,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: DiscoveryStyles.cardBorderRadius,
-          side: BorderSide(color: borderColor),
-        ),
+        color: fill,
+        borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: onTap,
-          borderRadius: DiscoveryStyles.cardBorderRadius,
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
@@ -183,9 +182,10 @@ class _EngagementChip extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  size: 18,
-                  color:
-                      active ? activeColor : theme.colorScheme.onSurfaceVariant,
+                  size: 16,
+                  color: active
+                      ? activeColor
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 6),
                 Flexible(
@@ -193,8 +193,10 @@ class _EngagementChip extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
                       color: active ? activeColor : theme.colorScheme.onSurface,
                     ),
                   ),

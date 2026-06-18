@@ -7,8 +7,10 @@ import '../../../../../shared/widgets/discovery/content/discovery_list_skeleton.
 import '../../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
-import '../../../../../services/supabase/storage/storage_service.dart';
 import '../../../logic/prestataire_hub_constants.dart';
+import '../../../logic/professional_experience_entries.dart';
+import '../../../logic/realisation_gallery_grouping.dart';
+import '../../../models/pending_realisation_upload.dart';
 import '../../../models/prestataire_profile_edit_section.dart';
 import '../../../models/prestataire_service_catalog_selection.dart';
 import '../../../models/prestataire_service_field_set.dart';
@@ -17,6 +19,7 @@ import '../overview/layout/prestataire_form_scroll_view.dart';
 import '../prestataire_hub_step_frame.dart';
 import '../schedule/prestataire_indisponibilites_editor.dart';
 import '../schedule/prestataire_weekly_horaires_editor.dart';
+import '../../../logic/prestataire_subscription_service_count.dart';
 import '../steps/hub/prestataire_hub_steps.dart';
 import '../subscription/prestataire_subscription_onboarding_panel.dart';
 import 'prestataire_hub_layout.dart';
@@ -35,10 +38,20 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.descriptionController,
     required this.experienceProController,
     required this.anneesExperienceController,
+    required this.professionalExperiences,
+    required this.onToggleProfessionalExperience,
+    required this.onProfessionalExperienceYearsChanged,
+    required this.onRemoveProfessionalExperience,
     required this.bioController,
     required this.villeController,
     required this.codePostalController,
     required this.adresseController,
+    required this.voieType,
+    required this.onVoieTypeChanged,
+    required this.voieNomController,
+    required this.numeroRueController,
+    required this.paysController,
+    required this.onPostalAddressChanged,
     required this.paysCode,
     required this.lieuTravail,
     required this.avatarUrl,
@@ -74,13 +87,12 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.onCompleteLater,
     required this.onBasicsChanged,
     required this.onLieuTravailChanged,
-    required this.onPaysChanged,
     required this.onPickAvatar,
     required this.defaultAvatarUrls,
     required this.selectedDefaultAvatarUrl,
     required this.onSelectDefaultAvatar,
-    required this.onPickGallery,
-    required this.onPickGalleryVideo,
+    required this.onPickGalleryForSlot,
+    required this.onPickGalleryVideoForSlot,
     required this.onRemoveGalleryPhoto,
     required this.onRemovePendingGallery,
     required this.onCatalogChanged,
@@ -107,10 +119,20 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final TextEditingController descriptionController;
   final TextEditingController experienceProController;
   final TextEditingController anneesExperienceController;
+  final List<ProfessionalExperienceEntry> professionalExperiences;
+  final ValueChanged<String> onToggleProfessionalExperience;
+  final void Function(String role, String years) onProfessionalExperienceYearsChanged;
+  final ValueChanged<String> onRemoveProfessionalExperience;
   final TextEditingController bioController;
   final TextEditingController villeController;
   final TextEditingController codePostalController;
   final TextEditingController adresseController;
+  final String voieType;
+  final ValueChanged<String> onVoieTypeChanged;
+  final TextEditingController voieNomController;
+  final TextEditingController numeroRueController;
+  final TextEditingController paysController;
+  final VoidCallback onPostalAddressChanged;
   final String paysCode;
   final LieuTravail? lieuTravail;
   final String? avatarUrl;
@@ -137,7 +159,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final String? servicesError;
   final String? pricingError;
   final List<PhotoRealisation> galleryPhotos;
-  final List<StorageUploadFile> pendingGallery;
+  final List<PendingRealisationUpload> pendingGallery;
   final String? galleryError;
   final ValueChanged<int> onStepTapped;
   final VoidCallback onContinue;
@@ -146,15 +168,14 @@ class PrestataireHubScreenBody extends StatelessWidget {
   final VoidCallback onCompleteLater;
   final VoidCallback onBasicsChanged;
   final ValueChanged<LieuTravail> onLieuTravailChanged;
-  final ValueChanged<String> onPaysChanged;
   final VoidCallback onPickAvatar;
   final List<String> defaultAvatarUrls;
   final String? selectedDefaultAvatarUrl;
   final ValueChanged<String> onSelectDefaultAvatar;
-  final VoidCallback onPickGallery;
-  final VoidCallback onPickGalleryVideo;
+  final ValueChanged<RealisationGallerySlot> onPickGalleryForSlot;
+  final ValueChanged<RealisationGallerySlot> onPickGalleryVideoForSlot;
   final ValueChanged<PhotoRealisation> onRemoveGalleryPhoto;
-  final ValueChanged<int> onRemovePendingGallery;
+  final ValueChanged<PendingRealisationUpload> onRemovePendingGallery;
   final VoidCallback onCatalogChanged;
   final VoidCallback onPricingChanged;
   final List<WeeklyJourHoraire>? horaireWeek;
@@ -193,11 +214,20 @@ class PrestataireHubScreenBody extends StatelessWidget {
         descriptionController: descriptionController,
         experienceProController: experienceProController,
         anneesExperienceController: anneesExperienceController,
+        professionalExperiences: professionalExperiences,
+        onToggleProfessionalExperience: onToggleProfessionalExperience,
+        onProfessionalExperienceYearsChanged: onProfessionalExperienceYearsChanged,
+        onRemoveProfessionalExperience: onRemoveProfessionalExperience,
         bioController: bioController,
         villeController: villeController,
         codePostalController: codePostalController,
         adresseController: adresseController,
-        paysCode: paysCode,
+        voieType: voieType,
+        onVoieTypeChanged: onVoieTypeChanged,
+        voieNomController: voieNomController,
+        numeroRueController: numeroRueController,
+        paysController: paysController,
+        onPostalAddressChanged: onPostalAddressChanged,
         lieuTravail: lieuTravail,
         avatarUrl: avatarUrl,
         avatarBytes: avatarBytes,
@@ -216,7 +246,6 @@ class PrestataireHubScreenBody extends StatelessWidget {
         selectedDefaultAvatarUrl: selectedDefaultAvatarUrl,
         onSelectDefaultAvatar: onSelectDefaultAvatar,
         onLieuTravailChanged: onLieuTravailChanged,
-        onPaysChanged: onPaysChanged,
         onChanged: onBasicsChanged,
         vitrineOnly: true,
       ),
@@ -227,11 +256,20 @@ class PrestataireHubScreenBody extends StatelessWidget {
         descriptionController: descriptionController,
         experienceProController: experienceProController,
         anneesExperienceController: anneesExperienceController,
+        professionalExperiences: professionalExperiences,
+        onToggleProfessionalExperience: onToggleProfessionalExperience,
+        onProfessionalExperienceYearsChanged: onProfessionalExperienceYearsChanged,
+        onRemoveProfessionalExperience: onRemoveProfessionalExperience,
         bioController: bioController,
         villeController: villeController,
         codePostalController: codePostalController,
         adresseController: adresseController,
-        paysCode: paysCode,
+        voieType: voieType,
+        onVoieTypeChanged: onVoieTypeChanged,
+        voieNomController: voieNomController,
+        numeroRueController: numeroRueController,
+        paysController: paysController,
+        onPostalAddressChanged: onPostalAddressChanged,
         lieuTravail: lieuTravail,
         avatarUrl: avatarUrl,
         avatarBytes: avatarBytes,
@@ -250,7 +288,6 @@ class PrestataireHubScreenBody extends StatelessWidget {
         selectedDefaultAvatarUrl: selectedDefaultAvatarUrl,
         onSelectDefaultAvatar: onSelectDefaultAvatar,
         onLieuTravailChanged: onLieuTravailChanged,
-        onPaysChanged: onPaysChanged,
         onChanged: onBasicsChanged,
         locationOnly: true,
       ),
@@ -266,12 +303,16 @@ class PrestataireHubScreenBody extends StatelessWidget {
       ),
       PrestataireProfileEditSection.gallery => PrestataireProfileGalleryStep(
         photos: galleryPhotos,
-        pendingFiles: pendingGallery,
+        pendingUploads: pendingGallery,
+        slots: buildRealisationGallerySlots(
+          catalogSelection: catalogSelection,
+          serviceFields: services,
+        ),
         errorText: galleryError,
         uploading: false,
         uploadProgress: null,
-        onPick: onPickGallery,
-        onPickVideo: onPickGalleryVideo,
+        onPickForSlot: onPickGalleryForSlot,
+        onPickVideoForSlot: onPickGalleryVideoForSlot,
         onRemoveExisting: onRemoveGalleryPhoto,
         onRemovePending: onRemovePendingGallery,
         embeddedInHub: guided,
@@ -337,7 +378,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
       );
     }
 
-    final isSubscriptionStep = currentStep == 6;
+    final isSubscriptionStep = currentStep == wizardStepCount - 1;
     final currentSection = switch (currentStep) {
       0 => PrestataireProfileEditSection.vitrine,
       1 => PrestataireProfileEditSection.location,
@@ -413,9 +454,14 @@ class PrestataireHubScreenBody extends StatelessWidget {
           requirement: stepRequirement,
           stepTip: DiscPrestaForm.hubStepTip(currentStep),
           child: isSubscriptionStep
-              ? const PrestataireSubscriptionOnboardingPanel(
+              ? PrestataireSubscriptionOnboardingPanel(
                   compact: true,
                   embeddedInHub: true,
+                  plannedServiceCount:
+                      PrestataireSubscriptionServiceCount.fromHubForm(
+                    catalogSelection: catalogSelection,
+                    serviceFields: services,
+                  ),
                 )
               : stepInner,
         ),

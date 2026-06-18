@@ -10,6 +10,7 @@ import '../../../shared/theme/discovery_styles.dart';
 import '../models/admin_analytics_summary.dart';
 import '../providers/admin_analytics_provider.dart';
 import '../providers/admin_pending_counts_provider.dart';
+import '../providers/admin_user_support_provider.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/admin_country_stats_section.dart';
 import '../widgets/admin_screen_scaffold.dart';
@@ -27,6 +28,7 @@ class AdminHomeScreen extends ConsumerWidget {
         ref.watch(adminPendingVerificationsCountProvider);
     final pendingReports = ref.watch(adminPendingReportsCountProvider);
     final pendingBugs = ref.watch(adminPendingBugReportsCountProvider);
+    final supportUnread = ref.watch(adminUserSupportUnreadCountProvider);
     final analyticsAsync = ref.watch(adminAnalyticsProvider);
 
     return AdminScreenScaffold(
@@ -100,6 +102,14 @@ class AdminHomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           _ActionCard(
+            icon: Icons.support_agent_outlined,
+            title: DiscProfile.actionAdminUserSupport,
+            subtitle: DiscProfile.actionAdminUserSupportHint,
+            badge: supportUnread.maybeWhen(data: (c) => c, orElse: () => 0),
+            onTap: () => context.pushAdminUserSupport(),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
             icon: Icons.people_outline,
             title: DiscProfile.actionAdminUsers,
             subtitle: DiscProfile.actionAdminUsersHint,
@@ -118,6 +128,20 @@ class AdminHomeScreen extends ConsumerWidget {
             title: DiscProfile.actionAdminSubscriptionTrial,
             subtitle: DiscProfile.actionAdminSubscriptionTrialHint,
             onTap: () => context.pushAdminSubscriptionTrial(),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
+            icon: Icons.photo_library_outlined,
+            title: DiscProfile.actionAdminRealisationPhotos,
+            subtitle: DiscProfile.actionAdminRealisationPhotosHint,
+            onTap: () => context.pushAdminRealisationPhotos(),
+          ),
+          const SizedBox(height: 10),
+          _ActionCard(
+            icon: Icons.euro_outlined,
+            title: DiscProfile.actionAdminBookingPlatformFee,
+            subtitle: DiscProfile.actionAdminBookingPlatformFeeHint,
+            onTap: () => context.pushAdminBookingPlatformFee(),
           ),
           const SizedBox(height: 10),
           _ActionCard(

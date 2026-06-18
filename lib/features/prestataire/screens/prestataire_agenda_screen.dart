@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../booking/logic/booking_formatters.dart';
@@ -162,18 +163,12 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              DiscNav.prestAgenda,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontFamily: AppFonts.display,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: DiscoverySectionHeader(
+                        title: DiscNav.prestAgenda,
+                        subtitle: DiscPrestaWorkspace.agendaSubtitle,
+                        icon: Icons.calendar_month_rounded,
+                        compact: true,
+                        showSubtitleWhenCompact: true,
                       ),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/screens/admin_booking_platform_fee_screen.dart';
 import '../../features/admin/screens/admin_subscription_trial_screen.dart';
 import '../../features/admin/screens/admin_audit_screen.dart';
 import '../../features/admin/screens/admin_push_screen.dart';
@@ -7,8 +8,10 @@ import '../../features/admin/screens/admin_bug_reports_screen.dart';
 import '../../features/admin/screens/admin_content_reports_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 import '../../features/admin/screens/admin_profile_screen.dart';
+import '../../features/admin/screens/admin_realisation_photos_screen.dart';
 import '../../features/admin/screens/admin_reservations_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
+import '../../features/admin/screens/admin_user_support_screen.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../app_routes.dart';
 import '../shell/admin_shell_scaffold.dart';
@@ -100,5 +103,20 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminSubscriptionTrial,
         path: AppRoutes.adminSubscriptionTrial,
         builder: (context, state) => const AdminSubscriptionTrialScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminBookingPlatformFee,
+        path: AppRoutes.adminBookingPlatformFee,
+        builder: (context, state) => const AdminBookingPlatformFeeScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminUserSupport,
+        path: AppRoutes.adminUserSupport,
+        builder: (context, state) => const AdminUserSupportScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminRealisationPhotos,
+        path: AppRoutes.adminRealisationPhotos,
+        builder: (context, state) => const AdminRealisationPhotosScreen(),
       ),
     ];

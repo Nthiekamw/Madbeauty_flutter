@@ -197,11 +197,12 @@ class _AmountCard extends StatelessWidget {
               breakdown.platformFeeCents,
               theme,
             )
-          else if (breakdown.priorBookingCount < 2)
+          else if (breakdown.platformFeeCents == 0 &&
+              breakdown.priorBookingCount < breakdown.platformFeeFreeBookingCount)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                DiscPay.checkoutFreePlatform,
+                DiscPay.checkoutFreePlatform(breakdown.platformFeeFreeBookingCount),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

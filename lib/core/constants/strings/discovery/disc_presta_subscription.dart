@@ -87,6 +87,15 @@ abstract final class DiscPrestaSub {
   static const profileRequired =
       'Impossible de préparer ton profil prestataire. Reconnecte-toi puis réessaie.';
   static const checkoutErr = 'Impossible d’ouvrir le paiement';
+  static const testModeBannerTitle = 'Paiement en mode test';
+  static const testModeBannerBody =
+      'Sur la page Stripe, utilise cette carte de test :';
+  static const testCardExpiryLabel = 'Expiration';
+  static const testCardCvcLabel = 'CVC';
+  static const testCardCopyTooltip = 'Copier le numéro de carte';
+  static const testCardCopied = 'Numéro de carte copié';
+  static const testModeCheckoutReminder =
+      'Mode test : carte 4242 4242 4242 4242 · 12/34 · 123';
   static const portalErr = 'Impossible d’ouvrir le portail de facturation';
   static const browserErr =
       'Impossible d’ouvrir le navigateur. Installe un navigateur puis réessaie.';

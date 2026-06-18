@@ -9,11 +9,15 @@ class BecomePrestataireFormCard extends StatelessWidget {
   const BecomePrestataireFormCard({
     super.key,
     required this.salonController,
-    required this.villeController,
+    required this.voieType,
+    required this.onVoieTypeChanged,
+    required this.voieNomController,
+    required this.numeroController,
     required this.codePostalController,
+    required this.villeController,
+    required this.paysController,
     required this.nomAfficheController,
     required this.descriptionController,
-    required this.adresseController,
     required this.bioController,
     this.salonError,
     this.villeError,
@@ -22,11 +26,15 @@ class BecomePrestataireFormCard extends StatelessWidget {
   });
 
   final TextEditingController salonController;
-  final TextEditingController villeController;
+  final String voieType;
+  final ValueChanged<String> onVoieTypeChanged;
+  final TextEditingController voieNomController;
+  final TextEditingController numeroController;
   final TextEditingController codePostalController;
+  final TextEditingController villeController;
+  final TextEditingController paysController;
   final TextEditingController nomAfficheController;
   final TextEditingController descriptionController;
-  final TextEditingController adresseController;
   final TextEditingController bioController;
   final String? salonError;
   final String? villeError;
@@ -44,11 +52,15 @@ class BecomePrestataireFormCard extends StatelessWidget {
         child: PrestataireSignupExtrasForm(
           dense: false,
           salonController: salonController,
-          villeController: villeController,
+          voieType: voieType,
+          onVoieTypeChanged: onVoieTypeChanged,
+          voieNomController: voieNomController,
+          numeroController: numeroController,
           codePostalController: codePostalController,
+          villeController: villeController,
+          paysController: paysController,
           nomAfficheController: nomAfficheController,
           descriptionController: descriptionController,
-          adresseController: adresseController,
           bioController: bioController,
           salonError: salonError,
           villeError: villeError,

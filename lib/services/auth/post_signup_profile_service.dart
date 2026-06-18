@@ -71,6 +71,7 @@ class PostSignupProfileService {
     return SupabaseErrorHandler.run(
       operation: 'postSignup.updatePrestataireExtras',
       action: () async {
+        final countryIso2 = _normalizeCountryIso2(pays);
         final geoQuery = _geocodeQuery(
           adresse: adresse,
           codePostal: codePostal,
@@ -85,8 +86,7 @@ class PostSignupProfileService {
             'adresse': adresse.trim(),
           if (codePostal != null && codePostal.trim().isNotEmpty)
             'code_postal': codePostal.trim(),
-          if (pays != null && pays.trim().isNotEmpty)
-            'pays': pays.trim().toUpperCase(),
+          if (countryIso2 != null) 'pays': countryIso2,
           if (nomAffiche != null && nomAffiche.trim().isNotEmpty)
             'nom_affiche': nomAffiche.trim(),
           if (lieuTravail != null) 'lieu_travail': lieuTravail.value,
@@ -118,6 +118,22 @@ class PostSignupProfileService {
       if (ville.trim().isNotEmpty) ville.trim(),
     ];
     return parts.isEmpty ? ville.trim() : parts.join(', ');
+  }
+
+  static String? _normalizeCountryIso2(String? raw) {
+    final value = raw?.trim();
+    if (value == null || value.isEmpty) return null;
+    final upper = value.toUpperCase();
+    if (upper.length == 2) return upper;
+    return switch (upper) {
+      'FRANCE' => 'FR',
+      'BELGIQUE' => 'BE',
+      'BELGIUM' => 'BE',
+      'LUXEMBOURG' => 'LU',
+      'SUISSE' => 'CH',
+      'SWITZERLAND' => 'CH',
+      _ => null,
+    };
   }
 }
 

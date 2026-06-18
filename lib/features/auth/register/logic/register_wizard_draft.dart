@@ -1,3 +1,4 @@
+import '../../../../core/logic/address/postal_address.dart';
 import '../../../../core/models/user_role.dart';
 
 
@@ -26,6 +27,14 @@ class RegisterWizardDraft {
 
     required this.adresse,
 
+    this.voieType = PostalVoieTypes.defaultType,
+
+    this.voieNom = '',
+
+    this.numeroRue = '',
+
+    this.pays = PostalAddress.defaultCountry,
+
     required this.salon,
 
     required this.nomAffiche,
@@ -48,6 +57,8 @@ class RegisterWizardDraft {
 
     this.role,
 
+    this.clientDefaultAvatarUrl,
+
   });
 
 
@@ -65,6 +76,14 @@ class RegisterWizardDraft {
   final String email;
 
   final String adresse;
+
+  final String voieType;
+
+  final String voieNom;
+
+  final String numeroRue;
+
+  final String pays;
 
   final String salon;
 
@@ -96,6 +115,8 @@ class RegisterWizardDraft {
 
   final UserRole? role;
 
+  final String? clientDefaultAvatarUrl;
+
 
 
   /// Brouillon actif tant que le wizard n'est pas terminé (y compris après Google).
@@ -122,7 +143,15 @@ class RegisterWizardDraft {
 
       ville.isNotEmpty ||
 
-      adresse.isNotEmpty;
+      adresse.isNotEmpty ||
+
+      voieNom.isNotEmpty ||
+
+      numeroRue.isNotEmpty ||
+
+      codePostal.isNotEmpty ||
+
+      clientDefaultAvatarUrl != null && clientDefaultAvatarUrl!.isNotEmpty;
 
 
 
@@ -154,6 +183,14 @@ class RegisterWizardDraft {
 
         'adresse': adresse,
 
+        'voieType': voieType,
+
+        'voieNom': voieNom,
+
+        'numeroRue': numeroRue,
+
+        'pays': pays,
+
         'salon': salon,
 
         'nomAffiche': nomAffiche,
@@ -176,7 +213,9 @@ class RegisterWizardDraft {
 
         'role': role?.name,
 
-        'v': 6,
+        'clientDefaultAvatarUrl': clientDefaultAvatarUrl,
+
+        'v': 8,
 
       };
 
@@ -196,7 +235,11 @@ class RegisterWizardDraft {
 
         version != 5 &&
 
-        version != 6) {
+        version != 6 &&
+
+        version != 7 &&
+
+        version != 8) {
 
       return null;
 
@@ -240,6 +283,14 @@ class RegisterWizardDraft {
 
       adresse: json['adresse'] as String? ?? '',
 
+      voieType: json['voieType'] as String? ?? PostalVoieTypes.defaultType,
+
+      voieNom: json['voieNom'] as String? ?? '',
+
+      numeroRue: json['numeroRue'] as String? ?? '',
+
+      pays: json['pays'] as String? ?? PostalAddress.defaultCountry,
+
       salon: json['salon'] as String? ?? '',
 
       nomAffiche: json['nomAffiche'] as String? ?? '',
@@ -263,6 +314,8 @@ class RegisterWizardDraft {
       pendingGoogleSignIn: json['pendingGoogleSignIn'] as bool? ?? false,
 
       role: role,
+
+      clientDefaultAvatarUrl: json['clientDefaultAvatarUrl'] as String?,
 
     );
 

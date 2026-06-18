@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
-import '../../../../shared/theme/discovery_styles.dart';
-import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../logic/booking_formatters.dart';
 import '../../logic/client_reservation_ui_status.dart';
 import '../../logic/reservation_chat_eligibility.dart';
 import '../../models/client_reservation_summary.dart';
+import '../shared/appointment_date_badge.dart';
 import 'client_reservation_review_action.dart';
 import 'reservation_payment_summary_card.dart';
 import 'reservation_pending_banner.dart';
@@ -55,131 +55,90 @@ class ClientReservationCard extends StatelessWidget {
         onMessage != null && clientReservationCanMessage(uiStatus);
 
     return Material(
-      color: Colors.transparent,
-      borderRadius: DiscoveryStyles.cardBorderRadius,
+      color: AppColors.cardSurfaceFor(theme.brightness),
+      elevation: 0,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: DiscoveryStyles.cardBorderRadius,
+        borderRadius: BorderRadius.circular(14),
         child: Ink(
         decoration: BoxDecoration(
-          borderRadius: DiscoveryStyles.cardBorderRadius,
-          color: theme.colorScheme.surface.withValues(
-            alpha: isDark ? 0.92 : 0.98,
-          ),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: chipStyle.backgroundColor.withValues(alpha: 0.4),
-            width: 1.5,
+            color: theme.colorScheme.outline.withValues(
+              alpha: isDark ? 0.28 : 0.1,
+            ),
           ),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: primary.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
               child: ReservationPendingBanner(statut: item.statut),
             ),
             if (uiStatus == ClientReservationUiStatus.cancelled &&
                 item.hasRejectReason)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: ReservationRejectReasonBox(reason: item.notesPrestataire!),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppAvatar(
-                    imageUrl: item.prestataireAvatarUrl,
-                    displayName: prestataireLabel,
-                    radius: 30,
-                  ),
-                  const SizedBox(width: 14),
+                  AppointmentDateBadge(date: item.dateHeure),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Text(
                                 prestataireLabel,
-                                style: theme.textTheme.titleMedium?.copyWith(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleSmall?.copyWith(
                                   fontFamily: AppFonts.display,
                                   fontWeight: FontWeight.w800,
-                                  height: 1.2,
+                                  letterSpacing: -0.2,
+                                  height: 1.1,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: chipStyle.backgroundColor,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _statusIcon(uiStatus),
-                                    size: 14,
-                                    color: chipStyle.foregroundColor,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    clientReservationStatusLabel(uiStatus),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontFamily: AppFonts.body,
-                                      color: chipStyle.foregroundColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            const SizedBox(width: 6),
+                            _StatusChip(
+                              uiStatus: uiStatus,
+                              chipStyle: chipStyle,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Icon(
-                                Icons.spa_outlined,
-                                size: 14,
-                                color: primary,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                serviceLabel,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontFamily: AppFonts.body,
-                                  fontWeight: FontWeight.w600,
-                                  color: primary,
-                                  height: 1.25,
-                                ),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 3),
+                        Text(
+                          '${
+                            _capitalize(formatBookingWeekday(item.dateHeure))
+                          } · ${formatBookingTime(item.dateHeure)}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          serviceLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontFamily: AppFonts.body,
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.2,
+                          ),
                         ),
                       ],
                     ),
@@ -203,91 +162,66 @@ class ClientReservationCard extends StatelessWidget {
               ),
             ],
             Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               decoration: BoxDecoration(
-                color: primary.withValues(alpha: isDark ? 0.07 : 0.04),
+                color: primary.withValues(alpha: isDark ? 0.06 : 0.04),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(14),
                   bottomRight: Radius.circular(14),
                 ),
                 border: Border(
                   top: BorderSide(
-                    color: primary.withValues(alpha: isDark ? 0.1 : 0.07),
+                    color: theme.colorScheme.outline.withValues(
+                      alpha: isDark ? 0.14 : 0.08,
+                    ),
                   ),
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: _InfoPill(
-                          icon: Icons.calendar_month_rounded,
-                          text: formatBookingDate(item.dateHeure),
-                          theme: theme,
-                          primary: primary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: _InfoPill(
-                          icon: Icons.schedule_rounded,
-                          text: formatBookingTime(item.dateHeure),
-                          theme: theme,
-                          primary: primary,
-                        ),
-                      ),
-                    ],
-                  ),
                   if (showMessage || showCancel)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Row(
-                        children: [
-                          if (showMessage)
-                            _ReservationIconAction(
-                              onPressed: onMessage,
-                              icon: Icons.forum_rounded,
-                              label: DiscChat.openChat,
-                              tooltip: DiscChat.openChat,
-                              primary: primary,
-                              filled: true,
-                            ),
-                          ClientReservationReviewAction(
-                            item: item,
-                            onReviewSubmitted: onReviewSubmitted,
+                    Row(
+                      children: [
+                        if (showMessage)
+                          _ReservationIconAction(
+                            onPressed: onMessage,
+                            icon: Icons.forum_rounded,
+                            label: DiscChat.openChat,
+                            tooltip: DiscChat.openChat,
+                            primary: primary,
+                            filled: true,
                           ),
-                          const Spacer(),
-                          if (showCancel)
-                            cancelLoading
-                                ? SizedBox(
-                                    height: 36,
-                                    width: 36,
-                                    child: Center(
-                                      child: SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: primary,
-                                        ),
+                        ClientReservationReviewAction(
+                          item: item,
+                          onReviewSubmitted: onReviewSubmitted,
+                        ),
+                        const Spacer(),
+                        if (showCancel)
+                          cancelLoading
+                              ? SizedBox(
+                                  height: 36,
+                                  width: 36,
+                                  child: Center(
+                                    child: SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: primary,
                                       ),
                                     ),
-                                  )
-                                : _ReservationIconAction(
-                                    onPressed: onCancel,
-                                    icon: Icons.event_busy_rounded,
-                                    label: DiscBk.revokeLabel,
-                                    tooltip: DiscBk.revokeLabel,
-                                    primary: theme.colorScheme.error,
-                                    filled: false,
                                   ),
-                        ],
-                      ),
+                                )
+                              : _ReservationIconAction(
+                                  onPressed: onCancel,
+                                  icon: Icons.event_busy_rounded,
+                                  label: DiscBk.revokeLabel,
+                                  tooltip: DiscBk.revokeLabel,
+                                  primary: theme.colorScheme.error,
+                                  filled: false,
+                                ),
+                      ],
                     ),
                 ],
               ),
@@ -299,7 +233,53 @@ class ClientReservationCard extends StatelessWidget {
     );
   }
 
-  IconData _statusIcon(ClientReservationUiStatus status) {
+  String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return '${value[0].toUpperCase()}${value.substring(1)}';
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.uiStatus,
+    required this.chipStyle,
+  });
+
+  final ClientReservationUiStatus uiStatus;
+  final ChipStyleReservationStatus chipStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: chipStyle.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _icon(uiStatus),
+            size: 12,
+            color: chipStyle.foregroundColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            clientReservationStatusLabel(uiStatus),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  color: chipStyle.foregroundColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _icon(ClientReservationUiStatus status) {
     switch (status) {
       case ClientReservationUiStatus.confirmed:
         return Icons.verified_rounded;
@@ -314,55 +294,6 @@ class ClientReservationCard extends StatelessWidget {
       case ClientReservationUiStatus.unknown:
         return Icons.help_outline_rounded;
     }
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({
-    required this.icon,
-    required this.text,
-    required this.theme,
-    required this.primary,
-  });
-
-  final IconData icon;
-  final String text;
-  final ThemeData theme;
-  final Color primary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.35 : 0.65,
-        ),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Icon(icon, size: 16, color: primary),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              softWrap: true,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w600,
-                fontSize: 11.5,
-                height: 1.25,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../shared/layout/discovery_responsive.dart';
+import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
+import '../../../../../shared/theme/discovery_styles.dart';
 
 /// Barre d'action fixe en bas de l'écran.
 class PrestataireDetailBottomBar extends StatelessWidget {
@@ -19,14 +22,15 @@ class PrestataireDetailBottomBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final layout = DiscoveryResponsive.of(context);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: AppColors.cardSurfaceFor(theme.brightness),
         border: Border(
           top: BorderSide(
             color: theme.colorScheme.outline.withValues(
-              alpha: isDark ? 0.2 : 0.12,
+              alpha: isDark ? 0.2 : 0.1,
             ),
           ),
         ),
@@ -34,60 +38,77 @@ class PrestataireDetailBottomBar extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: theme.colorScheme.shadow.withValues(alpha: 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
+                  color: AppColors.brandBrown.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
                 ),
               ],
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottom),
-        child: Row(
-          children: [
-            if (minPrice != null) ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    DiscPrestaDetail.fromPrice,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+        padding: EdgeInsets.fromLTRB(
+          layout.horizontalPadding,
+          10,
+          layout.horizontalPadding,
+          10 + bottom,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
+            child: Row(
+              children: [
+                if (minPrice != null) ...[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DiscPrestaDetail.fromPrice,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        '${minPrice!.toStringAsFixed(0)} €',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontFamily: AppFonts.display,
+                          fontWeight: FontWeight.w900,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '${minPrice!.toStringAsFixed(0)} €',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                  const SizedBox(width: 14),
                 ],
-              ),
-              const SizedBox(width: 16),
-            ],
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: onBook,
-                icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                label: Text(
-                  DiscPrestaDetail.actionBook,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  minimumSize: const Size(0, 40),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: theme.textTheme.labelLarge?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: onBook,
+                    icon: const Icon(Icons.calendar_month_rounded, size: 17),
+                    label: Text(
+                      DiscPrestaDetail.actionBook,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 44),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: DiscoveryStyles.chipBorderRadius,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

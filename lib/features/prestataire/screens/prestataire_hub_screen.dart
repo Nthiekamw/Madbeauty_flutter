@@ -11,10 +11,12 @@ import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../logic/prestataire_hub_constants.dart';
 import '../logic/prestataire_hub_media_actions.dart';
 import '../logic/prestataire_hub_save_actions.dart';
+import '../logic/prestataire_subscription_service_count.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../navigation/prestataire_hub_wizard_navigation.dart';
 import '../providers/hub/prestataire_hub_form_controller.dart';
 import '../providers/profile/prestataire_profile_form_provider.dart';
+import '../providers/subscription/prestataire_subscription_provider.dart';
 import '../providers/agenda/disponibilite_provider.dart';
 import '../widgets/profile/hub/prestataire_hub_screen_body.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
@@ -37,7 +39,8 @@ class PrestataireHubScreen extends ConsumerStatefulWidget {
       _PrestataireHubScreenState();
 }
 
-class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
+class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen>
+    with WidgetsBindingObserver {
   late final PrestataireHubFormController _form;
 
   PrestataireHubSaveActions get _save => PrestataireHubSaveActions(
@@ -52,6 +55,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _form = PrestataireHubFormController(
       focusedSection: widget.focusedSection,
       initialStep: widget.initialStep,
@@ -67,19 +71,56 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
     _form.attachOnboardingIfNeeded();
   }
 
+  void _syncPlannedServiceCount() {
+    final planned = PrestataireSubscriptionServiceCount.fromHubForm(
+      catalogSelection: _form.catalogSelection,
+      serviceFields: _form.services,
+    );
+    ref
+        .read(prestataireSubscriptionPlannedServiceCountProvider.notifier)
+        .setPlannedCount(planned > 0 ? planned : null);
+  }
+
   void _onFormChanged() {
     if (mounted) setState(() {});
+    // Riverpod interdit les écritures pendant build/initState.
+    Future.microtask(() {
+      if (!mounted) return;
+      _syncPlannedServiceCount();
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _form.removeListener(_onFormChanged);
+    ref
+        .read(prestataireSubscriptionPlannedServiceCountProvider.notifier)
+        .clear();
+    unawaited(
+      PrestataireHubMediaActions.flushPendingGalleryUploads(ref, _form),
+    );
     _form.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      unawaited(
+        PrestataireHubMediaActions.flushPendingGalleryUploads(ref, _form),
+      );
+    }
+  }
+
   void _continue() {
     if (widget.focusedSection != null) {
+      unawaited(_save.save());
+      return;
+    }
+    if (_form.currentStep == PrestataireHubConstants.wizardStepCount - 1) {
       unawaited(_save.save());
       return;
     }
@@ -166,10 +207,21 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 descriptionController: _form.descriptionController,
                 experienceProController: _form.experienceProController,
                 anneesExperienceController: _form.anneesExperienceController,
+                professionalExperiences: _form.professionalExperiences,
+                onToggleProfessionalExperience: _form.toggleProfessionalExperience,
+                onProfessionalExperienceYearsChanged:
+                    _form.updateProfessionalExperienceYears,
+                onRemoveProfessionalExperience: _form.removeProfessionalExperience,
                 bioController: _form.bioController,
                 villeController: _form.villeController,
                 codePostalController: _form.codePostalController,
                 adresseController: _form.adresseController,
+                voieType: _form.voieType,
+                onVoieTypeChanged: _form.setVoieType,
+                voieNomController: _form.voieNomController,
+                numeroRueController: _form.numeroRueController,
+                paysController: _form.paysController,
+                onPostalAddressChanged: _form.onPostalAddressChanged,
                 paysCode: _form.paysCode,
                 lieuTravail: _form.lieuTravail,
                 avatarUrl: _form.avatarUrl,
@@ -209,17 +261,26 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                 onCompleteLater: _save.completeLater,
                 onBasicsChanged: _form.clearBasicsErrors,
                 onLieuTravailChanged: _form.setLieuTravail,
-                onPaysChanged: _form.setPays,
                 onPickAvatar: () =>
                     PrestataireHubMediaActions.pickAvatar(context, _form),
                 defaultAvatarUrls: PrestataireHubConstants.defaultAvatarUrls,
                 selectedDefaultAvatarUrl:
                     _form.avatarBytes == null ? _form.avatarUrl : null,
                 onSelectDefaultAvatar: _form.selectDefaultAvatar,
-                onPickGallery: () =>
-                    PrestataireHubMediaActions.pickGallery(context, _form),
-                onPickGalleryVideo: () =>
-                    PrestataireHubMediaActions.pickGalleryVideo(context, _form),
+                onPickGalleryForSlot: (slot) =>
+                    PrestataireHubMediaActions.pickGalleryForSlot(
+                      ref,
+                      context,
+                      _form,
+                      slot,
+                    ),
+                onPickGalleryVideoForSlot: (slot) =>
+                    PrestataireHubMediaActions.pickGalleryVideoForSlot(
+                      ref,
+                      context,
+                      _form,
+                      slot,
+                    ),
                 onRemoveGalleryPhoto: (photo) =>
                     PrestataireHubMediaActions.removeGalleryPhoto(
                       ref,
@@ -227,7 +288,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen> {
                       _form,
                       photo,
                     ),
-                onRemovePendingGallery: _form.removePendingGalleryAt,
+                onRemovePendingGallery: _form.removePendingGallery,
                 onCatalogChanged: _form.onCatalogChanged,
                 onPricingChanged: _form.onPricingChanged,
                 horaireWeek: _form.horaireWeek,

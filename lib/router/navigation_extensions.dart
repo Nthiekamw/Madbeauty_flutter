@@ -93,6 +93,9 @@ extension AppNavigationX on BuildContext {
         AppRouteNames.bugReportChat,
         pathParameters: {'id': bugReportId},
       );
+  void pushUserSupportChat() => push(AppRoutes.userSupportChat);
+  void pushUserSupportChatThread(String threadId) =>
+      push('${AppRoutes.userSupportChat}/$threadId');
   void pushBannedAccountSupport({String? reason}) {
     final trimmed = reason?.trim();
     if (trimmed != null && trimmed.isNotEmpty) {
@@ -112,12 +115,17 @@ extension AppNavigationX on BuildContext {
   void pushAdminVerifications() => pushNamed(AppRouteNames.adminVerifications);
   void pushAdminReports() => pushNamed(AppRouteNames.adminReports);
   void pushAdminBugReports() => pushNamed(AppRouteNames.adminBugReports);
+  void pushAdminUserSupport() => pushNamed(AppRouteNames.adminUserSupport);
   void pushAdminUsers() => pushNamed(AppRouteNames.adminUsers);
   void pushAdminReservations() => pushNamed(AppRouteNames.adminReservations);
   void pushAdminAudit() => pushNamed(AppRouteNames.adminAudit);
   void pushAdminPush() => pushNamed(AppRouteNames.adminPush);
   void pushAdminSubscriptionTrial() =>
       pushNamed(AppRouteNames.adminSubscriptionTrial);
+  void pushAdminBookingPlatformFee() =>
+      pushNamed(AppRouteNames.adminBookingPlatformFee);
+  void pushAdminRealisationPhotos() =>
+      pushNamed(AppRouteNames.adminRealisationPhotos);
   void goClientMessages() => goNamed(AppRouteNames.clientMessages);
   void goPrestataireMessages() => goNamed(AppRouteNames.prestataireMessages);
   Future<T?> pushChat<T extends Object?>(

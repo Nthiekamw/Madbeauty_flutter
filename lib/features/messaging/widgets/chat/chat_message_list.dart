@@ -31,35 +31,7 @@ class ChatMessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (messages.isEmpty) {
-      return emptyPlaceholder ??
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 48,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.45),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    DiscChat.emptyBody,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          );
+      return emptyPlaceholder ?? const _ChatEmptyBody();
     }
 
     return ChatContentWidth(
@@ -135,6 +107,60 @@ class ChatMessageList extends StatelessWidget {
       return DiscChat.yesterday;
     }
     return DateFormat('EEEE d MMMM', 'fr_FR').format(dt);
+  }
+}
+
+class _ChatEmptyBody extends StatelessWidget {
+  const _ChatEmptyBody();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxHeight = constraints.maxHeight;
+        final tight = maxHeight < 140;
+        final padding = tight ? 12.0 : 32.0;
+        final iconSize = tight ? 28.0 : 48.0;
+        final gap = tight ? 6.0 : 14.0;
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: maxHeight.isFinite
+                  ? (maxHeight - padding * 2).clamp(0, double.infinity)
+                  : 0,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: iconSize,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.45),
+                  ),
+                  SizedBox(height: gap),
+                  Text(
+                    DiscChat.emptyBody,
+                    textAlign: TextAlign.center,
+                    maxLines: tight ? 2 : 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                      fontSize: tight ? 13 : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

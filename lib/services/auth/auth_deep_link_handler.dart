@@ -12,10 +12,13 @@ class AuthDeepLinkResult {
   const AuthDeepLinkResult({
     required this.handled,
     this.passwordRecovery = false,
+    this.linkExpired = false,
   });
 
   final bool handled;
   final bool passwordRecovery;
+  /// Lien PKCE expiré / déjà consommé (e-mail peut quand même être confirmé).
+  final bool linkExpired;
 }
 
 /// Traite les deep links auth Supabase (PKCE `code`, `token_hash`, recovery…).
@@ -72,6 +75,31 @@ abstract final class AuthDeepLinkHandler {
     };
   }
 
+  static bool _isFlowExpiredError(AuthException error) {
+    final message = error.message.toLowerCase();
+    return message.contains('flow state has expired') ||
+        message.contains('invalid flow state') ||
+        message.contains('code has expired') ||
+        message.contains('code verifier');
+  }
+
+  static Future<void> _verifyTokenHash(
+    GoTrueClient auth,
+    Map<String, String> params,
+  ) async {
+    final tokenHash = params['token_hash']?.trim();
+    final typeRaw = params['type']?.trim();
+    if (tokenHash == null || tokenHash.isEmpty || typeRaw == null) {
+      throw const AuthException('Missing token_hash or type');
+    }
+    final email = params['email']?.trim();
+    await auth.verifyOTP(
+      type: otpTypeFromQuery(typeRaw),
+      tokenHash: tokenHash,
+      email: email?.isNotEmpty == true ? email : null,
+    );
+  }
+
   /// Retourne le détail du traitement (session ouverte, recovery, etc.).
   static Future<AuthDeepLinkResult> handle(Uri uri) async {
     if (!AppConfig.hasSupabase || !isAuthCallbackUri(uri)) {
@@ -92,30 +120,50 @@ abstract final class AuthDeepLinkHandler {
       }
     });
 
+    var linkExpired = false;
+
     try {
-      if (params.containsKey('code') ||
+      final tokenHash = params['token_hash']?.trim();
+      final hasTokenHash = tokenHash != null && tokenHash.isNotEmpty;
+      final hasPkceParams = params.containsKey('code') ||
           params.containsKey('access_token') ||
           params.containsKey('error') ||
-          params.containsKey('error_description')) {
-        await auth.getSessionFromUrl(normalized);
-      } else {
-        final tokenHash = params['token_hash']?.trim();
-        final typeRaw = params['type']?.trim();
-        if (tokenHash == null || tokenHash.isEmpty || typeRaw == null) {
-          return const AuthDeepLinkResult(handled: false);
-        }
+          params.containsKey('error_description');
 
-        final email = params['email']?.trim();
-        await auth.verifyOTP(
-          type: otpTypeFromQuery(typeRaw),
-          tokenHash: tokenHash,
-          email: email?.isNotEmpty == true ? email : null,
-        );
+      // token_hash : pas de PKCE local requis (lien e-mail classique).
+      if (hasTokenHash) {
+        try {
+          await _verifyTokenHash(auth, params);
+        } on AuthException catch (e) {
+          if (_isFlowExpiredError(e) && auth.currentSession != null) {
+            // Lien déjà consommé mais session ouverte.
+          } else {
+            rethrow;
+          }
+          linkExpired = _isFlowExpiredError(e);
+        }
+      } else if (hasPkceParams) {
+        try {
+          await auth.getSessionFromUrl(normalized);
+        } on AuthException catch (e) {
+          linkExpired = _isFlowExpiredError(e);
+          if (auth.currentSession != null) {
+            // Double ouverture du lien : la 1re a réussi.
+          } else if (linkExpired) {
+            if (kDebugMode) {
+              debugPrint('AuthDeepLinkHandler: ${e.message}');
+            }
+          } else {
+            rethrow;
+          }
+        }
+      } else {
+        return const AuthDeepLinkResult(handled: false);
       }
 
       final sessionOpened = auth.currentSession != null;
       if (!sessionOpened) {
-        return const AuthDeepLinkResult(handled: false);
+        return AuthDeepLinkResult(handled: false, linkExpired: linkExpired);
       }
 
       AuthChangeEvent? capturedEvent = authEvent;
@@ -132,12 +180,23 @@ abstract final class AuthDeepLinkHandler {
       return AuthDeepLinkResult(
         handled: true,
         passwordRecovery: passwordRecovery,
+        linkExpired: linkExpired,
       );
     } on AuthException catch (e, st) {
+      if (auth.currentSession != null) {
+        return AuthDeepLinkResult(
+          handled: true,
+          passwordRecovery: recoveryFromUri,
+          linkExpired: _isFlowExpiredError(e),
+        );
+      }
       if (kDebugMode) {
         debugPrint('AuthDeepLinkHandler: ${e.message}\n$st');
       }
-      return const AuthDeepLinkResult(handled: false);
+      return AuthDeepLinkResult(
+        handled: false,
+        linkExpired: _isFlowExpiredError(e),
+      );
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('AuthDeepLinkHandler: $e\n$st');

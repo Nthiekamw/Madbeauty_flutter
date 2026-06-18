@@ -279,28 +279,20 @@ class PrestataireService {
 
   Future<List<PrestataireProfile>> getBestRated({
     int limit = 16,
-    int fetchCap = 48,
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getBestRated',
     action: () async {
       final response = await _client
           .from('prestataire_profiles')
           .select()
-          .limit(fetchCap);
+          .not('note_moyenne', 'is', null)
+          .order('note_moyenne', ascending: false)
+          .limit(limit);
 
-      final all = (response as List<dynamic>)
+      return (response as List<dynamic>)
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+          .where((p) => p.noteMoyenne != null)
           .toList();
-
-      all.sort((a, b) {
-        final na = a.noteMoyenne;
-        final nb = b.noteMoyenne;
-        if (na != null && nb != null && na != nb) return nb.compareTo(na);
-        if (na != null && nb == null) return -1;
-        if (na == null && nb != null) return 1;
-        return b.createdAt.compareTo(a.createdAt);
-      });
-      return all.take(limit).toList();
     },
   );
 

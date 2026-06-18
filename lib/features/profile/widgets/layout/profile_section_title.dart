@@ -1,25 +1,28 @@
 ﻿import 'package:flutter/material.dart';
 
-import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_header.dart';
 
 class ProfileSectionTitle extends StatelessWidget {
-  const ProfileSectionTitle({super.key, required this.title});
+  const ProfileSectionTitle({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.icon,
+  });
 
   final String title;
+  final String? subtitle;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        title,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontFamily: AppFonts.display,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.2,
-        ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: DiscoverySectionHeader(
+        title: title,
+        subtitle: subtitle,
+        icon: icon,
+        compact: true,
       ),
     );
   }

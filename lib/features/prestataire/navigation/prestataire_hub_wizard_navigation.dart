@@ -32,7 +32,8 @@ abstract final class PrestataireHubWizardNavigation {
         PrestaProfileEnhancementItem.clientExperience => 5,
       };
     }
-    return 6;
+    // L’abonnement (étape 7) est optionnel : ne pas y renvoyer automatiquement.
+    return 0;
   }
 
   /// Prépare le brouillon hub pour le parcours guidé.

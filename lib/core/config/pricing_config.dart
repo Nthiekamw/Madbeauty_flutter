@@ -2,8 +2,8 @@
 abstract final class PricingConfig {
   PricingConfig._();
 
-  /// Frais plateforme à partir de la 3ᵉ réservation (centimes).
-  static const int platformFeeCents = 100;
+  /// Frais plateforme à partir du seuil admin (centimes). Défaut 0 = désactivé.
+  static const int platformFeeCents = 0;
 
   /// Acompte prestation dans l’app (pourcentage entier).
   static const int depositPercent = 20;

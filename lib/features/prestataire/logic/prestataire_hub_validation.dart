@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../logic/professional_experience_entries.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../models/prestataire_service_catalog_selection.dart';
 import '../models/prestataire_service_field_set.dart';
@@ -80,24 +81,22 @@ abstract final class PrestataireHubValidation {
 
   static PrestataireHubFieldErrors validateVitrine({
     required String nom,
-    required String nomAffiche,
     required String description,
-    required String experiencePro,
+    required List<ProfessionalExperienceEntry> professionalExperiences,
     required bool hasAvatar,
   }) {
     return PrestataireHubFieldErrors(
       avatarError: hasAvatar ? null : DiscPrestaForm.reqPhoto,
       nomError: nom.isEmpty ? DiscPrestaForm.reqNameSalon : null,
-      nomAfficheError:
-          nomAffiche.isEmpty ? DiscPrestaForm.reqDisplayName : null,
+      nomAfficheError: null,
       descriptionError: description.isEmpty
           ? DiscPrestaForm.reqDescription
           : description.characters.length > 200
           ? DiscPrestaForm.descriptionTooLong
           : null,
-      experienceProError: experiencePro.length > 150
-          ? DiscPrestaForm.experienceProTooLong
-          : null,
+      experienceProError: ProfessionalExperienceCodec.validationError(
+        professionalExperiences,
+      ),
     );
   }
 

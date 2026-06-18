@@ -11,11 +11,14 @@ import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/auth/providers/auth_redirect_providers.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
+import '../../../features/auth/register/logic/register_wizard_submit_handler.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
 import '../../../features/prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../features/prestataire/providers/profile/prestataire_profile_form_provider.dart';
 import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
+import '../../../features/profile/storage/become_prestataire_draft_store.dart';
+import '../../../features/prestataire/navigation/prestataire_hub_wizard_navigation.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
@@ -123,6 +126,10 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
         await _go('${AppRoutes.registerVerifyEmail}?email=$email');
         return;
       }
+      if (hasSession) {
+        final finalized = await _tryFinalizeRegistrationDraft(container);
+        if (finalized) return;
+      }
       if (!hasSession) {
         await _go(AppRoutes.register);
         return;
@@ -140,7 +147,17 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       if (BecomePrestataireFlowResume.needsPrestataireRole) {
         await LocalCacheService.instance.setSelectedRole('prestataire');
       }
-      await _go(becomeResume);
+      if (becomeResume == AppRoutes.prestataireProfileEdit) {
+        await _navigate(() async {
+          if (!mounted) return;
+          await PrestataireHubWizardNavigation.openWizard(
+            context,
+            initialStep: 0,
+          );
+        });
+      } else {
+        await _go(becomeResume);
+      }
       return;
     }
 
@@ -168,8 +185,37 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     }
   }
 
+  Future<bool> _tryFinalizeRegistrationDraft(
+    ProviderContainer container,
+  ) async {
+    final draft = RegisterWizardDraftStore.instance.read();
+    if (draft == null || !draft.isActive) return false;
+
+    final session = container.read(authServiceProvider).currentSession;
+    final user = session?.user;
+    if (user == null || !mounted) return false;
+
+    try {
+      return await RegisterWizardSubmitHandler()
+          .finalizePendingRegistrationFromDraft(
+        context: context,
+        mounted: () => mounted,
+        ref: ref,
+        session: user,
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('Splash: finalize inscription – $e\n$st');
+      }
+      return false;
+    }
+  }
+
   /// Chemin de handoff redirect, ou `null` si le splash doit rester (bootstrap en cours).
   Future<String?> _bootstrapAuthenticated(ProviderContainer container) async {
+    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+    if (becomeResume != null) return becomeResume;
+
     final online = await container.read(connectivityServiceProvider).isOnline();
     if (!online) {
       if (kDebugMode) {
@@ -205,7 +251,9 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       }
     }
 
-    if (LocalCacheService.instance.selectedRole != 'prestataire') {
+    if (LocalCacheService.instance.selectedRole != 'prestataire' &&
+        LocalCacheService.instance.signupShellRole != 'prestataire' &&
+        !BecomePrestataireDraftStore.instance.hasDraft) {
       return AuthRoleCache.preferredAuthenticatedPath();
     }
 

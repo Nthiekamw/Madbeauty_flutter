@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../../messaging/messaging_navigation.dart';
@@ -16,6 +17,7 @@ import '../logic/prestataire_share.dart';
 import '../providers/catalog/prestataire_detail_provider.dart';
 import '../widgets/profile/overview/sections/prestataire_client_experience_section.dart';
 import '../widgets/public/detail/prestataire_client_engagement_row.dart';
+import '../logic/prestataire_services_grouping.dart';
 import '../widgets/public/detail/prestataire_detail_sections.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/public/detail/prestataire_detail_shell.dart';
@@ -137,10 +139,9 @@ class _PrestataireDetailScreenState
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       PrestataireDetailHero(
-                        prestataireId: data.profile.id,
+                        profile: data.profile,
                         displayTitle: displayTitle,
                         avatarUrl: data.avatarUrl,
-                        isOwnProfile: isOwnProfile,
                         onShare: () => sharePrestataireProfile(
                           prestataireId: data.profile.id,
                           displayName: displayTitle,
@@ -155,28 +156,42 @@ class _PrestataireDetailScreenState
                                 ),
                       ),
                       SliverToBoxAdapter(
-                        child: PrestataireDetailIdentityCard(
-                          profile: data.profile,
-                          avatarUrl: data.avatarUrl,
-                          displayTitle: displayTitle,
-                          servicesCount: data.services.length,
-                          isOwnProfile: isOwnProfile,
-                          onBook: () => context.pushBooking(
-                            prestataireId: data.profile.id,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: DiscoveryResponsive.of(context)
+                                  .contentMaxWidth,
+                            ),
+                            child: PrestataireDetailIdentityCard(
+                              profile: data.profile,
+                              servicesCount: data.services.length,
+                              isOwnProfile: isOwnProfile,
+                              onBook: () => context.pushBooking(
+                                prestataireId: data.profile.id,
+                              ),
+                              onMessage: canMessage
+                                  ? () => openChatWithPrestataire(
+                                        context,
+                                        ref,
+                                        data.profile.id,
+                                      )
+                                  : null,
+                            ),
                           ),
-                          onMessage: canMessage
-                              ? () => openChatWithPrestataire(
-                                    context,
-                                    ref,
-                                    data.profile.id,
-                                  )
-                              : null,
                         ),
                       ),
                       if (!isOwnProfile)
                         SliverToBoxAdapter(
-                          child: PrestataireClientEngagementRow(
-                            prestataireId: data.profile.id,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: DiscoveryResponsive.of(context)
+                                    .contentMaxWidth,
+                              ),
+                              child: PrestataireClientEngagementRow(
+                                prestataireId: data.profile.id,
+                              ),
+                            ),
                           ),
                         ),
                       SliverPersistentHeader(
@@ -187,13 +202,21 @@ class _PrestataireDetailScreenState
                         ),
                       ),
                       SliverToBoxAdapter(
-                        child: _DetailContent(
-                          data: data,
-                          isOwnProfile: isOwnProfile,
-                          servicesKey: _servicesKey,
-                          galleryKey: _galleryKey,
-                          aboutKey: _aboutKey,
-                          reviewsKey: _reviewsKey,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: DiscoveryResponsive.of(context)
+                                  .contentMaxWidth,
+                            ),
+                            child: _DetailContent(
+                              data: data,
+                              isOwnProfile: isOwnProfile,
+                              servicesKey: _servicesKey,
+                              galleryKey: _galleryKey,
+                              aboutKey: _aboutKey,
+                              reviewsKey: _reviewsKey,
+                            ),
+                          ),
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -288,18 +311,16 @@ class _DetailContent extends StatelessWidget {
                     title: DiscPrestaDetail.noSvcsTitle,
                     body: DiscPrestaDetail.noSvcsBody,
                   )
-                : Column(
-                    children: [
-                      for (final service in data.services)
-                        PrestataireDetailServiceCard(
-                          service: service,
-                          canBook: !isOwnProfile,
-                          onBook: () => context.pushBooking(
-                            prestataireId: data.profile.id,
-                            serviceId: service.id,
-                          ),
-                        ),
-                    ],
+                : PrestataireDetailServicesGrouped(
+                    groups: groupServicesByMain(
+                      data.services,
+                      otherGroupTitle: DiscPrestaDetail.servicesOtherGroup,
+                    ),
+                    canBook: !isOwnProfile,
+                    onBook: (serviceId) => context.pushBooking(
+                      prestataireId: data.profile.id,
+                      serviceId: serviceId,
+                    ),
                   ),
           ),
         ),
@@ -314,7 +335,7 @@ class _DetailContent extends StatelessWidget {
                     title: DiscPrestaDetail.noPhotosTitle,
                     body: DiscPrestaDetail.noPhotosBody,
                   )
-                : PrestataireDetailGalleryStrip(photos: data.photos),
+                : PrestataireDetailGalleryGrouped(sections: data.gallerySections),
           ),
         ),
         if (!isOwnProfile)
@@ -335,20 +356,21 @@ class _DetailContent extends StatelessWidget {
                 ),
               if (data.profile.confortClient.isNotEmpty ||
                   data.profile.conditionsService.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                PrestataireDetailSectionCard(
+                  icon: Icons.spa_outlined,
+                  title: DiscPrestaDetail.comfortTitle,
                   child: PrestataireClientExperienceSection(
                     comfortIds: data.profile.confortClient,
                     conditionIds: data.profile.conditionsService,
                     padding: EdgeInsets.zero,
                   ),
                 ),
-              if (data.specialtyNames.isNotEmpty)
+              if (data.specialtyGroups.isNotEmpty)
                 PrestataireDetailSectionCard(
                   icon: Icons.auto_awesome_rounded,
                   title: DiscPrestaDetail.specialtiesTitle,
-                  child: PrestataireDetailSpecialtyTags(
-                    names: data.specialtyNames,
+                  child: PrestataireDetailSpecialtiesByService(
+                    groups: data.specialtyGroups,
                   ),
                 ),
               PrestataireDetailSectionCard(

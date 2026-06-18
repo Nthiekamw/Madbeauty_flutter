@@ -87,4 +87,12 @@ abstract final class DiscNotif {
   static const bugReportMessageTitle = 'Nouveau message sur ton bug';
   static const bugReportMessageAdminTitle = 'Nouveau message sur un bug';
   static String bugReportMessageBody(String preview) => preview;
+
+  static const moderationPhotoRemovedTitle = 'Photo retirée';
+  static const moderationPhotoFlaggedTitle = 'Contenu signalé';
+  static const moderationAccountWarnedTitle = 'Avertissement MadBeauty';
+  static String moderationEventBody(String message) =>
+      message.trim().isEmpty
+          ? 'Consulte ton profil prestataire pour plus de détails.'
+          : message;
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_strings.dart';
@@ -13,7 +15,9 @@ import '../../../widgets/auth_role_card.dart';
 import '../../../widgets/auth_step_section.dart';
 import '../../logic/register_wizard_constants.dart';
 import '../../providers/register_wizard_form_controller.dart';
+import '../register_client_avatar_picker.dart';
 import '../../../../prestataire/widgets/shared/prestataire_signup_extras_form.dart';
+import '../../../widgets/postal_address_form.dart';
 import '../form/register_field_row.dart';
 
 class RegisterWizardIdentityStep extends StatelessWidget {
@@ -263,11 +267,13 @@ class RegisterWizardExtrasStep extends StatelessWidget {
     required this.form,
     required this.formEnabled,
     required this.onSurfaceVariant,
+    required this.onPickClientAvatar,
   });
 
   final RegisterWizardFormController form;
   final bool formEnabled;
   final Color onSurfaceVariant;
+  final Future<void> Function() onPickClientAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -276,29 +282,40 @@ class RegisterWizardExtrasStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!form.isPresta)
-            AppTextField(
+          if (!form.isPresta) ...[
+            RegisterClientAvatarPicker(
+              form: form,
+              formEnabled: formEnabled,
+              onPickPhoto: () => unawaited(onPickClientAvatar()),
+            ),
+            const SizedBox(height: RegisterWizardConstants.sectionGap),
+            PostalAddressForm(
               dense: true,
-              controller: form.adresse,
               enabled: formEnabled,
-              label: AuthStrings.registerFieldAdresse,
-              maxLines: 2,
-              prefixIcon: Icon(
-                Icons.location_on_outlined,
-                color: onSurfaceVariant,
-              ),
-            )
-          else ...[
+              onSurfaceVariant: onSurfaceVariant,
+              voieType: form.voieType,
+              onVoieTypeChanged: form.setVoieType,
+              voieNomController: form.voieNom,
+              numeroController: form.numeroRue,
+              codePostalController: form.codePostal,
+              villeController: form.ville,
+              paysController: form.pays,
+            ),
+          ] else ...[
             PrestataireSignupExtrasForm(
               dense: true,
               enabled: formEnabled,
               onSurfaceVariant: onSurfaceVariant,
               salonController: form.salon,
-              villeController: form.ville,
+              voieType: form.voieType,
+              onVoieTypeChanged: form.setVoieType,
+              voieNomController: form.voieNom,
+              numeroController: form.numeroRue,
               codePostalController: form.codePostal,
+              villeController: form.ville,
+              paysController: form.pays,
               nomAfficheController: form.nomAffiche,
               descriptionController: form.description,
-              adresseController: form.adresse,
               bioController: form.bio,
               salonError: form.salonError,
               villeError: form.villeError,

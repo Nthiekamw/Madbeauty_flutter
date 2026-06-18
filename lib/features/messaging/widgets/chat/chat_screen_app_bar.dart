@@ -30,7 +30,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onDeleteChat;
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 18);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +41,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 0,
+      toolbarHeight: kToolbarHeight,
       automaticallyImplyLeading: false,
       foregroundColor: AppColors.white,
       backgroundColor: AppColors.transparent,
@@ -81,6 +82,7 @@ class ChatScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     subtitle: subtitle,
                     peerLastSeenAt: peerLastSeenAt,
                     useSalonName: useSalonName,
+                    compact: true,
                     titleColor: AppColors.white,
                     subtitleColor: AppColors.onPrimaryMuted88,
                     onLightGradient: true,

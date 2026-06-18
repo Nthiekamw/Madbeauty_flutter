@@ -184,7 +184,7 @@ abstract final class AuthStrings {
       'Comment veux-tu utiliser l’application ?';
   static const String registerStepExtrasTitle = 'Détails';
   static const String registerStepExtrasClientSubtitle =
-      'Optionnel : aide les prestataires à mieux te localiser.';
+      'Photo de profil et adresse (optionnel) pour personnaliser ton compte.';
   static const String registerStepExtrasPrestaSubtitle =
       'Présente ton activité aux futures clientes.';
   static const String registerStepLabelIdentity = 'Compte';
@@ -200,6 +200,11 @@ abstract final class AuthStrings {
   static const String registerSectionIdentity = 'Identité';
   static const String registerSectionContact = 'Contact';
   static const String registerSectionSecurity = 'Sécurité';
+  static const String registerSectionAvatar = 'Photo de profil';
+  static const String registerSectionAvatarHint =
+      'Choisis une photo ou un avatar par défaut.';
+  static const String registerAvatarPick = 'Choisir une photo';
+  static const String registerDefaultAvatars = 'Avatars par défaut';
   static const String registerSectionActivity = 'Ton activité';
   static const String registerSectionActivityHint =
       'Visible sur ta fiche prestataire.';
@@ -244,6 +249,11 @@ abstract final class AuthStrings {
   static const String registerFieldDisplayName = 'Nom affiché';
   static const String registerFieldDescriptionPresta = 'Description courte';
   static const String registerFieldVille = 'Ville *';
+  static const String registerFieldVilleOptional = 'Ville';
+  static const String registerFieldVoieType = 'Type de voie';
+  static const String registerFieldVoieName = 'Nom de la voie';
+  static const String registerFieldStreetNumber = 'N°';
+  static const String registerFieldCountry = 'Pays';
   static const String registerFieldBioPresta = 'Présentation (optionnel)';
   static const String registerWizardSubmit = 'Créer mon compte';
   static const String registerWizardNext = 'Continuer';
@@ -266,13 +276,11 @@ abstract final class AuthStrings {
   static String registerEmailVerifySubtitle(String email) =>
       email.trim().isEmpty ? 'Confirme ton adresse e-mail' : email.trim();
   static const String registerEmailVerifyBody =
-      'On vient de t’envoyer un lien de confirmation. Tu peux l’ouvrir sur ce '
-      'téléphone ou sur un autre (tablette, ordinateur…). Une fois le lien '
-      'cliqué, reviens ici sur MadBeauty et saisis ton mot de passe pour continuer.';
-  static const String registerEmailVerifyPasswordHint =
-      'Pas besoin d’ouvrir le lien sur ce téléphone : la confirmation se fait '
-      'en ligne, puis tu te connectes ici avec ton mot de passe.';
-  static const String registerEmailVerifyCta = 'Continuer l’inscription';
+      'On vient de t’envoyer un lien de confirmation. Ouvre-le depuis ta boîte mail '
+      '(sur ce téléphone ou un autre), puis appuie sur le bouton ci-dessous pour '
+      'entrer dans l’application.';
+  static const String registerEmailVerifyConfirmedCta = 'J’ai vérifié mon e-mail';
+  static const String registerEmailVerifyChecking = 'Connexion…';
   static const String registerEmailVerifyResendLabel = 'Je ne vois pas le mail';
   static const String registerEmailVerifyResendHint =
       'Vérifie les spams / promotions, puis réessaie dans quelques secondes.';
@@ -283,8 +291,9 @@ abstract final class AuthStrings {
   static const String registerEmailVerifyStillPending =
       'Ton e-mail n’est pas encore confirmé. Clique sur le lien reçu (sur n’importe '
       'quel appareil), attends quelques secondes, puis réessaie.';
-  static const String registerEmailVerifyPasswordRequired =
-      'Saisis le mot de passe choisi à l’inscription.';
+  static const String authEmailLinkExpired =
+      'Ce lien a expiré ou a déjà été utilisé. Si ton e-mail est confirmé, appuie sur '
+      '« J’ai vérifié mon e-mail ». Sinon, demande un nouveau mail.';
 
   static const String loginSuccessTitle = 'Bon retour !';
   static const String loginSuccessBody =

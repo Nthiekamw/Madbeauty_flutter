@@ -1,7 +1,12 @@
+export 'sections/prestataire_detail_surface.dart';
 export 'sections/prestataire_detail_about_block.dart';
 export 'sections/prestataire_detail_empty_state.dart';
+export 'sections/prestataire_detail_gallery_grouped.dart';
 export 'sections/prestataire_detail_gallery_strip.dart';
 export 'sections/prestataire_detail_own_profile_banner.dart';
 export 'sections/prestataire_detail_section_layout.dart';
 export 'sections/prestataire_detail_service_card.dart';
 export 'sections/prestataire_detail_specialty_tags.dart';
+export 'sections/prestataire_detail_specialties_by_service.dart';
+export 'sections/prestataire_detail_services_grouped.dart';
+export 'sections/prestataire_detail_service_group_header.dart';

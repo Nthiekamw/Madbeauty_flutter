@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  fetchPlatformFeeSettings,
+  type PlatformFeeSettings,
+} from "./platform_fee_settings.ts";
 
 export type BookingPaymentMode = "deposit_20" | "on_site";
 
-export const PLATFORM_FEE_CENTS = 100;
-export const PLATFORM_FEE_FREE_BOOKING_COUNT = 2;
 export const DEPOSIT_PERCENT = 20;
 
 export interface BookingPricingBreakdown {
@@ -16,13 +18,17 @@ export interface BookingPricingBreakdown {
   balanceOnSiteCents: number;
   requiresInAppPayment: boolean;
   priorBookingCount: number;
+  platformFeeFreeBookingCount: number;
   originalServicePriceCents?: number;
   referralDiscountPercent?: number;
 }
 
-export function platformFeeCentsForPriorCount(priorBookingCount: number): number {
-  if (priorBookingCount < PLATFORM_FEE_FREE_BOOKING_COUNT) return 0;
-  return PLATFORM_FEE_CENTS;
+export function platformFeeCentsForPriorCount(
+  priorBookingCount: number,
+  settings: PlatformFeeSettings,
+): number {
+  if (priorBookingCount < settings.freeBookingCount) return 0;
+  return settings.feeCents;
 }
 
 export function depositCentsFromService(servicePriceCents: number): number {
@@ -42,6 +48,7 @@ export function computeBookingPricing(params: {
   priorBookingCount: number;
   prestataireAcceptsConnect: boolean;
   referralDiscountPercent?: number;
+  platformFeeSettings: PlatformFeeSettings;
 }): BookingPricingBreakdown {
   const {
     servicePriceCents: originalServicePriceCents,
@@ -49,12 +56,16 @@ export function computeBookingPricing(params: {
     priorBookingCount,
     prestataireAcceptsConnect,
     referralDiscountPercent,
+    platformFeeSettings,
   } = params;
   const percent = referralDiscountPercent;
   const servicePriceCents = percent != null && percent > 0
     ? discountedServicePriceCents(originalServicePriceCents, percent)
     : originalServicePriceCents;
-  const platformFee = platformFeeCentsForPriorCount(priorBookingCount);
+  const platformFee = platformFeeCentsForPriorCount(
+    priorBookingCount,
+    platformFeeSettings,
+  );
   const discountMeta = percent != null && percent > 0
     ? { originalServicePriceCents, referralDiscountPercent: percent }
     : {};
@@ -75,6 +86,7 @@ export function computeBookingPricing(params: {
       balanceOnSiteCents: servicePriceCents - deposit,
       requiresInAppPayment: total > 0,
       priorBookingCount,
+      platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
       ...discountMeta,
     };
   }
@@ -83,14 +95,26 @@ export function computeBookingPricing(params: {
     paymentMode: "on_site",
     servicePriceCents,
     depositCents: 0,
-    platformFeeCents: platformFee,
+    platformFeeCents: 0,
     prestatairePortionCents: 0,
-    totalChargeCents: platformFee,
+    totalChargeCents: 0,
     balanceOnSiteCents: servicePriceCents,
-    requiresInAppPayment: platformFee > 0,
+    requiresInAppPayment: false,
     priorBookingCount,
+    platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
     ...discountMeta,
   };
+}
+
+export async function computeBookingPricingFromSettings(
+  admin: SupabaseClient,
+  params: Omit<
+    Parameters<typeof computeBookingPricing>[0],
+    "platformFeeSettings"
+  >,
+): Promise<BookingPricingBreakdown> {
+  const platformFeeSettings = await fetchPlatformFeeSettings(admin);
+  return computeBookingPricing({ ...params, platformFeeSettings });
 }
 
 /** Réservations client hors annulées (avant la réservation en cours). */

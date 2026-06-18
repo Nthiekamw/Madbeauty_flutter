@@ -38,6 +38,7 @@ abstract final class AppRoutes {
   static const String clientNewBugReport = '/client/report-bug/new';
   static const String clientMyBugReports = '/client/my-bug-reports';
   static const String bugReportChat = '/bug-report/:id/chat';
+  static const String userSupportChat = '/support/chat';
   static const String clientReferral = '/client/referral';
   static const String adminHome = '/admin/home';
   static const String adminVerifications = '/admin/verifications';
@@ -49,6 +50,9 @@ abstract final class AppRoutes {
   static const String adminAudit = '/admin/audit';
   static const String adminPush = '/admin/push';
   static const String adminSubscriptionTrial = '/admin/subscription-trial';
+  static const String adminBookingPlatformFee = '/admin/booking-platform-fee';
+  static const String adminRealisationPhotos = '/admin/realisation-photos';
+  static const String adminUserSupport = '/admin/user-support';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -106,6 +110,8 @@ abstract final class AppRouteNames {
   static const String clientNewBugReport = 'client-new-bug-report';
   static const String clientMyBugReports = 'client-my-bug-reports';
   static const String bugReportChat = 'bug-report-chat';
+  static const String userSupportChat = 'user-support-chat';
+  static const String userSupportChatThread = 'user-support-chat-thread';
   static const String clientReferral = 'client-referral';
   static const String adminHome = 'admin-home';
   static const String adminVerifications = 'admin-verifications';
@@ -117,6 +123,9 @@ abstract final class AppRouteNames {
   static const String adminAudit = 'admin-audit';
   static const String adminPush = 'admin-push';
   static const String adminSubscriptionTrial = 'admin-subscription-trial';
+  static const String adminBookingPlatformFee = 'admin-booking-platform-fee';
+  static const String adminRealisationPhotos = 'admin-realisation-photos';
+  static const String adminUserSupport = 'admin-user-support';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';

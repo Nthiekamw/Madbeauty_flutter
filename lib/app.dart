@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -10,7 +10,6 @@ import 'router/deep_link_listener.dart';
 import 'features/messaging/widgets/presence/user_presence_coordinator.dart';
 import 'features/notifications/widgets/booking_push_coordinator.dart';
 import 'features/notifications/widgets/prestataire_booking_notification_coordinator.dart';
-import 'features/notifications/widgets/prestataire_visibility_notification_coordinator.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/router_theme_scope.dart';
 
@@ -26,27 +25,25 @@ class MadBeautyApp extends ConsumerWidget {
       child: UserPresenceCoordinator(
         child: BookingPushCoordinator(
           child: PrestataireBookingNotificationCoordinator(
-            child: PrestataireVisibilityNotificationCoordinator(
-              child: RouterThemeScope(
-                router: router,
-                builder: (context, area) {
-                  return MaterialApp.router(
-                    title: CoreStrings.appName,
-                    debugShowCheckedModeBanner: false,
-                    themeMode: appearance.themeMode,
-                    theme: AppTheme.light(area),
-                    darkTheme: AppTheme.dark(area),
-                    locale: appearance.locale,
-                    supportedLocales: const [
-                      Locale('fr', 'FR'),
-                      Locale('en', 'US'),
-                    ],
-                    localizationsDelegates:
-                        GlobalMaterialLocalizations.delegates,
-                    routerConfig: router,
-                  );
-                },
-              ),
+            child: RouterThemeScope(
+              router: router,
+              builder: (context, area) {
+                return MaterialApp.router(
+                  title: CoreStrings.appName,
+                  debugShowCheckedModeBanner: false,
+                  themeMode: appearance.themeMode,
+                  theme: AppTheme.light(area),
+                  darkTheme: AppTheme.dark(area),
+                  locale: appearance.locale,
+                  supportedLocales: const [
+                    Locale('fr', 'FR'),
+                    Locale('en', 'US'),
+                  ],
+                  localizationsDelegates:
+                      GlobalMaterialLocalizations.delegates,
+                  routerConfig: router,
+                );
+              },
             ),
           ),
         ),

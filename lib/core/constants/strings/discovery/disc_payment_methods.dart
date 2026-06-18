@@ -57,4 +57,13 @@ abstract final class DiscPaymentMethods {
       'Impossible d’ouvrir la page. Réessaie dans un instant.';
   static const unavailable = 'Paiement indisponible (configuration Stripe)';
   static const statusUpdated = 'Statut mis à jour.';
+
+  static const depositOptionTitle = 'Proposer l’acompte en ligne';
+  static const depositOptionHint =
+      'Les clientes peuvent payer 20 % dans l’app (solde sur place). '
+      'Les frais MadBeauty définis par l’admin s’appliquent uniquement sur cet acompte.';
+  static const depositOptionEnabled = 'Acompte en ligne activé.';
+  static const depositOptionDisabled = 'Acompte en ligne désactivé.';
+  static const depositConnectRequired =
+      'Configure d’abord « Recevoir mes paiements » pour activer l’acompte.';
 }

@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -6,6 +8,8 @@ import '../../../core/errors/app_failure.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../providers/agenda/prestataire_agenda_provider.dart';
+import '../../../services/notifications/booking_reminders_sync.dart';
 import '../providers/booking/prestataire_bookings_invalidate.dart';
 import '../providers/subscription/prestataire_subscription_gate_provider.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -45,6 +49,7 @@ class PrestataireReservationActions {
     try {
       await booking.confirm(reservationId);
       invalidatePrestataireBookings(ref);
+      unawaited(_syncPrestataireReminders(ref));
       _snack(DiscPrestaDash.actionOk, kind: AppSnackKind.success);
       return true;
     } on AppFailure catch (e) {
@@ -141,5 +146,11 @@ class PrestataireReservationActions {
     if (!context.mounted) return;
     AppSnackBar.show(context, message: message, kind: kind);
   }
+}
+
+Future<void> _syncPrestataireReminders(WidgetRef ref) async {
+  await syncPrestataireBookingRemindersWithLoader(
+    () => ref.read(prestataireAgendaProvider.future),
+  );
 }
 

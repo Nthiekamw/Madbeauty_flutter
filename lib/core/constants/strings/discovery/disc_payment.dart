@@ -33,7 +33,7 @@ abstract final class DiscPay {
   static const recapCtaPayAmount = 'Payer %s et confirmer';
   static const recapTrustOnSite =
       'Tu règleras la prestation chez le prestataire le jour J. '
-      'Les frais MadBeauty éventuels sont réglés dans l’app à la confirmation.';
+      'Aucun paiement dans l’app pour cette option.';
   static const doneBodyOnSite =
       'Ta réservation est enregistrée. Le solde de la prestation se règle sur place le jour J.';
 
@@ -43,14 +43,19 @@ abstract final class DiscPay {
       'Le reste (%s) se paie sur place chez le prestataire.';
   static const paymentModeOnSite = 'Tout payer sur place';
   static const paymentModeOnSiteHint =
-      'Prestation intégrale chez le prestataire. Frais MadBeauty éventuels dans l’app.';
+      'Prestation intégrale chez le prestataire, sans paiement dans l’app.';
   static const checkoutDueNow = 'À payer maintenant';
   static const checkoutOnSiteLater = 'À régler sur place';
   static const checkoutPlatformFee = 'Frais MadBeauty';
   static const checkoutDeposit = 'Acompte prestation (20 %)';
   static const checkoutReferralDiscount = 'Remise parrainage';
   static const checkoutServiceAfterDiscount = 'Prestation (après remise)';
-  static const checkoutFreePlatform = 'Pas de frais MadBeauty (1ʳᵉ ou 2ᵉ réservation)';
+  static const checkoutFreePlatformCount1 =
+      'Pas de frais MadBeauty (1ʳᵉ réservation)';
+  static String checkoutFreePlatform(int freeBookingCount) {
+    if (freeBookingCount <= 1) return checkoutFreePlatformCount1;
+    return 'Pas de frais MadBeauty ($freeBookingCount premières réservations)';
+  }
   static const recapReferralDiscountBanner =
       'Ta remise parrainage −10 % est appliquée sur cette réservation.';
   static const errNoPaymentRequired =

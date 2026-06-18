@@ -160,6 +160,7 @@ class _ReportCard extends StatelessWidget {
         'prestataire_profile' => Icons.storefront_outlined,
         'conversation' => Icons.forum_outlined,
         'message' => Icons.chat_outlined,
+        'realisation_photo' => Icons.photo_library_outlined,
         _ => Icons.flag_outlined,
       };
 

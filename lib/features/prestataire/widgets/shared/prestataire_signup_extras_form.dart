@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../auth/register/logic/register_wizard_constants.dart';
-import '../../../auth/register/widgets/form/register_field_row.dart';
 import '../../../auth/register/widgets/form/register_optional_panel.dart';
 import '../../../auth/widgets/auth_step_section.dart';
+import '../../../auth/widgets/postal_address_form.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
 
 /// Champs activité / localisation prestataire (inscription + devenir prestataire).
@@ -12,11 +12,15 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
   const PrestataireSignupExtrasForm({
     super.key,
     required this.salonController,
-    required this.villeController,
+    required this.voieType,
+    required this.onVoieTypeChanged,
+    required this.voieNomController,
+    required this.numeroController,
     required this.codePostalController,
+    required this.villeController,
+    required this.paysController,
     required this.nomAfficheController,
     required this.descriptionController,
-    required this.adresseController,
     required this.bioController,
     this.dense = true,
     this.enabled = true,
@@ -32,11 +36,15 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
   });
 
   final TextEditingController salonController;
-  final TextEditingController villeController;
+  final String voieType;
+  final ValueChanged<String> onVoieTypeChanged;
+  final TextEditingController voieNomController;
+  final TextEditingController numeroController;
   final TextEditingController codePostalController;
+  final TextEditingController villeController;
+  final TextEditingController paysController;
   final TextEditingController nomAfficheController;
   final TextEditingController descriptionController;
-  final TextEditingController adresseController;
   final TextEditingController bioController;
   final bool dense;
   final bool enabled;
@@ -78,15 +86,6 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
       SizedBox(height: dense ? RegisterWizardConstants.fieldGap : 12),
       AppTextField(
         dense: dense,
-        controller: adresseController,
-        enabled: enabled,
-        label: AuthStrings.registerFieldSalonAdresse,
-        maxLines: 2,
-        prefixIcon: Icon(Icons.location_on_outlined, color: iconColor),
-      ),
-      SizedBox(height: dense ? RegisterWizardConstants.fieldGap : 12),
-      AppTextField(
-        dense: dense,
         controller: bioController,
         enabled: enabled,
         label: AuthStrings.registerFieldBioPresta,
@@ -115,37 +114,22 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
           ),
         ),
         SizedBox(height: gap),
-        AuthStepSection(
-          compact: dense,
-          title: AuthStrings.registerSectionLocation,
-          icon: Icons.location_city_outlined,
-          child: RegisterFieldRow(
-            left: AppTextField(
-              dense: dense,
-              controller: villeController,
-              onChanged: onVilleChanged == null ? null : (_) => onVilleChanged!(),
-              enabled: enabled,
-              label: AuthStrings.registerFieldVille,
-              errorText: villeError,
-              textInputAction: TextInputAction.next,
-              prefixIcon: Icon(Icons.location_city_outlined, color: iconColor),
-            ),
-            right: AppTextField(
-              dense: dense,
-              controller: codePostalController,
-              onChanged: onCodePostalChanged == null
-                  ? null
-                  : (_) => onCodePostalChanged!(),
-              enabled: enabled,
-              label: AuthStrings.registerFieldPostalCode,
-              errorText: codePostalError,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icon(
-                Icons.markunread_mailbox_outlined,
-                color: iconColor,
-              ),
-            ),
-          ),
+        PostalAddressForm(
+          dense: dense,
+          enabled: enabled,
+          onSurfaceVariant: onSurfaceVariant,
+          voieType: voieType,
+          onVoieTypeChanged: onVoieTypeChanged,
+          voieNomController: voieNomController,
+          numeroController: numeroController,
+          codePostalController: codePostalController,
+          villeController: villeController,
+          paysController: paysController,
+          villeError: villeError,
+          codePostalError: codePostalError,
+          onVilleChanged: onVilleChanged,
+          onCodePostalChanged: onCodePostalChanged,
+          villeRequired: true,
         ),
         if (showOptionalPanel) ...[
           SizedBox(height: gap),

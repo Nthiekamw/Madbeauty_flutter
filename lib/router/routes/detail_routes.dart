@@ -11,6 +11,7 @@ import '../../features/prestataire/screens/prestataire_payment_methods_screen.da
 import '../../features/prestataire/screens/prestataire_received_reviews_screen.dart';
 import '../../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
 import '../../features/prestataire/screens/prestataire_subscription_screen.dart';
+import '../../features/support/screens/user_support_chat_screen.dart';
 import '../app_routes.dart';
 import '../prestataire_public_route.dart';
 
@@ -28,6 +29,18 @@ List<RouteBase> buildDetailRoutes() => [
           };
           return ChatScreen(bookingId: id, viewerRole: viewerRole);
         },
+      ),
+      GoRoute(
+        name: AppRouteNames.userSupportChatThread,
+        path: '${AppRoutes.userSupportChat}/:threadId',
+        builder: (context, state) => UserSupportChatScreen(
+          threadId: state.pathParameters['threadId'],
+        ),
+      ),
+      GoRoute(
+        name: AppRouteNames.userSupportChat,
+        path: AppRoutes.userSupportChat,
+        builder: (context, state) => const UserSupportChatScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientReservationDetail,

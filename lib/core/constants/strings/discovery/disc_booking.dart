@@ -11,6 +11,7 @@ abstract final class DiscBk {
   static const noSvcsTitle = 'Aucun service disponible';
   static const noSvcsBody =
       'Ce prestataire n’a pas encore publié de service réservable.';
+  static const selectedServiceLabel = 'Service sélectionné';
   static const stepService = '1. Choisis ton service';
   static const stepDate = '2. Choisis une date';
   static const stepDateSub =
@@ -132,6 +133,15 @@ abstract final class DiscBk {
       '$count service${count > 1 ? 's' : ''} disponible${count > 1 ? 's' : ''}';
 
   static String continueWithSlot(String slot) => 'Confirmer - $slot';
+
+  static const reminderDayBeforeTitle = 'Rappel – demain';
+  static String reminderDayBeforeBody(String service, String time) =>
+      '$service demain à $time';
+  static const reminderTwoHoursTitle = 'Rappel – dans 2 h';
+  static const reminderThirtyMinTitle = 'Rappel – dans 30 min';
+  static const reminderFifteenMinTitle = 'Rappel – dans 15 min';
+  static String reminderSoonBody(String service, String time) =>
+      '$service à $time';
 
   static String selectionConfirmedLine({
     required String serviceName,

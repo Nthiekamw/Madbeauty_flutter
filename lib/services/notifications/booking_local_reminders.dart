@@ -5,7 +5,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Rappels locaux J-1 et H-2 pour réservations confirmées (côté client).
+import '../../core/constants/app_strings.dart';
+import 'booking_reminder_schedule.dart';
+
+/// Rappels locaux avant RDV confirmés (client et prestataire).
 class BookingLocalReminders {
   BookingLocalReminders._();
 
@@ -17,8 +20,6 @@ class BookingLocalReminders {
       FlutterLocalNotificationsPlugin();
 
   static const _channelId = 'madbeauty_reminders';
-  static const _dayBeforeIdBase = 40000;
-  static const _twoHoursIdBase = 50000;
 
   Future<void> initialize() async {
     if (_pluginReady) return;
@@ -60,25 +61,26 @@ class BookingLocalReminders {
   }
 
   Future<void> syncForReservations(
-    List<({String id, DateTime dateHeure, String title, String statut})> items,
-  ) async {
+    List<({String id, DateTime dateHeure, String title, String statut})> items, {
+    BookingReminderAudience audience = BookingReminderAudience.client,
+  }) async {
     await initialize();
     final now = DateTime.now();
 
     for (final item in items) {
-      final s = item.statut.trim().toLowerCase().replaceAll('é', 'e');
-      if (!const {'confirmee', 'confirmed', 'validee', 'valide'}.contains(s)) {
-        await _cancel(item.id);
+      if (!bookingReminderStatusEligible(item.statut)) {
+        await _cancel(item.id, audience: audience);
         continue;
       }
-      if (item.dateHeure.isBefore(now)) {
-        await _cancel(item.id);
+      if (!item.dateHeure.isAfter(now)) {
+        await _cancel(item.id, audience: audience);
         continue;
       }
       await _schedule(
         reservationId: item.id,
         when: item.dateHeure,
         title: item.title,
+        audience: audience,
       );
     }
   }
@@ -87,29 +89,82 @@ class BookingLocalReminders {
     required String reservationId,
     required DateTime when,
     required String title,
+    required BookingReminderAudience audience,
   }) async {
-    final dayBefore = when.subtract(const Duration(hours: 24));
-    final twoHours = when.subtract(const Duration(hours: 2));
-    final hash = reservationId.hashCode.abs() % 10000;
+    final now = DateTime.now();
+    final slots = upcomingBookingReminderSlots(
+      appointmentAt: when,
+      now: now,
+    );
 
-    await _cancel(reservationId);
+    await _cancel(reservationId, audience: audience);
 
-    if (dayBefore.isAfter(DateTime.now())) {
+    for (final slot in slots) {
+      final copy = _notificationCopy(
+        audience: audience,
+        kind: slot.kind,
+        title: title,
+        appointmentAt: when,
+      );
       await _zoned(
-        id: _dayBeforeIdBase + hash,
-        scheduled: dayBefore,
-        notifTitle: 'Rappel – demain',
-        body: '$title demain à ${_formatTime(when)}',
+        id: bookingReminderNotificationId(
+          reservationId: reservationId,
+          kind: slot.kind,
+          audience: audience,
+        ),
+        scheduled: slot.at,
+        notifTitle: copy.title,
+        body: copy.body,
       );
     }
-    if (twoHours.isAfter(DateTime.now())) {
-      await _zoned(
-        id: _twoHoursIdBase + hash,
-        scheduled: twoHours,
-        notifTitle: 'Rappel – dans 2 h',
-        body: '$title à ${_formatTime(when)}',
-      );
+  }
+
+  ({String title, String body}) _notificationCopy({
+    required BookingReminderAudience audience,
+    required BookingReminderKind kind,
+    required String title,
+    required DateTime appointmentAt,
+  }) {
+    final time = _formatTime(appointmentAt);
+    if (audience == BookingReminderAudience.prestataire) {
+      return switch (kind) {
+        BookingReminderKind.dayBefore => (
+            title: DiscPrestaAgenda.reminderDayBeforeTitle,
+            body: DiscPrestaAgenda.reminderDayBeforeBody(title, time),
+          ),
+        BookingReminderKind.twoHours => (
+            title: DiscPrestaAgenda.reminderTwoHoursTitle,
+            body: DiscPrestaAgenda.reminderSoonBody(title, time),
+          ),
+        BookingReminderKind.thirtyMinutes => (
+            title: DiscPrestaAgenda.reminderThirtyMinTitle,
+            body: DiscPrestaAgenda.reminderSoonBody(title, time),
+          ),
+        BookingReminderKind.fifteenMinutes => (
+            title: DiscPrestaAgenda.reminderFifteenMinTitle,
+            body: DiscPrestaAgenda.reminderSoonBody(title, time),
+          ),
+      };
     }
+
+    return switch (kind) {
+      BookingReminderKind.dayBefore => (
+          title: DiscBk.reminderDayBeforeTitle,
+          body: DiscBk.reminderDayBeforeBody(title, time),
+        ),
+      BookingReminderKind.twoHours => (
+          title: DiscBk.reminderTwoHoursTitle,
+          body: DiscBk.reminderSoonBody(title, time),
+        ),
+      BookingReminderKind.thirtyMinutes => (
+          title: DiscBk.reminderThirtyMinTitle,
+          body: DiscBk.reminderSoonBody(title, time),
+        ),
+      BookingReminderKind.fifteenMinutes => (
+          title: DiscBk.reminderFifteenMinTitle,
+          body: DiscBk.reminderSoonBody(title, time),
+        ),
+    };
   }
 
   Future<void> _zoned({
@@ -142,10 +197,19 @@ class BookingLocalReminders {
     }
   }
 
-  Future<void> _cancel(String reservationId) async {
-    final hash = reservationId.hashCode.abs() % 10000;
-    await _plugin.cancel(_dayBeforeIdBase + hash);
-    await _plugin.cancel(_twoHoursIdBase + hash);
+  Future<void> _cancel(
+    String reservationId, {
+    required BookingReminderAudience audience,
+  }) async {
+    for (final kind in BookingReminderKind.values) {
+      await _plugin.cancel(
+        bookingReminderNotificationId(
+          reservationId: reservationId,
+          kind: kind,
+          audience: audience,
+        ),
+      );
+    }
   }
 
   static String _formatTime(DateTime d) {
@@ -154,4 +218,3 @@ class BookingLocalReminders {
     return '$h:$m';
   }
 }
-

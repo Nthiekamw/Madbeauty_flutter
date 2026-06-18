@@ -23,6 +23,7 @@ import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_create_failure.dart';
 import '../logic/booking_payment_flow.dart';
 import '../logic/booking_pricing.dart';
+import '../providers/booking_platform_fee_settings_provider.dart';
 import '../providers/client_prior_booking_count_provider.dart';
 import '../providers/prestataire_online_payment_provider.dart';
 
@@ -58,15 +59,19 @@ abstract final class BookingConfirmationSubmit {
     final bookingService = ref.read(bookingServiceProvider);
     final payments = ref.read(stripeBookingPaymentServiceProvider);
 
-    final acceptsOnline = await ref.read(
-      prestataireAcceptsOnlinePaymentProvider(prestataireId).future,
+    final depositAvailable = await ref.read(
+      prestataireDepositAvailableProvider(prestataireId).future,
     );
     final priorCount = await ref.read(clientPriorBookingCountProvider.future);
     final referralDiscountPercent =
         ref.read(clientReferralDiscountPercentProvider);
-    final effectiveMode = acceptsOnline && BookingPaymentFlow.isPaymentAvailable
+    final effectiveMode = depositAvailable && BookingPaymentFlow.isPaymentAvailable
         ? paymentMode
         : BookingPaymentModeKind.onSite;
+
+    final platformFeeSettings = await ref.read(
+      bookingPlatformFeeSettingsProvider.future,
+    );
 
     BookingPricingBreakdown breakdown;
     try {
@@ -74,7 +79,8 @@ abstract final class BookingConfirmationSubmit {
         servicePriceEur: price,
         paymentMode: effectiveMode,
         priorBookingCount: priorCount,
-        prestataireAcceptsConnect: acceptsOnline,
+        prestataireAcceptsConnect: depositAvailable,
+        platformFeeSettings: platformFeeSettings,
         referralDiscountPercent: referralDiscountPercent,
       );
     } on BookingPricingException {

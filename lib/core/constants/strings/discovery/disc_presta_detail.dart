@@ -22,8 +22,14 @@ abstract final class DiscPrestaDetail {
   static const comfortTitle = 'Confort client';
   static const conditionsTitle = 'Conditions de service';
   static const specialtiesTitle = 'Spécialités';
+  static const servicesOtherGroup = 'Autres prestations';
   static const galleryTitle = 'Réalisations';
+  static const galleryOtherService = 'Autres réalisations';
+  static const galleryOtherSpecialty = 'Non classées';
   static const galleryCloseTooltip = 'Fermer';
+  static const galleryDownloadTooltip = 'Télécharger';
+  static const galleryDownloadErr =
+      'Impossible d’ouvrir cette réalisation. Réessaie dans un instant.';
   static String galleryPhotoCounter(int current, int total) =>
       '$current / $total';
   static const svcTitle = 'Services';

@@ -20,6 +20,7 @@ class ChatPeerHeader extends StatelessWidget {
     this.subtitleColor,
     this.onLightGradient = false,
     this.useSalonName = false,
+    this.compact = false,
   });
 
   final String displayName;
@@ -32,6 +33,14 @@ class ChatPeerHeader extends StatelessWidget {
   final Color? subtitleColor;
   final bool onLightGradient;
   final bool useSalonName;
+  final bool compact;
+
+  String _secondaryLine(String presenceLabel) {
+    final parts = <String>[presenceLabel];
+    final sub = subtitle?.trim();
+    if (sub != null && sub.isNotEmpty) parts.add(sub);
+    return parts.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +58,7 @@ class ChatPeerHeader extends StatelessWidget {
     final presenceColor = isOnline
         ? (onLightGradient ? const Color(0xFF86EFAC) : const Color(0xFF16A34A))
         : (subtitleColor ?? theme.colorScheme.onSurfaceVariant);
+    final avatarRadius = compact ? 16.0 : 21.0;
 
     return Row(
       children: [
@@ -56,7 +66,7 @@ class ChatPeerHeader extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              padding: const EdgeInsets.all(2.5),
+              padding: EdgeInsets.all(compact ? 2 : 2.5),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: onLightGradient
@@ -66,13 +76,13 @@ class ChatPeerHeader extends StatelessWidget {
                   color: onLightGradient
                       ? AppColors.onPrimarySurface55
                       : primary.withValues(alpha: 0.25),
-                  width: 2,
+                  width: compact ? 1.5 : 2,
                 ),
               ),
               child: AppAvatar(
                 imageUrl: avatarUrl,
                 displayName: singleLineTitle,
-                radius: 21,
+                radius: avatarRadius,
               ),
             ),
             if (isOnline)
@@ -80,8 +90,8 @@ class ChatPeerHeader extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  width: 11,
-                  height: 11,
+                  width: compact ? 9 : 11,
+                  height: compact ? 9 : 11,
                   decoration: BoxDecoration(
                     color: const Color(0xFF22C55E),
                     shape: BoxShape.circle,
@@ -96,65 +106,98 @@ class ChatPeerHeader extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: compact ? 10 : 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                singleLineTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                  color: titleColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                presenceLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: AppFonts.body,
-                  fontWeight: isOnline ? FontWeight.w700 : FontWeight.w500,
-                  color: presenceColor,
-                  height: 1.1,
-                ),
-              ),
-              if (subtitle != null && subtitle!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Row(
+          child: compact
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.event_available_rounded,
-                      size: 13,
-                      color: subtitleColor ??
-                          theme.colorScheme.onSurfaceVariant,
+                    Text(
+                      singleLineTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        height: 1.05,
+                        color: titleColor,
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w500,
-                          color: subtitleColor ??
-                              theme.colorScheme.onSurfaceVariant,
-                          height: 1.1,
-                        ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _secondaryLine(presenceLabel),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFonts.body,
+                        fontWeight: isOnline ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 11,
+                        height: 1.05,
+                        color: isOnline ? presenceColor : subtitleColor,
                       ),
                     ),
                   ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      singleLineTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFamily: AppFonts.display,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      presenceLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFonts.body,
+                        fontWeight: isOnline ? FontWeight.w700 : FontWeight.w500,
+                        color: presenceColor,
+                        height: 1.1,
+                      ),
+                    ),
+                    if (subtitle != null && subtitle!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.event_available_rounded,
+                            size: 13,
+                            color: subtitleColor ??
+                                theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontFamily: AppFonts.body,
+                                fontWeight: FontWeight.w500,
+                                color: subtitleColor ??
+                                    theme.colorScheme.onSurfaceVariant,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
-          ),
         ),
       ],
     );

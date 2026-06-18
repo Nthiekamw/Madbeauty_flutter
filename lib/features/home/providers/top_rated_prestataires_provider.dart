@@ -14,11 +14,12 @@ final topRatedPrestatairesProvider =
       final loader = ref.read(offlineDataLoaderProvider);
       final cache = OfflineCacheService.instance;
 
-      return loader.load(
+      final list = await loader.load<List<PrestataireProfile>>(
         fallback: const [],
         readCache: cache.readTopRatedPrestataires,
         writeCache: cache.saveTopRatedPrestataires,
         fetchRemote: () => service.getBestRated(),
       );
+      return list.where((p) => p.noteMoyenne != null).toList();
     });
 

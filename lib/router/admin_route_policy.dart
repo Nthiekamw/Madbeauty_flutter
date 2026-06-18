@@ -7,13 +7,16 @@ abstract final class AdminRoutePolicy {
   static bool isAdminShellPath(String location) =>
       location.startsWith('/admin/');
 
-  /// Chat et formulaires de signalement technique (hors shell admin).
+  /// Chat support et signalements techniques (hors shell admin).
   static bool isBugReportPath(String location) =>
       location.startsWith('/bug-report/') ||
       location == AppRoutes.clientReportBug ||
       location == AppRoutes.clientNewBugReport ||
       location == AppRoutes.clientMyBugReports ||
-      location == AppRoutes.bannedAccountSupport;
+      location == AppRoutes.bannedAccountSupport ||
+      location == AppRoutes.userSupportChat ||
+      location.startsWith('${AppRoutes.userSupportChat}/') ||
+      location == AppRoutes.adminUserSupport;
 
   static bool isClientWorkspacePath(String location) =>
       location.startsWith('/client');

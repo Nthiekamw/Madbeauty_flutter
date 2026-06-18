@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
-import '../../../shared/theme/app_fonts.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../auth/providers/auth_notifier.dart';
@@ -13,6 +12,8 @@ import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../prestataire/widgets/workspace/prestataire_profile_completion_card.dart';
 import '../../prestataire/widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../prestataire/widgets/workspace/prestataire_workspace_shell.dart';
+import '../../home/widgets/shared/client_home_section_header.dart';
+import '../../prestataire/widgets/shared/prestataire_section_header.dart';
 import '../models/conversation_inbox_item.dart';
 import '../widgets/inbox/conversation_list_tile.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
@@ -90,7 +91,7 @@ class _ConversationsInboxScreenState
             ),
             child: RefreshIndicator(
               onRefresh: _refreshInbox,
-              child: _buildInboxSlivers(context, theme, inboxAsync),
+              child: _buildInboxSlivers(context, theme, inboxAsync, headerSubtitle),
             ),
           ),
         ),
@@ -104,7 +105,7 @@ class _ConversationsInboxScreenState
         showMessagesAction: false,
         child: RefreshIndicator(
           onRefresh: _refreshInbox,
-          child: _buildInboxSlivers(context, theme, inboxAsync),
+          child: _buildInboxSlivers(context, theme, inboxAsync, headerSubtitle),
         ),
       ),
     );
@@ -114,6 +115,7 @@ class _ConversationsInboxScreenState
     BuildContext context,
     ThemeData theme,
     AsyncValue<List<ConversationInboxItem>> inboxAsync,
+    String headerSubtitle,
   ) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -126,56 +128,21 @@ class _ConversationsInboxScreenState
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20,
-              widget.role == MessagingInboxRole.prestataire ? 4 : 16,
+              widget.role == MessagingInboxRole.prestataire ? 4 : 12,
               20,
               8,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
+            child: widget.role == MessagingInboxRole.client
+                ? ClientHomeSectionHeader(
+                    title: DiscChat.inboxTitle,
+                    subtitle: headerSubtitle,
+                    icon: Icons.forum_rounded,
+                  )
+                : PrestataireSectionHeader(
+                    icon: Icons.forum_rounded,
+                    title: DiscChat.inboxTitle,
+                    subtitle: DiscPrestaWorkspace.messagesInboxSubtitle,
                   ),
-                  child: Icon(
-                    Icons.forum_rounded,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        DiscChat.inboxTitle,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.role == MessagingInboxRole.prestataire
-                            ? DiscPrestaWorkspace.messagesInboxSubtitle
-                            : DiscChat.profileShortcutHint,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
         ...inboxAsync.when(

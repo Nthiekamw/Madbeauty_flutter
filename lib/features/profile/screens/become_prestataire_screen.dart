@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/logic/address/postal_address.dart';
 import '../../../core/models/user_role.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/auth/post_signup_profile_service.dart';
@@ -44,8 +45,12 @@ class _BecomePrestataireScreenState
   final _codePostal = TextEditingController();
   final _nomAffiche = TextEditingController();
   final _description = TextEditingController();
-  final _adresse = TextEditingController();
+  final _voieNom = TextEditingController();
+  final _numeroRue = TextEditingController();
+  final _pays = TextEditingController(text: PostalAddress.defaultCountry);
   final _bio = TextEditingController();
+
+  String _voieType = PostalVoieTypes.defaultType;
 
   String? _error;
   String? _salonError;
@@ -68,7 +73,9 @@ class _BecomePrestataireScreenState
       _codePostal,
       _nomAffiche,
       _description,
-      _adresse,
+      _voieNom,
+      _numeroRue,
+      _pays,
       _bio,
     ]) {
       c.addListener(_persistDraft);
@@ -86,7 +93,9 @@ class _BecomePrestataireScreenState
       _codePostal,
       _nomAffiche,
       _description,
-      _adresse,
+      _voieNom,
+      _numeroRue,
+      _pays,
       _bio,
     ]) {
       c.removeListener(_persistDraft);
@@ -96,7 +105,9 @@ class _BecomePrestataireScreenState
     _codePostal.dispose();
     _nomAffiche.dispose();
     _description.dispose();
-    _adresse.dispose();
+    _voieNom.dispose();
+    _numeroRue.dispose();
+    _pays.dispose();
     _bio.dispose();
     super.dispose();
   }
@@ -110,42 +121,72 @@ class _BecomePrestataireScreenState
 
   void _applyDraft(BecomePrestataireDraft draft) {
     _salon.text = draft.salon;
-    _ville.text = draft.ville;
     _codePostal.text = draft.codePostal;
     _nomAffiche.text = draft.nomAffiche;
     _description.text = draft.description;
-    _adresse.text = draft.adresse;
     _bio.text = draft.bio;
     _step1Submitted = draft.step1Submitted;
+    _applyPostalAddress(draft.postalAddress);
   }
+
+  void _applyPostalAddress(PostalAddress address) {
+    _voieType = address.voieType;
+    _voieNom.text = address.voieNom;
+    _numeroRue.text = address.numero;
+    _codePostal.text = address.codePostal;
+    _ville.text = address.ville;
+    _pays.text =
+        address.pays.isEmpty ? PostalAddress.defaultCountry : address.pays;
+  }
+
+  PostalAddress get _postalAddress => PostalAddress(
+        voieType: _voieType,
+        voieNom: _voieNom.text,
+        numero: _numeroRue.text,
+        codePostal: _codePostal.text,
+        ville: _ville.text,
+        pays: _pays.text,
+      );
 
   Future<void> _prefillFromClientProfile() async {
     if (_clientPrefillAttempted) return;
     _clientPrefillAttempted = true;
-    if (_adresse.text.trim().isNotEmpty) return;
+    if (_voieNom.text.trim().isNotEmpty ||
+        _ville.text.trim().isNotEmpty ||
+        _codePostal.text.trim().isNotEmpty) {
+      return;
+    }
     try {
       final client = await ref.read(currentClientProfileProvider.future);
       final savedAdresse = client?.adresse?.trim();
-      if (!mounted || savedAdresse == null || savedAdresse.isEmpty) return;
-      if (_adresse.text.trim().isEmpty) {
-        _adresse.text = savedAdresse;
-        await _persistDraft();
+      if (!mounted ||
+          savedAdresse == null ||
+          savedAdresse.isEmpty ||
+          _voieNom.text.trim().isNotEmpty) {
+        return;
       }
+      setState(() => _applyPostalAddress(PostalAddress.tryParse(savedAdresse)));
+      await _persistDraft();
     } catch (_) {
       // Profil client indisponible : pas bloquant.
     }
   }
 
   Future<void> _persistDraft() async {
+    final address = _postalAddress;
     await BecomePrestataireDraftStore.instance.save(
       BecomePrestataireDraft(
         salon: _salon.text,
-        ville: _ville.text,
-        codePostal: _codePostal.text,
+        ville: address.ville,
+        bio: _bio.text,
+        codePostal: address.codePostal,
         nomAffiche: _nomAffiche.text,
         description: _description.text,
-        adresse: _adresse.text,
-        bio: _bio.text,
+        adresse: address.streetLine,
+        voieType: address.voieType,
+        voieNom: address.voieNom,
+        numeroRue: address.numero,
+        pays: address.pays,
         step1Submitted: _step1Submitted,
       ),
     );
@@ -220,19 +261,21 @@ class _BecomePrestataireScreenState
       await AuthRoleCache.persistServerRoles(serverRoles);
 
       final salon = _salon.text.trim();
+      final address = _postalAddress;
       await post.updatePrestataireExtras(
         userId: user.id,
         nomSalon: salon,
         nomAffiche: _nomAffiche.text.trim().isEmpty
             ? salon
             : _nomAffiche.text.trim(),
-        ville: _ville.text.trim(),
-        codePostal: _codePostal.text.trim(),
+        ville: address.ville.trim(),
+        codePostal: address.codePostal.trim(),
+        pays: address.pays.trim().isEmpty ? null : address.pays.trim(),
         description: _description.text.trim().isEmpty
             ? null
             : _description.text.trim(),
         bio: _bio.text.trim(),
-        adresse: _adresse.text.trim().isEmpty ? null : _adresse.text.trim(),
+        adresse: address.streetLine.isEmpty ? null : address.streetLine,
       );
 
       await LocalCacheService.instance.setSelectedRole('prestataire');
@@ -429,11 +472,18 @@ class _BecomePrestataireScreenState
                 final horizontal = constraints.maxWidth >= 920;
                 final form = BecomePrestataireFormCard(
                   salonController: _salon,
+                  voieType: _voieType,
+                  onVoieTypeChanged: (type) {
+                    setState(() => _voieType = type);
+                    unawaited(_persistDraft());
+                  },
+                  voieNomController: _voieNom,
+                  numeroController: _numeroRue,
                   villeController: _ville,
                   codePostalController: _codePostal,
+                  paysController: _pays,
                   nomAfficheController: _nomAffiche,
                   descriptionController: _description,
-                  adresseController: _adresse,
                   bioController: _bio,
                   salonError: _salonError,
                   villeError: _villeError,

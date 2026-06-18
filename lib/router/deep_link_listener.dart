@@ -6,10 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_strings.dart';
+import '../core/models/user_role.dart';
+import '../features/auth/providers/auth_notifier.dart';
+import '../features/auth/providers/auth_redirect_providers.dart';
+import '../features/auth/register/logic/register_wizard_submit_handler.dart';
+import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../features/auth/providers/password_recovery_provider.dart';
+import '../features/profile/storage/become_prestataire_draft_store.dart';
 import '../services/auth/auth_deep_link_handler.dart';
 import '../services/storage/local_cache_service.dart';
-import 'app_routes.dart';
 import '../features/prestataire/logic/prestataire_subscription_refresh.dart';
 import '../shared/widgets/app/app_snack_bar.dart';
 import 'app_deep_links.dart';
@@ -28,6 +33,25 @@ class DeepLinkListener extends ConsumerStatefulWidget {
 class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   StreamSubscription<Uri>? _subscription;
   final _appLinks = AppLinks();
+  String? _lastAuthLinkKey;
+  DateTime? _lastAuthLinkAt;
+
+  bool _shouldSkipDuplicateAuthLink(Uri uri) {
+    final params = AuthDeepLinkHandler.normalizedQueryParameters(uri);
+    final key = params['code'] ??
+        params['token_hash'] ??
+        params['access_token'] ??
+        uri.toString();
+    final now = DateTime.now();
+    if (_lastAuthLinkKey == key &&
+        _lastAuthLinkAt != null &&
+        now.difference(_lastAuthLinkAt!) < const Duration(seconds: 8)) {
+      return true;
+    }
+    _lastAuthLinkKey = key;
+    _lastAuthLinkAt = now;
+    return false;
+  }
 
   @override
   void initState() {
@@ -104,13 +128,22 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   }
 
   Future<void> _handleAuthCallback(Uri uri) async {
+    if (_shouldSkipDuplicateAuthLink(uri)) return;
+
     final result = await AuthDeepLinkHandler.handle(uri);
     if (!mounted) return;
 
     if (!result.handled) {
       final params = AuthDeepLinkHandler.normalizedQueryParameters(uri);
       final authError = params['error_description'] ?? params['error'];
-      if (authError != null && authError.trim().isNotEmpty) {
+      if (result.linkExpired) {
+        AppSnackBar.show(
+          context,
+          message: AuthStrings.authEmailLinkExpired,
+          kind: AppSnackKind.info,
+          duration: const Duration(seconds: 6),
+        );
+      } else if (authError != null && authError.trim().isNotEmpty) {
         AppSnackBar.show(
           context,
           message: authError.trim(),
@@ -118,6 +151,31 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
         );
       }
       return;
+    }
+
+    if (!result.passwordRecovery) {
+      final draft = RegisterWizardDraftStore.instance.read();
+      if (draft != null && draft.isActive) {
+        final user = ref.read(authServiceProvider).currentSession?.user;
+        if (user != null) {
+          final isPrestaSignup = draft.role == UserRole.prestataire;
+          final finalized = await RegisterWizardSubmitHandler()
+              .finalizePendingRegistrationFromDraft(
+            context: context,
+            mounted: () => mounted,
+            ref: ref,
+            session: user,
+          );
+          if (finalized) {
+            if (isPrestaSignup || BecomePrestataireDraftStore.instance.hasDraft) {
+              ref
+                  .read(splashRedirectTargetProvider.notifier)
+                  .setTarget(AppRoutes.prestataireProfileEdit);
+            }
+            return;
+          }
+        }
+      }
     }
 
     if (!result.passwordRecovery) return;

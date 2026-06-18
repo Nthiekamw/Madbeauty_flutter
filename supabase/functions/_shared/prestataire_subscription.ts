@@ -69,6 +69,28 @@ export type PrestataireBillingProfileRow = {
   subscription_status?: string | null;
 };
 
+/** Statuts où l’essai Stripe a déjà été consommé ou l’abonnement est en cours. */
+const STRIPE_SUBSCRIPTION_TRIAL_EXHAUSTED_STATUSES = new Set([
+  "active",
+  "trialing",
+  "past_due",
+  "canceled",
+  "unpaid",
+]);
+
+/**
+ * Premier abonnement (ou reprise après checkout abandonné) → essai plateforme.
+ * Ne pas se baser sur stripe_subscription_id : un checkout incomplet peut déjà
+ * avoir créé un sub_... sans essai explicite, et Stripe retombe alors sur l’essai
+ * du prix (ex. 5 jours au lieu des 90 jours catalogue).
+ */
+export function qualifiesForStripeSubscriptionTrial(
+  prestataire: PrestataireBillingProfileRow,
+): boolean {
+  const status = String(prestataire.subscription_status ?? "none");
+  return !STRIPE_SUBSCRIPTION_TRIAL_EXHAUSTED_STATUSES.has(status);
+}
+
 /** Rôle prestataire + ligne profil (création si manquante, ex. hub sans sauvegarde). */
 export async function ensurePrestataireProfileRow(
   admin: SupabaseClient,

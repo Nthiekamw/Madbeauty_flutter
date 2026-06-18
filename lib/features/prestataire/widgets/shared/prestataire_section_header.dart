@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/widgets/discovery/content/discovery_section_header.dart';
 
-/// En-tête de section avec icône (dashboard, profil, agenda).
+/// En-tête de section prestataire (aligné accueil).
 class PrestataireSectionHeader extends StatelessWidget {
   const PrestataireSectionHeader({
     super.key,
@@ -21,73 +21,14 @@ class PrestataireSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accent = iconColor ?? theme.colorScheme.primary;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: accent),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              if (subtitle != null && subtitle!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: AppFonts.body,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (badgeCount != null && badgeCount! > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: accent,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              '$badgeCount',
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontFamily: AppFonts.body,
-                color: theme.colorScheme.onPrimary,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-      ],
+    return DiscoverySectionHeader(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      badgeCount: badgeCount,
+      iconColor: iconColor,
+      compact: true,
+      showSubtitleWhenCompact: true,
     );
   }
 }
-

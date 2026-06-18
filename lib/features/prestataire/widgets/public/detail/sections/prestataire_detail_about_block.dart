@@ -5,6 +5,7 @@ import '../../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../../logic/lieu_travail_display.dart';
+import '../../../../logic/professional_experience_entries.dart';
 
 class PrestataireDetailAboutBlock extends StatelessWidget {
   const PrestataireDetailAboutBlock({super.key, required this.profile});
@@ -18,6 +19,7 @@ class PrestataireDetailAboutBlock extends StatelessWidget {
     final bio = profile.bio?.trim() ?? '';
     final years = profile.anneesExperience?.trim() ?? '';
     final exp = profile.experienceProfessionnelle?.trim() ?? '';
+    final experiences = ProfessionalExperienceCodec.decode(exp, years);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,35 +46,57 @@ class PrestataireDetailAboutBlock extends StatelessWidget {
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
           ),
         ],
-        if (years.isNotEmpty || exp.isNotEmpty) ...[
+        if (experiences.isNotEmpty) ...[
           const SizedBox(height: 16),
           Divider(
             color: theme.colorScheme.outline.withValues(alpha: 0.12),
           ),
           const SizedBox(height: 14),
-          if (years.isNotEmpty) ...[
-            Text(
-              DiscPrestaDetail.experienceYearsLabel,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+          Text(
+            DiscPrestaDetail.experienceYearsLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final entry in experiences) ...[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.role,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (entry.years.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      entry.years,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              years,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            if (exp.isNotEmpty) const SizedBox(height: 12),
           ],
-          if (exp.isNotEmpty)
-            Text(
-              exp,
-              style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-            ),
         ],
         if (profile.lieuTravail != null) ...[
           const SizedBox(height: 16),

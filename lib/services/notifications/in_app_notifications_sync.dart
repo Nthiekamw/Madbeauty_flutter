@@ -10,6 +10,7 @@ import '../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import '../../features/reviews/providers/review_provider.dart';
 import '../../services/supabase/likes/prestataire_like_providers.dart';
+import '../../services/supabase/trust/account_moderation_service.dart';
 import '../../services/supabase/prestataire/prestataire_verification_service.dart';
 import 'in_app_notification.dart';
 
@@ -162,6 +163,44 @@ Future<List<InAppNotification>> fetchActivityNotifications(
     }
   } catch (_) {
     /* Pas prestataire ou erreur réseau */
+  }
+
+  try {
+    final moderationService = AccountModerationService.fromEnv();
+    final events = await moderationService.listRecentForCurrentUser(
+      since: cutoff,
+    );
+    for (final event in events) {
+      final (title, type) = switch (event.eventType) {
+        'photo_removed' => (
+            DiscNotif.moderationPhotoRemovedTitle,
+            'moderation_photo_removed',
+          ),
+        'photo_obscene_flagged' => (
+            DiscNotif.moderationPhotoFlaggedTitle,
+            'moderation_photo_flagged',
+          ),
+        'account_warned' => (
+            DiscNotif.moderationAccountWarnedTitle,
+            'moderation_account_warned',
+          ),
+        _ => (null, null),
+      };
+      if (title == null || type == null) continue;
+
+      out.add(
+        InAppNotification(
+          id: 'moderation_${event.id}',
+          title: title,
+          body: DiscNotif.moderationEventBody(event.message),
+          createdAt: event.createdAt,
+          read: false,
+          actionType: type,
+        ),
+      );
+    }
+  } catch (_) {
+    /* Erreur réseau modération */
   }
 
   try {

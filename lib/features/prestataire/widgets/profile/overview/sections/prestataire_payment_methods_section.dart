@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/constants/app_strings.dart';
+import '../../../../../../core/errors/supabase_service_exception.dart';
 import '../../../../../../services/stripe/stripe_connect_providers.dart';
 import '../../../../../../services/stripe/stripe_connect_service.dart';
 import '../../../../../../services/stripe/stripe_service.dart';
@@ -10,6 +11,7 @@ import '../../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../../shared/utils/app_url_launcher.dart';
 import '../../../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../../providers/prestataire_deposit_option_provider.dart';
 import '../../../../logic/prestataire_subscription_refresh.dart';
 import '../../../../models/prestataire_subscription_status.dart';
 import '../../../subscription/prestataire_subscription_billing_cards_section.dart';
@@ -35,6 +37,7 @@ class _PrestatairePaymentMethodsSectionState
     with WidgetsBindingObserver {
   bool _busySubscription = false;
   bool _busyConnect = false;
+  bool _busyDeposit = false;
 
   @override
   void initState() {
@@ -121,6 +124,7 @@ class _PrestatairePaymentMethodsSectionState
     try {
       ref.invalidate(prestataireStripeConnectProvider);
       await ref.read(prestataireStripeConnectProvider.future);
+      ref.invalidate(currentPrestataireDepositOptionProvider);
       _snack(DiscPaymentMethods.statusUpdated, kind: AppSnackKind.success);
     } on StripeConnectException catch (e) {
       _snack(e.message, kind: AppSnackKind.error);
@@ -130,6 +134,89 @@ class _PrestatairePaymentMethodsSectionState
     } finally {
       if (mounted) setState(() => _busyConnect = false);
     }
+  }
+
+  Future<void> _setDepositOption(bool enabled) async {
+    final service = ref.read(prestataireDepositServiceProvider);
+    if (service == null) {
+      _snack(DiscStripeConnect.stripeUnavailable, kind: AppSnackKind.error);
+      return;
+    }
+
+    setState(() => _busyDeposit = true);
+    try {
+      await service.setDepositOptionEnabled(enabled);
+      ref.invalidate(currentPrestataireDepositOptionProvider);
+      _snack(
+        enabled
+            ? DiscPaymentMethods.depositOptionEnabled
+            : DiscPaymentMethods.depositOptionDisabled,
+        kind: AppSnackKind.success,
+      );
+    } on SupabaseServiceException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('connect_required')) {
+        _snack(DiscPaymentMethods.depositConnectRequired, kind: AppSnackKind.error);
+      } else {
+        _snack(e.message, kind: AppSnackKind.error);
+      }
+    } catch (e, st) {
+      debugPrint('Deposit option: $e\n$st');
+      _snack(DiscStripeConnect.syncErr, kind: AppSnackKind.error);
+    } finally {
+      if (mounted) setState(() => _busyDeposit = false);
+    }
+  }
+
+  Widget _buildDepositOptionTile({
+    required ThemeData theme,
+    required bool connectReady,
+    required bool optionEnabled,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Divider(
+          height: 24,
+          color: theme.colorScheme.outline.withValues(alpha: 0.12),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          value: optionEnabled,
+          onChanged: connectReady && !_busyDeposit
+              ? (value) => _setDepositOption(value)
+              : null,
+          title: Text(
+            DiscPaymentMethods.depositOptionTitle,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            connectReady
+                ? DiscPaymentMethods.depositOptionHint
+                : DiscPaymentMethods.depositConnectRequired,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          secondary: _busyDeposit
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: connectReady
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+        ),
+      ],
+    );
   }
 
   String _connectStatusLabel(StripeConnectStatus? status) {
@@ -199,6 +286,7 @@ class _PrestatairePaymentMethodsSectionState
     final theme = Theme.of(context);
     final subscriptionAsync = ref.watch(prestataireSubscriptionStatusProvider);
     final connectAsync = ref.watch(prestataireStripeConnectProvider);
+    final depositOptionAsync = ref.watch(currentPrestataireDepositOptionProvider);
 
     final body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -248,37 +336,73 @@ class _PrestatairePaymentMethodsSectionState
           ),
           connectAsync.when(
             loading: () => const _PaymentMethodSkeleton(),
-            error: (_, __) => _PaymentMethodBlock(
-              icon: Icons.account_balance_outlined,
-              title: DiscPaymentMethods.payoutTitle,
-              hint: DiscPaymentMethods.payoutHint,
-              status: DiscPaymentMethods.payoutNotStarted,
-              statusColor: theme.colorScheme.onSurfaceVariant,
-              busy: _busyConnect,
-              primaryLabel: DiscPaymentMethods.payoutConfigure,
-              onPrimary: _openConnectOnboarding,
-              secondaryLabel: DiscPaymentMethods.payoutRefresh,
-              onSecondary: _refreshConnect,
+            error: (_, __) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _PaymentMethodBlock(
+                  icon: Icons.account_balance_outlined,
+                  title: DiscPaymentMethods.payoutTitle,
+                  hint: DiscPaymentMethods.payoutHint,
+                  status: DiscPaymentMethods.payoutNotStarted,
+                  statusColor: theme.colorScheme.onSurfaceVariant,
+                  busy: _busyConnect,
+                  primaryLabel: DiscPaymentMethods.payoutConfigure,
+                  onPrimary: _openConnectOnboarding,
+                  secondaryLabel: DiscPaymentMethods.payoutRefresh,
+                  onSecondary: _refreshConnect,
+                ),
+                depositOptionAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => _buildDepositOptionTile(
+                    theme: theme,
+                    connectReady: false,
+                    optionEnabled: false,
+                  ),
+                  data: (enabled) => _buildDepositOptionTile(
+                    theme: theme,
+                    connectReady: false,
+                    optionEnabled: enabled,
+                  ),
+                ),
+              ],
             ),
             data: (connect) {
               final canPay = connect?.canAcceptPayments ?? false;
               final hasAccount = connect?.accountId != null;
-              return _PaymentMethodBlock(
-                icon: Icons.account_balance_outlined,
-                title: DiscPaymentMethods.payoutTitle,
-                hint: DiscPaymentMethods.payoutHint,
-                status: _connectStatusLabel(connect),
-                statusColor:
-                    canPay ? AppColors.success : theme.colorScheme.primary,
-                busy: _busyConnect,
-                primaryLabel: canPay
-                    ? DiscPaymentMethods.payoutContinue
-                    : hasAccount
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PaymentMethodBlock(
+                    icon: Icons.account_balance_outlined,
+                    title: DiscPaymentMethods.payoutTitle,
+                    hint: DiscPaymentMethods.payoutHint,
+                    status: _connectStatusLabel(connect),
+                    statusColor:
+                        canPay ? AppColors.success : theme.colorScheme.primary,
+                    busy: _busyConnect,
+                    primaryLabel: canPay
                         ? DiscPaymentMethods.payoutContinue
-                        : DiscPaymentMethods.payoutConfigure,
-                onPrimary: _openConnectOnboarding,
-                secondaryLabel: DiscPaymentMethods.payoutRefresh,
-                onSecondary: _refreshConnect,
+                        : hasAccount
+                            ? DiscPaymentMethods.payoutContinue
+                            : DiscPaymentMethods.payoutConfigure,
+                    onPrimary: _openConnectOnboarding,
+                    secondaryLabel: DiscPaymentMethods.payoutRefresh,
+                    onSecondary: _refreshConnect,
+                  ),
+                  depositOptionAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => _buildDepositOptionTile(
+                      theme: theme,
+                      connectReady: canPay,
+                      optionEnabled: false,
+                    ),
+                    data: (enabled) => _buildDepositOptionTile(
+                      theme: theme,
+                      connectReady: canPay,
+                      optionEnabled: enabled,
+                    ),
+                  ),
+                ],
               );
             },
           ),

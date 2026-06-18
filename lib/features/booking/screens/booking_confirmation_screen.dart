@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/models/domain/booking/booking_platform_fee_settings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../../shared/utils/currency_format.dart';
@@ -11,6 +12,7 @@ import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_confirmation_submit.dart';
 import '../logic/booking_payment_flow.dart';
 import '../logic/booking_pricing.dart';
+import '../providers/booking_platform_fee_settings_provider.dart';
 import '../providers/client_prior_booking_count_provider.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
 import '../providers/prestataire_online_payment_provider.dart';
@@ -79,10 +81,10 @@ class _BookingConfirmationScreenState
     final isOwnProfile = ref
         .watch(isOwnPrestataireProfileProvider(widget.prestataireId))
         .maybeWhen(data: (value) => value, orElse: () => false);
-    final acceptsOnlineAsync = ref.watch(
-      prestataireAcceptsOnlinePaymentProvider(widget.prestataireId),
+    final depositAvailableAsync = ref.watch(
+      prestataireDepositAvailableProvider(widget.prestataireId),
     );
-    final acceptsOnline = acceptsOnlineAsync.maybeWhen(
+    final depositAvailable = depositAvailableAsync.maybeWhen(
       data: (value) => value,
       orElse: () => false,
     );
@@ -93,9 +95,15 @@ class _BookingConfirmationScreenState
     final referralDiscountPercent =
         ref.watch(clientReferralDiscountPercentProvider);
     final stripeAvailable = BookingPaymentFlow.isPaymentAvailable;
-    final effectiveMode = acceptsOnline && stripeAvailable
+    final effectiveMode = depositAvailable && stripeAvailable
         ? _paymentMode
         : BookingPaymentModeKind.onSite;
+
+    final platformFeeSettings = ref
+        .watch(bookingPlatformFeeSettingsProvider)
+        .maybeWhen(data: (value) => value, orElse: () => null);
+    final feeSettings =
+        platformFeeSettings ?? BookingPlatformFeeSettings.defaults;
 
     BookingPricingBreakdown? breakdown;
     try {
@@ -103,7 +111,8 @@ class _BookingConfirmationScreenState
         servicePriceEur: widget.price,
         paymentMode: effectiveMode,
         priorBookingCount: priorCount,
-        prestataireAcceptsConnect: acceptsOnline,
+        prestataireAcceptsConnect: depositAvailable,
+        platformFeeSettings: feeSettings,
         referralDiscountPercent: referralDiscountPercent,
       );
     } on BookingPricingException {
@@ -146,11 +155,11 @@ class _BookingConfirmationScreenState
             price: widget.price,
             breakdown: breakdown,
             effectiveMode: effectiveMode,
-            acceptsOnline: acceptsOnline,
+            acceptsOnline: depositAvailable,
             stripeAvailable: stripeAvailable,
             isOwnProfile: isOwnProfile,
             isSubmitting: _isSubmitting,
-            acceptsOnlineLoading: acceptsOnlineAsync.isLoading,
+            acceptsOnlineLoading: depositAvailableAsync.isLoading,
             errorMessage: _errorMessage,
             ctaLabel: _ctaLabel(breakdown),
             onPaymentModeChanged: (mode) => setState(() => _paymentMode = mode),

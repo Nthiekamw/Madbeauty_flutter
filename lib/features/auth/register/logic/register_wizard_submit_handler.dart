@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/errors/failure_mapper.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/supabase_service_exception.dart';
 import '../../../../core/models/user_role.dart';
@@ -18,14 +19,45 @@ import '../../../../services/auth/post_signup_profile_service.dart';
 import '../../../../services/auth/role_service.dart';
 import '../../../../services/offline/offline_actions.dart';
 import '../../../../services/storage/local_cache_service.dart';
+import '../../../../services/supabase/profile/profile_providers.dart';
+import '../../../../services/supabase/storage/storage_providers.dart';
+import '../../../../services/supabase/storage/storage_service.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/my_roles_provider.dart';
 import '../../widgets/auth_success_dialog.dart';
+import '../logic/register_wizard_role_intent.dart';
 import '../providers/register_wizard_form_controller.dart';
+import '../storage/register_pending_password_store.dart';
+import '../storage/register_wizard_draft_store.dart';
 
 /// Soumission finale de l'inscription wizard.
 class RegisterWizardSubmitHandler {
+  static bool _finalizeInFlight = false;
+
+  Future<void> _persistPrestaBecomeDraftFromForm(
+    RegisterWizardFormController form,
+  ) async {
+    final address = form.postalAddress;
+    await BecomePrestataireDraftStore.instance.save(
+      BecomePrestataireDraft(
+        salon: form.salon.text.trim(),
+        ville: address.ville.trim(),
+        bio: form.bio.text.trim(),
+        codePostal: address.codePostal.trim(),
+        nomAffiche: form.nomAffiche.text.trim(),
+        description: form.description.text.trim(),
+        adresse: address.streetLine,
+        voieType: address.voieType,
+        voieNom: address.voieNom,
+        numeroRue: address.numero,
+        pays: address.pays,
+        step1Submitted: true,
+        step2Started: true,
+      ),
+    );
+  }
+
   Future<void> submit({
     required WidgetRef ref,
     required BuildContext context,
@@ -89,6 +121,20 @@ class RegisterWizardSubmitHandler {
         }
 
         if (sessionUser == null) {
+          if (form.roleChoice != null) {
+            await RegisterWizardRoleIntent.persist(form.roleChoice!);
+          }
+          if (form.roleChoice == UserRole.prestataire) {
+            await LocalCacheService.instance.setSelectedRole('prestataire');
+            await LocalCacheService.instance.setSignupShellRole('prestataire');
+            await _persistPrestaBecomeDraftFromForm(form);
+          }
+          await RegisterPendingPasswordStore.instance.save(
+            email: email,
+            password: form.password.text,
+          );
+          form.persistDraftOnDispose = false;
+          form.saveDebounce?.cancel();
           form.clearPasswordFields();
           await form.persistDraft(pendingEmailVerification: true);
           if (!mounted()) return;
@@ -168,38 +214,40 @@ class RegisterWizardSubmitHandler {
 
     if (form.roleChoice == UserRole.prestataire) {
       await syncRoleBestEffort(UserRole.prestataire, providerContainer);
+      final address = form.postalAddress;
       await post.updatePrestataireExtras(
         userId: uid,
         nomSalon: form.salon.text.trim(),
         nomAffiche: form.nomAffiche.text.trim().isEmpty
             ? form.salon.text.trim()
             : form.nomAffiche.text.trim(),
-        ville: form.ville.text.trim(),
-        codePostal: form.codePostal.text.trim().isEmpty
+        ville: address.ville.trim(),
+        codePostal: address.codePostal.trim().isEmpty
             ? null
-            : form.codePostal.text.trim(),
+            : address.codePostal.trim(),
+        pays: address.pays.trim().isEmpty ? null : address.pays.trim(),
         description: form.description.text.trim().isEmpty
             ? null
             : form.description.text.trim(),
         bio: form.bio.text.trim(),
-        adresse: form.adresse.text.trim().isEmpty
-            ? null
-            : form.adresse.text.trim(),
+        adresse: address.streetLine.isEmpty ? null : address.streetLine,
       );
+      await _persistPrestaBecomeDraftFromForm(form);
     } else {
       await syncRoleBestEffort(UserRole.client, providerContainer);
+      final formatted = form.postalAddress.formattedLine;
       await post.updateClientExtras(
         userId: uid,
-        adresse: form.adresse.text.trim().isEmpty
-            ? null
-            : form.adresse.text.trim(),
+        adresse: formatted.isEmpty ? null : formatted,
       );
+      await _saveClientAvatar(form, uid, providerContainer);
     }
 
     await LocalCacheService.instance.setSelectedRole(shellRole);
     form.persistDraftOnDispose = false;
     form.saveDebounce?.cancel();
     await form.clearDraft();
+    await RegisterPendingPasswordStore.instance.clear();
 
     if (!mounted()) return;
     form.setLoading(false);
@@ -213,19 +261,6 @@ class RegisterWizardSubmitHandler {
     if (!mounted()) return;
 
     if (form.roleChoice == UserRole.prestataire) {
-      await BecomePrestataireDraftStore.instance.save(
-        BecomePrestataireDraft(
-          salon: form.salon.text.trim(),
-          ville: form.ville.text.trim(),
-          bio: form.bio.text.trim(),
-          codePostal: form.codePostal.text.trim(),
-          nomAffiche: form.nomAffiche.text.trim(),
-          description: form.description.text.trim(),
-          adresse: form.adresse.text.trim(),
-          step1Submitted: true,
-          step2Started: true,
-        ),
-      );
       if (!mounted()) return;
       await PrestataireNavigation.afterPrestaRegistration(
         context,
@@ -233,6 +268,38 @@ class RegisterWizardSubmitHandler {
       );
     } else {
       context.goHome();
+    }
+  }
+
+  Future<void> _saveClientAvatar(
+    RegisterWizardFormController form,
+    String userId,
+    ProviderContainer container,
+  ) async {
+    if (!form.hasClientAvatar) return;
+
+    final profileService = container.read(profileServiceProvider);
+    if (profileService == null) return;
+
+    final bytes = form.clientAvatarBytes;
+    if (bytes != null) {
+      final storage = container.read(storageServiceProvider);
+      if (storage == null) return;
+      final url = await storage.uploadAvatar(
+        userId: userId,
+        file: StorageUploadFile(
+          bytes: bytes,
+          fileName: form.clientAvatarFileName ?? 'avatar.jpg',
+          mimeType: form.clientAvatarMimeType ?? 'image/jpeg',
+        ),
+      );
+      await profileService.upsertAvatar(userId: userId, avatarUrl: url);
+      return;
+    }
+
+    final defaultUrl = form.clientDefaultAvatarUrl?.trim();
+    if (defaultUrl != null && defaultUrl.isNotEmpty) {
+      await profileService.upsertAvatar(userId: userId, avatarUrl: defaultUrl);
     }
   }
 
@@ -250,6 +317,97 @@ class RegisterWizardSubmitHandler {
     } catch (e) {
       if (!_isRoleSyncForbidden(e)) rethrow;
     }
+  }
+
+  Future<bool> finalizePendingRegistrationFromDraft({
+    required BuildContext context,
+    required bool Function() mounted,
+    required WidgetRef ref,
+    required User session,
+  }) async {
+    if (_finalizeInFlight) return false;
+    _finalizeInFlight = true;
+
+    try {
+      final draft = RegisterWizardDraftStore.instance.read();
+      if (draft == null) {
+        if (mounted()) context.goRegisterResume();
+        return false;
+      }
+
+      await RegisterWizardRoleIntent.persistFromDraft(draft);
+
+      final form = RegisterWizardFormController();
+      form.persistDraftOnDispose = false;
+      form.applyDraft(draft);
+      form.pendingEmailVerification = false;
+
+      final prenom = draft.prenom.trim();
+      final nom = draft.nom.trim();
+      final phoneStored = PhoneNumberUtils.toStored(
+        dialCode: draft.phoneDialCode,
+        local: draft.phone,
+      );
+      final phone = phoneStored.isEmpty ? null : phoneStored;
+
+      await completeRegistrationAfterAuth(
+        context: context,
+        mounted: mounted,
+        form: form,
+        session: session,
+        prenom: prenom,
+        nom: nom,
+        phone: phone,
+        providerContainer: ProviderScope.containerOf(context),
+      );
+      form.dispose();
+      return true;
+    } finally {
+      _finalizeInFlight = false;
+    }
+  }
+
+  Future<User?> resolveVerifiedUser({
+    required WidgetRef ref,
+    required String email,
+  }) async {
+    final authService = ref.read(authServiceProvider);
+    final normalized = email.trim();
+
+    var user = authService.currentSession?.user ??
+        ref.read(authNotifierProvider).value;
+    if (user != null) return user;
+
+    try {
+      await authService.refreshSession();
+    } catch (_) {}
+
+    user = authService.currentSession?.user ??
+        ref.read(authNotifierProvider).value;
+    if (user != null) return user;
+
+    final password =
+        RegisterPendingPasswordStore.instance.readForEmail(normalized);
+    if (password == null || password.isEmpty) return null;
+
+    try {
+      return await ref.read(authNotifierProvider.notifier).signInWithPassword(
+            email: normalized,
+            password: password,
+          );
+    } on AppFailure catch (e) {
+      if (_isEmailNotConfirmedFailure(e)) return null;
+      rethrow;
+    }
+  }
+
+  bool _isEmailNotConfirmedFailure(AppFailure failure) {
+    final cause = failure.cause;
+    if (cause is AuthException) {
+      return FailureMapper.fromAuthException(cause).message ==
+          AuthStrings.authEmailNotConfirmed;
+    }
+    return failure.message == AuthStrings.authEmailNotConfirmed;
   }
 
   bool _isRoleSyncForbidden(Object error) {

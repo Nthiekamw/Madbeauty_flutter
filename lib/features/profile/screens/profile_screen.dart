@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/user/user_profile.dart';
+import '../../support/navigation/user_support_navigation.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/offline/offline_actions.dart';
@@ -378,6 +379,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const ProfileAccountSection(),
                   const SizedBox(height: ProfilePageInsets.sectionGap),
                   ProfileFooterActions(
+                    onSupportUser: () => openUserSupportChat(context, ref),
                     onSignOut: _signOut,
                     onDeleteAccount: _confirmDeleteAccount,
                   ),

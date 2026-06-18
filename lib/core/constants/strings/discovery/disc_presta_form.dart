@@ -55,6 +55,11 @@ abstract final class DiscPrestaForm {
   static const hubGalleryEmpty = 'Aucun média pour l’instant.';
   static const hubGalleryUploading = 'Envoi des médias…';
   static const hubGalleryAddTile = 'Ajouter';
+  static const hubGalleryMediaAdded = 'Médias ajoutés';
+  static const hubGalleryBySpecialtyHint =
+      'Ajoute des photos ou courtes vidéos pour chaque spécialité que tu proposes.';
+  static const galleryNeedsServices =
+      'Configure d’abord tes services à l’étape précédente pour organiser tes réalisations par spécialité.';
   static const galleryPolicyTitle = 'Interdiction stricte';
   static const galleryPolicyBodyPrefix =
       'Il est formellement interdit d’ajouter des images ';
@@ -70,7 +75,8 @@ abstract final class DiscPrestaForm {
       'Cette photo semble contenir une promotion ou des coordonnées. '
       'Seules les photos de coiffures sans texte sont autorisées.';
   static const galleryPolicyScanHint =
-      'Les photos sont vérifiées automatiquement : pas de texte, prix ni promo.';
+      'Les photos doivent montrer tes réalisations, sans flyer ni promo. '
+      'L’équipe peut retirer les contenus non conformes.';
   static const skipStep = 'Passer';
   static const completeLater = 'Configurer plus tard';
   static const completeLaterSaved =
@@ -93,7 +99,8 @@ abstract final class DiscPrestaForm {
   static const hubGoalHoraires =
       'Indique tes créneaux habituels pour recevoir des réservations.';
   static const hubGoalSubscription =
-      'Profite de l’essai gratuit ou active ton abonnement pour publier tes services dans le catalogue.';
+      'Optionnel : profite de l’essai gratuit ou active ton abonnement plus tard. '
+      'Tu peux enregistrer ton profil sans payer maintenant.';
   static const hubSectionWorkPlace = 'Où travailles-tu ?';
   static const hubSectionWorkPlaceHint =
       'Les clientes savent si tu les reçois chez toi, à domicile ou les deux.';
@@ -113,7 +120,8 @@ abstract final class DiscPrestaForm {
       'Active au moins un jour avec des horaires cohérents. '
       'Les congés sont optionnels : tu peux les ajouter maintenant ou plus tard.';
   static const hubTipSubscription =
-      'Tu bénéficies d’un essai catalogue gratuit. Tu peux t’abonner maintenant ou à la fin de l’essai.';
+      'L’abonnement n’est pas obligatoire pour enregistrer ton profil. '
+      'Tu bénéficies d’un essai catalogue gratuit ; tu pourras t’abonner plus tard.';
   static String hubStepTip(int stepIndex) => switch (stepIndex) {
         0 => hubTipBasics,
         1 => hubTipLocation,
@@ -143,7 +151,8 @@ abstract final class DiscPrestaForm {
   static const avatarChange = 'Changer la photo';
   static const salonName = 'Nom du salon / activité';
   static const displayName = 'Nom affiché';
-  static const displayNameHint = 'Visible par les clientes';
+  static const displayNameHint =
+      'Optionnel — visible par les clientes (sinon le nom du salon est affiché)';
   static const bio = 'Présentation';
   static const bioHint = 'Texte libre complémentaire';
   static const description = 'Description';
@@ -151,8 +160,20 @@ abstract final class DiscPrestaForm {
   static const experienceYears = 'Années d’expérience';
   static const experiencePro = 'Expérience professionnelle';
   static const experienceProHint = '150 caractères max';
+  static const experienceProMultiHint =
+      'Choisis une ou plusieurs spécialités et indique ton ancienneté pour chacune.';
+  static const experienceProAddLabel = 'Ajouter une expérience';
+  static const experienceProRemove = 'Retirer';
   static const experienceProSuggestionsLabel = 'Suggestions';
   static const experienceYearsSuggestionsLabel = 'Durée d’activité';
+  static const experienceProTooMany =
+      'Tu peux ajouter au maximum 5 expériences.';
+  static const experienceProIncomplete =
+      'Choisis une durée pour chaque expérience ajoutée.';
+  static const reqExperiencePro =
+      'Ajoute au moins une expérience professionnelle.';
+  static const experienceProEncodedTooLong =
+      'Trop d’expériences renseignées. Retire-en une pour continuer.';
 
   static const experienceProSuggestions = <String>[
     'Coiffeuse / coiffeur indépendant·e',

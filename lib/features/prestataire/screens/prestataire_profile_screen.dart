@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../support/navigation/user_support_navigation.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
@@ -27,8 +28,6 @@ import '../widgets/profile/overview/menu/prestataire_profile_manage_menu.dart';
 import '../widgets/profile/overview/sections/prestataire_profile_section.dart';
 import '../widgets/profile/overview/stats/prestataire_profile_stats_strip.dart';
 import '../widgets/prestataire_verification_request_card.dart';
-import '../widgets/subscription/prestataire_catalog_trial_banner.dart';
-import '../widgets/subscription/prestataire_catalog_visibility_banner.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_profile_summary_card.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -149,8 +148,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
                 ),
                 children: [
                   const PrestataireProfileCompletionCard(),
-                  const PrestataireCatalogTrialBanner(),
-                  const PrestataireCatalogVisibilityBanner(),
                   PrestataireProfileSummaryCard(
                     title: title,
                     subtitle: profession,
@@ -196,6 +193,7 @@ class PrestataireProfileScreen extends ConsumerWidget {
                   ],
                   PrestataireProfileSection(
                     title: DiscPrestaProfile.sectionActivity,
+                    icon: Icons.dashboard_customize_outlined,
                     children: [
                       const PrestataireProfileManageMenu(showHeader: true),
                       if (data.prestataireId != null)
@@ -237,6 +235,7 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     padding: PrestataireProfileInsets.page(context)
                         .copyWith(top: PrestataireProfileInsets.sectionTop),
                     child: ProfileFooterActions(
+                      onSupportUser: () => openUserSupportChat(context, ref),
                       onSignOut: () => _signOut(context, ref),
                       onDeleteAccount: () =>
                           _confirmDeleteAccount(context, ref),

@@ -16,6 +16,15 @@ abstract final class DiscProfile {
 
   static const prefPush = 'Notifications push';
   static const prefPushHint = 'Alertes réservations et rappels';
+  static const prefPushInactiveHint =
+      'Non activées — autorise-les pour ne rien manquer';
+  static const prefPushPromptTitle = 'Active les notifications';
+  static const prefPushPromptBody =
+      'Reçois les confirmations de réservation, les messages et les rappels '
+      'même quand l’app est fermée.';
+  static const prefPushPromptEnable = 'Activer';
+  static const prefPushPromptLater = 'Plus tard';
+  static const prefOpenSettings = 'Ouvrir les réglages';
   static const prefLocation = 'Géolocalisation';
   static const prefLocationHint = 'Pros près de toi et tri par distance';
 
@@ -74,6 +83,9 @@ abstract final class DiscProfile {
   static const actionAdminBugReports = 'Bugs signalés';
   static const actionAdminBugReportsHint =
       'Dysfonctionnements techniques remontés par les utilisateurs.';
+  static const actionAdminUserSupport = 'Support utilisateurs';
+  static const actionAdminUserSupportHint =
+      'Conversations avec les clientes et prestataires.';
   static const actionAdminReports = 'Signalements';
   static const actionAdminReportsHint =
       'Consulter et traiter les signalements utilisateurs';
@@ -93,6 +105,39 @@ abstract final class DiscProfile {
   static const adminReportsModerated = 'Action de modération appliquée.';
   static const adminReportsModerateErr =
       'Impossible d’appliquer cette action pour le moment.';
+
+  static const actionAdminRealisationPhotos = 'Photos de réalisations';
+  static const actionAdminRealisationPhotosHint =
+      'Consulter, télécharger et modérer la galerie des prestataires.';
+  static const adminRealisationPhotosIntroTitle = 'Modération galerie';
+  static const adminRealisationPhotosIntroBody =
+      'Parcours les photos et vidéos publiées. Supprime le contenu inadapté '
+      'ou applique un signalement, un avertissement ou un bannissement.';
+  static const adminRealisationPhotosSearchHint = 'Salon, nom ou e-mail…';
+  static const adminRealisationPhotosEmpty = 'Aucune photo de réalisation.';
+  static const adminRealisationPhotosDownload = 'Ouvrir / télécharger';
+  static const adminRealisationPhotosDelete = 'Supprimer';
+  static const adminRealisationPhotosFlagObscene = 'Signaler (obscène)';
+  static const adminRealisationPhotosWarn = 'Avertir le compte';
+  static const adminRealisationPhotosBan = 'Bannir le compte';
+  static const adminRealisationPhotosDeleteConfirmTitle = 'Supprimer cette photo ?';
+  static const adminRealisationPhotosDeleteConfirmBody =
+      'Elle sera retirée de la galerie publique et du stockage.';
+  static const adminRealisationPhotosFlagConfirmTitle = 'Signaler comme obscène ?';
+  static const adminRealisationPhotosFlagConfirmBody =
+      'La photo sera supprimée et un signalement interne sera enregistré.';
+  static const adminRealisationPhotosWarnDialogTitle = 'Avertir le prestataire';
+  static const adminRealisationPhotosWarnHint =
+      'Message visible dans ses notifications.';
+  static const adminRealisationPhotosWarnDefault =
+      'Une photo de votre galerie ne respecte pas nos règles. '
+      'Merci de publier uniquement du contenu professionnel.';
+  static const adminRealisationPhotosModerated = 'Action de modération appliquée.';
+  static const adminRealisationPhotosModerateErr =
+      'Impossible d’appliquer cette action.';
+  static const adminRealisationPhotosOpenErr =
+      'Impossible d’ouvrir cette image.';
+  static const adminRealisationPhotosTargetType = 'Photo de réalisation';
 
   static const actionAdminUsers = 'Utilisateurs';
   static const actionAdminUsersHint =
@@ -140,6 +185,26 @@ abstract final class DiscProfile {
   static const actionAdminSubscriptionTrial = 'Essai abonnement prestataire';
   static const actionAdminSubscriptionTrialHint =
       'Durée d’essai gratuit catalogue (3 mois par défaut) et prolongations';
+  static const actionAdminBookingPlatformFee = 'Frais réservation client';
+  static const actionAdminBookingPlatformFeeHint =
+      'Montant prélevé dans l’app et nombre de réservations gratuites.';
+  static const adminBookingFeeIntroTitle = 'Frais MadBeauty (réservations)';
+  static const adminBookingFeeIntroBody =
+      'Par défaut aucun frais n’est prélevé au client. Tu peux définir un montant '
+      'fixe (ex. 1 €) prélevé uniquement lorsque le client paie un acompte en ligne '
+      '(prestataire ayant activé l’option), à partir d’un certain nombre de réservations.';
+  static const adminBookingFeeAmountLabel = 'Montant par réservation';
+  static const adminBookingFeeAmountHint = 'Montant en euros';
+  static const adminBookingFeeAmountHelper =
+      '0 € = aucun paiement dans l’app pour les frais plateforme.';
+  static const adminBookingFeeFreeCountLabel = 'Réservations sans frais';
+  static const adminBookingFeeFreeCountHint = 'Nombre de réservations gratuites';
+  static const adminBookingFeeFreeCountHelper =
+      'Ex. 2 = pas de frais sur les 2 premières réservations du client.';
+  static const adminBookingFeeSaveAction = 'Enregistrer';
+  static const adminBookingFeeSaved = 'Frais réservation mis à jour.';
+  static const adminBookingFeeInvalid =
+      'Montant (0–1000 €) ou nombre de réservations gratuites (0–100) invalide.';
   static const adminTrialIntroTitle = 'Essai catalogue prestataire';
   static const adminTrialIntroBody =
       'Les nouveaux prestataires bénéficient d’un essai gratuit pour apparaître dans le catalogue. '
@@ -306,6 +371,8 @@ abstract final class DiscProfile {
 
   static const signOut = 'Se déconnecter';
   static const deleteAccount = 'Supprimer mon compte';
+  static const supportUser = 'Support utilisateur';
+  static const supportUserHint = 'Discuter avec l’admin';
 
   static const deleteAccountTitle = 'Supprimer le compte ?';
   static const deleteAccountBody =

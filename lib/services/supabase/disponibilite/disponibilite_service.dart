@@ -127,60 +127,100 @@ class DisponibiliteService {
         },
       );
 
+  /// Tous les créneaux du planning pour l’UI (y compris complets), hors passés.
+  Future<List<TimeSlot>> getCreneauxAffichage(
+    String prestataireId,
+    DateTime date,
+  ) =>
+      SupabaseErrorHandler.run(
+        operation: 'disponibilite.getCreneauxAffichage',
+        action: () => _collectSlotsForDay(
+          prestataireId: prestataireId,
+          date: date,
+          excludeFullyReserved: false,
+          excludePast: true,
+        ),
+      );
+
   Future<List<TimeSlot>> getCreneauxDisponibles(
     String prestataireId,
     DateTime date,
   ) =>
       SupabaseErrorHandler.run(
         operation: 'disponibilite.getCreneauxDisponibles',
-        action: () async {
-          final day = DateTime(date.year, date.month, date.day);
-          final pgDow = DisponibiliteDow.fromDartWeekday(day.weekday);
-
-          if (await _isDayFullyBlocked(prestataireId, day)) {
-            return const [];
-          }
-
-          final plages = await getHoraires(prestataireId);
-          final dayPlages =
-              plages.where((p) => p.jourSemaine == pgDow).toList();
-          if (dayPlages.isEmpty) return const [];
-
-          final overrides = await _capacityOverridesForDay(
-            prestataireId: prestataireId,
-            pgDow: pgDow,
-          );
-          final reservedCounts = await _reservedSlotCounts(prestataireId, day);
-          final indispos = await _indisponibilitesForDay(prestataireId, day);
-
-          final slots = <TimeSlot>[];
-          for (final plage in dayPlages) {
-            for (final slot in _generateSlots(plage)) {
-              final at = slot.onDay(day);
-              final capacity = _capacityFor(
-                at: at,
-                fallback: plage.capaciteSimultanee,
-                overrides: overrides,
-              );
-              if (_isBlocked(
-                at: at,
-                indispos: indispos,
-                reservedCount: reservedCounts[slot] ?? 0,
-                capacity: capacity,
-              )) {
-                continue;
-              }
-              slots.add(slot);
-            }
-          }
-
-          slots.sort((a, b) {
-            final cmp = a.hour.compareTo(b.hour);
-            return cmp != 0 ? cmp : a.minute.compareTo(b.minute);
-          });
-          return slots;
-        },
+        action: () => _collectSlotsForDay(
+          prestataireId: prestataireId,
+          date: date,
+          excludeFullyReserved: true,
+          excludePast: true,
+        ),
       );
+
+  Future<List<TimeSlot>> _collectSlotsForDay({
+    required String prestataireId,
+    required DateTime date,
+    required bool excludeFullyReserved,
+    required bool excludePast,
+  }) async {
+    final day = DateTime(date.year, date.month, date.day);
+    final pgDow = DisponibiliteDow.fromDartWeekday(day.weekday);
+    final now = DateTime.now();
+
+    if (await _isDayFullyBlocked(prestataireId, day)) {
+      return const [];
+    }
+
+    final plages = await getHoraires(prestataireId);
+    final dayPlages = plages.where((p) => p.jourSemaine == pgDow).toList();
+    if (dayPlages.isEmpty) return const [];
+
+    final overrides = await _capacityOverridesForDay(
+      prestataireId: prestataireId,
+      pgDow: pgDow,
+    );
+    final reservedCounts = excludeFullyReserved
+        ? await _reservedSlotCounts(prestataireId, day)
+        : const <TimeSlot, int>{};
+    final indispos = await _indisponibilitesForDay(prestataireId, day);
+
+    final slots = <TimeSlot>[];
+    for (final plage in dayPlages) {
+      for (final slot in _generateSlots(plage)) {
+        final at = slot.onDay(day);
+        if (excludePast && _isSlotPast(day, at, now: now)) continue;
+
+        final capacity = _capacityFor(
+          at: at,
+          fallback: plage.capaciteSimultanee,
+          overrides: overrides,
+        );
+        if (_isBlocked(
+          at: at,
+          indispos: indispos,
+          reservedCount: reservedCounts[slot] ?? 0,
+          capacity: capacity,
+          checkCapacity: excludeFullyReserved,
+        )) {
+          continue;
+        }
+        slots.add(slot);
+      }
+    }
+
+    slots.sort((a, b) {
+      final cmp = a.hour.compareTo(b.hour);
+      return cmp != 0 ? cmp : a.minute.compareTo(b.minute);
+    });
+    return slots;
+  }
+
+  bool _isSlotPast(DateTime day, DateTime at, {required DateTime now}) {
+    final dayOnly = DateTime(day.year, day.month, day.day);
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    if (dayOnly.isBefore(todayOnly)) return true;
+    if (dayOnly.isAfter(todayOnly)) return false;
+    return at.isBefore(now);
+  }
 
   BookingAvailabilityRules buildAvailabilityRules(List<HorairePlage> horaires) {
     final map = <int, List<BookingSlot>>{
@@ -292,8 +332,9 @@ class DisponibiliteService {
     required List<DateTimeRange> indispos,
     required int reservedCount,
     required int capacity,
+    bool checkCapacity = true,
   }) {
-    if (reservedCount >= capacity) return true;
+    if (checkCapacity && reservedCount >= capacity) return true;
     for (final range in indispos) {
       if (!at.isBefore(range.start) && at.isBefore(range.end)) return true;
     }

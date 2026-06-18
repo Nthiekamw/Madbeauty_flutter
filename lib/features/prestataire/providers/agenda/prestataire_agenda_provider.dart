@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/providers/offline_providers.dart';
+import '../../../../services/notifications/booking_reminders_sync.dart';
 import '../../../../services/offline/offline_cache_service.dart';
 import '../../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../../services/supabase/supabase_service.dart';
@@ -83,6 +84,7 @@ class PrestataireAgendaNotifier
       final items = await service.listForCurrentPrestataire();
       state = AsyncData(items);
       ref.invalidate(prestataireDashboardProvider);
+      unawaited(syncPrestataireBookingReminders(items));
     } catch (_) {
       // Garde la liste affichée ; un pull-to-refresh permet de resynchroniser.
     }

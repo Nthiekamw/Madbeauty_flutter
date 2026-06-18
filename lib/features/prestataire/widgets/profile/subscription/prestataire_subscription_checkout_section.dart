@@ -10,10 +10,12 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/utils/app_url_launcher.dart';
 import '../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../../../shared/widgets/stripe/stripe_test_card_hint.dart';
 import '../../../models/prestataire_subscription_status.dart';
 import '../../../logic/prestataire_subscription_refresh.dart';
 import '../../../providers/profile/prestataire_profile_form_provider.dart';
 import '../../../providers/subscription/platform_catalog_trial_provider.dart';
+import '../../../logic/prestataire_subscription_service_count.dart';
 import '../../../providers/subscription/prestataire_subscription_provider.dart';
 import 'prestataire_subscription_interval_cards.dart';
 import 'prestataire_payout_setup_hint.dart';
@@ -23,9 +25,11 @@ class PrestataireSubscriptionCheckoutSection extends ConsumerStatefulWidget {
   const PrestataireSubscriptionCheckoutSection({
     super.key,
     this.compact = false,
+    this.plannedServiceCount,
   });
 
   final bool compact;
+  final int? plannedServiceCount;
 
   @override
   ConsumerState<PrestataireSubscriptionCheckoutSection> createState() =>
@@ -84,6 +88,9 @@ class _PrestataireSubscriptionCheckoutSectionState
         interval: _selectedInterval,
       );
       if (!context.mounted) return;
+      if (StripeService.isTestMode) {
+        _snack(DiscPrestaSub.testModeCheckoutReminder);
+      }
       final opened = await AppUrlLauncher.openInApp(context, result.url);
       if (!context.mounted) return;
       if (!opened) _snack(DiscPrestaSub.browserErr, error: true);
@@ -155,7 +162,11 @@ class _PrestataireSubscriptionCheckoutSectionState
     return serviceCountAsync.when(
       loading: () => const DiscoveryInlineSkeleton(height: 40),
       error: (_, __) => const SizedBox.shrink(),
-      data: (serviceCount) {
+      data: (publishedCount) {
+        final serviceCount = PrestataireSubscriptionServiceCount.resolve(
+          publishedCount: publishedCount,
+          plannedCount: widget.plannedServiceCount,
+        );
         final tier = PrestataireSubscriptionConfig.tierForServiceCount(
           serviceCount,
         );
@@ -206,7 +217,9 @@ class _PrestataireSubscriptionCheckoutSectionState
                   onChanged: (interval) =>
                       setState(() => _selectedInterval = interval),
                 ),
-                SizedBox(height: widget.compact ? 10 : 14),
+                const SizedBox(height: 10),
+                StripeTestCardHint(compact: widget.compact),
+                const SizedBox(height: 10),
                 FilledButton.icon(
                   onPressed: _busy ? null : () => _subscribe(tier.id),
                   icon: _busy

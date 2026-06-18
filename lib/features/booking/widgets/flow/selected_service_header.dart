@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
@@ -16,45 +17,45 @@ class SelectedServiceHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
-    final tertiary = theme.colorScheme.tertiary;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          stops: const [0.0, 0.6, 1.0],
+          stops: const [0.0, 0.55, 1.0],
           colors: [
-            primary.withValues(alpha: isDark ? 0.45 : 0.7),
+            primary.withValues(alpha: isDark ? 0.5 : 0.82),
             theme.colorScheme.primaryContainer.withValues(
-              alpha: isDark ? 0.6 : 0.88,
+              alpha: isDark ? 0.65 : 0.92,
             ),
-            tertiary.withValues(alpha: isDark ? 0.25 : 0.35),
+            AppColors.brandGold.withValues(alpha: isDark ? 0.22 : 0.35),
           ],
         ),
         border: Border.all(
-          color: primary.withValues(alpha: isDark ? 0.3 : 0.18),
-          width: 1.5,
+          color: primary.withValues(alpha: isDark ? 0.28 : 0.16),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.1),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.onPrimarySurface20,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.onPrimarySurface30,
                 ),
@@ -68,7 +69,7 @@ class SelectedServiceHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Service sélectionné',
+                    DiscBk.selectedServiceLabel,
                     style: TextStyle(
                       fontFamily: AppFonts.body,
                       fontSize: 11,

@@ -1,4 +1,5 @@
 import 'package:madbeauty/core/config/pricing_config.dart';
+import 'package:madbeauty/core/models/domain/booking/booking_platform_fee_settings.dart';
 
 /// Mode de paiement de la prestation choisi par le client.
 enum BookingPaymentModeKind {
@@ -34,6 +35,7 @@ class BookingPricingBreakdown {
     required this.balanceOnSiteCents,
     required this.requiresInAppPayment,
     required this.priorBookingCount,
+    required this.platformFeeFreeBookingCount,
     this.originalServicePriceCents,
     this.referralDiscountPercent,
   });
@@ -48,6 +50,7 @@ class BookingPricingBreakdown {
   final int balanceOnSiteCents;
   final bool requiresInAppPayment;
   final int priorBookingCount;
+  final int platformFeeFreeBookingCount;
   final int? originalServicePriceCents;
   final int? referralDiscountPercent;
 
@@ -68,11 +71,12 @@ class BookingPricingBreakdown {
   double get balanceOnSiteEur => balanceOnSiteCents / 100;
 }
 
-int platformFeeCentsForPriorCount(int priorBookingCount) {
-  if (priorBookingCount < PricingConfig.platformFeeFreeBookingCount) {
-    return 0;
-  }
-  return PricingConfig.platformFeeCents;
+int platformFeeCentsForPriorCount(
+  int priorBookingCount,
+  BookingPlatformFeeSettings settings,
+) {
+  if (priorBookingCount < settings.freeBookingCount) return 0;
+  return settings.feeCents;
 }
 
 int depositCentsFromService(int servicePriceCents) {
@@ -89,6 +93,8 @@ BookingPricingBreakdown computeBookingPricing({
   required BookingPaymentModeKind paymentMode,
   required int priorBookingCount,
   required bool prestataireAcceptsConnect,
+  BookingPlatformFeeSettings platformFeeSettings =
+      BookingPlatformFeeSettings.defaults,
   int? referralDiscountPercent,
 }) {
   final originalServicePriceCents = (servicePriceEur * 100).round();
@@ -96,7 +102,10 @@ BookingPricingBreakdown computeBookingPricing({
   final servicePriceCents = percent != null && percent > 0
       ? discountedServicePriceCents(originalServicePriceCents, percent)
       : originalServicePriceCents;
-  final platformFee = platformFeeCentsForPriorCount(priorBookingCount);
+  final platformFee = platformFeeCentsForPriorCount(
+    priorBookingCount,
+    platformFeeSettings,
+  );
 
   switch (paymentMode) {
     case BookingPaymentModeKind.deposit20:
@@ -117,6 +126,7 @@ BookingPricingBreakdown computeBookingPricing({
         balanceOnSiteCents: servicePriceCents - deposit,
         requiresInAppPayment: total > 0,
         priorBookingCount: priorBookingCount,
+        platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
         originalServicePriceCents: percent != null && percent > 0
             ? originalServicePriceCents
             : null,
@@ -127,12 +137,13 @@ BookingPricingBreakdown computeBookingPricing({
         paymentMode: paymentMode,
         servicePriceCents: servicePriceCents,
         depositCents: 0,
-        platformFeeCents: platformFee,
+        platformFeeCents: 0,
         prestatairePortionCents: 0,
-        totalChargeCents: platformFee,
+        totalChargeCents: 0,
         balanceOnSiteCents: servicePriceCents,
-        requiresInAppPayment: platformFee > 0,
+        requiresInAppPayment: false,
         priorBookingCount: priorBookingCount,
+        platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
         originalServicePriceCents: percent != null && percent > 0
             ? originalServicePriceCents
             : null,

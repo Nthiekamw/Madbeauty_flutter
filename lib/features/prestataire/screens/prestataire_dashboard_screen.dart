@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../router/navigation_extensions.dart';
@@ -19,8 +19,6 @@ import '../widgets/dashboard/content/prestataire_dashboard_overview_grid.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_reorderable_sections.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
-import '../widgets/subscription/prestataire_catalog_trial_banner.dart';
-import '../widgets/subscription/prestataire_catalog_visibility_banner.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
@@ -91,12 +89,6 @@ class _PrestataireDashboardScreenState
                       const SliverToBoxAdapter(
                         child: PrestataireProfileCompletionCard(),
                       ),
-                    const SliverToBoxAdapter(
-                      child: PrestataireCatalogTrialBanner(),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: PrestataireCatalogVisibilityBanner(),
-                    ),
                     if (dashboardAsync.maybeWhen(
                       data: (data) => data.needsCompletion.isNotEmpty,
                       orElse: () => false,
@@ -221,10 +213,10 @@ class _CompletionReminderBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Material(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onOpenAgenda,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

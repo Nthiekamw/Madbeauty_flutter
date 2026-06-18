@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../booking/logic/booking_formatters.dart';
 import '../../../../booking/logic/client_reservation_ui_status.dart';
@@ -45,25 +46,20 @@ class PrestataireCompactAppointmentCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: theme.colorScheme.surface,
+        color: AppColors.cardSurfaceFor(theme.brightness),
         elevation: 0,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
+          borderRadius: BorderRadius.circular(14),
+          child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.12),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.shadow.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                color: theme.colorScheme.outline.withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.28 : 0.1,
                 ),
-              ],
+              ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Column(

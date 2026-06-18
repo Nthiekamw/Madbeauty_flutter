@@ -23,7 +23,10 @@ class ProfileFavoritesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ProfileSectionTitle(title: DiscFavori.profileSectionTitle),
+        const ProfileSectionTitle(
+          title: DiscFavori.profileSectionTitle,
+          icon: Icons.bookmark_rounded,
+        ),
         DiscoverySurfaceCard(
           child: DiscoveryMenuTile(
             icon: Icons.bookmark_rounded,

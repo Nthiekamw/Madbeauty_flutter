@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/logic/address/postal_address.dart';
+import '../../../../core/logic/address/postal_country_format.dart';
 import '../../../../core/models/domain/availability/horaire_plage.dart';
 import '../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../core/models/domain/user/lieu_travail.dart';
@@ -12,6 +15,9 @@ import '../../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../../logic/prestataire_hub_constants.dart';
 import '../../logic/prestataire_hub_save_pipeline.dart';
 import '../../logic/prestataire_hub_validation.dart';
+import '../../logic/professional_experience_entries.dart';
+import '../../logic/realisation_gallery_grouping.dart';
+import '../../models/pending_realisation_upload.dart';
 import '../../models/prestataire_profile_edit_section.dart';
 import '../../models/prestataire_service_catalog_selection.dart';
 import '../../models/prestataire_service_field_set.dart';
@@ -24,6 +30,13 @@ class PrestataireHubFormController extends ChangeNotifier {
     this.focusedSection,
     int? initialStep,
   }) : _currentStep = _resolveInitialStep(focusedSection, initialStep) {
+    for (final controller in [
+      voieNomController,
+      numeroRueController,
+      paysController,
+    ]) {
+      controller.addListener(_onStructuredAddressFieldChanged);
+    }
     if (PrestataireHubOnboardingDraft.isActive) {
       _attachOnboardingDraftListeners();
     }
@@ -51,6 +64,9 @@ class PrestataireHubFormController extends ChangeNotifier {
   final villeController = TextEditingController();
   final codePostalController = TextEditingController();
   final adresseController = TextEditingController();
+  final voieNomController = TextEditingController();
+  final numeroRueController = TextEditingController();
+  final paysController = TextEditingController(text: PostalAddress.defaultCountry);
   final suggestionNomController = TextEditingController();
   final suggestionDescController = TextEditingController();
 
@@ -66,12 +82,15 @@ class PrestataireHubFormController extends ChangeNotifier {
   var saving = false;
   double? uploadProgress;
   LieuTravail? lieuTravail;
+  String voieType = PostalVoieTypes.defaultType;
   String paysCode = 'FR';
   String? paysError;
   Uint8List? avatarBytes;
   String? avatarFileName;
   String? avatarMimeType;
   String? avatarUrl;
+
+  List<ProfessionalExperienceEntry> professionalExperiences = [];
 
   String? avatarError;
   String? nomError;
@@ -86,7 +105,7 @@ class PrestataireHubFormController extends ChangeNotifier {
   String? pricingError;
   String? galleryError;
   List<PhotoRealisation> galleryPhotos = [];
-  final pendingGallery = <StorageUploadFile>[];
+  final pendingGallery = <PendingRealisationUpload>[];
   PrestataireProfileFormData? loadedData;
 
   final _hubDraftDebouncer = HubOnboardingDraftDebouncer();
@@ -97,9 +116,8 @@ class PrestataireHubFormController extends ChangeNotifier {
   String? horairesError;
 
   bool get shouldPersistHoraires =>
-      focusedSection == null ||
       focusedSection == PrestataireProfileEditSection.horaires ||
-      _currentStep == 3;
+      (focusedSection == null && horaireWeek != null);
 
   void setCurrentStep(int step) {
     _currentStep = step;
@@ -144,11 +162,20 @@ class PrestataireHubFormController extends ChangeNotifier {
     villeController,
     codePostalController,
     adresseController,
+    voieNomController,
+    numeroRueController,
+    paysController,
     suggestionNomController,
     suggestionDescController,
   ];
 
   void _onOnboardingFieldChanged() => _schedulePersistHubDraft();
+
+  void _onStructuredAddressFieldChanged() {
+    syncAdresseFromPostalFields();
+    notifyListeners();
+    _schedulePersistHubDraft();
+  }
 
   void _schedulePersistHubDraft() {
     if (!PrestataireHubOnboardingDraft.isActive) return;
@@ -168,6 +195,7 @@ class PrestataireHubFormController extends ChangeNotifier {
 
   Future<void> _persistOnboardingHubDraftUnchecked() async {
     if (!PrestataireHubOnboardingDraft.isActive) return;
+    syncAdresseFromPostalFields();
     final step = focusedSection?.hubStepIndex ?? _currentStep;
     await PrestataireHubOnboardingDraft.persist(
       currentStep: step,
@@ -239,21 +267,39 @@ class PrestataireHubFormController extends ChangeNotifier {
       },
     );
     hubDraftApplied = true;
+    loadProfessionalExperiencesFromControllers();
+    hydratePostalFieldsFromStored();
+    syncAdresseFromPostalFields();
     notifyListeners();
   }
 
   void prepareOnboardingDraftRestore() {
     if (!PrestataireHubOnboardingDraft.isActive) return;
+    maybeApplyOnboardingHubDraft();
     PrestataireHubOnboardingDraft.seedBasicsFromBecomeDraft(
       nomController: nomController,
       villeController: villeController,
       bioController: bioController,
       nomAfficheController: nomAfficheController,
+      descriptionController: descriptionController,
+      codePostalController: codePostalController,
+      adresseController: adresseController,
     );
-    maybeApplyOnboardingHubDraft();
+    PrestataireHubOnboardingDraft.seedLocationFromBecomeDraft(
+      villeController: villeController,
+      codePostalController: codePostalController,
+      voieNomController: voieNomController,
+      numeroRueController: numeroRueController,
+      paysController: paysController,
+      setVoieType: (type) => voieType = type,
+      setPaysCode: (code) => paysCode = code,
+    );
+    hydratePostalFieldsFromStored();
+    syncAdresseFromPostalFields();
     if (!hubDraftApplied) {
       unawaited(_persistOnboardingHubDraft());
     }
+    notifyListeners();
   }
 
   @override
@@ -285,11 +331,15 @@ class PrestataireHubFormController extends ChangeNotifier {
     descriptionController.text = data.description;
     experienceProController.text = data.experienceProfessionnelle;
     anneesExperienceController.text = data.anneesExperience;
+    loadProfessionalExperiencesFromControllers();
     bioController.text = data.bio;
     villeController.text = data.ville;
     codePostalController.text = data.codePostal;
     adresseController.text = data.adresse;
     paysCode = data.pays.trim().isEmpty ? 'FR' : data.pays.trim().toUpperCase();
+    paysController.text = postalCountryLabelForIso(paysCode);
+    hydratePostalFieldsFromStored();
+    syncAdresseFromPostalFields();
     lieuTravail = data.lieuTravail;
     selectedComfortIds
       ..clear()
@@ -347,9 +397,8 @@ class PrestataireHubFormController extends ChangeNotifier {
   PrestataireHubFieldErrors _validateVitrineFields() {
     return PrestataireHubValidation.validateVitrine(
       nom: nomController.text.trim(),
-      nomAffiche: nomAfficheController.text.trim(),
       description: descriptionController.text.trim(),
-      experiencePro: experienceProController.text.trim(),
+      professionalExperiences: professionalExperiences,
       hasAvatar:
           avatarBytes != null ||
           (avatarUrl != null && avatarUrl!.trim().isNotEmpty),
@@ -357,6 +406,7 @@ class PrestataireHubFormController extends ChangeNotifier {
   }
 
   PrestataireHubFieldErrors _validateLocationFields() {
+    syncAdresseFromPostalFields();
     return PrestataireHubValidation.validateLocation(
       ville: villeController.text.trim(),
       codePostal: codePostalController.text.trim(),
@@ -444,6 +494,7 @@ class PrestataireHubFormController extends ChangeNotifier {
   }
 
   PrestataireProfileSavePayload buildSavePayload() {
+    syncAdresseFromPostalFields();
     return PrestataireHubSavePipeline.buildSavePayload(
       nomSalon: nomController.text.trim(),
       nomAffiche: nomAfficheController.text.trim(),
@@ -491,9 +542,136 @@ class PrestataireHubFormController extends ChangeNotifier {
 
   void setPays(String code) {
     paysCode = code.trim().toUpperCase();
+    paysController.text = postalCountryLabelForIso(paysCode);
     paysError = null;
     notifyListeners();
     _schedulePersistHubDraft();
+  }
+
+  PostalAddress get postalAddress => PostalAddress(
+        voieType: voieType,
+        voieNom: voieNomController.text,
+        numero: numeroRueController.text,
+        codePostal: codePostalController.text,
+        ville: villeController.text,
+        pays: paysController.text,
+      );
+
+  void applyPostalAddress(PostalAddress address, {bool onlyIfEmpty = false}) {
+    void assign(TextEditingController controller, String value) {
+      if (onlyIfEmpty && controller.text.trim().isNotEmpty) return;
+      controller.text = value.trim();
+    }
+
+    if (!onlyIfEmpty || voieNomController.text.trim().isEmpty) {
+      voieType = address.voieType;
+    }
+    assign(voieNomController, address.voieNom);
+    assign(numeroRueController, address.numero);
+    assign(codePostalController, address.codePostal);
+    assign(villeController, address.ville);
+    if (address.pays.trim().isNotEmpty) {
+      if (!onlyIfEmpty || paysController.text.trim().isEmpty) {
+        paysController.text = address.pays.trim();
+        paysCode = postalCountryIso2(address.pays);
+      }
+    }
+  }
+
+  void hydratePostalFieldsFromStored() {
+    if (voieNomController.text.trim().isNotEmpty ||
+        numeroRueController.text.trim().isNotEmpty) {
+      return;
+    }
+
+    final street = adresseController.text.trim();
+    final cp = codePostalController.text.trim();
+    final city = villeController.text.trim();
+    final country = paysController.text.trim().isNotEmpty
+        ? paysController.text.trim()
+        : postalCountryLabelForIso(paysCode);
+
+    if (street.isEmpty && cp.isEmpty && city.isEmpty) return;
+
+    final segments = <String>[
+      if (street.isNotEmpty) street,
+      if (cp.isNotEmpty || city.isNotEmpty) '$cp $city'.trim(),
+      if (country.isNotEmpty) country,
+    ];
+    applyPostalAddress(PostalAddress.tryParse(segments.join(', ')));
+  }
+
+  void syncAdresseFromPostalFields() {
+    paysCode = postalCountryIso2(paysController.text);
+    adresseController.text = postalAddress.streetLine;
+  }
+
+  void setVoieType(String type) {
+    voieType = type;
+    onPostalAddressChanged();
+  }
+
+  void onPostalAddressChanged() {
+    syncAdresseFromPostalFields();
+    villeError = null;
+    codePostalError = null;
+    adresseError = null;
+    notifyListeners();
+    _schedulePersistHubDraft();
+  }
+
+  void loadProfessionalExperiencesFromControllers() {
+    professionalExperiences = ProfessionalExperienceCodec.decode(
+      experienceProController.text,
+      anneesExperienceController.text,
+    );
+  }
+
+  void _syncProfessionalExperiencesToControllers() {
+    final encoded = ProfessionalExperienceCodec.encode(professionalExperiences);
+    experienceProController.text = encoded.professional;
+    anneesExperienceController.text = encoded.yearsSummary;
+  }
+
+  void setProfessionalExperiences(List<ProfessionalExperienceEntry> entries) {
+    professionalExperiences = List<ProfessionalExperienceEntry>.from(entries);
+    _syncProfessionalExperiencesToControllers();
+    experienceProError = null;
+    notifyListeners();
+    _schedulePersistHubDraft();
+  }
+
+  void toggleProfessionalExperience(String role) {
+    final idx = professionalExperiences.indexWhere((e) => e.role == role);
+    if (idx >= 0) {
+      setProfessionalExperiences(
+        professionalExperiences.where((e) => e.role != role).toList(),
+      );
+      return;
+    }
+    if (professionalExperiences.length >= ProfessionalExperienceCodec.maxEntries) {
+      return;
+    }
+    setProfessionalExperiences([
+      ...professionalExperiences,
+      ProfessionalExperienceEntry(
+        role: role,
+        years: DiscPrestaForm.experienceYearsSuggestions.first,
+      ),
+    ]);
+  }
+
+  void updateProfessionalExperienceYears(String role, String years) {
+    setProfessionalExperiences([
+      for (final entry in professionalExperiences)
+        if (entry.role == role) entry.copyWith(years: years) else entry,
+    ]);
+  }
+
+  void removeProfessionalExperience(String role) {
+    setProfessionalExperiences(
+      professionalExperiences.where((e) => e.role != role).toList(),
+    );
   }
 
   void setAvatarFromUpload({
@@ -535,13 +713,50 @@ class PrestataireHubFormController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addPendingGallery(StorageUploadFile file) {
-    pendingGallery.add(file);
+  List<RealisationGallerySlot> buildGallerySlots() =>
+      buildRealisationGallerySlots(
+        catalogSelection: catalogSelection,
+        serviceFields: services,
+      );
+
+  int get galleryMediaCount =>
+      galleryPhotos.length + pendingGallery.length;
+
+  void addPendingGallery(
+    StorageUploadFile file, {
+    required String categorieId,
+    required String specialtyLabel,
+  }) {
+    addPendingGalleryUpload(
+      PendingRealisationUpload(
+        file: file,
+        categorieId: categorieId,
+        specialtyLabel: specialtyLabel,
+      ),
+    );
+  }
+
+  void addPendingGalleryUpload(PendingRealisationUpload upload) {
+    pendingGallery.add(upload);
+    galleryError = null;
+    notifyListeners();
+  }
+
+  void addGalleryPhoto(PhotoRealisation photo) {
+    if (galleryPhotos.any((p) => p.id == photo.id)) return;
+    galleryPhotos = [...galleryPhotos, photo];
+    galleryError = null;
+    notifyListeners();
+  }
+
+  void removePendingGallery(PendingRealisationUpload upload) {
+    pendingGallery.remove(upload);
     galleryError = null;
     notifyListeners();
   }
 
   void removePendingGalleryAt(int index) {
+    if (index < 0 || index >= pendingGallery.length) return;
     pendingGallery.removeAt(index);
     galleryError = null;
     notifyListeners();

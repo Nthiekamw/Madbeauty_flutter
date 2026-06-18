@@ -7,16 +7,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
-import '../../../../core/errors/failure_mapper.dart';
 import '../../../../router/navigation_extensions.dart';
-import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../../shared/widgets/app/app_text_field.dart';
 import '../../providers/auth_notifier.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';
-import '../../../../shared/theme/app_colors.dart';
 import '../logic/register_wizard_draft.dart';
+import '../logic/register_wizard_submit_handler.dart';
+import '../storage/register_pending_password_store.dart';
 import '../storage/register_wizard_draft_store.dart';
 
 class RegisterEmailVerificationScreen extends ConsumerStatefulWidget {
@@ -34,12 +33,10 @@ class RegisterEmailVerificationScreen extends ConsumerStatefulWidget {
 
 class _RegisterEmailVerificationScreenState
     extends ConsumerState<RegisterEmailVerificationScreen> {
-  final _passwordController = TextEditingController();
+  final _submitHandler = RegisterWizardSubmitHandler();
   bool _redirecting = false;
   bool _resending = false;
   bool _checkingVerification = false;
-  bool _obscurePassword = true;
-  String? _passwordError;
 
   @override
   void initState() {
@@ -49,64 +46,17 @@ class _RegisterEmailVerificationScreenState
     });
   }
 
-  /// Après ouverture via le lien e-mail (`token_hash`), la session peut
-  /// s’ouvrir juste après le premier frame.
   Future<void> _continueIfSessionReady() async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (!mounted || _redirecting || _checkingVerification) return;
-    final user = ref.read(authServiceProvider).currentSession?.user;
-    if (user != null) {
+    if (_hasActiveSession) {
       await _continueAfterVerification();
     }
   }
 
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  String get _password => _passwordController.text.trim();
-
-  Future<User?> _resolveVerifiedUser() async {
-    final authService = ref.read(authServiceProvider);
-    final email = widget.email.trim();
-    final password = _password;
-
-    // Session déjà ouverte (lien cliqué sur ce téléphone, token_hash traité).
-    var user = authService.currentSession?.user ??
-        ref.read(authNotifierProvider).value;
-    if (user != null) return user;
-
-    if (email.isEmpty || password.isEmpty) return null;
-
-    try {
-      await authService.refreshSession();
-    } catch (_) {}
-
-    user = authService.currentSession?.user ??
-        ref.read(authNotifierProvider).value;
-    if (user != null) return user;
-
-    // Connexion : fonctionne si le lien a été ouvert sur un autre appareil.
-    try {
-      return await ref.read(authNotifierProvider.notifier).signInWithPassword(
-            email: email,
-            password: password,
-          );
-    } on AppFailure catch (e) {
-      if (_isEmailNotConfirmed(e)) return null;
-      rethrow;
-    }
-  }
-
-  bool _isEmailNotConfirmed(AppFailure failure) {
-    final cause = failure.cause;
-    if (cause is AuthException) {
-      return FailureMapper.fromAuthException(cause).message ==
-          AuthStrings.authEmailNotConfirmed;
-    }
-    return failure.message == AuthStrings.authEmailNotConfirmed;
+  bool get _hasActiveSession {
+    return ref.read(authServiceProvider).currentSession?.user != null ||
+        ref.read(authNotifierProvider).value != null;
   }
 
   Future<void> _persistDraft({
@@ -123,6 +73,10 @@ class _RegisterEmailVerificationScreenState
         phoneDialCode: draft.phoneDialCode,
         email: draft.email,
         adresse: draft.adresse,
+        voieType: draft.voieType,
+        voieNom: draft.voieNom,
+        numeroRue: draft.numeroRue,
+        pays: draft.pays,
         salon: draft.salon,
         nomAffiche: draft.nomAffiche,
         codePostal: draft.codePostal,
@@ -134,6 +88,7 @@ class _RegisterEmailVerificationScreenState
         phoneRequiredOnExtras: draft.phoneRequiredOnExtras,
         pendingEmailVerification: pendingEmailVerification,
         role: draft.role,
+        clientDefaultAvatarUrl: draft.clientDefaultAvatarUrl,
       ),
     );
   }
@@ -141,6 +96,7 @@ class _RegisterEmailVerificationScreenState
   Future<void> _goBack() async {
     if (_checkingVerification || _redirecting) return;
     await _persistDraft(pendingEmailVerification: false);
+    await RegisterPendingPasswordStore.instance.clear();
     if (!mounted) return;
     context.goRegister();
   }
@@ -148,20 +104,13 @@ class _RegisterEmailVerificationScreenState
   Future<void> _continueAfterVerification() async {
     if (!mounted || _redirecting || _checkingVerification) return;
 
-    if (_password.isEmpty) {
-      setState(
-        () => _passwordError = AuthStrings.registerEmailVerifyPasswordRequired,
-      );
-      return;
-    }
-
-    setState(() {
-      _checkingVerification = true;
-      _passwordError = null;
-    });
+    setState(() => _checkingVerification = true);
 
     try {
-      final user = await _resolveVerifiedUser();
+      final user = await _submitHandler.resolveVerifiedUser(
+        ref: ref,
+        email: widget.email,
+      );
       if (!mounted) return;
 
       if (user == null) {
@@ -170,20 +119,27 @@ class _RegisterEmailVerificationScreenState
         return;
       }
 
-      await _persistDraft(pendingEmailVerification: false);
-      if (!mounted) return;
-
       _redirecting = true;
-      setState(() => _checkingVerification = false);
-      context.goRegisterResume();
+      await _submitHandler.finalizePendingRegistrationFromDraft(
+        context: context,
+        mounted: () => mounted,
+        ref: ref,
+        session: user,
+      );
     } on AppFailure catch (e) {
       if (!mounted) return;
       AppSnackBar.error(context, e.message);
-      setState(() => _checkingVerification = false);
+      setState(() {
+        _checkingVerification = false;
+        _redirecting = false;
+      });
     } catch (_) {
       if (!mounted) return;
       AppSnackBar.error(context, CoreStrings.errorUnexpected);
-      setState(() => _checkingVerification = false);
+      setState(() {
+        _checkingVerification = false;
+        _redirecting = false;
+      });
     }
   }
 
@@ -217,7 +173,6 @@ class _RegisterEmailVerificationScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
 
     ref.listen(authNotifierProvider, (prev, next) {
       final user = switch (next) {
@@ -228,18 +183,18 @@ class _RegisterEmailVerificationScreenState
         AsyncData(:final value) => value != null,
         _ => false,
       };
-      if (user != null && !hadUser) {
+      if (user != null && !hadUser && !_redirecting) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _continueAfterVerification();
+          unawaited(_continueAfterVerification());
         });
       }
     });
 
     ref.listen(authStateStreamProvider, (prev, next) {
       final event = next.value?.event;
-      if (event != AuthChangeEvent.signedIn) return;
+      if (event != AuthChangeEvent.signedIn || _redirecting) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _continueAfterVerification();
+        unawaited(_continueAfterVerification());
       });
     });
 
@@ -257,89 +212,49 @@ class _RegisterEmailVerificationScreenState
         isBackEnabled: !_checkingVerification && !_redirecting,
         onBack: () => unawaited(_goBack()),
         child: AuthFormCard(
-        compact: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              AuthStrings.registerEmailVerifyBody,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              AuthStrings.registerEmailVerifyPasswordHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: AppFonts.body,
-                color: onSurfaceVariant,
-                height: 1.4,
+          compact: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                AuthStrings.registerEmailVerifyBody,
+                style: theme.textTheme.bodyMedium,
               ),
-            ),
-            const SizedBox(height: 16),
-            AppTextField(
-              dense: true,
-              controller: _passwordController,
-              onChanged: (_) => setState(() => _passwordError = null),
-              enabled: !_checkingVerification,
-              label: AuthStrings.loginFieldPassword,
-              errorText: _passwordError,
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              prefixIcon: Icon(
-                Icons.lock_outline,
-                color: onSurfaceVariant,
-              ),
-              suffixIcon: IconButton(
-                tooltip: _obscurePassword
-                    ? AuthStrings.loginShowPassword
-                    : AuthStrings.loginHidePassword,
-                onPressed: _checkingVerification
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _checkingVerification || _redirecting
                     ? null
-                    : () => setState(() => _obscurePassword = !_obscurePassword),
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: onSurfaceVariant,
+                    : () => unawaited(_continueAfterVerification()),
+                icon: _checkingVerification
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : const Icon(Icons.mark_email_read_outlined),
+                label: Text(
+                  _checkingVerification
+                      ? AuthStrings.registerEmailVerifyChecking
+                      : AuthStrings.registerEmailVerifyConfirmedCta,
                 ),
               ),
-              onSubmitted: (_) => _continueAfterVerification(),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _checkingVerification
-                  ? null
-                  : () => _continueAfterVerification(),
-              icon: _checkingVerification
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.white,
-                      ),
-                    )
-                  : const Icon(Icons.arrow_forward_rounded),
-              label: Text(
-                _checkingVerification
-                    ? 'Vérification...'
-                    : AuthStrings.registerEmailVerifyCta,
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _resending ? null : _resendEmail,
+                child: _resending
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(AuthStrings.registerEmailVerifyResendLabel),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: _resending ? null : _resendEmail,
-              child: _resending
-                  ? const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(AuthStrings.registerEmailVerifyResendLabel),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

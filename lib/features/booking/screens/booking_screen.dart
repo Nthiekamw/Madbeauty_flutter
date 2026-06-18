@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
+import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../router/navigation_extensions.dart';
 import '../models/booked_slots_query.dart';
 import '../models/booking_slot.dart';
@@ -15,6 +16,7 @@ import '../providers/booking_services_provider.dart';
 import '../providers/booked_slots_provider.dart';
 import '../widgets/shared/booking_message.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/flow/booking_step_one_content.dart';
 
@@ -76,6 +78,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     }
 
     final prestataireId = widget.prestataireId?.trim();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final selection = ref.watch(bookingSelectionProvider);
     final availabilityAsync = prestataireId == null || prestataireId.isEmpty
         ? null
@@ -85,6 +89,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         : ref.watch(isOwnPrestataireProfileProvider(prestataireId));
 
     return Scaffold(
+      backgroundColor: isDark
+          ? theme.colorScheme.surface
+          : AppColors.lightSurface,
       appBar: AppBar(title: const Text(DiscNav.bookingFlowTitle)),
       body: prestataireId == null || prestataireId.isEmpty
           ? const BookingMessage(
@@ -143,19 +150,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     };
 
                     final creneauxAsync = ref.watch(
-                      creneauxDisponiblesProvider((
+                      creneauxAffichageProvider((
                         prestataireId: prestataireId,
                         date: selection.selectedDay,
                       )),
                     );
-                    final daySlots = switch (creneauxAsync) {
-                      AsyncData(:final value) => value
-                          .map(
-                            (s) => BookingSlot(hour: s.hour, minute: s.minute),
-                          )
-                          .toList(),
-                      _ => const <BookingSlot>[],
-                    };
+                    final daySlots = _mergeDaySlots(
+                      creneauxAsync: creneauxAsync,
+                      bookedSlots: bookedSlots,
+                      day: selection.selectedDay,
+                    );
 
                     return BookingStepOneContent(
                       services: services,
@@ -229,6 +233,34 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       if (!mounted) return;
       ref.read(bookingSelectionProvider.notifier).selectService(service.id);
     });
+  }
+
+  List<BookingSlot> _mergeDaySlots({
+    required AsyncValue<List<TimeSlot>> creneauxAsync,
+    required Set<BookingSlot> bookedSlots,
+    required DateTime day,
+  }) {
+    final fromPlanning = switch (creneauxAsync) {
+      AsyncData(:final value) => value
+          .map((s) => BookingSlot(hour: s.hour, minute: s.minute))
+          .toList(),
+      _ => const <BookingSlot>[],
+    };
+    final now = DateTime.now();
+    final visibleBooked = bookedSlots.where((slot) {
+      final at = slot.onDay(day);
+      final dayOnly = DateTime(day.year, day.month, day.day);
+      final todayOnly = DateTime(now.year, now.month, now.day);
+      if (dayOnly.isBefore(todayOnly)) return false;
+      if (dayOnly.isAfter(todayOnly)) return true;
+      return !at.isBefore(now);
+    });
+    final merged = <BookingSlot>{...fromPlanning, ...visibleBooked}.toList()
+      ..sort((a, b) {
+        final h = a.hour.compareTo(b.hour);
+        return h != 0 ? h : a.minute.compareTo(b.minute);
+      });
+    return merged;
   }
 
   void _clearSlotIfBooked(Set<BookingSlot> bookedSlots) {

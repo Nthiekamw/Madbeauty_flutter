@@ -13,6 +13,7 @@ import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../core/models/user_role.dart';
 import '../logic/account_ban_handler.dart';
 import '../logic/auth_role_cache.dart';
+import '../register/storage/register_wizard_draft_store.dart';
 import '../providers/my_roles_provider.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 
@@ -109,6 +110,16 @@ abstract final class PostAuthNavigation {
     }
 
     if (roles.isEmpty) {
+      final registerDraft = RegisterWizardDraftStore.instance.read();
+      if (registerDraft?.role != null) {
+        final shell = registerDraft!.role!.value;
+        await LocalCacheService.instance.setSelectedRole(shell);
+        await LocalCacheService.instance.setSignupShellRole(shell);
+        if (shell == 'prestataire') {
+          return PrestataireNavigation.prestataireSpacePath(container);
+        }
+        return AppRoutes.clientHome;
+      }
       final inferredRole = await _inferRoleFromProfilesWithContainer(container);
       if (inferredRole != null) {
         await LocalCacheService.instance.setSelectedRole(inferredRole);

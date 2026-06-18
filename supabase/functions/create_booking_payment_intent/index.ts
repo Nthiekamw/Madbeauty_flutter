@@ -1,7 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   type BookingPaymentMode,
-  computeBookingPricing,
+  computeBookingPricingFromSettings,
   countClientBookingsForPlatformFee,
 } from "../_shared/booking_pricing.ts";
 import { fetchActiveReferralDiscount } from "../_shared/referral_discount.ts";
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     const { data: prestataire } = await admin
       .from("prestataire_profiles")
       .select(
-        "stripe_connect_account_id, stripe_connect_charges_enabled, nom_salon",
+        "stripe_connect_account_id, stripe_connect_charges_enabled, deposit_option_enabled, nom_salon",
       )
       .eq("id", prestataireId)
       .maybeSingle();
@@ -97,15 +97,20 @@ Deno.serve(async (req) => {
       | string
       | undefined;
     const chargesEnabled = prestataire?.stripe_connect_charges_enabled === true;
-    const prestataireAcceptsConnect = Boolean(
+    const hasConnectAccount = Boolean(
       connectAccountId?.startsWith("acct_") && chargesEnabled,
     );
 
     let connectReady = false;
-    if (prestataireAcceptsConnect && connectAccountId) {
+    if (hasConnectAccount && connectAccountId) {
       const connectAccount = await stripe.accounts.retrieve(connectAccountId);
       connectReady = accountCanAcceptPayments(connectAccount);
     }
+
+    const depositOptionEnabled =
+      prestataire?.deposit_option_enabled === true;
+    const prestataireDepositAvailable =
+      depositOptionEnabled && connectReady;
 
     const priorBookingCount = await countClientBookingsForPlatformFee(
       admin,
@@ -114,11 +119,11 @@ Deno.serve(async (req) => {
 
     let pricing;
     try {
-      pricing = computeBookingPricing({
+      pricing = await computeBookingPricingFromSettings(admin, {
         servicePriceCents: originalServicePriceCents,
         paymentMode,
         priorBookingCount,
-        prestataireAcceptsConnect: connectReady,
+        prestataireAcceptsConnect: prestataireDepositAvailable,
         referralDiscountPercent: referralDiscount?.percent,
       });
     } catch (e) {

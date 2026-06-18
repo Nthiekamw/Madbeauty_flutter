@@ -32,4 +32,13 @@ abstract final class DiscPrestaAgenda {
     return '$count prestations confirmées sont passées : marque-les comme terminées.';
   }
   static const realtimeHint = 'Mise à jour automatique';
+
+  static const reminderDayBeforeTitle = 'RDV demain';
+  static String reminderDayBeforeBody(String clientAndService, String time) =>
+      '$clientAndService demain à $time';
+  static const reminderTwoHoursTitle = 'RDV dans 2 h';
+  static const reminderThirtyMinTitle = 'RDV dans 30 min';
+  static const reminderFifteenMinTitle = 'RDV dans 15 min';
+  static String reminderSoonBody(String clientAndService, String time) =>
+      '$clientAndService à $time';
 }

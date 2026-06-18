@@ -178,7 +178,7 @@ void main() {
         );
         expect(nearby.map((p) => p.id), contains(prestataire.id));
 
-        final bestRated = await prestataireService.getBestRated(fetchCap: 1000);
+        final bestRated = await prestataireService.getBestRated(limit: 1000);
         expect(bestRated, isNotEmpty);
 
         final specialtyNames = await prestataireService.getSpecialtyNames(

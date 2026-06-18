@@ -37,108 +37,66 @@ class ConversationListTile extends StatelessWidget {
               ? '${item.peerPrenom!.trim()} ${item.peerNom!.trim()}'
               : item.peerDisplayName),
     );
-    final hasSplitPeerName = !item.showSalonName &&
-        item.peerPrenom?.trim().isNotEmpty == true &&
-        item.peerNom?.trim().isNotEmpty == true;
+    final displayName =
+        peerName.isEmpty ? item.peerDisplayName : peerName;
     final preview = item.lastMessagePreview?.trim();
-    final subtitle = preview == null || preview.isEmpty
+    final messageLine = preview == null || preview.isEmpty
         ? _reservationSubtitle()
         : (item.isLastMessageMine ? '${DiscChat.you}: $preview' : preview);
+    final metaLine = '$presenceLabel · $messageLine';
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: hasUnread
-            ? primary.withValues(alpha: 0.06)
-            : theme.colorScheme.surface,
-        border: Border.all(
-          color: hasUnread
-              ? primary.withValues(alpha: 0.22)
-              : theme.colorScheme.outline.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: hasUnread
-                ? primary.withValues(alpha: 0.08)
-                : AppColors.scrimLight05,
-            blurRadius: hasUnread ? 14 : 10,
-            offset: const Offset(0, 3),
+    return Material(
+      color: AppColors.cardSurfaceFor(theme.brightness),
+      elevation: 0,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: hasUnread
+                  ? primary.withValues(alpha: 0.22)
+                  : theme.colorScheme.outline.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.28 : 0.1,
+                    ),
+            ),
           ),
-        ],
-      ),
-      child: Material(
-        color: AppColors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+            padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _AvatarWithStatus(
                   imageUrl: item.peerAvatarUrl,
-                  displayName:
-                      peerName.isEmpty ? item.peerDisplayName : peerName,
+                  displayName: displayName,
                   hasUnread: hasUnread,
                   unreadCount: item.unreadCount,
                   isOnline: isPeerOnline,
                   primary: primary,
                 ),
-                const SizedBox(width: 13),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: hasSplitPeerName
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.peerPrenom!.trim(),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                          fontFamily: AppFonts.display,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
-                                      Text(
-                                        item.peerNom!.trim(),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                          fontFamily: AppFonts.display,
-                                          fontWeight: FontWeight.w600,
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Text(
-                                    peerName.isEmpty
-                                        ? item.peerDisplayName
-                                        : peerName,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        theme.textTheme.titleSmall?.copyWith(
-                                      fontFamily: AppFonts.display,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.2,
-                                      height: 1.15,
-                                    ),
-                                  ),
+                            child: Text(
+                              displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
+                                height: 1.1,
+                              ),
+                            ),
                           ),
                           if (item.lastMessageAt != null) ...[
                             const SizedBox(width: 8),
@@ -156,39 +114,23 @@ class ConversationListTile extends StatelessWidget {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        presenceLabel,
+                        metaLine,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontFamily: AppFonts.body,
-                          fontWeight:
-                              isPeerOnline ? FontWeight.w700 : FontWeight.w500,
-                          color: isPeerOnline
-                              ? const Color(0xFF16A34A)
-                              : theme.colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.85),
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        subtitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: hasUnread
                               ? theme.colorScheme.onSurface
                               : theme.colorScheme.onSurfaceVariant,
                           fontWeight:
                               hasUnread ? FontWeight.w600 : FontWeight.w400,
-                          height: 1.3,
-                          fontSize: 14,
+                          height: 1.2,
+                          fontSize: 13,
                         ),
                       ),
                       if (item.hasConversationActivity) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         ConversationReadStatusBadge(
                           unreadCount: item.unreadCount,
                           showReadWhenZero: !item.isOutgoingUnread,

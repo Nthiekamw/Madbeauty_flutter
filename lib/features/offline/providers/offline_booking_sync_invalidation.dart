@@ -13,5 +13,5 @@ void invalidateBookingCachesAfterOfflineSync(Ref ref) {
   ref.invalidate(prestataireAgendaProvider);
   ref.invalidate(prestataireDashboardProvider);
   ref.invalidate(bookingsPrestataireProvider);
-  unawaited(syncClientBookingRemindersFromRef(ref));
+  unawaited(syncAllBookingRemindersFromRef(ref));
 }

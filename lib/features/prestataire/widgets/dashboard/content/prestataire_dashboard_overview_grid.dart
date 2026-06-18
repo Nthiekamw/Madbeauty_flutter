@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
-import '../../../../../shared/theme/discovery_styles.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../../shared/theme/app_colors.dart';
@@ -17,7 +17,6 @@ class PrestataireDashboardOverviewGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final overviewAsync = ref.watch(prestataireDashboardOverviewProvider);
 
     return Padding(
@@ -28,32 +27,14 @@ class PrestataireDashboardOverviewGrid extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  DiscPrestaDash.overviewTitle,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: () =>
-                    showPrestataireDashboardLayoutSheet(context, ref),
-                icon: const Icon(Icons.tune_rounded, size: 18),
-                label: Text(DiscPrestaDash.layoutOrganizeAction),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-            ],
+          DiscoverySectionHeader(
+            title: DiscPrestaDash.overviewTitle,
+            icon: Icons.insights_rounded,
+            compact: true,
+            actionLabel: DiscPrestaDash.layoutOrganizeAction,
+            onAction: () => showPrestataireDashboardLayoutSheet(context, ref),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           overviewAsync.when(
             loading: () => _OverviewGridSkeleton(),
             error: (_, __) => DiscoverySectionError(
@@ -75,7 +56,7 @@ class _OverviewGridSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final track = DiscoveryShimmer.colors(theme).track;
-    final radius = DiscoveryStyles.cardBorderRadius;
+    final radius = BorderRadius.circular(14);
 
     return DiscoveryShimmer.wrap(
       context: context,
@@ -199,18 +180,13 @@ class _OverviewCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.cardSurfaceFor(theme.brightness),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+          color: theme.colorScheme.outline.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.28 : 0.1,
           ),
-        ],
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -222,16 +198,16 @@ class _OverviewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    color: theme.colorScheme.onPrimary,
-                    size: 20,
+                    color: theme.colorScheme.primary,
+                    size: 17,
                   ),
                 ),
                 const SizedBox(width: 10),

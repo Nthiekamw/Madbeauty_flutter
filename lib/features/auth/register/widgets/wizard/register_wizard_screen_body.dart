@@ -13,6 +13,7 @@ class RegisterWizardScreenBody extends StatelessWidget {
     required this.theme,
     required this.onSurfaceVariant,
     required this.onGoogleSignIn,
+    required this.onPickClientAvatar,
   });
 
   final RegisterWizardFormController form;
@@ -20,6 +21,7 @@ class RegisterWizardScreenBody extends StatelessWidget {
   final ThemeData theme;
   final Color onSurfaceVariant;
   final VoidCallback? onGoogleSignIn;
+  final Future<void> Function() onPickClientAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,7 @@ class RegisterWizardScreenBody extends StatelessWidget {
                   form: form,
                   formEnabled: formEnabled,
                   onSurfaceVariant: onSurfaceVariant,
+                  onPickClientAvatar: onPickClientAvatar,
                 ),
             },
           ),

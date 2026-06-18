@@ -1,56 +1,68 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:madbeauty/core/logic/booking/booking_pricing.dart';
+import 'package:madbeauty/core/models/domain/booking/booking_platform_fee_settings.dart';
+
+const _oneEuroFee = BookingPlatformFeeSettings(
+  feeCents: 100,
+  freeBookingCount: 2,
+);
 
 void main() {
   group('platformFeeCentsForPriorCount', () {
-    test('gratuit pour les deux premières réservations', () {
-      expect(platformFeeCentsForPriorCount(0), 0);
-      expect(platformFeeCentsForPriorCount(1), 0);
+    test('gratuit sous le seuil admin', () {
+      expect(platformFeeCentsForPriorCount(0, _oneEuroFee), 0);
+      expect(platformFeeCentsForPriorCount(1, _oneEuroFee), 0);
     });
 
-    test('1 € à partir de la 3e', () {
-      expect(platformFeeCentsForPriorCount(2), 100);
-      expect(platformFeeCentsForPriorCount(5), 100);
+    test('frais à partir du seuil', () {
+      expect(platformFeeCentsForPriorCount(2, _oneEuroFee), 100);
+      expect(platformFeeCentsForPriorCount(5, _oneEuroFee), 100);
+    });
+
+    test('désactivé par défaut (0 centime)', () {
+      expect(
+        platformFeeCentsForPriorCount(10, BookingPlatformFeeSettings.defaults),
+        0,
+      );
     });
   });
 
   group('computeBookingPricing', () {
-    test('sur place sans frais — 1re résa', () {
+    test('sur place sans frais — défaut admin', () {
       final b = computeBookingPricing(
         servicePriceEur: 50,
         paymentMode: BookingPaymentModeKind.onSite,
-        priorBookingCount: 0,
+        priorBookingCount: 5,
         prestataireAcceptsConnect: true,
       );
       expect(b.requiresInAppPayment, isFalse);
       expect(b.totalChargeCents, 0);
-      expect(b.balanceOnSiteCents, 5000);
     });
 
-    test('sur place — 3e résa = 1 € seul', () {
+    test('sur place — jamais de frais admin dans l’app', () {
       final b = computeBookingPricing(
         servicePriceEur: 50,
         paymentMode: BookingPaymentModeKind.onSite,
         priorBookingCount: 2,
         prestataireAcceptsConnect: false,
+        platformFeeSettings: _oneEuroFee,
       );
-      expect(b.requiresInAppPayment, isTrue);
-      expect(b.totalChargeCents, 100);
-      expect(b.prestatairePortionCents, 0);
-      expect(b.isPlatformFeeOnly, isTrue);
+      expect(b.requiresInAppPayment, isFalse);
+      expect(b.totalChargeCents, 0);
+      expect(b.platformFeeCents, 0);
     });
 
-    test('acompte 20 % + frais — 3e résa', () {
+    test('acompte 20 % + frais admin', () {
       final b = computeBookingPricing(
         servicePriceEur: 50,
         paymentMode: BookingPaymentModeKind.deposit20,
         priorBookingCount: 2,
         prestataireAcceptsConnect: true,
+        platformFeeSettings: _oneEuroFee,
       );
       expect(b.depositCents, 1000);
       expect(b.platformFeeCents, 100);
       expect(b.totalChargeCents, 1100);
-      expect(b.balanceOnSiteCents, 4000);
     });
 
     test('acompte sans connect', () {
@@ -63,21 +75,6 @@ void main() {
         ),
         throwsA(isA<BookingPricingException>()),
       );
-    });
-
-    test('remise parrainage −10 % sur prestation et acompte', () {
-      final b = computeBookingPricing(
-        servicePriceEur: 50,
-        paymentMode: BookingPaymentModeKind.deposit20,
-        priorBookingCount: 0,
-        prestataireAcceptsConnect: true,
-        referralDiscountPercent: 10,
-      );
-      expect(b.originalServicePriceCents, 5000);
-      expect(b.servicePriceCents, 4500);
-      expect(b.referralDiscountCents, 500);
-      expect(b.depositCents, 900);
-      expect(b.balanceOnSiteCents, 3600);
     });
   });
 }

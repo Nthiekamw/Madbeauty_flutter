@@ -10,6 +10,7 @@ import '../../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../../shared/utils/app_url_launcher.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../shared/widgets/stripe/saved_stripe_cards_panel.dart';
+import '../../../../shared/widgets/stripe/stripe_test_card_hint.dart';
 import '../../providers/profile/prestataire_profile_form_provider.dart';
 
 /// Carte d’abonnement prestataire (liste + Customer Sheet dans l’app).
@@ -108,6 +109,8 @@ class _PrestataireSubscriptionBillingCardsSectionState
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const StripeTestCardHint(),
+          const SizedBox(height: 12),
           Text(
             DiscPaymentMethods.webFallbackHint,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -127,15 +130,22 @@ class _PrestataireSubscriptionBillingCardsSectionState
       );
     }
 
-    return SavedStripeCardsPanel(
-      title: DiscPaymentMethods.subscriptionTitle,
-      hint: DiscPaymentMethods.subscriptionHint,
-      manageLabel: DiscPaymentMethods.subscriptionManage,
-      methodsAsync: ref.watch(prestataireBillingPaymentMethodsProvider),
-      busy: _sheetBusy || _portalBusy,
-      onManage: _openCustomerSheet,
-      onPortalFallback: _openPortalFallback,
-      onRetry: () => ref.invalidate(prestataireBillingPaymentMethodsProvider),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const StripeTestCardHint(),
+        const SizedBox(height: 12),
+        SavedStripeCardsPanel(
+          title: DiscPaymentMethods.subscriptionTitle,
+          hint: DiscPaymentMethods.subscriptionHint,
+          manageLabel: DiscPaymentMethods.subscriptionManage,
+          methodsAsync: ref.watch(prestataireBillingPaymentMethodsProvider),
+          busy: _sheetBusy || _portalBusy,
+          onManage: _openCustomerSheet,
+          onPortalFallback: _openPortalFallback,
+          onRetry: () => ref.invalidate(prestataireBillingPaymentMethodsProvider),
+        ),
+      ],
     );
   }
 }

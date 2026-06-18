@@ -30,7 +30,7 @@ class ServiceChoiceCard extends StatelessWidget {
         color: selected
             ? primary.withValues(alpha: isDark ? 0.18 : 0.08)
             : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: selected
               ? primary.withValues(alpha: isDark ? 0.5 : 0.35)
@@ -49,10 +49,10 @@ class ServiceChoiceCard extends StatelessWidget {
       ),
       child: Material(
         color: AppColors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

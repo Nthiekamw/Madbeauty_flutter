@@ -33,6 +33,17 @@ final creneauxDisponiblesProvider = FutureProvider.autoDispose
       );
     });
 
+/// Créneaux affichés dans le flux réservation (inclut les complets, hors passés).
+final creneauxAffichageProvider = FutureProvider.autoDispose
+    .family<List<TimeSlot>, CreneauxDisponiblesQuery>((ref, query) async {
+      final service = ref.watch(disponibiliteServiceProvider);
+      if (service == null) return const [];
+      return service.getCreneauxAffichage(
+        query.prestataireId,
+        query.date,
+      );
+    });
+
 /// Règles calendrier client dérivées des horaires Supabase.
 final bookingAvailabilityForPrestaProvider = FutureProvider.autoDispose
     .family<BookingAvailabilityRules, String>((ref, prestataireId) async {
@@ -61,5 +72,6 @@ void invalidateDisponibiliteProviders(WidgetRef ref) {
   ref.invalidate(prestataireIndisponibilitesProvider);
   ref.invalidate(bookingAvailabilityForPrestaProvider);
   ref.invalidate(creneauxDisponiblesProvider);
+  ref.invalidate(creneauxAffichageProvider);
 }
 

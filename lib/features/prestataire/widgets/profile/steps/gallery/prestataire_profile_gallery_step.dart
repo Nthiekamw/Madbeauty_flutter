@@ -2,15 +2,17 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../../core/logic/media/realisation_image_moderator.dart';
+import '../../../../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../../../core/models/domain/catalog/realisation_media_type.dart';
-import '../../../../../../services/supabase/storage/storage_service.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/widgets/prestataire/realisation_media_cover.dart';
+import '../../../../logic/realisation_gallery_grouping.dart';
+import '../../../../models/pending_realisation_upload.dart';
+import '../../../public/detail/sections/prestataire_detail_service_group_header.dart';
 import '../../hub/prestataire_hub_layout.dart';
 
 import 'realisation_gallery_policy_banner.dart';
@@ -19,12 +21,13 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
   const PrestataireProfileGalleryStep({
     super.key,
     required this.photos,
-    required this.pendingFiles,
+    required this.pendingUploads,
+    required this.slots,
     required this.errorText,
     required this.uploading,
     required this.uploadProgress,
-    required this.onPick,
-    required this.onPickVideo,
+    required this.onPickForSlot,
+    required this.onPickVideoForSlot,
     required this.onRemoveExisting,
     required this.onRemovePending,
     this.maxPhotos = 10,
@@ -32,43 +35,44 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
   });
 
   final List<PhotoRealisation> photos;
-  final List<StorageUploadFile> pendingFiles;
+  final List<PendingRealisationUpload> pendingUploads;
+  final List<RealisationGallerySlot> slots;
   final String? errorText;
   final bool uploading;
   final double? uploadProgress;
-  final VoidCallback onPick;
-  final VoidCallback onPickVideo;
+  final ValueChanged<RealisationGallerySlot> onPickForSlot;
+  final ValueChanged<RealisationGallerySlot> onPickVideoForSlot;
   final ValueChanged<PhotoRealisation> onRemoveExisting;
-  final ValueChanged<int> onRemovePending;
+  final ValueChanged<PendingRealisationUpload> onRemovePending;
   final int maxPhotos;
   final bool embeddedInHub;
+
+  int get _totalMediaCount => photos.length + pendingUploads.length;
+
+  bool get _canAddMore => _totalMediaCount < maxPhotos && !uploading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-    final total = photos.length + pendingFiles.length;
-    final canAdd = total < maxPhotos && !uploading;
+    final total = _totalMediaCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const RealisationGalleryPolicyBanner(),
         const SizedBox(height: 12),
-        if (RealisationImageModerator.supportsOnDeviceScan) ...[
-          Text(
-            DiscPrestaForm.galleryPolicyScanHint,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.35,
-            ),
+        Text(
+          DiscPrestaForm.galleryPolicyScanHint,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.35,
           ),
-          const SizedBox(height: 10),
-        ],
+        ),
+        const SizedBox(height: 10),
         if (embeddedInHub)
           PrestataireHubMetricBanner(
             icon: Icons.perm_media_outlined,
-            label: 'Médias ajoutés',
+            label: DiscPrestaForm.hubGalleryMediaAdded,
             value: '$total / $maxPhotos',
             progress: maxPhotos > 0 ? total / maxPhotos : 0,
           )
@@ -81,7 +85,7 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
-                    color: primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
@@ -104,68 +108,19 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
                 ),
             ],
           ),
-        SizedBox(height: embeddedInHub ? 12 : 12),
-        if (total == 0)
-          _GalleryEmptyState(
-            onPickPhotos: canAdd ? onPick : null,
-            onPickVideo: canAdd ? onPickVideo : null,
-          )
-        else ...[
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: total + (canAdd ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (canAdd && index == total) {
-                return _AddMediaTile(onPickPhotos: onPick, onPickVideo: onPickVideo);
-              }
-              final isPending = index >= photos.length;
-              if (isPending) {
-                final pendingIndex = index - photos.length;
-                final file = pendingFiles[pendingIndex];
-                return _MediaTile(
-                  mediaType: file.mediaType,
-                  memoryBytes: file.isVideo ? null : file.bytes,
-                  localVideoPath: file.isVideo ? file.localPath : null,
-                  onRemove: () => onRemovePending(pendingIndex),
-                );
-              }
-              final photo = photos[index];
-              return _MediaTile(
-                mediaType: photo.mediaType,
-                imageUrl: photo.url,
-                onRemove: () => onRemoveExisting(photo),
-              );
-            },
+        const SizedBox(height: 12),
+        Text(
+          DiscPrestaForm.hubGalleryBySpecialtyHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.4,
           ),
-          if (canAdd) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onPick,
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: const Text(DiscPrestaForm.hubGalleryPick),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onPickVideo,
-                    icon: const Icon(Icons.videocam_outlined),
-                    label: const Text(DiscPrestaForm.hubGalleryPickVideo),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
+        ),
+        const SizedBox(height: 16),
+        if (slots.isEmpty)
+          _NeedsServicesState()
+        else
+          ..._buildServiceSections(context),
         if (uploading && uploadProgress != null) ...[
           const SizedBox(height: 12),
           LinearProgressIndicator(value: uploadProgress),
@@ -189,17 +144,61 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
       ],
     );
   }
+
+  List<Widget> _buildServiceSections(BuildContext context) {
+    final sections = <Widget>[];
+    var sectionIndex = 0;
+
+    for (final main in PrestaMainService.values) {
+      final mainSlots = slots.where((s) => s.main == main).toList();
+      if (mainSlots.isEmpty) continue;
+
+      sections.add(
+        PrestataireDetailServiceGroupHeader(
+          title: PrestataireServiceCatalog.label(main),
+          main: main,
+          compact: sectionIndex == 0,
+        ),
+      );
+      sectionIndex++;
+
+      for (final slot in mainSlots) {
+        sections.add(
+          _SpecialtyGallerySection(
+            slot: slot,
+            photos: photos
+                .where(
+                  (p) => realisationPhotoMatchesSlot(
+                    p,
+                    slot,
+                    allSlots: slots,
+                  ),
+                )
+                .toList(),
+            pendingUploads: pendingUploads
+                .where(
+                  (u) => pendingUploadMatchesSlot(
+                    u,
+                    slot,
+                    allSlots: slots,
+                  ),
+                )
+                .toList(),
+            canAdd: _canAddMore,
+            onPickPhotos: () => onPickForSlot(slot),
+            onPickVideo: () => onPickVideoForSlot(slot),
+            onRemoveExisting: onRemoveExisting,
+            onRemovePending: onRemovePending,
+          ),
+        );
+      }
+    }
+
+    return sections;
+  }
 }
 
-class _GalleryEmptyState extends StatelessWidget {
-  const _GalleryEmptyState({
-    required this.onPickPhotos,
-    required this.onPickVideo,
-  });
-
-  final VoidCallback? onPickPhotos;
-  final VoidCallback? onPickVideo;
-
+class _NeedsServicesState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,47 +214,111 @@ class _GalleryEmptyState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.perm_media_outlined,
+            Icons.category_outlined,
             size: 48,
             color: primary.withValues(alpha: 0.85),
           ),
           const SizedBox(height: 12),
           Text(
-            DiscPrestaForm.hubGalleryEmpty,
+            DiscPrestaForm.galleryNeedsServices,
             textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpecialtyGallerySection extends StatelessWidget {
+  const _SpecialtyGallerySection({
+    required this.slot,
+    required this.photos,
+    required this.pendingUploads,
+    required this.canAdd,
+    required this.onPickPhotos,
+    required this.onPickVideo,
+    required this.onRemoveExisting,
+    required this.onRemovePending,
+  });
+
+  final RealisationGallerySlot slot;
+  final List<PhotoRealisation> photos;
+  final List<PendingRealisationUpload> pendingUploads;
+  final bool canAdd;
+  final VoidCallback onPickPhotos;
+  final VoidCallback onPickVideo;
+  final ValueChanged<PhotoRealisation> onRemoveExisting;
+  final ValueChanged<PendingRealisationUpload> onRemovePending;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final total = photos.length + pendingUploads.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            slot.specialtyLabel,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            DiscPrestaForm.hubGalleryHint,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.4,
+          if (total == 0 && !canAdd)
+            Text(
+              DiscPrestaForm.hubGalleryEmpty,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            SizedBox(
+              height: 108,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: total + (canAdd ? 1 : 0),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  if (canAdd && index == total) {
+                    return _AddMediaTile(
+                      onPickPhotos: onPickPhotos,
+                      onPickVideo: onPickVideo,
+                    );
+                  }
+                  final isPending = index >= photos.length;
+                  if (isPending) {
+                    final upload = pendingUploads[index - photos.length];
+                    return SizedBox(
+                      width: 108,
+                      child: _MediaTile(
+                        mediaType: upload.file.mediaType,
+                        memoryBytes:
+                            upload.file.isVideo ? null : upload.file.bytes,
+                        localVideoPath:
+                            upload.file.isVideo ? upload.file.localPath : null,
+                        onRemove: () => onRemovePending(upload),
+                      ),
+                    );
+                  }
+                  final photo = photos[index];
+                  return SizedBox(
+                    width: 108,
+                    child: _MediaTile(
+                      mediaType: photo.mediaType,
+                      imageUrl: photo.url,
+                      onRemove: () => onRemoveExisting(photo),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onPickPhotos,
-                  icon: const Icon(Icons.add_a_photo_outlined),
-                  label: const Text(DiscPrestaForm.hubGalleryPick),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onPickVideo,
-                  icon: const Icon(Icons.videocam_outlined),
-                  label: const Text(DiscPrestaForm.hubGalleryPickVideo),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -276,29 +339,32 @@ class _AddMediaTile extends StatelessWidget {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
-    return Material(
-      color: primary.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: DiscoveryStyles.chipBorderRadius,
-        side: BorderSide(color: primary.withValues(alpha: 0.35), width: 1.2),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPickPhotos,
-        onLongPress: onPickVideo,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, color: primary, size: 28),
-            const SizedBox(height: 4),
-            Text(
-              DiscPrestaForm.hubGalleryAddTile,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: primary,
-                fontWeight: FontWeight.w700,
+    return SizedBox(
+      width: 108,
+      child: Material(
+        color: primary.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: DiscoveryStyles.chipBorderRadius,
+          side: BorderSide(color: primary.withValues(alpha: 0.35), width: 1.2),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPickPhotos,
+          onLongPress: onPickVideo,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_rounded, color: primary, size: 28),
+              const SizedBox(height: 4),
+              Text(
+                DiscPrestaForm.hubGalleryAddTile,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

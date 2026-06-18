@@ -1,3 +1,5 @@
+import '../../../constants/app_strings.dart';
+
 class AdminContentReport {
   const AdminContentReport({
     required this.id,
@@ -43,6 +45,7 @@ class AdminContentReport {
     'prestataire_profile' => 'Profil prestataire',
     'conversation' => 'Conversation',
     'message' => 'Message',
+    'realisation_photo' => DiscProfile.adminRealisationPhotosTargetType,
     _ => targetType,
   };
 

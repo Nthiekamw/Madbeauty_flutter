@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../layout/discovery_responsive.dart';
-import '../../../theme/discovery_styles.dart';
 import '../../../../shared/theme/app_colors.dart';
 
 /// Carte surface semi-opaque sur fond brand.
@@ -22,12 +21,12 @@ class DiscoverySurfaceCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final surfaceColor = isDark
-        ? theme.colorScheme.surfaceContainerHigh
-        : theme.colorScheme.surface.withValues(alpha: 0.98);
-    final borderRadius = DiscoveryStyles.cardBorderRadius;
+    final surfaceColor = AppColors.cardSurfaceFor(theme.brightness);
+    const borderRadius = BorderRadius.all(Radius.circular(14));
     final borderSide = BorderSide(
-      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+      color: theme.colorScheme.outline.withValues(
+        alpha: isDark ? 0.28 : 0.1,
+      ),
     );
 
     final card = Material(
@@ -54,9 +53,9 @@ class DiscoverySurfaceCard extends StatelessWidget {
               borderRadius: borderRadius,
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),

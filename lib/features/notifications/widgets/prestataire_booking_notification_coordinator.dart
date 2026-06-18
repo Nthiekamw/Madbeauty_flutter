@@ -12,6 +12,8 @@ import '../../../features/prestataire/providers/profile/current_prestataire_prov
 import '../../../features/prestataire/providers/booking/prestataire_bookings_invalidate.dart';
 import '../../../services/notifications/booking_push_notifications.dart';
 import '../../../services/notifications/in_app_notification.dart';
+import '../../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
+import '../../../services/notifications/booking_reminders_sync.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/supabase/booking/booking_service_core_providers.dart';
 import '../../../services/supabase/supabase_service.dart';
@@ -89,6 +91,7 @@ class _PrestataireBookingNotificationCoordinatorState
 
     invalidatePrestataireBookings(ref);
     ref.invalidate(inAppNotificationsSyncProvider);
+    unawaited(_syncPrestataireReminders());
 
     final booking = ref.read(bookingServiceProvider);
     if (booking == null) return;
@@ -121,6 +124,12 @@ class _PrestataireBookingNotificationCoordinatorState
     } catch (_) {
       /* Réseau ou profil — la sync inbox rattrapera */
     }
+  }
+
+  Future<void> _syncPrestataireReminders() async {
+    await syncPrestataireBookingRemindersWithLoader(
+      () => ref.read(prestataireAgendaProvider.future),
+    );
   }
 
   @override

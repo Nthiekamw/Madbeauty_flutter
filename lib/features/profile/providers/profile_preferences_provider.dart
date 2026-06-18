@@ -39,6 +39,24 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
     );
   }
 
+  /// Aligne le toggle avec l’autorisation système (ex. après création de compte).
+  Future<void> refreshFromSystem() async {
+    final permissions = ref.read(appPermissionsServiceProvider);
+    final osGranted = await permissions.areNotificationsGranted();
+    var enabled = LocalCacheService.instance.profilePushNotificationsEnabled;
+
+    if (!osGranted && enabled) {
+      enabled = false;
+      await LocalCacheService.instance.setProfilePushNotificationsEnabled(
+        false,
+      );
+    }
+
+    if (enabled != state.pushNotificationsEnabled) {
+      state = state.copyWith(pushNotificationsEnabled: enabled);
+    }
+  }
+
   Future<bool> setPushNotifications(bool enabled) async {
     final permissions = ref.read(appPermissionsServiceProvider);
 

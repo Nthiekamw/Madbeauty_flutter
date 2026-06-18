@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/logic/address/postal_address.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../logic/register_wizard_constants.dart';
 import '../logic/register_wizard_draft.dart';
+import '../logic/register_wizard_role_intent.dart';
 import '../logic/register_wizard_validation.dart';
 import '../storage/register_wizard_draft_store.dart';
 
@@ -27,6 +30,7 @@ class RegisterWizardFormController extends ChangeNotifier {
   int step = 0;
   Timer? saveDebounce;
   bool persistDraftOnDispose = true;
+  bool _disposed = false;
 
   final prenom = TextEditingController();
   final nom = TextEditingController();
@@ -35,6 +39,9 @@ class RegisterWizardFormController extends ChangeNotifier {
   final password = TextEditingController();
   final confirm = TextEditingController();
   final adresse = TextEditingController();
+  final voieNom = TextEditingController();
+  final numeroRue = TextEditingController();
+  final pays = TextEditingController(text: PostalAddress.defaultCountry);
   final salon = TextEditingController();
   final nomAffiche = TextEditingController();
   final codePostal = TextEditingController();
@@ -44,6 +51,7 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   UserRole? roleChoice;
   String phoneDialCode = '+33';
+  String voieType = PostalVoieTypes.defaultType;
   String? error;
   String? prenomError;
   String? nomError;
@@ -63,7 +71,31 @@ class RegisterWizardFormController extends ChangeNotifier {
   bool obscureConfirmPassword = true;
   bool pendingEmailVerification = false;
 
+  Uint8List? clientAvatarBytes;
+  String? clientAvatarFileName;
+  String? clientAvatarMimeType;
+  String? clientDefaultAvatarUrl;
+
   bool get isPresta => roleChoice == UserRole.prestataire;
+
+  PostalAddress get postalAddress => PostalAddress(
+        voieType: voieType,
+        voieNom: voieNom.text,
+        numero: numeroRue.text,
+        codePostal: codePostal.text,
+        ville: ville.text,
+        pays: pays.text,
+      );
+
+  void applyPostalAddress(PostalAddress address) {
+    voieType = address.voieType;
+    voieNom.text = address.voieNom;
+    numeroRue.text = address.numero;
+    codePostal.text = address.codePostal;
+    ville.text = address.ville;
+    pays.text = address.pays;
+    adresse.text = address.formattedLine;
+  }
 
   String get phoneE164 => PhoneNumberUtils.toE164(
         dialCode: phoneDialCode,
@@ -77,6 +109,9 @@ class RegisterWizardFormController extends ChangeNotifier {
     phone,
     email,
     adresse,
+    voieNom,
+    numeroRue,
+    pays,
     salon,
     ville,
     bio,
@@ -103,11 +138,19 @@ class RegisterWizardFormController extends ChangeNotifier {
     phone.text = draft.phone;
     email.text = draft.email;
     adresse.text = draft.adresse;
+    voieType = draft.voieType;
+    voieNom.text = draft.voieNom;
+    numeroRue.text = draft.numeroRue;
+    pays.text =
+        draft.pays.isEmpty ? PostalAddress.defaultCountry : draft.pays;
+    codePostal.text = draft.codePostal;
+    ville.text = draft.ville;
+    if (voieNom.text.trim().isEmpty && draft.adresse.trim().isNotEmpty) {
+      applyPostalAddress(PostalAddress.tryParse(draft.adresse));
+    }
     salon.text = draft.salon;
     nomAffiche.text = draft.nomAffiche;
-    codePostal.text = draft.codePostal;
     description.text = draft.description;
-    ville.text = draft.ville;
     bio.text = draft.bio;
     phoneDialCode = draft.phoneDialCode;
     roleChoice = draft.role;
@@ -115,17 +158,25 @@ class RegisterWizardFormController extends ChangeNotifier {
     pendingGoogleSignIn = draft.pendingGoogleSignIn;
     phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     pendingEmailVerification = draft.pendingEmailVerification;
+    clientDefaultAvatarUrl = draft.clientDefaultAvatarUrl;
     notifyListeners();
   }
 
-  RegisterWizardDraft currentDraft() => RegisterWizardDraft(
+  RegisterWizardDraft currentDraft() {
+    final formatted = postalAddress.formattedLine;
+    adresse.text = formatted;
+    return RegisterWizardDraft(
         step: step,
         prenom: prenom.text,
         nom: nom.text,
         phone: phone.text,
         phoneDialCode: phoneDialCode,
         email: email.text,
-        adresse: adresse.text,
+        adresse: formatted,
+        voieType: voieType,
+        voieNom: voieNom.text,
+        numeroRue: numeroRue.text,
+        pays: pays.text,
         salon: salon.text,
         nomAffiche: nomAffiche.text,
         codePostal: codePostal.text,
@@ -136,8 +187,10 @@ class RegisterWizardFormController extends ChangeNotifier {
         pendingGoogleSignIn: pendingGoogleSignIn || googleLaunched,
         phoneRequiredOnExtras: phoneRequiredOnExtras,
         pendingEmailVerification: pendingEmailVerification,
+        clientDefaultAvatarUrl: clientDefaultAvatarUrl,
         role: roleChoice,
       );
+  }
 
   Future<void> persistDraft({
     bool? pendingEmailVerification,
@@ -155,13 +208,14 @@ class RegisterWizardFormController extends ChangeNotifier {
       this.step = step.clamp(0, 2);
     }
     await RegisterWizardDraftStore.instance.save(currentDraft());
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> clearDraft() => RegisterWizardDraftStore.instance.clear();
 
   @override
   void dispose() {
+    _disposed = true;
     saveDebounce?.cancel();
     if (persistDraftOnDispose) {
       unawaited(persistDraft());
@@ -174,6 +228,9 @@ class RegisterWizardFormController extends ChangeNotifier {
       password,
       confirm,
       adresse,
+      voieNom,
+      numeroRue,
+      pays,
       salon,
       nomAffiche,
       codePostal,
@@ -346,7 +403,14 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   void selectRole(UserRole role) {
     roleChoice = role;
+    if (role == UserRole.prestataire) {
+      clientAvatarBytes = null;
+      clientAvatarFileName = null;
+      clientAvatarMimeType = null;
+      clientDefaultAvatarUrl = null;
+    }
     error = null;
+    unawaited(RegisterWizardRoleIntent.persist(role));
     notifyListeners();
     unawaited(persistDraft());
   }
@@ -387,11 +451,43 @@ class RegisterWizardFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setVoieType(String type) {
+    voieType = type;
+    notifyListeners();
+    unawaited(persistDraft());
+  }
+
   void clearVilleError() {
     villeError = null;
     error = null;
     notifyListeners();
   }
+
+  void setClientAvatarFile({
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) {
+    clientAvatarBytes = bytes;
+    clientAvatarFileName = fileName;
+    clientAvatarMimeType = mimeType;
+    clientDefaultAvatarUrl = null;
+    notifyListeners();
+  }
+
+  void selectClientDefaultAvatar(String url) {
+    clientDefaultAvatarUrl = url;
+    clientAvatarBytes = null;
+    clientAvatarFileName = null;
+    clientAvatarMimeType = null;
+    notifyListeners();
+    unawaited(persistDraft());
+  }
+
+  bool get hasClientAvatar =>
+      clientAvatarBytes != null ||
+      (clientDefaultAvatarUrl != null &&
+          clientDefaultAvatarUrl!.trim().isNotEmpty);
 
   void setPhoneDialCode(String code) {
     phoneDialCode = code;

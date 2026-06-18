@@ -67,13 +67,13 @@ class PrestataireProfileCompletionCard extends ConsumerWidget {
           child: Material(
             color: theme.colorScheme.surface,
             elevation: 0,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: openWizard,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/constants/default_avatar_urls.dart';
 import '../widgets/profile/hub/prestataire_hub_layout.dart';
 
 abstract final class PrestataireHubConstants {
@@ -11,14 +12,7 @@ abstract final class PrestataireHubConstants {
   static const wizardStepCount = 7;
   static const optionalFromStep = 4;
 
-  static const defaultAvatarUrls = <String>[
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty1',
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty2',
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty3',
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty4',
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty5',
-    'https://api.dicebear.com/9.x/adventurer/png?seed=MadBeauty6',
-  ];
+  static const defaultAvatarUrls = DefaultAvatarUrls.urls;
 }
 
 const List<PrestataireHubStepMeta> kPrestataireHubSteps = [

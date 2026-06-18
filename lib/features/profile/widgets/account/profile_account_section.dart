@@ -39,7 +39,10 @@ class ProfileAccountSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ProfileSectionTitle(title: DiscProfile.sectionAccount),
+        const ProfileSectionTitle(
+          title: DiscProfile.sectionAccount,
+          icon: Icons.manage_accounts_outlined,
+        ),
         if (topSection != null) ...[
           topSection!,
           const SizedBox(height: 10),
