@@ -74,10 +74,13 @@ abstract final class ShellStrings {
   static const String navClientMessages = 'Chat';
   static const String navClientProfile = 'Profil';
 
-  static const String navAdminHome = 'Tableau de bord';
+  static const String navAdminHome = 'Accueil';
+  static const String navAdminModeration = 'Modération';
+  static const String navAdminSupport = 'Support';
+  static const String navAdminManagement = 'Gestion';
+  static const String navAdminProfile = 'Compte';
   static const String navAdminVerifications = 'Vérifications';
   static const String navAdminReports = 'Signalements';
-  static const String navAdminProfile = 'Compte';
 
   static const String navPrestataireDashboard = 'Dashboard';
   static const String navPrestataireAgenda = 'Agenda';

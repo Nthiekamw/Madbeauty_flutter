@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/profile/providers/profile_tab_visibility_provider.dart';
 import '../../features/booking/providers/booking_session_providers.dart';
+import '../../features/home/providers/home_feed_provider.dart';
 import '../../services/notifications/booking_reminders_sync.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
@@ -66,11 +67,15 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
       }
       if (selectedIndex == ClientShellScaffold.homeTabIndex) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_lastSelectedIndex != null &&
+              _lastSelectedIndex != ClientShellScaffold.homeTabIndex) {
+            ref.read(homeFeedSelectionProvider.notifier).clear();
+          }
           unawaited(
-          syncClientBookingRemindersWithLoader(
-            () => ref.read(clientReservationsProvider.future),
-          ),
-        );
+            syncClientBookingRemindersWithLoader(
+              () => ref.read(clientReservationsProvider.future),
+            ),
+          );
         });
       }
       _lastSelectedIndex = selectedIndex;

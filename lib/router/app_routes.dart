@@ -19,6 +19,7 @@ abstract final class AppRoutes {
   static const String bookingConfirmation = '/booking/confirmation';
   static const String asyncStateTest = '/test/async-states';
   static const String becomePrestataire = '/become-prestataire';
+  static const String becomeClient = '/become-client';
 
   static const String clientHome = '/client/home';
   static const String clientSearch = '/client/search';
@@ -41,6 +42,9 @@ abstract final class AppRoutes {
   static const String userSupportChat = '/support/chat';
   static const String clientReferral = '/client/referral';
   static const String adminHome = '/admin/home';
+  static const String adminModeration = '/admin/moderation';
+  static const String adminSupport = '/admin/support';
+  static const String adminManagement = '/admin/management';
   static const String adminVerifications = '/admin/verifications';
   static const String adminReports = '/admin/reports';
   static const String adminBugReports = '/admin/bug-reports';
@@ -91,6 +95,7 @@ abstract final class AppRouteNames {
   static const String bookingConfirmation = 'booking-confirmation';
   static const String asyncStateTest = 'async-state-test';
   static const String becomePrestataire = 'become-prestataire';
+  static const String becomeClient = 'become-client';
 
   static const String clientHome = 'client-home';
   static const String clientSearch = 'client-search';
@@ -114,6 +119,9 @@ abstract final class AppRouteNames {
   static const String userSupportChatThread = 'user-support-chat-thread';
   static const String clientReferral = 'client-referral';
   static const String adminHome = 'admin-home';
+  static const String adminModeration = 'admin-moderation';
+  static const String adminSupport = 'admin-support';
+  static const String adminManagement = 'admin-management';
   static const String adminVerifications = 'admin-verifications';
   static const String adminReports = 'admin-reports';
   static const String adminBugReports = 'admin-bug-reports';

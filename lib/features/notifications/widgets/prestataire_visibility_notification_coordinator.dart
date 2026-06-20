@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/user_role.dart';
 import '../../../features/prestataire/providers/subscription/prestataire_subscription_gate_provider.dart';
 import '../../../services/notifications/in_app_notification.dart';
+import '../../../services/notifications/in_app_notification_audience.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/prestataire_catalog_visibility_reminders.dart';
 import '../../../services/notifications/prestataire_visibility_notify_service.dart';
@@ -104,6 +105,7 @@ class _PrestataireVisibilityNotificationCoordinatorState
             createdAt: DateTime.now(),
             read: false,
             actionType: 'prestataire_catalog_visibility',
+            audience: InAppNotificationAudience.prestataire.wire,
           ),
         );
   }

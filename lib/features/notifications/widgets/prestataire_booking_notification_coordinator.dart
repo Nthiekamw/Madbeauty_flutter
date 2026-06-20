@@ -9,11 +9,12 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/logic/booking/client_reservation_ui_status.dart';
 import '../../../core/providers/offline_providers.dart';
 import '../../../features/prestataire/providers/profile/current_prestataire_provider.dart';
-import '../../../features/prestataire/providers/booking/prestataire_bookings_invalidate.dart';
 import '../../../services/notifications/booking_push_notifications.dart';
 import '../../../services/notifications/in_app_notification.dart';
 import '../../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
 import '../../../services/notifications/booking_reminders_sync.dart';
+import '../../../services/notifications/in_app_notification_audience.dart';
+import '../../../services/notifications/live_refresh.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/supabase/booking/booking_service_core_providers.dart';
 import '../../../services/supabase/supabase_service.dart';
@@ -89,8 +90,7 @@ class _PrestataireBookingNotificationCoordinatorState
     final reservationId = record['id']?.toString();
     if (reservationId == null || reservationId.isEmpty) return;
 
-    invalidatePrestataireBookings(ref);
-    ref.invalidate(inAppNotificationsSyncProvider);
+    refreshReservationsLiveState(ref);
     unawaited(_syncPrestataireReminders());
 
     final booking = ref.read(bookingServiceProvider);
@@ -108,12 +108,13 @@ class _PrestataireBookingNotificationCoordinatorState
 
       ref.read(inAppNotificationsProvider.notifier).enqueue(
             InAppNotification(
-              id: 'reservation_${item.id}_${item.statut}',
+              id: 'prestataire_reservation_${item.id}_${item.statut}',
               title: DiscNotif.bookingPendingTitle,
               body: body,
               createdAt: DateTime.now(),
               read: false,
               actionType: 'booking_pending',
+              audience: InAppNotificationAudience.prestataire.wire,
             ),
           );
 

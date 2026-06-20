@@ -78,6 +78,7 @@ extension AppNavigationX on BuildContext {
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
+  void pushBecomeClient() => pushNamed(AppRouteNames.becomeClient);
   void pushEditClientAccount() => pushNamed(AppRouteNames.editClientAccount);
   void pushClientPaymentMethods() =>
       pushNamed(AppRouteNames.clientPaymentMethods);
@@ -109,6 +110,9 @@ extension AppNavigationX on BuildContext {
   }
   void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
   void goAdminHome() => goNamed(AppRouteNames.adminHome);
+  void goAdminModeration() => goNamed(AppRouteNames.adminModeration);
+  void goAdminSupport() => goNamed(AppRouteNames.adminSupport);
+  void goAdminManagement() => goNamed(AppRouteNames.adminManagement);
   void goAdminVerifications() => goNamed(AppRouteNames.adminVerifications);
   void goAdminReports() => goNamed(AppRouteNames.adminReports);
   void goAdminProfile() => goNamed(AppRouteNames.adminProfile);

@@ -37,73 +37,89 @@ class PrestataireProfileSummaryCard extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(16),
-            child: Row(
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: primary.withValues(alpha: 0.25),
-                      width: 2,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: primary.withValues(alpha: 0.25),
+                          width: 2,
+                        ),
+                      ),
+                      child: AppAvatar(
+                        imageUrl: avatarUrl,
+                        displayName: title,
+                        radius: compact ? 24 : 30,
+                      ),
                     ),
-                  ),
-                  child: AppAvatar(
-                    imageUrl: avatarUrl,
-                    displayName: title,
-                    radius: 30,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    SizedBox(width: compact ? 10 : 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontFamily: AppFonts.display,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (trailingBadge != null) ...[
-                            const SizedBox(width: 8),
+                          if (trailingBadge != null && compact) ...[
                             trailingBadge!,
+                            const SizedBox(height: 6),
                           ],
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontFamily: AppFonts.display,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.2,
+                                    fontSize: compact ? 15 : null,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (trailingBadge != null && !compact) ...[
+                                const SizedBox(width: 8),
+                                Flexible(child: trailingBadge!),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              height: 1.35,
+                            ),
+                            maxLines: compact ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            DiscPrestaProfile.editProfileHint,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        DiscPrestaProfile.editProfileHint,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ],
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: theme.colorScheme.onSurfaceVariant,
+                      size: compact ? 20 : 24,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),

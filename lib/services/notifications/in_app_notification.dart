@@ -13,8 +13,10 @@ class InAppNotification {
     this.reservationId,
     this.bookingId,
     this.role,
+    this.audience,
     this.nav,
     this.bugReportId,
+    this.threadId,
   });
 
   final String id;
@@ -29,8 +31,11 @@ class InAppNotification {
   final String? reservationId;
   final String? bookingId;
   final String? role;
+  /// Espace cible : `client`, `prestataire` ou `admin` (cloche séparée).
+  final String? audience;
   final String? nav;
   final String? bugReportId;
+  final String? threadId;
 
   InAppNotification copyWith({
     String? id,
@@ -45,8 +50,10 @@ class InAppNotification {
     String? reservationId,
     String? bookingId,
     String? role,
+    String? audience,
     String? nav,
     String? bugReportId,
+    String? threadId,
   }) {
     return InAppNotification(
       id: id ?? this.id,
@@ -61,8 +68,10 @@ class InAppNotification {
       reservationId: reservationId ?? this.reservationId,
       bookingId: bookingId ?? this.bookingId,
       role: role ?? this.role,
+      audience: audience ?? this.audience,
       nav: nav ?? this.nav,
       bugReportId: bugReportId ?? this.bugReportId,
+      threadId: threadId ?? this.threadId,
     );
   }
 
@@ -79,8 +88,10 @@ class InAppNotification {
         if (reservationId != null) 'reservationId': reservationId,
         if (bookingId != null) 'bookingId': bookingId,
         if (role != null) 'role': role,
+        if (audience != null) 'audience': audience,
         if (nav != null) 'nav': nav,
         if (bugReportId != null) 'bugReportId': bugReportId,
+        if (threadId != null) 'threadId': threadId,
       };
 
   factory InAppNotification.fromJson(Map<String, dynamic> json) {
@@ -98,8 +109,10 @@ class InAppNotification {
       reservationId: json['reservationId'] as String?,
       bookingId: json['bookingId'] as String?,
       role: json['role'] as String?,
+      audience: json['audience'] as String?,
       nav: json['nav'] as String?,
       bugReportId: json['bugReportId'] as String?,
+      threadId: json['threadId'] as String?,
     );
   }
 }

@@ -4,12 +4,17 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../services/notifications/in_app_notification.dart';
+import '../../../services/notifications/in_app_notification_audience.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/push_navigation.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 
-Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
+Future<void> showInAppNotificationsSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required InAppNotificationAudience audience,
+}) {
   ref.invalidate(inAppNotificationsSyncProvider);
   return showModalBottomSheet<void>(
     context: context,
@@ -20,8 +25,9 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
       return Consumer(
         builder: (context, ref, _) {
           final syncAsync = ref.watch(inAppNotificationsSyncProvider);
-          final items = ref.watch(inAppNotificationsProvider);
-          final unreadCount = ref.watch(unreadInAppNotificationsCountProvider);
+          final items = ref.watch(scopedInAppNotificationsProvider(audience));
+          final unreadCount =
+              ref.watch(scopedUnreadInAppNotificationsCountProvider(audience));
           final theme = Theme.of(context);
           final sheetHeight = MediaQuery.sizeOf(context).height * 0.72;
           final notifier = ref.read(inAppNotificationsProvider.notifier);
@@ -65,13 +71,13 @@ Future<void> showInAppNotificationsSheet(BuildContext context, WidgetRef ref) {
                           if (unreadCount > 0)
                             TextButton(
                               onPressed: () async {
-                                await notifier.markAllRead();
+                                await notifier.markAllReadForAudience(audience);
                               },
                               child: const Text(DiscNotif.markAllRead),
                             ),
                           TextButton(
                             onPressed: () async {
-                              await notifier.clear();
+                              await notifier.clearForAudience(audience);
                             },
                             child: const Text(DiscNotif.clearAll),
                           ),

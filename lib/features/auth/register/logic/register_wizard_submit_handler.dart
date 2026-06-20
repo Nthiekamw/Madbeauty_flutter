@@ -214,6 +214,7 @@ class RegisterWizardSubmitHandler {
 
     if (form.roleChoice == UserRole.prestataire) {
       await syncRoleBestEffort(UserRole.prestataire, providerContainer);
+      await removeClientRoleBestEffort(providerContainer);
       final address = form.postalAddress;
       await post.updatePrestataireExtras(
         userId: uid,
@@ -311,6 +312,19 @@ class RegisterWizardSubmitHandler {
     final rolesService = RoleService.fromEnv();
     try {
       await rolesService.ensureRole(role);
+      final serverRoles = await rolesService.getMyRoles();
+      await AuthRoleCache.persistServerRoles(serverRoles);
+      container.invalidate(myRolesProvider);
+    } catch (e) {
+      if (!_isRoleSyncForbidden(e)) rethrow;
+    }
+  }
+
+  Future<void> removeClientRoleBestEffort(ProviderContainer container) async {
+    if (!AppConfig.hasSupabase) return;
+    final rolesService = RoleService.fromEnv();
+    try {
+      await rolesService.removeRole(UserRole.client);
       final serverRoles = await rolesService.getMyRoles();
       await AuthRoleCache.persistServerRoles(serverRoles);
       container.invalidate(myRolesProvider);

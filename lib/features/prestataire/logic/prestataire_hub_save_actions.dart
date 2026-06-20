@@ -9,6 +9,7 @@ import '../../../services/supabase/disponibilite/disponibilite_service_providers
 import '../../../services/supabase/prestataire/photos/photo_realisation_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
+import '../logic/prestataire_hub_validation.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../models/prestataire_profile_edit_section.dart';
 import '../models/weekly_jour_horaire.dart';
@@ -46,7 +47,12 @@ class PrestataireHubSaveActions {
   Future<void> prepareSavePayload() async {
     FocusScope.of(context).unfocus();
     await form.persistHubDraftOnExit();
-    form.syncServicesFromCatalog();
+  }
+
+  void _handleMandatoryStepFailure(PrestataireMandatoryStepFailure failure) {
+    form.restoreServicesFromHubDraft();
+    form.setCurrentStep(failure.step);
+    showSnack(failure.message, kind: AppSnackKind.warning);
   }
 
   Future<bool> saveHorairesIfNeeded() async {
@@ -155,6 +161,7 @@ class PrestataireHubSaveActions {
 
     var profileSaved = false;
     if (failed == null && service != null) {
+      form.syncServicesFromCatalog();
       form.setSaving(true);
       try {
         await service.save(form.buildSavePayload());
@@ -185,11 +192,7 @@ class PrestataireHubSaveActions {
       }
       showSnack(DiscPrestaForm.completeLaterSaved, kind: AppSnackKind.success);
     } else if (failed != null) {
-      form.setCurrentStep(failed);
-      showSnack(
-        DiscPrestaForm.completeLaterNeedsCore,
-        kind: AppSnackKind.warning,
-      );
+      _handleMandatoryStepFailure(failed);
       return;
     }
     context.goPrestataireDashboard();
@@ -202,13 +205,10 @@ class PrestataireHubSaveActions {
     if (wizard) {
       final failed = form.firstMandatoryStepFailure();
       if (failed != null) {
-        form.setCurrentStep(failed);
-        showSnack(
-          DiscPrestaForm.completeLaterNeedsCore,
-          kind: AppSnackKind.warning,
-        );
+        _handleMandatoryStepFailure(failed);
         return;
       }
+      form.syncServicesFromCatalog();
     } else if (!form.validateCurrentStep()) {
       return;
     }

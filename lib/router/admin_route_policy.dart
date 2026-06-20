@@ -43,6 +43,7 @@ abstract final class AdminRoutePolicy {
     if (isPrestataireWorkspacePath(location)) return true;
     if (location == AppRoutes.role) return true;
     if (location == AppRoutes.becomePrestataire) return true;
+    if (location == AppRoutes.becomeClient) return true;
     if (location.startsWith(AppRoutes.booking)) return true;
     if (location.startsWith(AppRoutes.chat)) return true;
     return false;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/models/domain/user/user_profile.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../router/navigation_extensions.dart';
+import '../../../../../services/notifications/in_app_notification_audience.dart';
 import '../../../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../../notifications/widgets/in_app_notifications_sheet.dart';
 import '../../../../../services/supabase/messaging/messaging_providers.dart';
@@ -41,7 +42,11 @@ class PrestataireWorkspaceHeader extends ConsumerWidget {
     final presta = ref.watch(currentPrestataireProvider).asData?.value;
     final userProfile = ref.watch(currentUserProfileProvider).asData?.value;
     final authUser = ref.watch(authNotifierProvider).asData?.value;
-    final unreadNotif = ref.watch(unreadInAppNotificationsCountProvider);
+    final unreadNotif = ref.watch(
+      scopedUnreadInAppNotificationsCountProvider(
+        InAppNotificationAudience.prestataire,
+      ),
+    );
     final unreadMsg = ref
             .watch(messagingUnreadCountProvider(MessagingInboxRole.prestataire))
             .value ??
@@ -321,7 +326,11 @@ class _HeaderActions extends ConsumerWidget {
           size: buttonSize,
           iconSize: iconSize,
           gap: gap,
-          onTap: () => showInAppNotificationsSheet(context, ref),
+          onTap: () => showInAppNotificationsSheet(
+            context,
+            ref,
+            audience: InAppNotificationAudience.prestataire,
+          ),
         ),
         if (showMessagesAction)
           _HeaderIconButton(

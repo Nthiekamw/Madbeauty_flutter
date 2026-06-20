@@ -6,6 +6,8 @@ import '../../core/logic/booking/client_reservation_ui_status.dart';
 import '../../core/models/user_role.dart';
 import '../../features/admin/providers/admin_bug_reports_provider.dart';
 import '../../features/auth/providers/my_roles_provider.dart';
+import '../../features/auth/providers/auth_notifier.dart';
+import '../../services/supabase/support/user_support_providers.dart';
 import '../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
 import '../../features/reviews/providers/review_provider.dart';
@@ -13,6 +15,7 @@ import '../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../services/supabase/trust/account_moderation_service.dart';
 import '../../services/supabase/prestataire/prestataire_verification_service.dart';
 import 'in_app_notification.dart';
+import 'in_app_notification_audience.dart';
 
 /// Alimente la boîte de notifications depuis l'activité Supabase
 /// (réservations), en complément des push FCM.
@@ -55,7 +58,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
       out.add(
         InAppNotification(
-          id: 'reservation_${item.id}_${item.statut}',
+          id: 'prestataire_reservation_${item.id}_${item.statut}',
           title: title,
           body: DiscNotif.bookingBody(
             clientOrSalon: item.clientName,
@@ -64,6 +67,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           createdAt: item.dateHeure,
           read: status != ClientReservationUiStatus.pending,
           actionType: type,
+          audience: InAppNotificationAudience.prestataire.wire,
         ),
       );
     }
@@ -84,7 +88,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           out.add(
             InAppNotification(
               id:
-                  'like_${like.clientId}_${like.prestataireId}_'
+                  'prestataire_like_${like.clientId}_${like.prestataireId}_'
                   '${like.createdAt.millisecondsSinceEpoch}',
               title: DiscNotif.prestataireLikeTitle,
               body: DiscNotif.prestataireLikeBody(
@@ -94,6 +98,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
               read: false,
               actionType: 'prestataire_like',
               prestataireId: like.prestataireId,
+              audience: InAppNotificationAudience.prestataire.wire,
             ),
           );
         }
@@ -116,7 +121,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
         for (final review in reviews) {
           out.add(
             InAppNotification(
-              id: 'review_${review.id}',
+              id: 'prestataire_review_${review.id}',
               title: DiscNotif.prestataireReviewTitle(review.note),
               body: DiscNotif.prestataireReviewBody(
                 clientName: review.clientDisplayName ?? 'Une cliente',
@@ -128,6 +133,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
               actionType: 'prestataire_review',
               prestataireId: review.prestataireId,
               reservationId: review.reservationId,
+              audience: InAppNotificationAudience.prestataire.wire,
             ),
           );
         }
@@ -146,7 +152,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
       final isApproved = event.action == 'approved';
       out.add(
         InAppNotification(
-          id: 'verification_${event.id}',
+          id: 'prestataire_verification_${event.id}',
           title: isApproved
               ? DiscNotif.verificationApprovedTitle
               : DiscNotif.verificationRevokedTitle,
@@ -158,6 +164,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           actionType: isApproved
               ? 'prestataire_verification_approved'
               : 'prestataire_verification_revoked',
+          audience: InAppNotificationAudience.prestataire.wire,
         ),
       );
     }
@@ -190,12 +197,13 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
       out.add(
         InAppNotification(
-          id: 'moderation_${event.id}',
+          id: 'prestataire_moderation_${event.id}',
           title: title,
           body: DiscNotif.moderationEventBody(event.message),
           createdAt: event.createdAt,
           read: false,
           actionType: type,
+          audience: InAppNotificationAudience.prestataire.wire,
         ),
       );
     }
@@ -234,7 +242,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
       out.add(
         InAppNotification(
-          id: 'reservation_${item.id}_${item.statut}',
+          id: 'client_reservation_${item.id}_${item.statut}',
           title: title,
           body: DiscNotif.bookingBody(
             clientOrSalon: salon,
@@ -246,6 +254,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           actionType: type,
           prestataireId: item.prestataireId,
           serviceId: item.serviceId,
+          audience: InAppNotificationAudience.client.wire,
         ),
       );
     }
@@ -265,7 +274,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
         for (final bug in pending) {
           out.add(
             InAppNotification(
-              id: 'bug_report_admin_${bug.id}',
+              id: 'admin_bug_report_${bug.id}',
               title: DiscNotif.bugReportNewTitle,
               body: DiscNotif.bugReportNewBody(
                 category: DiscBug.categoryLabel(bug.category),
@@ -276,6 +285,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
               actionType: 'bug_report',
               nav: 'admin_bug_reports',
               bugReportId: bug.id,
+              audience: InAppNotificationAudience.admin.wire,
             ),
           );
         }
@@ -293,7 +303,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
         if (!bug.isTerminal || bug.updatedAt.isBefore(cutoff)) continue;
         out.add(
           InAppNotification(
-            id: 'bug_report_status_${bug.id}_${bug.status}',
+            id: 'client_bug_report_status_${bug.id}_${bug.status}',
             title: DiscNotif.bugReportStatusTitle,
             body: DiscNotif.bugReportStatusBody(
               title: bug.title,
@@ -305,12 +315,49 @@ Future<List<InAppNotification>> fetchActivityNotifications(
             actionType: 'bug_report_status',
             nav: 'my_bug_reports',
             bugReportId: bug.id,
+            audience: InAppNotificationAudience.client.wire,
           ),
         );
       }
     }
   } catch (_) {
     /* Erreur réseau */
+  }
+
+  try {
+    final userId = ref.read(authNotifierProvider).value?.id;
+    final threadService = ref.read(userSupportServiceProvider);
+    final messageService = ref.read(userSupportMessageServiceProvider);
+    if (userId != null && threadService != null && messageService != null) {
+      final threadId = await threadService.ensureMyThread();
+      final unread = await messageService.listUnreadFromOthers(
+        threadId: threadId,
+        userId: userId,
+      );
+      final roles = await ref.read(myRolesProvider.future);
+      final supportRole =
+          roles.contains(UserRole.prestataire) && !roles.contains(UserRole.client)
+              ? 'prestataire'
+              : 'client';
+      for (final message in unread) {
+        if (message.createdAt.isBefore(cutoff)) continue;
+        out.add(
+          InAppNotification(
+            id: 'user_support_${message.id}',
+            title: DiscNotif.userSupportMessageTitle,
+            body: DiscNotif.userSupportMessageBody(message.content),
+            createdAt: message.createdAt,
+            read: false,
+            actionType: 'user_support_message',
+            threadId: threadId,
+            role: supportRole,
+            audience: supportRole,
+          ),
+        );
+      }
+    }
+  } catch (_) {
+    /* Pas de fil support ou erreur réseau */
   }
 
   out.sort((a, b) => b.createdAt.compareTo(a.createdAt));

@@ -10,6 +10,7 @@ import '../../../../../../shared/theme/app_fonts.dart';
 import '../../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/widgets/prestataire/realisation_media_cover.dart';
+import '../../../../logic/prestataire_hub_constants.dart';
 import '../../../../logic/realisation_gallery_grouping.dart';
 import '../../../../models/pending_realisation_upload.dart';
 import '../../../public/detail/sections/prestataire_detail_service_group_header.dart';
@@ -49,7 +50,15 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
 
   int get _totalMediaCount => photos.length + pendingUploads.length;
 
+  int get _videoCount =>
+      photos.where((p) => p.mediaType.isVideo).length +
+      pendingUploads.where((u) => u.file.isVideo).length;
+
   bool get _canAddMore => _totalMediaCount < maxPhotos && !uploading;
+
+  bool get _canAddVideo =>
+      _canAddMore &&
+      _videoCount < PrestataireHubConstants.galleryMaxVideos;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +69,14 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const RealisationGalleryPolicyBanner(),
+        const SizedBox(height: 12),
+        Text(
+          DiscPrestaForm.hubGalleryHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
         const SizedBox(height: 12),
         Text(
           DiscPrestaForm.galleryPolicyScanHint,
@@ -73,7 +90,12 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
           PrestataireHubMetricBanner(
             icon: Icons.perm_media_outlined,
             label: DiscPrestaForm.hubGalleryMediaAdded,
-            value: '$total / $maxPhotos',
+            value: DiscPrestaForm.hubGalleryMediaSummary(
+              total: total,
+              maxTotal: maxPhotos,
+              videos: _videoCount,
+              maxVideos: PrestataireHubConstants.galleryMaxVideos,
+            ),
             progress: maxPhotos > 0 ? total / maxPhotos : 0,
           )
         else
@@ -81,7 +103,12 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$total / $maxPhotos ${DiscPrestaForm.hubGalleryMediaCount}',
+                  DiscPrestaForm.hubGalleryMediaSummary(
+                    total: total,
+                    maxTotal: maxPhotos,
+                    videos: _videoCount,
+                    maxVideos: PrestataireHubConstants.galleryMaxVideos,
+                  ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
@@ -185,6 +212,7 @@ class PrestataireProfileGalleryStep extends StatelessWidget {
                 )
                 .toList(),
             canAdd: _canAddMore,
+            canAddVideo: _canAddVideo,
             onPickPhotos: () => onPickForSlot(slot),
             onPickVideo: () => onPickVideoForSlot(slot),
             onRemoveExisting: onRemoveExisting,
@@ -239,6 +267,7 @@ class _SpecialtyGallerySection extends StatelessWidget {
     required this.photos,
     required this.pendingUploads,
     required this.canAdd,
+    required this.canAddVideo,
     required this.onPickPhotos,
     required this.onPickVideo,
     required this.onRemoveExisting,
@@ -249,10 +278,16 @@ class _SpecialtyGallerySection extends StatelessWidget {
   final List<PhotoRealisation> photos;
   final List<PendingRealisationUpload> pendingUploads;
   final bool canAdd;
+  final bool canAddVideo;
   final VoidCallback onPickPhotos;
   final VoidCallback onPickVideo;
   final ValueChanged<PhotoRealisation> onRemoveExisting;
   final ValueChanged<PendingRealisationUpload> onRemovePending;
+
+  int get _addTileCount {
+    if (!canAdd) return 0;
+    return 1 + (canAddVideo ? 1 : 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,13 +318,23 @@ class _SpecialtyGallerySection extends StatelessWidget {
               height: 108,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: total + (canAdd ? 1 : 0),
+                itemCount: total + _addTileCount,
                 separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
-                  if (canAdd && index == total) {
-                    return _AddMediaTile(
-                      onPickPhotos: onPickPhotos,
-                      onPickVideo: onPickVideo,
+                  if (canAdd && index >= total) {
+                    final addIndex = index - total;
+                    if (addIndex == 0) {
+                      return _AddMediaActionTile(
+                        icon: Icons.photo_camera_outlined,
+                        label: DiscPrestaForm.hubGalleryAddPhoto,
+                        onTap: onPickPhotos,
+                      );
+                    }
+                    return _AddMediaActionTile(
+                      icon: Icons.videocam_outlined,
+                      label: DiscPrestaForm.hubGalleryAddVideo,
+                      onTap: onPickVideo,
+                      enabled: canAddVideo,
                     );
                   }
                   final isPending = index >= photos.length;
@@ -325,41 +370,52 @@ class _SpecialtyGallerySection extends StatelessWidget {
   }
 }
 
-class _AddMediaTile extends StatelessWidget {
-  const _AddMediaTile({
-    required this.onPickPhotos,
-    required this.onPickVideo,
+class _AddMediaActionTile extends StatelessWidget {
+  const _AddMediaActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
   });
 
-  final VoidCallback onPickPhotos;
-  final VoidCallback onPickVideo;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final color = enabled ? primary : theme.colorScheme.onSurfaceVariant;
 
     return SizedBox(
       width: 108,
       child: Material(
-        color: primary.withValues(alpha: 0.08),
+        color: enabled
+            ? primary.withValues(alpha: 0.08)
+            : theme.colorScheme.surfaceContainerHighest,
         shape: RoundedRectangleBorder(
           borderRadius: DiscoveryStyles.chipBorderRadius,
-          side: BorderSide(color: primary.withValues(alpha: 0.35), width: 1.2),
+          side: BorderSide(
+            color: enabled
+                ? primary.withValues(alpha: 0.35)
+                : theme.colorScheme.outlineVariant,
+            width: 1.2,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onPickPhotos,
-          onLongPress: onPickVideo,
+          onTap: enabled ? onTap : null,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: primary, size: 28),
+              Icon(icon, color: color, size: 26),
               const SizedBox(height: 4),
               Text(
-                DiscPrestaForm.hubGalleryAddTile,
+                label,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: primary,
+                  color: color,
                   fontWeight: FontWeight.w700,
                 ),
               ),

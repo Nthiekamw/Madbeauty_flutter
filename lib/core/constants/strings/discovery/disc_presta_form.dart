@@ -47,7 +47,7 @@ abstract final class DiscPrestaForm {
   static const servicesWizardConfiguredBadge = 'Configuré';
   static const hubGalleryHint =
       'Ajoute jusqu’à 10 photos et 3 courtes vidéos de tes meilleures prestations '
-      '(JPEG, PNG, WebP, MP4 ou MOV) pour valoriser ton savoir-faire.';
+      '(JPEG, PNG, WebP ou tout format vidéo courant) pour valoriser ton savoir-faire.';
   static const hubGalleryPick = 'Ajouter des photos';
   static const hubGalleryPickVideo = 'Ajouter une vidéo';
   static const hubGalleryMediaCount = 'médias';
@@ -55,6 +55,17 @@ abstract final class DiscPrestaForm {
   static const hubGalleryEmpty = 'Aucun média pour l’instant.';
   static const hubGalleryUploading = 'Envoi des médias…';
   static const hubGalleryAddTile = 'Ajouter';
+  static const hubGalleryAddPhoto = 'Photo';
+  static const hubGalleryAddVideo = 'Vidéo';
+  static const hubGalleryVideoLimitReached =
+      'Limite de 3 vidéos atteinte pour ta galerie.';
+  static String hubGalleryMediaSummary({
+    required int total,
+    required int maxTotal,
+    required int videos,
+    required int maxVideos,
+  }) =>
+      '$total / $maxTotal $hubGalleryMediaCount · $videos / $maxVideos vidéos';
   static const hubGalleryMediaAdded = 'Médias ajoutés';
   static const hubGalleryBySpecialtyHint =
       'Ajoute des photos ou courtes vidéos pour chaque spécialité que tu proposes.';
@@ -84,6 +95,21 @@ abstract final class DiscPrestaForm {
   static const completeLaterNeedsCore =
       'Complète au minimum la vitrine, l’adresse, tes services et tes horaires pour enregistrer ton profil. '
       'Ton brouillon local est conservé.';
+  static const hubSaveBlockedDraftKept = 'Ton brouillon local est conservé.';
+  static const hubSaveBlockedVitrineFallback =
+      'Ajoute ta photo, le nom du salon et une description.';
+  static const hubSaveBlockedLocationFallback =
+      'Complète ton adresse et indique où tu travailles.';
+  static const hubSaveBlockedServicesFallback =
+      'Choisis tes prestations et renseigne prix et durée pour chacune.';
+  static const hubSaveBlockedHorairesFallback =
+      'Indique au moins un jour d’ouverture avec des horaires valides.';
+
+  static String hubSaveBlockedMessage({
+    required String stepLabel,
+    required String detail,
+  }) =>
+      '$stepLabel : $detail $hubSaveBlockedDraftKept';
   static String hubWizardProgressLabel(int current, int total) =>
       'Étape $current sur $total';
   static const hubGoalBasics =

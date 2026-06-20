@@ -32,7 +32,7 @@ class AdminRealisationPhotosService {
       );
 
   Future<List<AdminRealisationPhotoSummary>> listPhotos({
-    int limit = 60,
+    int limit = 200,
     int offset = 0,
     String? search,
   }) async {

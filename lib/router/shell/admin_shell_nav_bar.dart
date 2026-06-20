@@ -7,37 +7,40 @@ import 'shell_nav_badge_icon.dart';
 
 const _kNavLabels = [
   ShellStrings.navAdminHome,
-  ShellStrings.navAdminVerifications,
-  ShellStrings.navAdminReports,
+  ShellStrings.navAdminModeration,
+  ShellStrings.navAdminSupport,
+  ShellStrings.navAdminManagement,
   ShellStrings.navAdminProfile,
 ];
 const _kNavOutlined = [
-  Icons.dashboard_outlined,
-  Icons.verified_user_outlined,
-  Icons.flag_outlined,
+  Icons.home_outlined,
+  Icons.gavel_outlined,
+  Icons.support_agent_outlined,
+  Icons.tune_outlined,
   Icons.shield_outlined,
 ];
 const _kNavFilled = [
-  Icons.dashboard_rounded,
-  Icons.verified_user_rounded,
-  Icons.flag_rounded,
+  Icons.home_rounded,
+  Icons.gavel_rounded,
+  Icons.support_agent_rounded,
+  Icons.tune_rounded,
   Icons.shield_rounded,
 ];
 
-/// Barre d'onglets back-office admin (accent or / bronze).
+/// Barre d'onglets back-office admin (5 onglets, accent or / bronze).
 class AdminShellNavBar extends StatelessWidget {
   const AdminShellNavBar({
     super.key,
     required this.selectedIndex,
     required this.onTap,
-    this.verificationsBadgeCount = 0,
-    this.reportsBadgeCount = 0,
+    this.moderationBadgeCount = 0,
+    this.supportBadgeCount = 0,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onTap;
-  final int verificationsBadgeCount;
-  final int reportsBadgeCount;
+  final int moderationBadgeCount;
+  final int supportBadgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -66,34 +69,34 @@ class AdminShellNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 8, 6, 6),
+          padding: const EdgeInsets.fromLTRB(4, 6, 4, 4),
           child: Row(
             children: List.generate(_kNavLabels.length, (index) {
               final selected = selectedIndex == index;
               final badgeCount = switch (index) {
-                1 => verificationsBadgeCount,
-                2 => reportsBadgeCount,
+                1 => moderationBadgeCount,
+                2 => supportBadgeCount,
                 _ => 0,
               };
 
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
                   child: Material(
                     color: selected
                         ? AppColors.adminBg12
                         : AppColors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       side: selected
                           ? BorderSide(color: AppColors.adminBorder30)
                           : BorderSide.none,
                     ),
                     child: InkWell(
                       onTap: () => onTap(index),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -102,7 +105,7 @@ class AdminShellNavBar extends StatelessWidget {
                                 color: selected
                                     ? accent
                                     : theme.colorScheme.onSurfaceVariant,
-                                size: 22,
+                                size: 21,
                               ),
                               child: shellNavBadgeIcon(
                                 outlined: _kNavOutlined[index],
@@ -116,11 +119,13 @@ class AdminShellNavBar extends StatelessWidget {
                               _kNavLabels[index],
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontFamily: AppFonts.body,
                                 fontWeight:
                                     selected ? FontWeight.w700 : FontWeight.w500,
-                                fontSize: 10,
+                                fontSize: 9.5,
+                                letterSpacing: -0.1,
                                 color: selected
                                     ? onAccent
                                     : theme.colorScheme.onSurfaceVariant,

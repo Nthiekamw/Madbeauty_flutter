@@ -28,24 +28,18 @@ class AdminDiscoveryCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: radius,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 4,
-                color: accent,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                  child: DefaultTextStyle(
-                    style: theme.textTheme.bodyMedium!,
-                    child: child,
-                  ),
-                ),
-              ),
-            ],
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: accent, width: 4),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: DefaultTextStyle(
+              style: theme.textTheme.bodyMedium!,
+              child: child,
+            ),
           ),
         ),
       ),

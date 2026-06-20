@@ -30,13 +30,11 @@ class ClientHomeReorderableSections extends ConsumerWidget {
     final layout = ref.watch(clientHomeLayoutProvider);
     final isLoggedIn = clientHomeIsLoggedIn(ref);
     final hasSupabase = AppConfig.hasSupabase;
-    final hasFeedSelection = clientHomeHasFeedSelection(ref);
 
     final visible = visibleClientHomeSections(
       layout: layout,
       isLoggedIn: isLoggedIn,
       hasSupabase: hasSupabase,
-      hasFeedSelection: hasFeedSelection,
     );
 
     final theme = Theme.of(context);

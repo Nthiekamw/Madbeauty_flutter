@@ -55,5 +55,21 @@ class RoleService {
       },
     );
   }
+
+  Future<void> removeRole(UserRole role) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+
+    await SupabaseErrorHandler.run(
+      operation: 'role.removeRole',
+      action: () async {
+        await _client
+            .from('user_roles')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('role', role.value);
+      },
+    );
+  }
 }
 

@@ -300,6 +300,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
         pricingError: pricingError,
         onCatalogChanged: onCatalogChanged,
         onPricingChanged: onPricingChanged,
+        editMode: !guided,
       ),
       PrestataireProfileEditSection.gallery => PrestataireProfileGalleryStep(
         photos: galleryPhotos,

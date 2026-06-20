@@ -73,7 +73,11 @@ class _RoleChoiceScreenState extends ConsumerState<RoleChoiceScreen> {
 
     try {
       if (ref.read(authSupabaseEnabledProvider)) {
-        await ref.read(roleServiceProvider).ensureRole(role);
+        final rolesService = ref.read(roleServiceProvider);
+        if (role == UserRole.prestataire) {
+          await rolesService.removeRole(UserRole.client);
+        }
+        await rolesService.ensureRole(role);
       }
       ref.invalidate(myRolesProvider);
       final roles = await ref.read(myRolesProvider.future);

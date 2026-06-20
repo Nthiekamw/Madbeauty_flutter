@@ -21,21 +21,29 @@ abstract final class PrestataireHubSavePipeline {
     required List<PrestataireServiceFieldSet> services,
     required PrestataireServiceCatalogSelection catalogSelection,
   }) {
-    final preserved = <String, ({String? id, String prix, String duree})>{};
+    final preservedById = <String, ({String? id, String prix, String duree})>{};
+    final preservedByName = <String, ({String? id, String prix, String duree})>{};
+    final preservedByCategory =
+        <String, ({String? id, String prix, String duree})>{};
+
     for (final s in services) {
-      final idKey = s.id?.trim();
-      if (idKey != null && idKey.isNotEmpty) {
-        preserved[idKey] = (
-          id: s.id,
-          prix: s.prixController.text,
-          duree: s.dureeController.text,
-        );
-      }
-      preserved[s.nomController.text.trim().toLowerCase()] = (
+      final entry = (
         id: s.id,
         prix: s.prixController.text,
         duree: s.dureeController.text,
       );
+      final idKey = s.id?.trim();
+      if (idKey != null && idKey.isNotEmpty) {
+        preservedById[idKey] = entry;
+      }
+      final nameKey = s.nomController.text.trim().toLowerCase();
+      if (nameKey.isNotEmpty) {
+        preservedByName[nameKey] = entry;
+      }
+      final catId = s.categorieId?.trim();
+      if (catId != null && catId.isNotEmpty) {
+        preservedByCategory[catId] = entry;
+      }
     }
     final existing = services
         .map(
@@ -46,7 +54,7 @@ abstract final class PrestataireHubSavePipeline {
             categorieId: s.categorieId,
             prix: parsePrestataireServicePrice(s.prixController.text) ?? 0,
             dureeMinutes:
-                int.tryParse(s.dureeController.text.trim()) ?? 60,
+                parsePrestataireServiceDuration(s.dureeController.text) ?? 60,
           ),
         )
         .toList();
@@ -60,8 +68,11 @@ abstract final class PrestataireHubSavePipeline {
 
     for (final service in generated) {
       final nameKey = service.nom.trim().toLowerCase();
-      final keep = (service.id != null ? preserved[service.id!] : null) ??
-          preserved[nameKey];
+      final keep = (service.id != null ? preservedById[service.id!] : null) ??
+          (service.categorieId != null
+              ? preservedByCategory[service.categorieId!]
+              : null) ??
+          preservedByName[nameKey];
       services.add(
         PrestataireServiceFieldSet(
           id: keep?.id ?? service.id,
@@ -107,7 +118,7 @@ abstract final class PrestataireHubSavePipeline {
             categorieId: s.categorieId,
             prix: parsePrestataireServicePrice(s.prixController.text) ?? 0,
             dureeMinutes:
-                int.tryParse(s.dureeController.text.trim()) ?? 60,
+                parsePrestataireServiceDuration(s.dureeController.text) ?? 60,
           ),
         )
         .toList();

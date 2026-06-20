@@ -95,4 +95,12 @@ abstract final class DiscNotif {
       message.trim().isEmpty
           ? 'Consulte ton profil prestataire pour plus de détails.'
           : message;
+
+  static const userSupportMessageTitle = 'Message du support';
+  static String userSupportMessageBody(String preview) {
+    final text = preview.trim();
+    if (text.isEmpty) return 'L’équipe MadBeauty t’a répondu.';
+    if (text.length <= 120) return text;
+    return '${text.substring(0, 119)}…';
+  }
 }

@@ -7,9 +7,12 @@ import '../../features/admin/screens/admin_push_screen.dart';
 import '../../features/admin/screens/admin_bug_reports_screen.dart';
 import '../../features/admin/screens/admin_content_reports_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
+import '../../features/admin/screens/admin_management_hub_screen.dart';
+import '../../features/admin/screens/admin_moderation_hub_screen.dart';
 import '../../features/admin/screens/admin_profile_screen.dart';
 import '../../features/admin/screens/admin_realisation_photos_screen.dart';
 import '../../features/admin/screens/admin_reservations_screen.dart';
+import '../../features/admin/screens/admin_support_hub_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/screens/admin_user_support_screen.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
@@ -39,11 +42,11 @@ List<RouteBase> buildAdminRoutes() => [
           StatefulShellBranch(
             routes: [
               GoRoute(
-                name: AppRouteNames.adminVerifications,
-                path: AppRoutes.adminVerifications,
+                name: AppRouteNames.adminModeration,
+                path: AppRoutes.adminModeration,
                 pageBuilder: (context, state) => shellTabPage(
                   key: state.pageKey,
-                  child: const AdminVerificationScreen(),
+                  child: const AdminModerationHubScreen(),
                 ),
               ),
             ],
@@ -51,11 +54,23 @@ List<RouteBase> buildAdminRoutes() => [
           StatefulShellBranch(
             routes: [
               GoRoute(
-                name: AppRouteNames.adminReports,
-                path: AppRoutes.adminReports,
+                name: AppRouteNames.adminSupport,
+                path: AppRoutes.adminSupport,
                 pageBuilder: (context, state) => shellTabPage(
                   key: state.pageKey,
-                  child: const AdminContentReportsScreen(),
+                  child: const AdminSupportHubScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                name: AppRouteNames.adminManagement,
+                path: AppRoutes.adminManagement,
+                pageBuilder: (context, state) => shellTabPage(
+                  key: state.pageKey,
+                  child: const AdminManagementHubScreen(),
                 ),
               ),
             ],
@@ -73,6 +88,16 @@ List<RouteBase> buildAdminRoutes() => [
             ],
           ),
         ],
+      ),
+      GoRoute(
+        name: AppRouteNames.adminVerifications,
+        path: AppRoutes.adminVerifications,
+        builder: (context, state) => const AdminVerificationScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminReports,
+        path: AppRoutes.adminReports,
+        builder: (context, state) => const AdminContentReportsScreen(),
       ),
       GoRoute(
         name: AppRouteNames.adminUsers,

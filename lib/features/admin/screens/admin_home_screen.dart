@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../router/app_router.dart';
+import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
+import '../../../shared/utils/currency_format.dart';
+import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../models/admin_analytics_summary.dart';
 import '../providers/admin_analytics_provider.dart';
 import '../providers/admin_pending_counts_provider.dart';
 import '../providers/admin_user_support_provider.dart';
-import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/admin_country_stats_section.dart';
+import '../widgets/admin_hub_action_tile.dart';
 import '../widgets/admin_screen_scaffold.dart';
-import '../../../router/navigation_extensions.dart';
-import '../../../shared/utils/currency_format.dart';
 
 class AdminHomeScreen extends ConsumerWidget {
   const AdminHomeScreen({super.key});
@@ -23,6 +23,7 @@ class AdminHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final responsive = DiscoveryResponsive.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final pendingVerifications =
         ref.watch(adminPendingVerificationsCountProvider);
@@ -31,157 +32,129 @@ class AdminHomeScreen extends ConsumerWidget {
     final supportUnread = ref.watch(adminUserSupportUnreadCountProvider);
     final analyticsAsync = ref.watch(adminAnalyticsProvider);
 
+    final moderationPending =
+        (pendingVerifications.value ?? 0) + (pendingReports.value ?? 0);
+    final supportPending =
+        (pendingBugs.value ?? 0) + (supportUnread.value ?? 0);
+
     return AdminScreenScaffold(
       title: ShellStrings.navAdminHome,
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(
+          responsive.horizontalPadding,
+          8,
+          responsive.horizontalPadding,
+          24,
+        ),
         children: [
-          const AdminScreenIntroBanner(
-            icon: Icons.shield_rounded,
-            title: DiscProfile.adminHomeWelcomeTitle,
-            body: DiscProfile.adminHomeWelcomeBody,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            DiscProfile.adminHomeAnalyticsTitle,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          analyticsAsync.when(
-            data: (stats) => _AnalyticsGrid(stats: stats),
-            loading: () => const _StatsLoading(),
-            error: (_, __) => pendingVerifications.when(
-              data: (vCount) => pendingReports.when(
-                data: (rCount) => _StatsRow(
-                  verificationsCount: vCount,
-                  reportsCount: rCount,
-                ),
-                loading: () => const _StatsLoading(),
-                error: (_, __) => const _StatsLoading(),
-              ),
-              loading: () => const _StatsLoading(),
-              error: (_, __) => const _StatsLoading(),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const AdminCountryStatsSection(),
-          const SizedBox(height: 16),
-          Text(
-            DiscProfile.adminHomeActionsTitle,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.verified_user_outlined,
-            title: DiscProfile.actionAdminVerifications,
-            subtitle: DiscProfile.actionAdminVerificationsHint,
-            badge: pendingVerifications.maybeWhen(data: (c) => c, orElse: () => 0),
-            onTap: () => context.goNamed(AppRouteNames.adminVerifications),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.flag_outlined,
-            title: DiscProfile.actionAdminReports,
-            subtitle: DiscProfile.actionAdminReportsHint,
-            badge: pendingReports.maybeWhen(data: (c) => c, orElse: () => 0),
-            onTap: () => context.goNamed(AppRouteNames.adminReports),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.bug_report_outlined,
-            title: DiscProfile.actionAdminBugReports,
-            subtitle: DiscProfile.actionAdminBugReportsHint,
-            badge: pendingBugs.maybeWhen(data: (c) => c, orElse: () => 0),
-            onTap: () => context.pushAdminBugReports(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.support_agent_outlined,
-            title: DiscProfile.actionAdminUserSupport,
-            subtitle: DiscProfile.actionAdminUserSupportHint,
-            badge: supportUnread.maybeWhen(data: (c) => c, orElse: () => 0),
-            onTap: () => context.pushAdminUserSupport(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.people_outline,
-            title: DiscProfile.actionAdminUsers,
-            subtitle: DiscProfile.actionAdminUsersHint,
-            onTap: () => context.pushAdminUsers(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.payments_outlined,
-            title: DiscProfile.actionAdminReservations,
-            subtitle: DiscProfile.actionAdminReservationsHint,
-            onTap: () => context.pushAdminReservations(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.card_giftcard_outlined,
-            title: DiscProfile.actionAdminSubscriptionTrial,
-            subtitle: DiscProfile.actionAdminSubscriptionTrialHint,
-            onTap: () => context.pushAdminSubscriptionTrial(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.photo_library_outlined,
-            title: DiscProfile.actionAdminRealisationPhotos,
-            subtitle: DiscProfile.actionAdminRealisationPhotosHint,
-            onTap: () => context.pushAdminRealisationPhotos(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.euro_outlined,
-            title: DiscProfile.actionAdminBookingPlatformFee,
-            subtitle: DiscProfile.actionAdminBookingPlatformFeeHint,
-            onTap: () => context.pushAdminBookingPlatformFee(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.notifications_active_outlined,
-            title: DiscProfile.actionAdminPush,
-            subtitle: DiscProfile.actionAdminPushHint,
-            onTap: () => context.pushAdminPush(),
-          ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.history,
-            title: DiscProfile.actionAdminAudit,
-            subtitle: DiscProfile.actionAdminAuditHint,
-            onTap: () => context.pushAdminAudit(),
-          ),
-          const SizedBox(height: 20),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: DiscoveryStyles.cardBorderRadius,
-              color: AppColors.adminBg12,
-              border: Border.all(color: AppColors.adminBorder30),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: responsive.contentMaxWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.lock_outline_rounded,
-                    color: AppColors.adminAccentMid,
-                    size: 22,
+                  const AdminScreenIntroBanner(
+                    icon: Icons.dashboard_rounded,
+                    title: DiscProfile.adminHomeWelcomeTitle,
+                    body: DiscProfile.adminHomeWelcomeBody,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      DiscProfile.adminHomeIsolationHint,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? theme.colorScheme.onSurfaceVariant
-                            : AppColors.adminAccentDark,
-                        height: 1.4,
+                  const SizedBox(height: 16),
+                  Text(
+                    DiscProfile.adminHomeAnalyticsTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  analyticsAsync.when(
+                    data: (stats) => _AnalyticsGrid(
+                      stats: stats,
+                      onVerificationsTap: () =>
+                          context.pushAdminVerifications(),
+                      onReportsTap: () => context.pushAdminReports(),
+                    ),
+                    loading: () => const _StatsLoading(),
+                    error: (_, __) => pendingVerifications.when(
+                      data: (vCount) => pendingReports.when(
+                        data: (rCount) => _StatsRow(
+                          verificationsCount: vCount,
+                          reportsCount: rCount,
+                          onVerificationsTap: () =>
+                              context.pushAdminVerifications(),
+                          onReportsTap: () => context.pushAdminReports(),
+                        ),
+                        loading: () => const _StatsLoading(),
+                        error: (_, __) => const _StatsLoading(),
+                      ),
+                      loading: () => const _StatsLoading(),
+                      error: (_, __) => const _StatsLoading(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    DiscProfile.adminHomeQuickAccessTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontFamily: AppFonts.display,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  AdminHubActionGrid(
+                    children: [
+                      AdminHubActionTile(
+                        icon: Icons.gavel_outlined,
+                        title: ShellStrings.navAdminModeration,
+                        subtitle: DiscProfile.adminModerationHubBody,
+                        badge: moderationPending,
+                        onTap: () => context.goAdminModeration(),
+                      ),
+                      AdminHubActionTile(
+                        icon: Icons.support_agent_outlined,
+                        title: ShellStrings.navAdminSupport,
+                        subtitle: DiscProfile.adminSupportHubBody,
+                        badge: supportPending,
+                        onTap: () => context.goAdminSupport(),
+                      ),
+                      AdminHubActionTile(
+                        icon: Icons.tune_outlined,
+                        title: ShellStrings.navAdminManagement,
+                        subtitle: DiscProfile.adminManagementHubBody,
+                        onTap: () => context.goAdminManagement(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const AdminCountryStatsSection(),
+                  const SizedBox(height: 20),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: DiscoveryStyles.cardBorderRadius,
+                      color: AppColors.adminBg12,
+                      border: Border.all(color: AppColors.adminBorder30),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            color: AppColors.adminAccentMid,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              DiscProfile.adminHomeIsolationHint,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark
+                                    ? theme.colorScheme.onSurfaceVariant
+                                    : AppColors.adminAccentDark,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -196,9 +169,15 @@ class AdminHomeScreen extends ConsumerWidget {
 }
 
 class _AnalyticsGrid extends StatelessWidget {
-  const _AnalyticsGrid({required this.stats});
+  const _AnalyticsGrid({
+    required this.stats,
+    required this.onVerificationsTap,
+    required this.onReportsTap,
+  });
 
   final AdminAnalyticsSummary stats;
+  final VoidCallback onVerificationsTap;
+  final VoidCallback onReportsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +210,7 @@ class _AnalyticsGrid extends StatelessWidget {
                 value: '${stats.verificationPending}',
                 label: DiscProfile.adminHomeStatVerifications,
                 icon: Icons.verified_user_outlined,
+                onTap: onVerificationsTap,
               ),
             ),
             const SizedBox(width: 10),
@@ -251,6 +231,7 @@ class _AnalyticsGrid extends StatelessWidget {
                 value: '${stats.reportsPending}',
                 label: DiscProfile.adminHomeStatReports,
                 icon: Icons.flag_outlined,
+                onTap: onReportsTap,
               ),
             ),
             const SizedBox(width: 10),
@@ -278,10 +259,14 @@ class _StatsRow extends StatelessWidget {
   const _StatsRow({
     required this.verificationsCount,
     required this.reportsCount,
+    required this.onVerificationsTap,
+    required this.onReportsTap,
   });
 
   final int verificationsCount;
   final int reportsCount;
+  final VoidCallback onVerificationsTap;
+  final VoidCallback onReportsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -292,6 +277,7 @@ class _StatsRow extends StatelessWidget {
             value: '$verificationsCount',
             label: DiscProfile.adminHomeStatVerifications,
             icon: Icons.verified_user_outlined,
+            onTap: onVerificationsTap,
           ),
         ),
         const SizedBox(width: 10),
@@ -300,6 +286,7 @@ class _StatsRow extends StatelessWidget {
             value: '$reportsCount',
             label: DiscProfile.adminHomeStatReports,
             icon: Icons.flag_outlined,
+            onTap: onReportsTap,
           ),
         ),
       ],
@@ -312,43 +299,53 @@ class _StatTile extends StatelessWidget {
     required this.value,
     required this.label,
     required this.icon,
+    this.onTap,
   });
 
   final String value;
   final String label;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
+    return Material(
+      color: theme.colorScheme.surface,
+      borderRadius: DiscoveryStyles.cardBorderRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: DiscoveryStyles.cardBorderRadius,
-        color: theme.colorScheme.surface,
-        border: Border.all(color: AppColors.adminBorder30),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.adminAccentMid, size: 22),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w900,
-              ),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: DiscoveryStyles.cardBorderRadius,
+            border: Border.all(color: AppColors.adminBorder30),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            child: Column(
+              children: [
+                Icon(icon, color: AppColors.adminAccentMid, size: 22),
+                const SizedBox(height: 8),
+                Text(
+                  value,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -362,107 +359,10 @@ class _StatsLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SizedBox(
       height: 96,
-      child: DiscoveryListSkeleton(rowCount: 1, rowHeight: 80, padding: EdgeInsets.symmetric(horizontal: 16)),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.badge = 0,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final int badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: theme.colorScheme.surface,
-      borderRadius: DiscoveryStyles.cardBorderRadius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: DiscoveryStyles.cardBorderRadius,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: DiscoveryStyles.cardBorderRadius,
-            border: Border.all(
-              color: AppColors.adminBorder30.withValues(alpha: 0.7),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.adminBg12,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.adminBorder30),
-                  ),
-                  child: Icon(icon, color: AppColors.adminAccentMid),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: AppFonts.display,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (badge > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.notificationDot,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$badge',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-              ],
-            ),
-          ),
-        ),
+      child: DiscoveryListSkeleton(
+        rowCount: 1,
+        rowHeight: 80,
+        padding: EdgeInsets.symmetric(horizontal: 16),
       ),
     );
   }

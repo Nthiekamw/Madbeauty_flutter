@@ -8,6 +8,11 @@ double? parsePrestataireServicePrice(String raw) {
   var text = raw.trim();
   if (text.isEmpty) return null;
   text = text.replaceAll(RegExp(r'[€\s\u00A0]'), '').replaceAll(',', '.');
+  // Retire un séparateur décimal final (« 36. ») laissé en cours de saisie.
+  if (text.endsWith('.')) {
+    text = text.substring(0, text.length - 1);
+  }
+  if (text.isEmpty) return null;
   return double.tryParse(text);
 }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/domain/user/lieu_travail.dart';
 import '../../prestataire/models/horaire_day_draft.dart';
+import '../../prestataire/models/prestataire_service_catalog_selection.dart';
 import '../../prestataire/models/prestataire_service_field_set.dart';
 import '../../prestataire/models/weekly_jour_horaire.dart';
 import '../../../core/logic/address/postal_country_format.dart';
@@ -61,6 +62,7 @@ abstract final class PrestataireHubOnboardingDraft {
             conditionsService: existing.conditionsService,
             services: existing.services,
             horaires: existing.horaires,
+            catalogSelection: existing.catalogSelection,
           );
     await BecomePrestataireDraftStore.instance.save(
       current.copyWith(step2Started: true, hub: hub),
@@ -86,6 +88,7 @@ abstract final class PrestataireHubOnboardingDraft {
     required Set<String> confortClient,
     required Set<String> conditionsService,
     required List<PrestataireServiceFieldSet> services,
+    required PrestataireServiceCatalogSelection catalogSelection,
     List<WeeklyJourHoraire>? horaireWeek,
   }) async {
     if (!isActive) return;
@@ -128,6 +131,7 @@ abstract final class PrestataireHubOnboardingDraft {
           )
           .toList(),
       horaires: horaires,
+      catalogSelection: catalogSelection.toJson(),
     );
 
     await BecomePrestataireDraftStore.instance.save(
@@ -237,6 +241,19 @@ abstract final class PrestataireHubOnboardingDraft {
       pays: address.pays.trim().isEmpty
           ? 'FR'
           : address.pays.trim().toUpperCase(),
+    );
+  }
+
+  static PrestataireServiceCatalogSelection? catalogSelectionFromHub(
+    BecomePrestataireHubDraft hub,
+  ) {
+    final raw = hub.catalogSelection;
+    if (raw != null && raw.isNotEmpty) {
+      return PrestataireServiceCatalogSelection.fromJson(raw);
+    }
+    if (hub.services.isEmpty) return null;
+    return PrestataireServiceCatalogSelection.fromServiceDrafts(
+      hub.services.map((s) => (nom: s.nom, categorieId: s.categorieId)),
     );
   }
 

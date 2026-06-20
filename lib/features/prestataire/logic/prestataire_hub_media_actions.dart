@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -98,15 +102,23 @@ abstract final class PrestataireHubMediaActions {
       return;
     }
 
-    final picked = await ImagePicker().pickVideo(
-      source: ImageSource.gallery,
-      maxDuration: const Duration(minutes: 2),
+    final picked = await FilePicker.pickFiles(
+      type: FileType.video,
+      allowMultiple: false,
+      withData: true,
     );
-    if (picked == null) return;
+    final platformFile = picked?.files.singleOrNull;
+    if (platformFile == null) return;
 
-    final uploadFile = await StorageUploadFile.fromXFile(picked);
+    final uploadFile = StorageUploadFile(
+      bytes: platformFile.bytes ?? await _readPlatformFileBytes(platformFile),
+      fileName: platformFile.name,
+      mimeType: _guessVideoMimeType(platformFile.name),
+      localPath: platformFile.path,
+    );
+
     try {
-      StorageService.validateVideoFile(uploadFile);
+      StorageService.validateVideoFile(uploadFile, pickedAsVideo: true);
     } on AppFailure catch (e) {
       if (!context.mounted) return;
       form.setGalleryError(e.message);
@@ -121,6 +133,34 @@ abstract final class PrestataireHubMediaActions {
     );
     form.addPendingGalleryUpload(pending);
     await _persistGalleryUpload(ref, form, pending);
+  }
+
+  static Future<Uint8List> _readPlatformFileBytes(PlatformFile file) async {
+    if (file.bytes != null) return file.bytes!;
+    final path = file.path;
+    if (path == null) {
+      throw StateError('Fichier vidéo illisible');
+    }
+    return File(path).readAsBytes();
+  }
+
+  static String? _guessVideoMimeType(String? fileName) {
+    final ext = fileName?.split('.').last.toLowerCase();
+    return switch (ext) {
+      'mov' || 'qt' => 'video/quicktime',
+      'webm' => 'video/webm',
+      'm4v' => 'video/x-m4v',
+      'avi' => 'video/x-msvideo',
+      'mkv' => 'video/x-matroska',
+      '3gp' => 'video/3gpp',
+      '3g2' => 'video/3gpp2',
+      'wmv' => 'video/x-ms-wmv',
+      'flv' => 'video/x-flv',
+      'ogv' || 'ogg' => 'video/ogg',
+      'mpeg' || 'mpg' => 'video/mpeg',
+      'ts' || 'm2ts' || 'mts' => 'video/mp2t',
+      _ => 'video/mp4',
+    };
   }
 
   static Future<void> _persistGalleryUpload(

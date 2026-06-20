@@ -67,6 +67,35 @@ class UserSupportMessageService {
         },
       );
 
+  Future<List<UserSupportMessage>> listUnreadFromOthers({
+    required String threadId,
+    required String userId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'userSupportMessage.listUnreadFromOthers',
+        action: () async {
+          final rows = await _client
+              .from('user_support_messages')
+              .select()
+              .eq('thread_id', threadId)
+              .neq('sender_id', userId)
+              .eq('is_read', false)
+              .order('created_at', ascending: false);
+          return _decode((rows as List<dynamic>).cast<Map<String, dynamic>>());
+        },
+      );
+
+  Future<int> countUnreadFromOthers({
+    required String threadId,
+    required String userId,
+  }) async {
+    final list = await listUnreadFromOthers(
+      threadId: threadId,
+      userId: userId,
+    );
+    return list.length;
+  }
+
   Stream<List<UserSupportMessage>> watchMessages(String threadId) {
     final controller = StreamController<List<UserSupportMessage>>.broadcast();
     RealtimeChannel? channel;

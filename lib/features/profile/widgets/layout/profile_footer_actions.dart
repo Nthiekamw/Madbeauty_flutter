@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../services/supabase/support/user_support_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
 
-class ProfileFooterActions extends StatelessWidget {
+class ProfileFooterActions extends ConsumerWidget {
   const ProfileFooterActions({
     super.key,
     required this.onSupportUser,
@@ -16,16 +18,27 @@ class ProfileFooterActions extends StatelessWidget {
   final VoidCallback onDeleteAccount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final error = theme.colorScheme.error;
+    final supportUnread = ref.watch(userSupportUnreadCountProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         OutlinedButton.icon(
           onPressed: onSupportUser,
-          icon: const Icon(Icons.support_agent_rounded, size: 20),
+          icon: Badge(
+            isLabelVisible: supportUnread > 0,
+            label: Text(
+              supportUnread > 99 ? '99+' : '$supportUnread',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            child: const Icon(Icons.support_agent_rounded, size: 20),
+          ),
           label: const Text(DiscProfile.supportUser),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -33,11 +46,17 @@ class ProfileFooterActions extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          DiscProfile.supportUserHint,
+          supportUnread > 0
+              ? DiscProfile.supportUserUnreadHint(supportUnread)
+              : DiscProfile.supportUserHint,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: supportUnread > 0
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
             fontFamily: AppFonts.body,
+            fontWeight:
+                supportUnread > 0 ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
         const SizedBox(height: 12),

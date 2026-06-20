@@ -76,6 +76,17 @@ class PrestataireHubFieldErrors {
   bool get horairesValid => horairesError == null;
 }
 
+/// Première étape obligatoire (0–3) non valide lors de l'enregistrement du profil.
+class PrestataireMandatoryStepFailure {
+  const PrestataireMandatoryStepFailure({
+    required this.step,
+    required this.message,
+  });
+
+  final int step;
+  final String message;
+}
+
 abstract final class PrestataireHubValidation {
   PrestataireHubValidation._();
 
@@ -259,7 +270,7 @@ abstract final class PrestataireHubValidation {
   }
 
   /// Première étape obligatoire (0–3) non valide, ou `null` si tout est OK.
-  static int? firstMandatoryStepFailure({
+  static PrestataireMandatoryStepFailure? firstMandatoryStepFailure({
     required PrestataireHubFieldErrors Function() validateVitrineFn,
     required PrestataireHubFieldErrors Function() validateLocationFn,
     required PrestataireHubFieldErrors Function() validateServicesFn,
@@ -268,20 +279,83 @@ abstract final class PrestataireHubValidation {
   }) {
     var errors = validateVitrineFn();
     applyErrors(errors);
-    if (!errors.vitrineValid) return 0;
+    if (!errors.vitrineValid) {
+      return PrestataireMandatoryStepFailure(
+        step: 0,
+        message: _mandatoryFailureMessage(
+          stepLabel: DiscPrestaForm.stepBasics,
+          detail: _firstError([
+                errors.avatarError,
+                errors.nomError,
+                errors.descriptionError,
+                errors.experienceProError,
+              ]) ??
+              DiscPrestaForm.hubSaveBlockedVitrineFallback,
+        ),
+      );
+    }
 
     errors = validateLocationFn();
     applyErrors(errors);
-    if (!errors.locationValid) return 1;
+    if (!errors.locationValid) {
+      return PrestataireMandatoryStepFailure(
+        step: 1,
+        message: _mandatoryFailureMessage(
+          stepLabel: DiscPrestaForm.stepLocation,
+          detail: _firstError([
+                errors.villeError,
+                errors.codePostalError,
+                errors.adresseError,
+                errors.lieuTravailError,
+              ]) ??
+              DiscPrestaForm.hubSaveBlockedLocationFallback,
+        ),
+      );
+    }
 
     errors = validateServicesFn();
     applyErrors(errors);
-    if (!errors.servicesValid) return 2;
+    if (!errors.servicesValid) {
+      return PrestataireMandatoryStepFailure(
+        step: 2,
+        message: _mandatoryFailureMessage(
+          stepLabel: DiscPrestaForm.stepServices,
+          detail: errors.pricingError ??
+              errors.servicesError ??
+              DiscPrestaForm.hubSaveBlockedServicesFallback,
+        ),
+      );
+    }
 
     errors = validateHorairesFn();
     applyErrors(errors);
-    if (!errors.horairesValid) return 3;
+    if (!errors.horairesValid) {
+      return PrestataireMandatoryStepFailure(
+        step: 3,
+        message: _mandatoryFailureMessage(
+          stepLabel: DiscPrestaForm.stepHoraires,
+          detail: errors.horairesError ??
+              DiscPrestaForm.hubSaveBlockedHorairesFallback,
+        ),
+      );
+    }
 
+    return null;
+  }
+
+  static String _mandatoryFailureMessage({
+    required String stepLabel,
+    required String detail,
+  }) =>
+      DiscPrestaForm.hubSaveBlockedMessage(
+        stepLabel: stepLabel,
+        detail: detail,
+      );
+
+  static String? _firstError(Iterable<String?> values) {
+    for (final value in values) {
+      if (value != null && value.trim().isNotEmpty) return value.trim();
+    }
     return null;
   }
 }

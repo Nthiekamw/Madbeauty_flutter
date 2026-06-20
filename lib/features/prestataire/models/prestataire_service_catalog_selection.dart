@@ -21,6 +21,120 @@ class PrestataireServiceCatalogSelection {
   final Map<PrestaMainService, Set<String>> specialtyIdsByMain;
   final Map<PrestaMainService, List<String>> customSpecialtiesByMain;
 
+  Map<String, dynamic> toJson() => {
+        'selectedMains': selectedMains.map((m) => m.name).toList(),
+        'specialtyIdsByMain': {
+          for (final entry in specialtyIdsByMain.entries)
+            entry.key.name: entry.value.toList(),
+        },
+        'customSpecialtiesByMain': {
+          for (final entry in customSpecialtiesByMain.entries)
+            entry.key.name: List<String>.from(entry.value),
+        },
+      };
+
+  factory PrestataireServiceCatalogSelection.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    PrestaMainService? mainFromName(String name) {
+      for (final main in PrestaMainService.values) {
+        if (main.name == name) return main;
+      }
+      return null;
+    }
+
+    final mains = <PrestaMainService>{};
+    for (final raw in json['selectedMains'] as List? ?? const []) {
+      final main = mainFromName(raw.toString());
+      if (main != null) mains.add(main);
+    }
+
+    final specsByMain = <PrestaMainService, Set<String>>{};
+    final specsRaw = json['specialtyIdsByMain'];
+    if (specsRaw is Map) {
+      for (final entry in specsRaw.entries) {
+        final main = mainFromName(entry.key.toString());
+        if (main == null) continue;
+        specsByMain[main] = (entry.value as List? ?? const [])
+            .map((e) => e.toString())
+            .toSet();
+      }
+    }
+
+    final customByMain = <PrestaMainService, List<String>>{};
+    final customRaw = json['customSpecialtiesByMain'];
+    if (customRaw is Map) {
+      for (final entry in customRaw.entries) {
+        final main = mainFromName(entry.key.toString());
+        if (main == null) continue;
+        customByMain[main] = (entry.value as List? ?? const [])
+            .map((e) => e.toString())
+            .toList();
+      }
+    }
+
+    return PrestataireServiceCatalogSelection(
+      selectedMains: mains,
+      specialtyIdsByMain: specsByMain,
+      customSpecialtiesByMain: customByMain,
+    );
+  }
+
+  /// Reconstruit la sélection à partir de services brouillon (rétrocompatibilité).
+  factory PrestataireServiceCatalogSelection.fromServiceDrafts(
+    Iterable<({String nom, String? categorieId})> drafts,
+  ) {
+    final mains = <PrestaMainService>{};
+    final specsByMain = <PrestaMainService, Set<String>>{};
+    final customByMain = <PrestaMainService, List<String>>{};
+
+    for (final draft in drafts) {
+      final nom = draft.nom.trim();
+      if (nom.isEmpty) continue;
+
+      final catId = draft.categorieId?.trim();
+      if (catId != null && catId.isNotEmpty) {
+        final spec = PrestataireServiceCatalog.specialtyByCategoryId(catId);
+        if (spec != null) {
+          final main = PrestataireServiceCatalog.mainForSpecialty(spec);
+          mains.add(main);
+          specsByMain.putIfAbsent(main, () => {}).add(spec.id);
+          continue;
+        }
+        final main = PrestataireServiceCatalog.mainForCategoryId(catId);
+        if (main != null) {
+          mains.add(main);
+          customByMain.putIfAbsent(main, () => []).add(nom);
+          continue;
+        }
+      }
+
+      PrestaCatalogSpecialty? matched;
+      for (final spec in PrestataireServiceCatalog.allSpecialties) {
+        if (spec.label.toLowerCase() == nom.toLowerCase()) {
+          matched = spec;
+          break;
+        }
+      }
+      if (matched != null) {
+        final main = PrestataireServiceCatalog.mainForSpecialty(matched);
+        mains.add(main);
+        specsByMain.putIfAbsent(main, () => {}).add(matched.id);
+      } else {
+        final main =
+            _guessMainFromSuggestionLabel(nom) ?? PrestaMainService.coiffure;
+        mains.add(main);
+        customByMain.putIfAbsent(main, () => []).add(nom);
+      }
+    }
+
+    return PrestataireServiceCatalogSelection(
+      selectedMains: mains,
+      specialtyIdsByMain: specsByMain,
+      customSpecialtiesByMain: customByMain,
+    );
+  }
+
   factory PrestataireServiceCatalogSelection.fromProfileData({
     required Set<String> selectedCategoryIds,
     required List<PrestataireServiceFormData> services,
@@ -134,7 +248,38 @@ class PrestataireServiceCatalogSelection {
       for (final s in existing)
         s.nom.trim().toLowerCase(): s,
     };
+    final existingById = {
+      for (final s in existing)
+        if (s.id != null && s.id!.trim().isNotEmpty) s.id!: s,
+    };
     final out = <PrestataireServiceFormData>[];
+
+    PrestataireServiceFormData? resolveExisting({
+      required String nom,
+      String? categorieId,
+    }) {
+      final key = nom.trim().toLowerCase();
+      final direct = existingByName[key];
+      if (direct != null) return direct;
+
+      if (categorieId != null && categorieId.trim().isNotEmpty) {
+        final sameCategory = existing
+            .where((s) => s.categorieId == categorieId)
+            .toList(growable: false);
+        if (sameCategory.length == 1) return sameCategory.first;
+      }
+
+      for (final candidate in existing) {
+        final existingKey = candidate.nom.trim().toLowerCase();
+        if (existingKey.isEmpty) continue;
+        if (existingKey == key ||
+            existingKey.contains(key) ||
+            key.contains(existingKey)) {
+          return candidate;
+        }
+      }
+      return null;
+    }
 
     void addIfNew({
       required String nom,
@@ -143,11 +288,15 @@ class PrestataireServiceCatalogSelection {
       double prix = 0,
       int dureeMinutes = 60,
     }) {
-      final key = nom.trim().toLowerCase();
-      final prev = existingByName[key];
+      final prev = resolveExisting(nom: nom, categorieId: categorieId);
+      final resolvedId = prev?.id ?? existingId;
+      if (resolvedId != null && existingById.containsKey(resolvedId)) {
+        // Évite de réutiliser deux fois la même ligne existante.
+        existingById.remove(resolvedId);
+      }
       out.add(
         PrestataireServiceFormData(
-          id: prev?.id ?? existingId,
+          id: resolvedId,
           nom: nom,
           categorieId: categorieId ?? prev?.categorieId,
           prix: prev?.prix ?? prix,

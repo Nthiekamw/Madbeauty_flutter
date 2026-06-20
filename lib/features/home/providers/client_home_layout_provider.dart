@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../models/client_home_layout.dart';
 import '../models/client_home_section_id.dart';
-import '../providers/home_feed_provider.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 
@@ -95,7 +94,6 @@ List<ClientHomeSectionId> visibleClientHomeSections({
   required ClientHomeLayout layout,
   required bool isLoggedIn,
   required bool hasSupabase,
-  required bool hasFeedSelection,
 }) {
   final out = <ClientHomeSectionId>[];
   for (final id in layout.order) {
@@ -107,7 +105,7 @@ List<ClientHomeSectionId> visibleClientHomeSections({
       case ClientHomeSectionId.promo:
         out.add(id);
       case ClientHomeSectionId.feed:
-        if (hasSupabase && hasFeedSelection) out.add(id);
+        if (hasSupabase) out.add(id);
       case ClientHomeSectionId.nearby:
         if (hasSupabase) out.add(id);
       case ClientHomeSectionId.topRated:
@@ -147,9 +145,4 @@ bool clientHomeIsLoggedIn(WidgetRef ref) {
   final user = ref.watch(authNotifierProvider).asData?.value;
   final isGuest = ref.watch(isGuestBrowsingProvider);
   return user != null && !isGuest;
-}
-
-bool clientHomeHasFeedSelection(WidgetRef ref) {
-  final selection = ref.watch(homeFeedSelectionProvider);
-  return selection?.showsFeedSection ?? false;
 }

@@ -216,6 +216,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       confortClient: selectedComfortIds,
       conditionsService: selectedConditionIds,
       services: services,
+      catalogSelection: catalogSelection,
       horaireWeek: horaireWeek,
     );
   }
@@ -266,6 +267,11 @@ class PrestataireHubFormController extends ChangeNotifier {
         horairesFromDraft = true;
       },
     );
+    final restoredCatalog =
+        PrestataireHubOnboardingDraft.catalogSelectionFromHub(hub);
+    if (restoredCatalog != null) {
+      catalogSelection = restoredCatalog;
+    }
     hubDraftApplied = true;
     loadProfessionalExperiencesFromControllers();
     hydratePostalFieldsFromStored();
@@ -475,7 +481,7 @@ class PrestataireHubFormController extends ChangeNotifier {
     );
   }
 
-  int? firstMandatoryStepFailure() {
+  PrestataireMandatoryStepFailure? firstMandatoryStepFailure() {
     return PrestataireHubValidation.firstMandatoryStepFailure(
       validateVitrineFn: _validateVitrineFields,
       validateLocationFn: _validateLocationFields,
@@ -483,6 +489,35 @@ class PrestataireHubFormController extends ChangeNotifier {
       validateHorairesFn: _validateHorairesFields,
       applyErrors: applyFieldErrors,
     );
+  }
+
+  /// Restaure services + catalogue depuis le brouillon hub (après échec d'enregistrement).
+  void restoreServicesFromHubDraft() {
+    if (!PrestataireHubOnboardingDraft.isActive) return;
+    final hub = PrestataireHubOnboardingDraft.readHub();
+    if (hub == null) return;
+
+    final restoredCatalog =
+        PrestataireHubOnboardingDraft.catalogSelectionFromHub(hub);
+    if (restoredCatalog != null) {
+      catalogSelection = restoredCatalog;
+    }
+    disposeServices();
+    for (final draft in hub.services) {
+      services.add(
+        PrestataireServiceFieldSet(
+          id: draft.id,
+          nom: draft.nom,
+          description: draft.description,
+          categorieId: draft.categorieId,
+          prix: draft.prix,
+          duree: draft.duree,
+        ),
+      );
+    }
+    servicesError = null;
+    pricingError = null;
+    notifyListeners();
   }
 
   void syncServicesFromCatalog() {
@@ -807,13 +842,14 @@ class PrestataireHubFormController extends ChangeNotifier {
     servicesError = null;
     pricingError = null;
     syncServicesFromCatalog();
+    _schedulePersistHubDraft();
   }
 
   void onPricingChanged() {
     if (services.any(isServiceWizardConfigured)) {
       pricingError = null;
     }
-    notifyListeners();
+    _schedulePersistHubDraft();
   }
 
   void toggleHoraireDay(int index, bool enabled) {
@@ -863,7 +899,8 @@ class PrestataireHubFormController extends ChangeNotifier {
       if (!validateLocation()) return false;
       _currentStep = 2;
     } else if (step == 2) {
-      if (!validateServices(forWizardAdvance: true)) return false;
+      if (!validateServices()) return false;
+      unawaited(_persistOnboardingHubDraft());
       _currentStep = 3;
     } else if (step == 3) {
       if (!validateHoraires()) return false;

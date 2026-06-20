@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/user/user_profile.dart';
+import '../../../../services/notifications/in_app_notification_audience.dart';
 import '../../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../notifications/widgets/in_app_notifications_sheet.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
@@ -40,7 +41,11 @@ class ClientWorkspaceHeader extends ConsumerWidget {
     final authUser = ref.watch(authNotifierProvider).asData?.value;
     final isGuest = ref.watch(isGuestBrowsingProvider);
     final profileSnapshot = ref.watch(homeProfileSnapshotProvider).asData?.value;
-    final unreadNotif = ref.watch(unreadInAppNotificationsCountProvider);
+    final unreadNotif = ref.watch(
+      scopedUnreadInAppNotificationsCountProvider(
+        InAppNotificationAudience.client,
+      ),
+    );
 
     final greetingName = _resolveGreetingName(
       isGuest: isGuest,
@@ -316,7 +321,11 @@ class _ClientHeaderActions extends ConsumerWidget {
           size: buttonSize,
           iconSize: iconSize,
           gap: 0,
-          onTap: () => showInAppNotificationsSheet(context, ref),
+          onTap: () => showInAppNotificationsSheet(
+            context,
+            ref,
+            audience: InAppNotificationAudience.client,
+          ),
         ),
       ],
     );

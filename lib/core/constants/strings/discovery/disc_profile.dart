@@ -59,6 +59,17 @@ abstract final class DiscProfile {
   static const adminSectionSubtitle =
       'Outils de modération et de gestion de la plateforme';
   static const adminBackofficeLabel = 'Back-office';
+  static const adminModerationHubTitle = 'Modération & contenus';
+  static const adminModerationHubBody =
+      'Vérifications prestataires, signalements et galerie des réalisations.';
+  static const adminSupportHubTitle = 'Support & signalements';
+  static const adminSupportHubBody =
+      'Bugs remontés par les utilisateurs et fils de support.';
+  static const adminManagementHubTitle = 'Gestion de la plateforme';
+  static const adminManagementHubBody =
+      'Utilisateurs, réservations, tarifs, notifications et journal d’audit.';
+  static const adminHomeQuickAccessTitle = 'Accès rapide';
+
   static const adminHomeWelcomeTitle = 'Espace administrateur';
   static const adminHomeWelcomeBody =
       'Gère la modération, les vérifications et les signalements de la plateforme.';
@@ -115,6 +126,8 @@ abstract final class DiscProfile {
       'ou applique un signalement, un avertissement ou un bannissement.';
   static const adminRealisationPhotosSearchHint = 'Salon, nom ou e-mail…';
   static const adminRealisationPhotosEmpty = 'Aucune photo de réalisation.';
+  static String adminRealisationPhotosUserMediaCount(int count) =>
+      '$count média${count > 1 ? 's' : ''}';
   static const adminRealisationPhotosDownload = 'Ouvrir / télécharger';
   static const adminRealisationPhotosDelete = 'Supprimer';
   static const adminRealisationPhotosFlagObscene = 'Signaler (obscène)';
@@ -373,6 +386,10 @@ abstract final class DiscProfile {
   static const deleteAccount = 'Supprimer mon compte';
   static const supportUser = 'Support utilisateur';
   static const supportUserHint = 'Discuter avec l’admin';
+  static String supportUserUnreadHint(int count) =>
+      count == 1
+          ? '1 message non lu de l’équipe'
+          : '$count messages non lus de l’équipe';
 
   static const deleteAccountTitle = 'Supprimer le compte ?';
   static const deleteAccountBody =
@@ -411,6 +428,20 @@ abstract final class DiscProfile {
   static const becomePrestaBenefit2 = 'Agenda et réservations';
   static const becomePrestaBenefit3 = 'Portfolio de réalisations';
   static const becomePrestaCta = 'Commencer';
+
+  static const becomeClientCardTitle = 'Réserver en tant que cliente';
+  static const becomeClientCardBody =
+      'Active ton espace client pour découvrir des prestataires, réserver et gérer tes rendez-vous.';
+  static const becomeClientBenefit1 = 'Recherche et réservation en quelques clics';
+  static const becomeClientBenefit2 = 'Historique et favoris';
+  static const becomeClientBenefit3 = 'Messages avec les prestataires';
+  static const becomeClientCta = 'Activer l’espace client';
+
+  static const becomeClientScreenTitle = 'Espace cliente';
+  static const becomeClientScreenBody =
+      'Tu restes prestataire : tu pourras basculer entre les deux espaces depuis ton profil.';
+  static const becomeClientScreenSubmit = 'Activer l’espace client';
+  static const becomeClientSuccess = 'Espace client activé. Tu peux réserver dès maintenant.';
 
   static const becomePrestaScreenStep = 'Étape 1 sur 3';
   static const becomePrestaHubStep = 'Étape 2 sur 3';

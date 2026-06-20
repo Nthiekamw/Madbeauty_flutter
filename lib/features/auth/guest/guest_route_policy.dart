@@ -12,6 +12,7 @@ abstract final class GuestRoutePolicy {
     if (isPublicPrestataireProfilePath(location)) return false;
     return location.startsWith('/prestataire/') ||
         location == AppRoutes.becomePrestataire ||
+        location == AppRoutes.becomeClient ||
         location == AppRoutes.role;
   }
 

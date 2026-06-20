@@ -22,6 +22,7 @@ class BecomePrestataireHubDraft {
     this.conditionsService = const [],
     this.services = const [],
     this.horaires = const [],
+    this.catalogSelection,
   });
 
   final int currentStep;
@@ -43,6 +44,7 @@ class BecomePrestataireHubDraft {
   final List<String> conditionsService;
   final List<BecomePrestataireHubServiceDraft> services;
   final List<HoraireDayDraft> horaires;
+  final Map<String, dynamic>? catalogSelection;
 
   bool get hasContent =>
       currentStep > 0 ||
@@ -75,6 +77,7 @@ class BecomePrestataireHubDraft {
         'conditionsService': conditionsService,
         'services': services.map((s) => s.toJson()).toList(),
         'horaires': horaires.map((h) => h.toJson()).toList(),
+        if (catalogSelection != null) 'catalogSelection': catalogSelection,
       };
 
   static BecomePrestataireHubDraft? fromJson(Object? raw) {
@@ -126,6 +129,9 @@ class BecomePrestataireHubDraft {
           const [],
       services: services,
       horaires: horaires,
+      catalogSelection: json['catalogSelection'] is Map
+          ? Map<String, dynamic>.from(json['catalogSelection'] as Map)
+          : null,
     );
   }
 }

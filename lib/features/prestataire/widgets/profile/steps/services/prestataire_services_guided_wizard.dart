@@ -22,6 +22,7 @@ class PrestataireServicesGuidedWizard extends StatefulWidget {
     this.pricingError,
     required this.onCatalogChanged,
     required this.onPricingChanged,
+    this.externalPricing = false,
   });
 
   final PrestataireServiceCatalogSelection catalogSelection;
@@ -30,6 +31,7 @@ class PrestataireServicesGuidedWizard extends StatefulWidget {
   final String? pricingError;
   final VoidCallback onCatalogChanged;
   final VoidCallback onPricingChanged;
+  final bool externalPricing;
 
   @override
   State<PrestataireServicesGuidedWizard> createState() =>
@@ -56,9 +58,12 @@ class _PrestataireServicesGuidedWizardState
       _activeSpecialtyId = null;
       _activeCustomSpecialty = null;
       _step = ServicesWizardStep.specialty;
-      widget.catalogSelection.selectedMains.add(main);
     });
-    widget.onCatalogChanged();
+  }
+
+  void _onPricingChanged() {
+    widget.onPricingChanged();
+    setState(() {});
   }
 
   void _openSpecialty({String? specialtyId, String? customLabel}) {
@@ -70,6 +75,7 @@ class _PrestataireServicesGuidedWizardState
     }
 
     setState(() {
+      widget.catalogSelection.selectedMains.add(main);
       if (specialtyId != null) {
         widget.catalogSelection.specialtyIdsByMain
             .putIfAbsent(main, () => {})
@@ -90,6 +96,9 @@ class _PrestataireServicesGuidedWizardState
       _step = ServicesWizardStep.pricing;
     });
     widget.onCatalogChanged();
+    if (widget.externalPricing) {
+      setState(() => _step = ServicesWizardStep.specialty);
+    }
   }
 
   void _deselectCatalogSpecialty(String specialtyId) {
@@ -263,7 +272,7 @@ class _PrestataireServicesGuidedWizardState
                   specialtyLabel: _activeSpecialtyLabel(),
                   service: _activeServiceField(),
                   pricingError: widget.pricingError,
-                  onPricingChanged: widget.onPricingChanged,
+                  onPricingChanged: _onPricingChanged,
                   onAnotherSpecialty: () => setState(() {
                     _step = ServicesWizardStep.specialty;
                     _activeSpecialtyId = null;

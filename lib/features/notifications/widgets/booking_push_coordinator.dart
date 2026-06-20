@@ -9,13 +9,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/booking/providers/booking_session_providers.dart'
-    show clientReservationsProvider, invalidateClientReservations;
+    show clientReservationsProvider;
 import '../../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
 import '../../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../../features/referral/logic/referral_pending_apply.dart';
 import '../../../router/app_router.dart';
 import '../../../services/notifications/booking_push_notifications.dart';
 import '../../../services/notifications/booking_reminders_sync.dart';
+import '../../../services/notifications/live_refresh.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/push_navigation.dart'
     show
@@ -47,7 +48,7 @@ class _BookingPushCoordinatorState
       ref
           .read(inAppNotificationsProvider.notifier)
           .enqueueFromRemoteMessage(msg);
-      unawaited(_onBookingPushSideEffects(msg));
+      unawaited(_onPushSideEffects(msg));
     });
     BookingPushNotifications.instance.setOnNotificationOpened((msg) {
       if (!mounted) return;
@@ -82,6 +83,10 @@ class _BookingPushCoordinatorState
         }
         _lastAuthUserIdSeen = uid;
 
+        if (uid != null) {
+          await ref.read(inAppNotificationsProvider.notifier).bindToUser(uid);
+        }
+
         final profileSvc = ref.read(profileServiceProvider);
         await BookingPushNotifications.instance.syncForUser(
           userId: uid,
@@ -104,16 +109,33 @@ class _BookingPushCoordinatorState
     );
   }
 
-  Future<void> _onBookingPushSideEffects(RemoteMessage msg) async {
+  Future<void> _onPushSideEffects(RemoteMessage msg) async {
     final type = msg.data['type'] as String?;
-    final body = (msg.notification?.body ?? msg.data['body'] as String? ?? '')
-        .toLowerCase();
-    final isBookingStatus = type == 'booking_status' ||
-        body.contains('confirmée') ||
-        body.contains('confirmee');
-    if (!isBookingStatus) return;
+    final bookingId = msg.data['booking_id'] as String? ??
+        msg.data['bookingId'] as String?;
 
-    invalidateClientReservations(ref);
+    switch (type) {
+      case 'message':
+        refreshMessagingLiveState(ref, bookingId: bookingId);
+        return;
+      case 'booking_created':
+        refreshReservationsLiveState(ref);
+        return;
+      case 'user_support_message':
+        refreshUserSupportLiveState(ref);
+        return;
+      case 'booking_status':
+        break;
+      default:
+        final body = (msg.notification?.body ?? msg.data['body'] as String? ?? '')
+            .toLowerCase();
+        final isBookingStatus = body.contains('confirmée') ||
+            body.contains('confirmee') ||
+            body.contains('annul');
+        if (!isBookingStatus) return;
+    }
+
+    refreshReservationsLiveState(ref);
     await syncClientBookingRemindersWithLoader(
       () => ref.read(clientReservationsProvider.future),
     );
@@ -122,8 +144,6 @@ class _BookingPushCoordinatorState
         () => ref.read(prestataireAgendaProvider.future),
       ),
     );
-    ref.invalidate(inAppNotificationsSyncProvider);
-    unawaited(ref.read(inAppNotificationsSyncProvider.future));
   }
 
   @override

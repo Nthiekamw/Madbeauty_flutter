@@ -9,6 +9,7 @@ import '../../features/auth/register/screens/register_email_verification_screen.
 import '../../features/auth/reset_password/routes/reset_password_route.dart';
 import '../../features/auth/role/screens/role_choice_screen.dart';
 import '../../features/auth/welcome/screens/auth_welcome_screen.dart';
+import '../../features/profile/screens/become_client_screen.dart';
 import '../../features/profile/screens/become_prestataire_screen.dart';
 import '../../features/splash/screens/startup_splash_screen.dart';
 import '../app_routes.dart';
@@ -74,5 +75,10 @@ List<RouteBase> buildAuthRoutes() => [
         name: AppRouteNames.becomePrestataire,
         path: AppRoutes.becomePrestataire,
         builder: (context, state) => const BecomePrestataireScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.becomeClient,
+        path: AppRoutes.becomeClient,
+        builder: (context, state) => const BecomeClientScreen(),
       ),
     ];

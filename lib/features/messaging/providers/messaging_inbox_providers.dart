@@ -8,11 +8,13 @@ import '../../../services/supabase/messaging/messaging_service_core_providers.da
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../models/chat_inbox_key.dart';
 import '../models/messaging_inbox_role.dart';
+import 'messaging_refresh_signal_provider.dart';
 
 export '../models/messaging_inbox_role.dart';
 
 final conversationsInboxProvider = FutureProvider.autoDispose
     .family<List<ConversationInboxItem>, MessagingInboxRole>((ref, role) async {
+  ref.watch(messagingRefreshSignalProvider);
   final service = ref.watch(messagingServiceProvider);
   final user = switch (ref.watch(authNotifierProvider)) {
     AsyncData(:final value) => value,
@@ -35,6 +37,7 @@ final conversationsInboxProvider = FutureProvider.autoDispose
 /// Total messages non lus (badge onglet + en-tête inbox). Conservé hors autoDispose.
 final messagingUnreadCountProvider =
     FutureProvider.family<int, MessagingInboxRole>((ref, role) async {
+  ref.watch(messagingRefreshSignalProvider);
   ref.listen(authNotifierProvider, (_, __) {
     ref.invalidateSelf();
   });

@@ -34,6 +34,7 @@ final bookingsPrestataireProvider =
 /// Liste des réservations client (auto-dispose hors écran ; invalidée à chaque action).
 final clientReservationsProvider =
     FutureProvider.autoDispose<List<ClientReservationSummary>>((ref) async {
+      ref.watch(reservationsRefreshSignalProvider);
       if (ref.watch(isGuestBrowsingProvider)) return const [];
 
       final service = ref.watch(bookingServiceProvider);
@@ -55,6 +56,7 @@ final clientReservationsProvider =
 
 /// Nombre de réservations « en attente » pour le badge de l'onglet Réservations.
 final clientPendingReservationsCountProvider = FutureProvider<int>((ref) async {
+  ref.watch(reservationsRefreshSignalProvider);
   final service = ref.watch(bookingServiceProvider);
   if (service == null) return 0;
 

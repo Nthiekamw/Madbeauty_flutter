@@ -75,7 +75,9 @@ Write-Host "==> Déploiement Edge Functions..."
 $functions = @(
     "on_booking_created",
     "on_booking_updated",
-    "on_message_created"
+    "on_message_created",
+    "on_bug_report_message_created",
+    "on_user_support_message_created"
 )
 foreach ($fn in $functions) {
     npx supabase functions deploy $fn --no-verify-jwt

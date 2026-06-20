@@ -7,6 +7,7 @@
 | `on_booking_created` | `INSERT reservations` | prestataire |
 | `on_booking_updated` | `UPDATE` / `DELETE reservations` | client (statut) + liste d'attente (créneau libéré) |
 | `on_message_created` | `INSERT messages` | autre participant |
+| `on_user_support_message_created` | `INSERT user_support_messages` | utilisateur ou admins |
 
 Partagé : `_shared/booking_notify.ts`
 
@@ -14,6 +15,7 @@ Partagé : `_shared/booking_notify.ts`
 npx supabase functions deploy on_booking_created --no-verify-jwt
 npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
+npx supabase functions deploy on_user_support_message_created --no-verify-jwt
 ```
 
 ## Bugs signalés (push admins + e-mail)

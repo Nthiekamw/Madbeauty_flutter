@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/user/user_profile.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../services/notifications/in_app_notification_audience.dart';
 import '../../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../notifications/widgets/in_app_notifications_sheet.dart'
     show showInAppNotificationsSheet;
@@ -61,8 +62,10 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
   @override
   Widget build(BuildContext context) {
     ref.listen<HomeFeedSelection?>(homeFeedSelectionProvider, (_, next) {
-      if (next == null || next.source == HomeFeedSource.search) return;
-      if (_searchController.text.isEmpty) return;
+      if (next == null) return;
+      final shouldClearSearch = next == HomeFeedSelection.defaultInspiration ||
+          next.source != HomeFeedSource.search;
+      if (!shouldClearSearch || _searchController.text.isEmpty) return;
       _searchController.removeListener(_onSearchChanged);
       _searchController.clear();
       _searchController.addListener(_onSearchChanged);
@@ -74,7 +77,11 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
     final authUser = ref.watch(authNotifierProvider).asData?.value;
     final profileSnapshot =
         ref.watch(homeProfileSnapshotProvider).asData?.value;
-    final unreadNotif = ref.watch(unreadInAppNotificationsCountProvider);
+    final unreadNotif = ref.watch(
+      scopedUnreadInAppNotificationsCountProvider(
+        InAppNotificationAudience.client,
+      ),
+    );
 
     final greetingName = _greetingName(
       isGuest: isGuest,
@@ -153,7 +160,11 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
                 icon: Icons.notifications_outlined,
                 tooltip: DiscHome.notificationsTooltip,
                 badgeCount: unreadNotif,
-                onPressed: () => showInAppNotificationsSheet(context, ref),
+                onPressed: () => showInAppNotificationsSheet(
+                  context,
+                  ref,
+                  audience: InAppNotificationAudience.client,
+                ),
               ),
             ],
           ),

@@ -89,6 +89,17 @@ void navigateFromPushDataWithRouter(
         );
       }
       return;
+    case 'user_support_message':
+      final threadId = _str(data, 'thread_id');
+      if (threadId != null && role == 'admin') {
+        router.pushNamed(
+          AppRouteNames.userSupportChatThread,
+          pathParameters: {'threadId': threadId},
+        );
+      } else {
+        router.pushNamed(AppRouteNames.userSupportChat);
+      }
+      return;
     case 'admin_broadcast':
       _openAdminNavTarget(router, nav, data);
       return;
@@ -114,6 +125,8 @@ Map<String, dynamic> _dataFromInApp(InAppNotification notification) {
     if (notification.nav != null) 'nav': notification.nav!,
     if (notification.bugReportId != null)
       'bug_report_id': notification.bugReportId!,
+    if (notification.threadId != null)
+      'thread_id': notification.threadId!,
   };
 }
 

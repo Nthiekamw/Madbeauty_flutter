@@ -6,15 +6,15 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/admin/admin_realisation_photo_summary.dart';
 import '../../../services/supabase/admin/admin_realisation_photos_service.dart';
-import '../../../shared/layout/discovery_responsive.dart';
-import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/app_url_launcher.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../../shared/widgets/prestataire/network_video_preview.dart';
+import '../logic/admin_realisation_photos_grouping.dart';
 import '../providers/admin_realisation_photos_provider.dart';
 import '../widgets/admin_discovery_widgets.dart';
+import '../widgets/admin_realisation_photo_user_section.dart';
 import '../widgets/admin_screen_scaffold.dart';
 
 class AdminRealisationPhotosScreen extends ConsumerStatefulWidget {
@@ -186,25 +186,50 @@ class _AdminRealisationPhotosScreenState
       context: context,
       builder: (ctx) => Dialog(
         insetPadding: const EdgeInsets.all(16),
-        child: InteractiveViewer(
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: photo.isVideo
-                ? Center(
-                    child: Icon(
-                      Icons.videocam_outlined,
-                      size: 64,
-                      color: Theme.of(ctx).colorScheme.primary,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 560),
+          child: InteractiveViewer(
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: photo.isVideo
+                  ? NetworkVideoPreview(
+                      url: photo.url,
+                      autoPlay: true,
+                      muted: false,
+                      loop: false,
+                      fit: BoxFit.contain,
+                      showControls: true,
+                      placeholderIconSize: 48,
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: photo.url,
+                      fit: BoxFit.contain,
                     ),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: photo.url,
-                    fit: BoxFit.contain,
-                  ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _handlePhotoAction(
+    AdminRealisationPhotoSummary photo,
+    AdminRealisationPhotoMenuAction action,
+  ) async {
+    switch (action) {
+      case AdminRealisationPhotoMenuAction.preview:
+        _preview(photo);
+      case AdminRealisationPhotoMenuAction.download:
+        await _download(photo);
+      case AdminRealisationPhotoMenuAction.delete:
+        await _confirmDelete(photo);
+      case AdminRealisationPhotoMenuAction.flagObscene:
+        await _confirmFlagObscene(photo);
+      case AdminRealisationPhotoMenuAction.warn:
+        await _warn(photo);
+      case AdminRealisationPhotoMenuAction.ban:
+        await _ban(photo);
+    }
   }
 
   @override
@@ -239,6 +264,10 @@ class _AdminRealisationPhotosScreenState
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
                   onPressed: _submitSearch,
                   child: const Text(DiscProfile.adminUsersSearchAction),
                 ),
@@ -256,37 +285,19 @@ class _AdminRealisationPhotosScreenState
                     body: DiscProfile.adminRealisationPhotosIntroBody,
                   );
                 }
+
+                final groups = groupAdminRealisationPhotosByUser(items);
                 return RefreshIndicator(
                   onRefresh: _refresh,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final responsive = DiscoveryResponsive.of(context);
-                      final columns = responsive.isWide
-                          ? 4
-                          : (responsive.isTablet ? 3 : 2);
-                      return GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final photo = items[index];
-                          return _PhotoModerationCard(
-                            photo: photo,
-                            dateFormat: _dateFormat,
-                            busy: _busyIds.contains(photo.id),
-                            onPreview: () => _preview(photo),
-                            onDownload: () => _download(photo),
-                            onDelete: () => _confirmDelete(photo),
-                            onFlag: () => _confirmFlagObscene(photo),
-                            onWarn: () => _warn(photo),
-                            onBan: () => _ban(photo),
-                          );
-                        },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: groups.length,
+                    itemBuilder: (context, index) {
+                      return AdminRealisationPhotoUserSection(
+                        group: groups[index],
+                        dateFormat: _dateFormat,
+                        busyIds: _busyIds,
+                        onAction: _handlePhotoAction,
                       );
                     },
                   ),
@@ -304,191 +315,6 @@ class _AdminRealisationPhotosScreenState
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PhotoModerationCard extends StatelessWidget {
-  const _PhotoModerationCard({
-    required this.photo,
-    required this.dateFormat,
-    required this.busy,
-    required this.onPreview,
-    required this.onDownload,
-    required this.onDelete,
-    required this.onFlag,
-    required this.onWarn,
-    required this.onBan,
-  });
-
-  final AdminRealisationPhotoSummary photo;
-  final DateFormat dateFormat;
-  final bool busy;
-  final VoidCallback onPreview;
-  final VoidCallback onDownload;
-  final VoidCallback onDelete;
-  final VoidCallback onFlag;
-  final VoidCallback onWarn;
-  final VoidCallback onBan;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AdminDiscoveryCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                onTap: onPreview,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (photo.isVideo)
-                      ColoredBox(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(
-                          Icons.videocam_outlined,
-                          size: 40,
-                          color: theme.colorScheme.primary,
-                        ),
-                      )
-                    else
-                      CachedNetworkImage(
-                        imageUrl: photo.url,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => const ColoredBox(
-                          color: Color(0x11000000),
-                          child: Center(
-                            child: SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        ),
-                        errorWidget: (_, __, ___) => ColoredBox(
-                          color: theme.colorScheme.errorContainer,
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: theme.colorScheme.error,
-                          ),
-                        ),
-                      ),
-                    if (photo.isVideo)
-                      const Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: EdgeInsets.all(6),
-                          child: Icon(Icons.play_circle_outline, color: Colors.white),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            photo.prestataireLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          Text(
-            dateFormat.format(photo.createdAt.toLocal()),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          if (busy)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
-          else
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                _MiniAction(
-                  icon: Icons.download_outlined,
-                  label: DiscProfile.adminRealisationPhotosDownload,
-                  onTap: onDownload,
-                ),
-                _MiniAction(
-                  icon: Icons.delete_outline,
-                  label: DiscProfile.adminRealisationPhotosDelete,
-                  onTap: onDelete,
-                  color: theme.colorScheme.error,
-                ),
-                _MiniAction(
-                  icon: Icons.report_outlined,
-                  label: DiscProfile.adminRealisationPhotosFlagObscene,
-                  onTap: onFlag,
-                  color: AppColors.errorLight,
-                ),
-                _MiniAction(
-                  icon: Icons.warning_amber_outlined,
-                  label: DiscProfile.adminRealisationPhotosWarn,
-                  onTap: onWarn,
-                ),
-                _MiniAction(
-                  icon: Icons.block,
-                  label: DiscProfile.adminRealisationPhotosBan,
-                  onTap: onBan,
-                  color: theme.colorScheme.error,
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniAction extends StatelessWidget {
-  const _MiniAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16, color: color),
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          color: color,
-        ),
-      ),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

@@ -50,10 +50,13 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
         .maybeWhen(data: (v) => v, orElse: () => 0);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(pad, 4, pad, 0),
-      child: PrestataireDetailSurface.cardMaterial(
-        theme: theme,
-        child: Column(
+      padding: EdgeInsets.fromLTRB(pad, 0, pad, 0),
+      child: Transform.translate(
+        offset: const Offset(0, -6),
+        child: PrestataireDetailSurface.cardMaterial(
+          theme: theme,
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
@@ -172,6 +175,7 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
     );
   }
 }
@@ -206,7 +210,7 @@ class _StatPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: fill,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: DiscoveryStyles.chipBorderRadius,
           border: Border.all(
             color: theme.colorScheme.outline.withValues(alpha: 0.1),
           ),

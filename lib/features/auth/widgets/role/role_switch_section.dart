@@ -15,6 +15,7 @@ import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../navigation/client_navigation.dart';
 import '../../providers/my_roles_provider.dart';
+import 'become_client_cta_card.dart';
 import 'become_prestataire_cta_card.dart';
 import 'role_space_card.dart';
 
@@ -38,10 +39,13 @@ class RoleSwitchSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final responsive = DiscoveryResponsive.of(context);
     final rolesAsync = ref.watch(myRolesProvider);
     final prestaProfileAsync = ref.watch(currentPrestataireProvider);
     final clientProfileAsync = ref.watch(currentClientProfileProvider);
     final activeRole = _activeRoleFromContext(context);
+    final forceStackOnTinyScreen =
+        MediaQuery.sizeOf(context).width < 360;
 
     return Padding(
       padding: padding,
@@ -56,11 +60,7 @@ class RoleSwitchSection extends ConsumerWidget {
           final hasPresta =
               hasPrestaByRole || hasPrestaByProfile || activeRole == 'prestataire';
 
-          final hasClientByProfile = switch (clientProfileAsync) {
-            AsyncData(:final value) => value != null,
-            _ => false,
-          };
-          final hasClient = hasClientByRole || hasClientByProfile;
+          final hasClient = hasClientByRole;
 
           /// Même logique que le profil prestataire : évite une zone vide si
           /// `user_roles` n'a pas encore (ou pas) la ligne « client ».
@@ -108,8 +108,8 @@ class RoleSwitchSection extends ConsumerWidget {
                 if (!compact) const SizedBox(height: 10),
                 _RoleSpaceCards(
                   compact: compact,
-                  stackVertically: !forceTwoColumns &&
-                      DiscoveryResponsive.of(context).stackRoleSpaceCards,
+                  stackVertically: forceStackOnTinyScreen ||
+                      (!forceTwoColumns && responsive.stackRoleSpaceCards),
                   activeRole: activeRole,
                   onClientTap: activeRole == 'client'
                       ? null
@@ -127,6 +127,10 @@ class RoleSwitchSection extends ConsumerWidget {
               ] else if (hasClient && !hasPresta) ...[
                 BecomePrestataireCtaCard(
                   onTap: () => context.pushBecomePrestataire(),
+                ),
+              ] else if (hasPresta && !hasClient) ...[
+                BecomeClientCtaCard(
+                  onTap: () => context.pushBecomeClient(),
                 ),
               ],
             ],

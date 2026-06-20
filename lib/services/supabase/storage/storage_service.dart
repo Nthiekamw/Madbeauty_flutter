@@ -127,8 +127,41 @@ class StorageService {
     final mimeType = file.mimeType?.toLowerCase().trim();
     if (mimeType != null && mimeType.startsWith('video/')) return true;
     final extension = _extensionFromFileName(file.fileName);
+    if (extension == null) return false;
+    return _isLikelyVideoExtension(extension);
+  }
+
+  static bool _isLikelyVideoExtension(String extension) {
     return switch (extension) {
-      'mp4' || 'mov' || 'm4v' || 'webm' => true,
+      'mp4' ||
+      'm4v' ||
+      'mov' ||
+      'qt' ||
+      'webm' ||
+      'avi' ||
+      'mkv' ||
+      '3gp' ||
+      '3g2' ||
+      'flv' ||
+      'wmv' ||
+      'ogv' ||
+      'ogg' ||
+      'mpeg' ||
+      'mpg' ||
+      'm2ts' ||
+      'mts' ||
+      'ts' ||
+      'hevc' ||
+      'h265' ||
+      'divx' ||
+      'xvid' ||
+      'asf' ||
+      'f4v' ||
+      'vob' ||
+      'rm' ||
+      'rmvb' ||
+      'amv' =>
+        true,
       _ => false,
     };
   }
@@ -240,35 +273,21 @@ class StorageService {
     );
   }
 
-  static void validateVideoFile(StorageUploadFile file) {
+  static void validateVideoFile(
+    StorageUploadFile file, {
+    bool pickedAsVideo = false,
+  }) {
     if (file.bytes.lengthInBytes > maxSourceVideoBytes) {
       throw const AppFailure(
         'Vidéo trop lourde. Choisis une vidéo de moins de 50 Mo.',
       );
     }
 
-    final mimeType = file.mimeType?.toLowerCase().trim();
-    final extension = _extensionFromFileName(file.fileName);
-    final supportedMime = switch (mimeType) {
-      null || '' => null,
-      'video/mp4' ||
-      'video/quicktime' ||
-      'video/webm' ||
-      'video/x-m4v' =>
-        true,
-      _ => false,
-    };
-    final supportedExtension = switch (extension) {
-      'mp4' || 'mov' || 'm4v' || 'webm' => true,
-      _ => false,
-    };
+    if (isVideoFile(file) || pickedAsVideo) return;
 
-    if ((supportedMime == false && !supportedExtension) ||
-        (supportedMime == null && !supportedExtension)) {
-      throw const AppFailure(
-        'Format vidéo non supporté. Utilise un fichier MP4, MOV ou WebM.',
-      );
-    }
+    throw const AppFailure(
+      'Fichier non reconnu comme vidéo. Choisis un fichier vidéo depuis ta galerie ou tes fichiers.',
+    );
   }
 
   static void validateImageFile(StorageUploadFile file) {
@@ -350,20 +369,30 @@ class StorageService {
 
   static String _videoExtensionForFile(StorageUploadFile file) {
     final ext = _extensionFromFileName(file.fileName);
-    return switch (ext) {
-      'mov' => 'mov',
-      'webm' => 'webm',
-      'm4v' => 'm4v',
-      _ => 'mp4',
-    };
+    if (ext != null && ext.isNotEmpty) return ext;
+    return 'mp4';
   }
 
   static String _videoContentTypeForFile(StorageUploadFile file) {
     final mimeType = file.mimeType?.toLowerCase().trim();
     if (mimeType != null && mimeType.startsWith('video/')) return mimeType;
-    return switch (_videoExtensionForFile(file)) {
-      'mov' => 'video/quicktime',
+    return _videoMimeFromExtension(_extensionFromFileName(file.fileName));
+  }
+
+  static String _videoMimeFromExtension(String? extension) {
+    return switch (extension) {
+      'mov' || 'qt' => 'video/quicktime',
       'webm' => 'video/webm',
+      'm4v' => 'video/x-m4v',
+      'avi' => 'video/x-msvideo',
+      'mkv' => 'video/x-matroska',
+      '3gp' => 'video/3gpp',
+      '3g2' => 'video/3gpp2',
+      'wmv' => 'video/x-ms-wmv',
+      'flv' => 'video/x-flv',
+      'ogv' || 'ogg' => 'video/ogg',
+      'mpeg' || 'mpg' => 'video/mpeg',
+      'ts' || 'm2ts' || 'mts' => 'video/mp2t',
       _ => 'video/mp4',
     };
   }
