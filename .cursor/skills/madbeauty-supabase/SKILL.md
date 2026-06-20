@@ -8,6 +8,15 @@ description: >-
 
 # Supabase MadBeauty
 
+## Contrainte production
+
+Concevoir chaque changement backend comme pour une application de production à très forte échelle.
+
+- prioriser intégrité des données, idempotence, sécurité et observabilité
+- éviter les opérations coûteuses, ambiguës ou risquées sous forte concurrence
+- penser indexation, volumétrie, rollback, compatibilité migration et effets de bord
+- appliquer des pratiques de backend robustes comparables à celles attendues dans les grandes applications en production
+
 ## Emplacements
 
 | Élément | Chemin |

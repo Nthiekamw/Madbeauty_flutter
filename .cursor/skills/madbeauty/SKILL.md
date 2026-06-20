@@ -11,6 +11,22 @@ description: >-
 
 # MadBeauty — contexte projet
 
+## Contrainte production (obligatoire)
+
+**Toujours raisonner comme pour une application de production utilisée à très grande échelle.**  
+Chaque tâche doit prendre en compte la robustesse, la maintenabilité, la performance, la sécurité, l'observabilité et l'évolutivité.
+
+Attendus minimums sur toute modification :
+
+- éviter les solutions fragiles ou uniquement "qui marchent en local"
+- privilégier des choix lisibles, testables et faciles à faire évoluer
+- limiter les rebuilds inutiles, appels réseau redondants et traitements coûteux
+- anticiper les cas limites, erreurs réseau, états vides et comportements concurrents
+- préserver la cohérence des données, la sécurité et les garde-fous produit
+- suivre des pratiques comparables à celles attendues dans de grandes applications en production
+
+En cas d'arbitrage, préférer la solution la plus fiable en prod plutôt que la plus rapide à coder.
+
 ## Stack
 
 - **Flutter / Dart 3.8+** — iOS & Android

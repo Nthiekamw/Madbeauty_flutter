@@ -9,6 +9,15 @@ description: >-
 
 # MadBeauty — design responsive
 
+## Contrainte production
+
+Le responsive doit être pensé pour une application de production utilisée à très grande échelle.
+
+- aucun overflow ou layout cassé sur tailles compactes, standard, tablette et large
+- privilégier des layouts robustes, prévisibles et faciles à maintenir
+- anticiper noms longs, textes dynamiques, badges, chargements, erreurs et contenu vide
+- éviter les solutions "pile pour mon téléphone" qui cassent sur d'autres devices
+
 ## Règle absolue
 
 **Toujours adapter le design à l’écran**, quel que soit le device. Chaque écran ou widget livré doit rester lisible, utilisable et esthétique sur :

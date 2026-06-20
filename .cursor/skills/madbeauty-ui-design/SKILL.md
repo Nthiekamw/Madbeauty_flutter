@@ -10,6 +10,15 @@ description: >-
 
 # MadBeauty — design UI
 
+## Contrainte production
+
+Toute décision UI doit être pensée pour une application de production utilisée à grande échelle.
+
+- viser une interface robuste, lisible et stable sur contenus réels, pas seulement sur maquettes
+- anticiper textes longs, erreurs, états async, accessibilité et densité variable de contenu
+- préférer des patterns éprouvés, cohérents et maintenables
+- éviter les effets visuels ou structures fragiles qui dégradent l'expérience sur des millions d'usages
+
 ## Règle produit (verbatim)
 
 Quand on ajoute ou change du design, ça doit **toujours** être :

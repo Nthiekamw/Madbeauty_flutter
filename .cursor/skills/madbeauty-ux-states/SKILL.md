@@ -9,6 +9,15 @@ description: >-
 
 # MadBeauty — polish UX (états async)
 
+## Contrainte production
+
+Traiter chaque état async comme pour une application de production utilisée à grande échelle.
+
+- prévoir chargement, vide, erreur, retry, offline partiel et rafraîchissement concurrent
+- éviter les transitions cassées, spinners bloquants et retours utilisateur trop vagues
+- privilégier des états fiables, cohérents et compréhensibles sur des millions d'usages
+- penser résilience produit autant que confort visuel
+
 À appliquer sur **chaque** écran ou section qui charge des données (`AsyncValue`, `FutureProvider`, pagination).
 
 Complète le skill **`madbeauty-ui-design`** (charte visuelle) et **`madbeauty-performance`** (cache images, providers).

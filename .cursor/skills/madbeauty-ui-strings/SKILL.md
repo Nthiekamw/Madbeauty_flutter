@@ -8,6 +8,15 @@ description: >-
 
 # Chaînes UI MadBeauty
 
+## Contrainte production
+
+Les textes doivent être pensés pour une application de production utilisée à grande échelle.
+
+- privilégier des libellés clairs, courts, non ambigus et compréhensibles sans contexte caché
+- anticiper erreurs réelles, cas limites, actions bloquées et messages de récupération
+- éviter les formulations floues, approximatives ou difficilement maintenables
+- préférer une microcopy précise et robuste, au niveau attendu dans de grandes applications en production
+
 ## Règle absolue
 
 **Aucun texte utilisateur en dur** dans `features/` ou `shared/widgets/`. Toujours une constante dans `lib/core/constants/strings/`.

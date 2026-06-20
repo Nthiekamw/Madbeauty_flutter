@@ -10,6 +10,15 @@ description: >-
 
 # MadBeauty — performance & stabilité
 
+## Contrainte production
+
+Traiter chaque optimisation comme si l'application devait tenir une charge de production très élevée.
+
+- privilégier les solutions stables, mesurables et maintenables
+- éviter les rebuilds, requêtes, allocations et traitements inutiles
+- penser latence, mémoire, batterie, timeouts, retry et dégradation réseau
+- éviter les optimisations fragiles qui marchent en dev mais se dégradent à grande échelle
+
 Checklist à appliquer sur **chaque** modif qui touche UI, images, uploads, providers ou Supabase.
 
 ## 1. Images réseau — cache obligatoire

@@ -1,0 +1,24 @@
+---
+description: MadBeauty — raisonner comme pour une app prod à très grande échelle (robustesse, perf, sécurité)
+alwaysApply: true
+---
+
+# MadBeauty — contrainte production
+
+Traiter **chaque requête** comme si l'application sera en production et utilisée à très grande échelle. Privilégier les pratiques des grandes applications en prod, pas des solutions « qui marchent en local ».
+
+## Attendus minimums
+
+- **Robustesse** : cas limites, erreurs réseau, états vides, concurrence, données partielles
+- **Performance** : pas de rebuilds/requêtes/traitements inutiles ; penser latence, mémoire, batterie
+- **Sécurité & données** : RLS, validation, pas de secrets en dur, cohérence des états
+- **Maintenabilité** : code lisible, testable, évolutif ; pas de micro-hacks fragiles
+- **UX prod** : messages d'erreur précis, retry, pas de perte silencieuse de saisie utilisateur
+
+## Arbitrage
+
+En cas de doute, choisir la solution **la plus fiable en prod** plutôt que la plus rapide à coder.
+
+## Skills projet
+
+Compléter avec les skills `.cursor/skills/madbeauty*` (perf, responsive, supabase, ux-states, ui-strings) selon le type de tâche.
