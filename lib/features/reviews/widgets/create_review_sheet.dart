@@ -131,111 +131,106 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final maxH = MediaQuery.sizeOf(context).height * 0.92;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+      padding: EdgeInsets.only(bottom: bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                DiscReview.rateTitle,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            DiscReview.rateTitle,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            widget.prestataireName,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontFamily: AppFonts.body,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            DiscReview.rateSubtitle,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) {
-              final star = i + 1;
-              final filled = star <= _note;
-              return Semantics(
-                label: '$star sur 5',
-                button: true,
-                selected: filled,
-                child: IconButton(
-                  onPressed: () => setState(() => _note = star),
-                  icon: Icon(
-                    filled ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: filled
-                        ? AppColors.starReview
-                        : theme.colorScheme.outline,
-                    size: 44,
+              const SizedBox(height: 6),
+              Text(
+                widget.prestataireName,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DiscReview.rateSubtitle,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final star = i + 1;
+                  final filled = star <= _note;
+                  return Semantics(
+                    label: '$star sur 5',
+                    button: true,
+                    selected: filled,
+                    child: IconButton(
+                      onPressed: () => setState(() => _note = star),
+                      icon: Icon(
+                        filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                        color: filled
+                            ? AppColors.starReview
+                            : theme.colorScheme.outline,
+                        size: 44,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              if (_note > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    DiscReview.starsSelected(_note),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.starReview,
+                    ),
                   ),
                 ),
-              );
-            }),
-          ),
-          if (_note > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                DiscReview.starsSelected(_note),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.starReview,
+              const SizedBox(height: 12),
+              ReviewPhotoPicker(
+                onChanged: (bytes, _) => setState(() => _photoBytes = bytes),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _commentController,
+                maxLines: 4,
+                minLines: 2,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: DiscReview.commentHint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-            ),
-          const SizedBox(height: 12),
-          ReviewPhotoPicker(
-            onChanged: (bytes, _) => setState(() => _photoBytes = bytes),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _commentController,
-            maxLines: 4,
-            minLines: 2,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(
-              hintText: DiscReview.commentHint,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _note >= 1 && !_submitting ? _submit : null,
+                child: _submitting
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(DiscReview.submit),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _note >= 1 && !_submitting ? _submit : null,
-            child: _submitting
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(DiscReview.submit),
-          ),
-        ],
+        ),
       ),
     );
   }
