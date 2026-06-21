@@ -1,5 +1,5 @@
 # Back-office admin MadBeauty — site statique dans web/
-# Variables Netlify requises : SUPABASE_URL, SUPABASE_ANON_KEY
+# Variables Netlify (dashboard ou CLI) : SUPABASE_URL, SUPABASE_ANON_KEY
 
 [build]
   command = "node scripts/generate_web_admin_config.js"
@@ -7,11 +7,3 @@
 
 [build.environment]
   NODE_VERSION = "22"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

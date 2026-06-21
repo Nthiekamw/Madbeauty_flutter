@@ -1,0 +1,59 @@
+# Déploie le back-office admin (dossier web/) sur Netlify.
+#
+# Secrets GitHub requis (Settings → Secrets and variables → Actions) :
+#   NETLIFY_AUTH_TOKEN  — https://app.netlify.com/user/applications#personal-access-tokens
+#   SUPABASE_URL        — même valeur que .env Flutter
+#   SUPABASE_ANON_KEY   — même valeur que .env Flutter
+#
+# Site Netlify : madbeauty-admin (ID dans le workflow)
+
+name: Deploy admin Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - features/v2
+    paths:
+      - 'web/**'
+      - 'scripts/generate_web_admin_config.js'
+      - 'netlify.toml'
+      - '.github/workflows/deploy-admin-netlify.yml'
+
+concurrency:
+  group: deploy-admin-netlify
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_SITE_ID: 8a6bc2a3-80df-46de-a1be-0c15efcc8551
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Vérifier les secrets
+        run: |
+          missing=0
+          for name in SUPABASE_URL SUPABASE_ANON_KEY NETLIFY_AUTH_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret manquant : $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Déployer sur Netlify
+        run: npx --yes netlify-cli@26.1.0 deploy --prod
