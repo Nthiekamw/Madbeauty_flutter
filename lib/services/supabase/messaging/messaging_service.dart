@@ -27,23 +27,80 @@ class MessagingService {
   Future<Conversation> getOrCreateForReservation(String reservationId) =>
       _messageService.ensureThreadForBooking(reservationId);
 
+  Future<Conversation?> getByConversationId(String conversationId) =>
+      _messageService.getConversation(conversationId);
+
   Future<Conversation?> getByBookingId(String bookingId) =>
       SupabaseErrorHandler.run(
         operation: 'messaging.getByBookingId',
         action: () async {
           final row = await _client
-              .from('conversations')
-              .select()
-              .eq('reservation_id', bookingId)
+              .from('reservations')
+              .select('client_id, prestataire_id')
+              .eq('id', bookingId)
               .maybeSingle();
           if (row == null) return null;
+          final m = Map<String, dynamic>.from(row);
+          final existing = await _client
+              .from('conversations')
+              .select()
+              .eq('client_id', m['client_id'] as String)
+              .eq('prestataire_id', m['prestataire_id'] as String)
+              .maybeSingle();
+          if (existing == null) return null;
           return SupabaseDomainCodec.conversation(
-            Map<String, dynamic>.from(row),
+            Map<String, dynamic>.from(existing),
           );
         },
       );
 
-  /// En-tête chat (nom + avatar interlocuteur) même hors liste inbox.
+  Future<ConversationInboxItem?> resolveInboxItemForConversation({
+    required String conversationId,
+    required String currentUserId,
+    required bool peerIsPrestataire,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'messaging.resolveInboxItemForConversation',
+        action: () async {
+          final conv = await getByConversationId(conversationId);
+          if (conv == null) return null;
+
+          final lastByConv = await _messageService
+              .latestMessageByConversationIds([conversationId]);
+          final unreadByConv = await _messageService
+              .unreadCountByConversationIds(
+            [conversationId],
+            currentUserId: currentUserId,
+          );
+
+          final reservationIds = <String>[
+            if (conv.reservationId != null && conv.reservationId!.isNotEmpty)
+              conv.reservationId!,
+          ];
+          final reservationMeta = await _reservationMetaById(reservationIds);
+
+          final peerId =
+              peerIsPrestataire ? conv.prestataireId : conv.clientId;
+          final peerInfo = peerIsPrestataire
+              ? await _prestatairePeerInfoById([peerId])
+              : await _clientPeerInfoById([peerId]);
+
+          final last = lastByConv[conversationId];
+          final resId = conv.reservationId;
+
+          return _toInboxItem(
+            conv: conv,
+            currentUserId: currentUserId,
+            peer: peerInfo[peerId],
+            peerIsPrestataire: peerIsPrestataire,
+            last: last,
+            unread: unreadByConv[conversationId] ?? 0,
+            reservation: resId != null ? reservationMeta[resId] : null,
+          );
+        },
+      );
+
+  @Deprecated('Use resolveInboxItemForConversation')
   Future<ConversationInboxItem?> resolveInboxItemForBooking({
     required String bookingId,
     required String currentUserId,
@@ -54,29 +111,10 @@ class MessagingService {
         action: () async {
           final conv = await getByBookingId(bookingId);
           if (conv == null) return null;
-
-          final lastByBooking =
-              await _messageService.latestMessageByBookingIds([bookingId]);
-          final unreadByBooking = await _messageService.unreadCountByBookingIds(
-            [bookingId],
+          return resolveInboxItemForConversation(
+            conversationId: conv.id,
             currentUserId: currentUserId,
-          );
-          final reservationMeta = await _reservationMetaById([bookingId]);
-
-          final peerId =
-              peerIsPrestataire ? conv.prestataireId : conv.clientId;
-          final peerInfo = peerIsPrestataire
-              ? await _prestatairePeerInfoById([peerId])
-              : await _clientPeerInfoById([peerId]);
-
-          return _toInboxItem(
-            conv: conv,
-            currentUserId: currentUserId,
-            peer: peerInfo[peerId],
             peerIsPrestataire: peerIsPrestataire,
-            last: lastByBooking[bookingId],
-            unread: unreadByBooking[bookingId] ?? 0,
-            reservation: reservationMeta[bookingId],
           );
         },
       );
@@ -128,18 +166,26 @@ class MessagingService {
 
           if (conversations.isEmpty) return [];
 
-          final bookingIds =
-              conversations.map((c) => c.reservationId).toList();
+          final conversationIds = conversations.map((c) => c.id).toList();
 
-          final lastByBooking =
-              await _messageService.latestMessageByBookingIds(bookingIds);
-          final unreadByBooking = await _messageService.unreadCountByBookingIds(
-            bookingIds,
+          final lastByConv =
+              await _messageService.latestMessageByConversationIds(
+            conversationIds,
+          );
+          final unreadByConv =
+              await _messageService.unreadCountByConversationIds(
+            conversationIds,
             currentUserId: currentUserId,
           );
 
+          final reservationIds = conversations
+              .map((c) => c.reservationId)
+              .whereType<String>()
+              .where((id) => id.isNotEmpty)
+              .toList();
+
           final reservationMeta =
-              await _reservationMetaById(bookingIds);
+              await _reservationMetaById(reservationIds);
 
           final peerIds = peerIsPrestataire
               ? conversations.map((c) => c.prestataireId).toSet().toList()
@@ -158,9 +204,11 @@ class MessagingService {
                     ? conv.prestataireId
                     : conv.clientId],
                 peerIsPrestataire: peerIsPrestataire,
-                last: lastByBooking[conv.reservationId],
-                unread: unreadByBooking[conv.reservationId] ?? 0,
-                reservation: reservationMeta[conv.reservationId],
+                last: lastByConv[conv.id],
+                unread: unreadByConv[conv.id] ?? 0,
+                reservation: conv.reservationId != null
+                    ? reservationMeta[conv.reservationId!]
+                    : null,
               ),
           ];
         },

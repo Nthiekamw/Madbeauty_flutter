@@ -24,6 +24,23 @@ class ClientProfileService {
         },
       );
 
+  Future<ClientProfile> ensureForUserId(String userId) =>
+      SupabaseErrorHandler.run(
+        operation: 'clientProfile.ensureForUserId',
+        action: () async {
+          final existing = await getByUserId(userId);
+          if (existing != null) return existing;
+
+          await _client.from('client_profiles').insert({'user_id': userId});
+
+          final created = await getByUserId(userId);
+          if (created == null) {
+            throw StateError('Impossible de créer le profil client.');
+          }
+          return created;
+        },
+      );
+
   Future<void> updateAdresse({
     required String userId,
     String? adresse,

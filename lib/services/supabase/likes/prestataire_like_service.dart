@@ -107,10 +107,15 @@ class PrestataireLikeService {
       SupabaseErrorHandler.run(
         operation: 'prestataireLike.like',
         action: () async {
-          await _client.from('prestataire_likes').insert({
-            'client_id': clientId,
-            'prestataire_id': prestataireId,
-          });
+          try {
+            await _client.from('prestataire_likes').insert({
+              'client_id': clientId,
+              'prestataire_id': prestataireId,
+            });
+          } on PostgrestException catch (e) {
+            if (e.code == '23505') return;
+            rethrow;
+          }
         },
       );
 

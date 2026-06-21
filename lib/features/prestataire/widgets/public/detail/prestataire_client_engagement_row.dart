@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
-import '../../../../../features/auth/providers/auth_notifier.dart';
 import '../../../../../features/favorites/providers/client_favorite_prestataire_ids_provider.dart';
+import '../../../../../features/likes/logic/toggle_prestataire_like.dart';
 import '../../../../../features/likes/providers/client_prestataire_likes_provider.dart';
+import '../../../../../features/auth/providers/auth_notifier.dart';
 import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../shared/theme/app_colors.dart';
@@ -14,7 +15,7 @@ import 'sections/prestataire_detail_section_layout.dart';
 import 'sections/prestataire_detail_surface.dart';
 
 /// Like (public) vs favori (privé) — carte style accueil.
-class PrestataireClientEngagementRow extends ConsumerWidget {
+class PrestataireClientEngagementRow extends ConsumerStatefulWidget {
   const PrestataireClientEngagementRow({
     super.key,
     required this.prestataireId,
@@ -22,14 +23,25 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
 
   final String prestataireId;
 
+  @override
+  ConsumerState<PrestataireClientEngagementRow> createState() =>
+      _PrestataireClientEngagementRowState();
+}
+
+class _PrestataireClientEngagementRowState
+    extends ConsumerState<PrestataireClientEngagementRow> {
   static const _likeColor = Color(0xFF2563EB);
 
+  bool _likeBusy = false;
+  bool _favoriteBusy = false;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pad = DiscoveryResponsive.of(context).horizontalPadding;
-    final isLiked = ref.watch(isPrestataireLikedProvider(prestataireId));
-    final isFavorite = ref.watch(isPrestataireFavoriteProvider(prestataireId));
+    final isLiked = ref.watch(isPrestataireLikedProvider(widget.prestataireId));
+    final isFavorite =
+        ref.watch(isPrestataireFavoriteProvider(widget.prestataireId));
 
     return Padding(
       padding: EdgeInsets.fromLTRB(pad, 18, pad, 0),
@@ -54,7 +66,8 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
                     hint: DiscLike.engagementHint,
                     active: isLiked,
                     activeColor: _likeColor,
-                    onTap: () => _toggleLike(context, ref, isLiked),
+                    enabled: !_likeBusy,
+                    onTap: _toggleLike,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -67,7 +80,8 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
                     hint: DiscFavori.engagementHint,
                     active: isFavorite,
                     activeColor: AppColors.favorite,
-                    onTap: () => _toggleFavorite(context, ref, isFavorite),
+                    enabled: !_favoriteBusy,
+                    onTap: _toggleFavorite,
                   ),
                 ),
               ],
@@ -78,40 +92,23 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _toggleLike(
-    BuildContext context,
-    WidgetRef ref,
-    bool wasLiked,
-  ) async {
-    final user = switch (ref.read(authNotifierProvider)) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
-    if (user == null) {
-      AppSnackBar.show(context, message: DiscLike.loginRequired);
-      return;
-    }
-
+  Future<void> _toggleLike() async {
+    if (_likeBusy) return;
+    setState(() => _likeBusy = true);
     try {
-      await ref
-          .read(clientLikedPrestataireIdsProvider.notifier)
-          .toggle(prestataireId);
-      if (!context.mounted) return;
-      AppSnackBar.show(
-        context,
-        message: wasLiked ? DiscLike.removedFeedback : DiscLike.addedFeedback,
+      await togglePrestataireLike(
+        context: context,
+        ref: ref,
+        prestataireId: widget.prestataireId,
       );
-    } catch (_) {
-      if (!context.mounted) return;
-      AppSnackBar.show(context, message: DiscLike.toggleError);
+    } finally {
+      if (mounted) setState(() => _likeBusy = false);
     }
   }
 
-  Future<void> _toggleFavorite(
-    BuildContext context,
-    WidgetRef ref,
-    bool wasFavorite,
-  ) async {
+  Future<void> _toggleFavorite() async {
+    if (_favoriteBusy) return;
+
     final user = switch (ref.read(authNotifierProvider)) {
       AsyncData(:final value) => value,
       _ => null,
@@ -122,11 +119,15 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
       return;
     }
 
+    final wasFavorite =
+        ref.read(isPrestataireFavoriteProvider(widget.prestataireId));
+
+    setState(() => _favoriteBusy = true);
     try {
       await ref
           .read(clientFavoritePrestataireIdsProvider.notifier)
-          .toggle(prestataireId);
-      if (!context.mounted) return;
+          .toggle(widget.prestataireId);
+      if (!mounted) return;
       AppSnackBar.show(
         context,
         message: wasFavorite
@@ -134,8 +135,10 @@ class PrestataireClientEngagementRow extends ConsumerWidget {
             : DiscFavori.addedFeedback,
       );
     } catch (_) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       AppSnackBar.show(context, message: DiscFavori.toggleError);
+    } finally {
+      if (mounted) setState(() => _favoriteBusy = false);
     }
   }
 }
@@ -148,6 +151,7 @@ class _EngagementChip extends StatelessWidget {
     required this.active,
     required this.activeColor,
     required this.onTap,
+    this.enabled = true,
   });
 
   final IconData icon;
@@ -156,6 +160,7 @@ class _EngagementChip extends StatelessWidget {
   final bool active;
   final Color activeColor;
   final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +178,7 @@ class _EngagementChip extends StatelessWidget {
         color: fill,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -197,7 +202,8 @@ class _EngagementChip extends StatelessWidget {
                       fontFamily: AppFonts.display,
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: active ? activeColor : theme.colorScheme.onSurface,
+                      color:
+                          active ? activeColor : theme.colorScheme.onSurface,
                     ),
                   ),
                 ),

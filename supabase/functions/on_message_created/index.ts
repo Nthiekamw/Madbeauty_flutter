@@ -35,29 +35,70 @@ Deno.serve(async (req) => {
 
     const senderId = String(record["sender_id"] ?? "");
     const bookingId = String(record["booking_id"] ?? "");
-    if (!senderId || !bookingId) {
+    const conversationId = String(record["conversation_id"] ?? "");
+    if (!senderId || (!bookingId && !conversationId)) {
       return new Response(
-        JSON.stringify({ ok: false, error: "sender_id ou booking_id manquant" }),
+        JSON.stringify({
+          ok: false,
+          error: "sender_id ou conversation_id/booking_id manquant",
+        }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
     const supabase = createServiceClient();
 
-    const { data: reservation } = await supabase
-      .from("reservations")
-      .select("client_id, prestataire_id")
-      .eq("id", bookingId)
-      .maybeSingle();
+    let clientProfileId = "";
+    let prestataireProfileId = "";
+    let effectiveBookingId = bookingId;
+    let effectiveConversationId = conversationId;
 
-    if (!reservation) {
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "no reservation" }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (conversationId) {
+      const { data: conv } = await supabase
+        .from("conversations")
+        .select("client_id, prestataire_id, reservation_id")
+        .eq("id", conversationId)
+        .maybeSingle();
+
+      if (!conv) {
+        return new Response(
+          JSON.stringify({ ok: true, skipped: true, reason: "no conversation" }),
+          { headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      clientProfileId = String(conv.client_id ?? "");
+      prestataireProfileId = String(conv.prestataire_id ?? "");
+      if (!effectiveBookingId && conv.reservation_id) {
+        effectiveBookingId = String(conv.reservation_id);
+      }
+    } else {
+      const { data: reservation } = await supabase
+        .from("reservations")
+        .select("client_id, prestataire_id")
+        .eq("id", bookingId)
+        .maybeSingle();
+
+      if (!reservation) {
+        return new Response(
+          JSON.stringify({ ok: true, skipped: true, reason: "no reservation" }),
+          { headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      clientProfileId = String(reservation.client_id ?? "");
+      prestataireProfileId = String(reservation.prestataire_id ?? "");
+
+      const { data: conv } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("client_id", clientProfileId)
+        .eq("prestataire_id", prestataireProfileId)
+        .maybeSingle();
+      if (conv?.id) {
+        effectiveConversationId = String(conv.id);
+      }
     }
-
-    const clientProfileId = String(reservation.client_id ?? "");
-    const prestataireProfileId = String(reservation.prestataire_id ?? "");
 
     const { data: clientRow } = await supabase
       .from("client_profiles")
@@ -115,7 +156,10 @@ Deno.serve(async (req) => {
       body,
       data: {
         type: "message",
-        booking_id: bookingId,
+        ...(effectiveConversationId
+          ? { conversation_id: effectiveConversationId }
+          : {}),
+        ...(effectiveBookingId ? { booking_id: effectiveBookingId } : {}),
       },
     });
 

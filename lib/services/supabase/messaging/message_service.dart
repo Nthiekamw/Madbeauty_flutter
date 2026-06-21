@@ -4,46 +4,71 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/supabase_error_handler.dart';
+import '../../../core/logic/messaging/reservation_chat_eligibility.dart';
+import '../../../core/logic/messaging/chat_message_moderator.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
-import '../../../core/logic/messaging/chat_message_moderator.dart';
 
-/// Couche data messagerie (réservation / booking + Supabase Realtime).
+/// Couche data messagerie (fil par paire client/prestataire + Supabase Realtime).
 class MessageService {
   MessageService(this._client);
 
   final SupabaseClient _client;
 
-  /// Crée le fil metadata si besoin (table `conversations`).
-  Future<Conversation> ensureThreadForBooking(String bookingId) =>
+  Future<Conversation?> getConversation(String conversationId) =>
       SupabaseErrorHandler.run(
-        operation: 'message.ensureThreadForBooking',
+        operation: 'message.getConversation',
+        action: () async {
+          final row = await _client
+              .from('conversations')
+              .select()
+              .eq('id', conversationId)
+              .maybeSingle();
+          if (row == null) return null;
+          return SupabaseDomainCodec.conversation(
+            Map<String, dynamic>.from(row),
+          );
+        },
+      );
+
+  /// Crée ou récupère le fil unique client ↔ prestataire.
+  Future<Conversation> ensureThreadForPair({
+    required String clientId,
+    required String prestataireId,
+    String? reservationId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.ensureThreadForPair',
         action: () async {
           final existing = await _client
               .from('conversations')
               .select()
-              .eq('reservation_id', bookingId)
+              .eq('client_id', clientId)
+              .eq('prestataire_id', prestataireId)
               .maybeSingle();
           if (existing != null) {
-            return SupabaseDomainCodec.conversation(
+            final conv = SupabaseDomainCodec.conversation(
               Map<String, dynamic>.from(existing),
             );
+            if (reservationId != null &&
+                reservationId.isNotEmpty &&
+                conv.reservationId != reservationId) {
+              await _client.from('conversations').update({
+                'reservation_id': reservationId,
+              }).eq('id', conv.id);
+              return conv.copyWith(reservationId: reservationId);
+            }
+            return conv;
           }
 
-          final reservation = await _client
-              .from('reservations')
-              .select('client_id, prestataire_id')
-              .eq('id', bookingId)
-              .single();
-
-          final row = Map<String, dynamic>.from(reservation);
           final inserted = await _client
               .from('conversations')
               .insert({
-                'client_id': row['client_id'],
-                'prestataire_id': row['prestataire_id'],
-                'reservation_id': bookingId,
+                'client_id': clientId,
+                'prestataire_id': prestataireId,
+                if (reservationId != null && reservationId.isNotEmpty)
+                  'reservation_id': reservationId,
               })
               .select()
               .single();
@@ -54,9 +79,68 @@ class MessageService {
         },
       );
 
-  /// Envoie un message sur le booking.
+  /// Ouvre le fil lié à une réservation (réutilise le fil paire client/prestataire).
+  Future<Conversation> ensureThreadForBooking(String bookingId) =>
+      SupabaseErrorHandler.run(
+        operation: 'message.ensureThreadForBooking',
+        action: () async {
+          final reservation = await _client
+              .from('reservations')
+              .select('client_id, prestataire_id')
+              .eq('id', bookingId)
+              .single();
+
+          final row = Map<String, dynamic>.from(reservation);
+          return ensureThreadForPair(
+            clientId: row['client_id'] as String,
+            prestataireId: row['prestataire_id'] as String,
+            reservationId: bookingId,
+          );
+        },
+      );
+
+  Future<String> resolveBookingContextForSend(Conversation thread) async {
+    final cached = thread.reservationId?.trim();
+    if (cached != null && cached.isNotEmpty) {
+      final row = await _client
+          .from('reservations')
+          .select('statut')
+          .eq('id', cached)
+          .maybeSingle();
+      final statut = row?['statut'];
+      if (statut is String && reservationStatutAllowsChat(statut)) {
+        return cached;
+      }
+    }
+
+    final rows = await _client
+        .from('reservations')
+        .select('id, statut, date_heure')
+        .eq('client_id', thread.clientId)
+        .eq('prestataire_id', thread.prestataireId)
+        .order('date_heure', ascending: false)
+        .limit(30);
+
+    for (final raw in rows as List<dynamic>) {
+      final m = Map<String, dynamic>.from(raw as Map);
+      final id = m['id'] as String?;
+      final statut = m['statut'];
+      if (id == null || id.isEmpty) continue;
+      if (statut is String && reservationStatutAllowsChat(statut)) {
+        return id;
+      }
+    }
+
+    for (final raw in rows as List<dynamic>) {
+      final id = (raw as Map)['id'] as String?;
+      if (id != null && id.isNotEmpty) return id;
+    }
+
+    throw StateError('Aucune réservation pour contextualiser ce message.');
+  }
+
   Future<void> send({
-    required String bookingId,
+    required String conversationId,
     required String senderId,
     required String content,
   }) =>
@@ -67,16 +151,22 @@ class MessageService {
           if (text.isEmpty) {
             throw ArgumentError('Le contenu du message est vide.');
           }
+
+          final thread = await getConversation(conversationId);
+          if (thread == null) {
+            throw StateError('Conversation introuvable.');
+          }
+          final bookingId = await resolveBookingContextForSend(thread);
+
           final recentRows = await _client
               .from('messages')
               .select('content, contenu')
-              .eq('booking_id', bookingId)
+              .eq('conversation_id', conversationId)
               .eq('sender_id', senderId)
               .order('created_at', ascending: false)
               .limit(5);
           final recentOutgoing = <String>[];
-          final rows = (recentRows as List<dynamic>).reversed;
-          for (final raw in rows) {
+          for (final raw in (recentRows as List<dynamic>).reversed) {
             final row = Map<String, dynamic>.from(raw as Map);
             final body = (row['content'] as String?)?.trim() ??
                 (row['contenu'] as String?)?.trim() ??
@@ -92,10 +182,10 @@ class MessageService {
           if (moderation.isBlocked) {
             throw MessageValidationException(moderation.primary!);
           }
-          final thread = await ensureThreadForBooking(bookingId);
+
           await _client.from('messages').insert({
             'booking_id': bookingId,
-            'conversation_id': thread.id,
+            'conversation_id': conversationId,
             'sender_id': senderId,
             'content': text,
             'contenu': text,
@@ -103,9 +193,8 @@ class MessageService {
         },
       );
 
-  /// Envoie une photo sur le fil de réservation.
   Future<void> sendImage({
-    required String bookingId,
+    required String conversationId,
     required String senderId,
     required String imageUrl,
   }) =>
@@ -116,10 +205,15 @@ class MessageService {
           if (url.isEmpty) {
             throw ArgumentError('L’URL de l’image est vide.');
           }
-          final thread = await ensureThreadForBooking(bookingId);
+          final thread = await getConversation(conversationId);
+          if (thread == null) {
+            throw StateError('Conversation introuvable.');
+          }
+          final bookingId = await resolveBookingContextForSend(thread);
+
           await _client.from('messages').insert({
             'booking_id': bookingId,
-            'conversation_id': thread.id,
+            'conversation_id': conversationId,
             'sender_id': senderId,
             'content': DiscChat.imageMessagePreview,
             'contenu': DiscChat.imageMessagePreview,
@@ -128,17 +222,17 @@ class MessageService {
         },
       );
 
-  /// Flux temps réel des messages d'une réservation.
-  Stream<List<Message>> getMessages(String bookingId) => watchMessages(bookingId);
+  Stream<List<Message>> getMessages(String conversationId) =>
+      watchMessages(conversationId);
 
-  Stream<List<Message>> watchMessages(String bookingId) {
+  Stream<List<Message>> watchMessages(String conversationId) {
     final controller = StreamController<List<Message>>.broadcast();
     RealtimeChannel? channel;
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;
 
     Future<void> emitLatest() async {
       try {
-        final list = await _fetchMessages(bookingId);
+        final list = await _fetchMessages(conversationId);
         if (!controller.isClosed) controller.add(list);
       } catch (e, st) {
         if (!controller.isClosed) controller.addError(e, st);
@@ -151,7 +245,7 @@ class MessageService {
       streamSub = _client
           .from('messages')
           .stream(primaryKey: ['id'])
-          .eq('booking_id', bookingId)
+          .eq('conversation_id', conversationId)
           .order('created_at', ascending: true)
           .listen(
             (rows) {
@@ -162,15 +256,15 @@ class MessageService {
           );
 
       channel = _client
-          .channel('messages-booking-$bookingId')
+          .channel('messages-conversation-$conversationId')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'messages',
             filter: PostgresChangeFilter(
               type: PostgresChangeFilterType.eq,
-              column: 'booking_id',
-              value: bookingId,
+              column: 'conversation_id',
+              value: conversationId,
             ),
             callback: (_) => unawaited(emitLatest()),
           )
@@ -189,9 +283,8 @@ class MessageService {
     return controller.stream;
   }
 
-  /// Marque comme livrés les messages reçus sur ce booking.
   Future<void> markAsDelivered({
-    required String bookingId,
+    required String conversationId,
     required String userId,
   }) =>
       SupabaseErrorHandler.run(
@@ -201,31 +294,29 @@ class MessageService {
           await _client
               .from('messages')
               .update({'delivered_at': now})
-              .eq('booking_id', bookingId)
+              .eq('conversation_id', conversationId)
               .neq('sender_id', userId)
               .isFilter('delivered_at', null);
         },
       );
 
-  /// Marque comme lus les messages reçus sur ce booking.
   Future<void> markAsRead({
-    required String bookingId,
+    required String conversationId,
     required String userId,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'message.markAsRead',
         action: () async {
-          await markAsDelivered(bookingId: bookingId, userId: userId);
+          await markAsDelivered(conversationId: conversationId, userId: userId);
           await _client
               .from('messages')
               .update({'is_read': true})
-              .eq('booking_id', bookingId)
+              .eq('conversation_id', conversationId)
               .neq('sender_id', userId)
               .eq('is_read', false);
         },
       );
 
-  /// Fils de discussion de l'utilisateur connecté ([userId] = auth.users.id).
   Future<List<Conversation>> getConversations(String userId) =>
       SupabaseErrorHandler.run(
         operation: 'message.getConversations',
@@ -285,20 +376,19 @@ class MessageService {
         },
       );
 
-  Future<List<Message>> _fetchMessages(String bookingId) async {
+  Future<List<Message>> _fetchMessages(String conversationId) async {
     final response = await _client
         .from('messages')
         .select()
-        .eq('booking_id', bookingId)
+        .eq('conversation_id', conversationId)
         .isFilter('deleted_at', null)
         .order('created_at', ascending: true);
     return _decodeMessages(response as List<dynamic>);
   }
 
-  /// Supprime un message envoyé par l’utilisateur connecté.
   Future<void> deleteMessage({
     required String messageId,
-    required String bookingId,
+    required String conversationId,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'message.deleteMessage',
@@ -307,18 +397,17 @@ class MessageService {
               .from('messages')
               .delete()
               .eq('id', messageId)
-              .eq('booking_id', bookingId);
+              .eq('conversation_id', conversationId);
         },
       );
 
-  /// Supprime tous les messages et le fil metadata de la réservation.
-  Future<void> deleteChat({required String bookingId}) =>
+  Future<void> deleteConversation({required String conversationId}) =>
       SupabaseErrorHandler.run(
-        operation: 'message.deleteChat',
+        operation: 'message.deleteConversation',
         action: () async {
           await _client.rpc(
-            'delete_booking_chat',
-            params: {'p_booking_id': bookingId},
+            'delete_conversation_chat',
+            params: {'p_conversation_id': conversationId},
           );
         },
       );
@@ -351,64 +440,55 @@ class MessageService {
         .toList();
     if (convIds.isEmpty) return 0;
 
-    final bookingRows = await _client
-        .from('conversations')
-        .select('reservation_id')
-        .inFilter('id', convIds);
-
-    final bookingIds = (bookingRows as List)
-        .map((r) => (r as Map)['reservation_id'] as String?)
-        .whereType<String>()
-        .toList();
-    if (bookingIds.isEmpty) return 0;
-
     final unread = await _client
         .from('messages')
         .select('id')
-        .inFilter('booking_id', bookingIds)
+        .inFilter('conversation_id', convIds)
         .eq('is_read', false)
         .neq('sender_id', userId);
 
     return (unread as List).length;
   }
 
-  Future<Map<String, Message>> latestMessageByBookingIds(
-    List<String> bookingIds,
+  Future<Map<String, Message>> latestMessageByConversationIds(
+    List<String> conversationIds,
   ) async {
-    if (bookingIds.isEmpty) return {};
+    if (conversationIds.isEmpty) return {};
 
     final response = await _client
         .from('messages')
         .select()
-        .inFilter('booking_id', bookingIds)
+        .inFilter('conversation_id', conversationIds)
         .order('created_at', ascending: false);
 
     final out = <String, Message>{};
     for (final raw in response as List<dynamic>) {
-      final msg = SupabaseDomainCodec.message(
-        Map<String, dynamic>.from(raw as Map),
-      );
-      out.putIfAbsent(msg.bookingId, () => msg);
+      final row = Map<String, dynamic>.from(raw as Map);
+      final msg = SupabaseDomainCodec.message(row);
+      final convId = row['conversation_id'] as String?;
+      if (convId != null) {
+        out.putIfAbsent(convId, () => msg);
+      }
     }
     return out;
   }
 
-  Future<Map<String, int>> unreadCountByBookingIds(
-    List<String> bookingIds, {
+  Future<Map<String, int>> unreadCountByConversationIds(
+    List<String> conversationIds, {
     required String currentUserId,
   }) async {
-    if (bookingIds.isEmpty) return {};
+    if (conversationIds.isEmpty) return {};
 
     final response = await _client
         .from('messages')
-        .select('booking_id')
-        .inFilter('booking_id', bookingIds)
+        .select('conversation_id')
+        .inFilter('conversation_id', conversationIds)
         .eq('is_read', false)
         .neq('sender_id', currentUserId);
 
     final counts = <String, int>{};
     for (final raw in response as List<dynamic>) {
-      final id = (raw as Map)['booking_id'] as String;
+      final id = (raw as Map)['conversation_id'] as String;
       counts[id] = (counts[id] ?? 0) + 1;
     }
     return counts;

@@ -36,8 +36,15 @@ Future<void> openChatForReservation(
     }
     await messageService.ensureThreadForBooking(reservationId);
     if (!context.mounted) return;
+    final conv = await messagingService.getByBookingId(reservationId);
+    if (conv == null) {
+      if (context.mounted) {
+        AppSnackBar.show(context, message: DiscChat.loadError);
+      }
+      return;
+    }
     context.pushChat(
-      reservationId,
+      conv.id,
       as: viewerRole == MessagingInboxRole.client ? 'client' : 'prestataire',
     );
   } catch (_) {
@@ -103,7 +110,12 @@ Future<void> openChatWithPrestataire(
         }
         await messageService.ensureThreadForBooking(bookingId);
         if (!context.mounted) return;
-        await context.pushChat(bookingId, as: 'client');
+        final conv = await messagingService.getByBookingId(bookingId);
+        if (conv == null) {
+          AppSnackBar.show(context, message: DiscChat.loadError);
+          return;
+        }
+        await context.pushChat(conv.id, as: 'client');
     }
   } catch (_) {
     if (context.mounted) {

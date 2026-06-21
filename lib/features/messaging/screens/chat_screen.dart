@@ -43,42 +43,40 @@ import '../providers/messaging_inbox_providers.dart';
 
 
 class ChatScreen extends ConsumerStatefulWidget {
+  const ChatScreen({
+    super.key,
+    this.conversationId,
+    this.bookingId,
+    this.viewerRole,
+  }) : assert(
+          conversationId != null || bookingId != null,
+          'conversationId ou bookingId requis',
+        );
 
-  const ChatScreen({super.key, required this.bookingId, this.viewerRole});
+  /// Fil de discussion (prioritaire).
+  final String? conversationId;
 
-  /// Identifiant de la réservation (booking).
-  final String bookingId;
+  /// Réservation (deep link / push legacy) — résolu vers [conversationId].
+  final String? bookingId;
 
-  /// Rôle dans le fil (client → salon ; prestataire → cliente).
   final MessagingInboxRole? viewerRole;
 
-
-
   @override
-
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
-
 }
 
-
-
 class _ChatScreenState extends ConsumerState<ChatScreen> {
-
   final _controller = TextEditingController();
-
   final _scrollController = ScrollController();
-
   bool _sending = false;
   bool _attachingImage = false;
   bool _deleting = false;
-
   int _lastMessageCount = 0;
   ConversationInboxItem? _lastHeader;
   Timer? _presenceRefresh;
 
-
-
-  ChatInboxKey get _inboxKey => ChatInboxKey(
+  ChatRouteKey get _routeKey => ChatRouteKey(
+        conversationId: widget.conversationId,
         bookingId: widget.bookingId,
         viewerRole: widget.viewerRole,
       );
@@ -88,14 +86,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     _presenceRefresh = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
-      ref.invalidate(chatInboxItemProvider(_inboxKey));
+      ref.invalidate(chatInboxItemProvider(_routeKey));
     });
   }
 
   @override
   void didUpdateWidget(covariant ChatScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.bookingId != widget.bookingId ||
+    if (oldWidget.conversationId != widget.conversationId ||
+        oldWidget.bookingId != widget.bookingId ||
         oldWidget.viewerRole != widget.viewerRole) {
       _lastHeader = null;
     }
@@ -161,26 +160,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return tail.map((m) => m.content).toList();
   }
 
-  Future<void> _syncReceipts() async {
-
+  Future<void> _syncReceipts(String conversationId) async {
     final service = ref.read(messageServiceProvider);
-
     final user = switch (ref.read(authNotifierProvider)) {
-
       AsyncData(:final value) => value,
-
       _ => null,
-
     };
-
     if (service == null || user == null) return;
 
     await service.markAsRead(
-
-      bookingId: widget.bookingId,
-
+      conversationId: conversationId,
       userId: user.id,
-
     );
 
     ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.client));
@@ -195,11 +185,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
 
-  Future<void> _markRead() async => _syncReceipts();
+  Future<void> _markRead(String conversationId) async =>
+      _syncReceipts(conversationId);
 
-
-
-  Future<void> _send() async {
+  Future<void> _send(String conversationId) async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
 
@@ -210,7 +199,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (user == null) return;
 
     final recentOutgoing = _recentOutgoingMessages(
-      ref.read(messagesProvider(widget.bookingId)).asData?.value ?? const [],
+      ref.read(messagesProvider(conversationId)).asData?.value ?? const [],
       user.id,
     );
     final moderation = ChatMessageModerator.analyze(
@@ -251,7 +240,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     try {
       await service.send(
-        bookingId: widget.bookingId,
+        conversationId: conversationId,
         senderId: user.id,
         content: text,
       );
@@ -283,7 +272,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.prestataire));
   }
 
-  Future<void> _confirmDeleteChat() async {
+  Future<void> _confirmDeleteChat(String conversationId) async {
     if (_deleting) return;
     final confirmed = await confirmChatDeletion(
       context,
@@ -297,7 +286,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     setState(() => _deleting = true);
     try {
-      await service.deleteChat(bookingId: widget.bookingId);
+      await service.deleteConversation(conversationId: conversationId);
       _invalidateInbox();
       if (!mounted) return;
       AppSnackBar.show(context, message: DiscChat.deleteChatSuccess);
@@ -314,7 +303,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  Future<void> _handleMessageLongPress(Message message) async {
+  Future<void> _handleMessageLongPress(
+    Message message,
+    String conversationId,
+  ) async {
     final action = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -338,11 +330,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
     );
     if (action == 'delete' && mounted) {
-      await _confirmDeleteMessage(message);
+      await _confirmDeleteMessage(message, conversationId);
     }
   }
 
-  Future<void> _confirmDeleteMessage(Message message) async {
+  Future<void> _confirmDeleteMessage(
+    Message message,
+    String conversationId,
+  ) async {
     if (_deleting) return;
     final confirmed = await confirmChatDeletion(
       context,
@@ -358,7 +353,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await service.deleteMessage(
         messageId: message.id,
-        bookingId: widget.bookingId,
+        conversationId: conversationId,
       );
       _invalidateInbox();
       if (!mounted) return;
@@ -375,7 +370,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  Future<void> _sendImage() async {
+  Future<void> _sendImage(String conversationId) async {
     if (_sending || _attachingImage) return;
 
     final user = switch (ref.read(authNotifierProvider)) {
@@ -411,15 +406,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return;
     }
 
+    final thread = await messageService.getConversation(conversationId);
+    if (thread == null) {
+      if (mounted) {
+        AppSnackBar.show(context, message: DiscChat.imagePickError);
+      }
+      return;
+    }
+    final storageBookingId = widget.bookingId?.trim().isNotEmpty == true
+        ? widget.bookingId!
+        : await messageService.resolveBookingContextForSend(thread);
+
     setState(() => _attachingImage = true);
     try {
       final imageUrl = await storage.uploadChatAttachment(
         userId: user.id,
-        bookingId: widget.bookingId,
+        bookingId: storageBookingId,
         file: uploadFile,
       );
       await messageService.sendImage(
-        bookingId: widget.bookingId,
+        conversationId: conversationId,
         senderId: user.id,
         imageUrl: imageUrl,
       );
@@ -479,29 +485,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
   @override
-
   Widget build(BuildContext context) {
+    final convIdAsync = ref.watch(chatConversationIdProvider(_routeKey));
+    return convIdAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: Text(DiscChat.inboxTitle)),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Scaffold(
+        appBar: AppBar(title: Text(DiscChat.inboxTitle)),
+        body: Center(
+          child: DiscoveryEmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: CoreStrings.networkErrorTitle,
+            body: DiscChat.loadError,
+            actionLabel: DiscList.retry,
+            onAction: () =>
+                ref.invalidate(chatConversationIdProvider(_routeKey)),
+          ),
+        ),
+      ),
+      data: (conversationId) => _buildChatBody(context, conversationId),
+    );
+  }
 
+  Widget _buildChatBody(BuildContext context, String conversationId) {
     final theme = Theme.of(context);
-
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = theme.colorScheme.surface;
 
     final userId = switch (ref.watch(authNotifierProvider)) {
-
       AsyncData(:final value) => value?.id,
-
       _ => null,
-
     };
 
-
-
-    final headerAsync = ref.watch(chatInboxItemProvider(_inboxKey));
-
-    final messagesAsync =
-
-        ref.watch(messagesProvider(widget.bookingId));
+    final headerAsync = ref.watch(chatInboxItemProvider(_routeKey));
+    final messagesAsync = ref.watch(messagesProvider(conversationId));
 
     final headerForRole = headerAsync.asData?.value ?? _lastHeader;
     final isPresta = widget.viewerRole == MessagingInboxRole.prestataire ||
@@ -512,17 +531,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? ChatMessageTemplates.prestataire
         : ChatMessageTemplates.client;
 
-    ref.listen(messagesProvider(widget.bookingId), (prev, next) {
-
-      unawaited(_markRead());
-
+    ref.listen(messagesProvider(conversationId), (prev, next) {
+      unawaited(_markRead(conversationId));
       final count = next.asData?.value.length;
-
       if (count != null) _onMessagesUpdated(count);
-
     });
 
-    ref.listen(chatInboxItemProvider(_inboxKey), (_, next) {
+    ref.listen(chatInboxItemProvider(_routeKey), (_, next) {
       final fresh = next.asData?.value;
       if (fresh != null && mounted) {
         setState(() => _lastHeader = fresh);
@@ -532,9 +547,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-
-      unawaited(_markRead());
-
+      unawaited(_markRead(conversationId));
     });
 
 
@@ -566,7 +579,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   targetType: ContentReportTargetType.conversation,
                   targetId: header.conversation.id,
                 ),
-        onDeleteChat: _confirmDeleteChat,
+        onDeleteChat: () => _confirmDeleteChat(conversationId),
       ),
 
       body: ColoredBox(
@@ -633,7 +646,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   iconColor: theme.colorScheme.error,
                   actionLabel: DiscList.retry,
                   onAction: () =>
-                      ref.invalidate(messagesProvider(widget.bookingId)),
+                      ref.invalidate(messagesProvider(conversationId)),
                 ),
               ),
 
@@ -647,7 +660,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                   scrollController: _scrollController,
 
-                  onDeleteMessage: userId == null ? null : _handleMessageLongPress,
+                  onDeleteMessage: userId == null
+                      ? null
+                      : (m) => _handleMessageLongPress(m, conversationId),
 
                 );
 
@@ -659,8 +674,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _controller,
               sending: _sending,
               attachingImage: _attachingImage,
-              onSend: _send,
-              onAttachImage: _sendImage,
+              onSend: () => _send(conversationId),
+              onAttachImage: () => _sendImage(conversationId),
               quickReplyTemplates: quickTemplates,
               recentOutgoingMessages: _recentOutgoingMessages(
                 messagesAsync.asData?.value ?? const [],

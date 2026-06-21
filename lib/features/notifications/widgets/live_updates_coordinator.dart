@@ -28,26 +28,77 @@ class LiveUpdatesCoordinator extends ConsumerStatefulWidget {
       _LiveUpdatesCoordinatorState();
 }
 
-class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator> {
+class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
+    with WidgetsBindingObserver {
   RealtimeChannel? _messagesChannel;
   RealtimeChannel? _clientReservationsChannel;
   RealtimeChannel? _prestaReservationsChannel;
+  RealtimeChannel? _prestaLikesChannel;
+  RealtimeChannel? _prestaReviewsChannel;
   RealtimeChannel? _userSupportChannel;
   String? _subscribedUserId;
+  String? _subscribedClientId;
+  String? _subscribedPrestaId;
   String? _subscribedSupportThreadId;
+  Timer? _foregroundSyncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted || !AppConfig.hasSupabase) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        refreshInAppNotificationsSync(ref);
+        _startForegroundSyncTimer();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_resubscribe());
+        });
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        _foregroundSyncTimer?.cancel();
+        _foregroundSyncTimer = null;
+    }
+  }
+
+  void _startForegroundSyncTimer() {
+    _foregroundSyncTimer?.cancel();
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null || !ref.read(isOnlineProvider)) return;
+
+    _foregroundSyncTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+      if (!mounted) return;
+      refreshInAppNotificationsSync(ref);
+    });
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _foregroundSyncTimer?.cancel();
     unawaited(_teardown());
     super.dispose();
   }
 
   Future<void> _teardown() async {
     _subscribedUserId = null;
+    _subscribedClientId = null;
+    _subscribedPrestaId = null;
     for (final channel in [
       _messagesChannel,
       _clientReservationsChannel,
       _prestaReservationsChannel,
+      _prestaLikesChannel,
+      _prestaReviewsChannel,
       _userSupportChannel,
     ]) {
       if (channel != null) {
@@ -57,6 +108,8 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
     _messagesChannel = null;
     _clientReservationsChannel = null;
     _prestaReservationsChannel = null;
+    _prestaLikesChannel = null;
+    _prestaReviewsChannel = null;
     _userSupportChannel = null;
     _subscribedSupportThreadId = null;
   }
@@ -76,17 +129,21 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
       await _teardown();
       return;
     }
+
+    final client = await ref.read(currentClientProfileProvider.future);
+    final presta = await ref.read(currentPrestataireProvider.future);
+
     if (_subscribedUserId == user.id &&
-        _messagesChannel != null &&
-        _userSupportChannel != null) {
+        _subscribedClientId == client?.id &&
+        _subscribedPrestaId == presta?.id &&
+        _messagesChannel != null) {
       return;
     }
 
     await _teardown();
     _subscribedUserId = user.id;
-
-    final client = await ref.read(currentClientProfileProvider.future);
-    final presta = await ref.read(currentPrestataireProvider.future);
+    _subscribedClientId = client?.id;
+    _subscribedPrestaId = presta?.id;
 
     _messagesChannel = SupabaseService.client
         .channel('live-messages-${user.id}')
@@ -136,6 +193,36 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
             callback: (_) => _onReservationsChange(),
           )
           .subscribe();
+
+      _prestaLikesChannel = SupabaseService.client
+          .channel('live-presta-likes-${presta.id}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'prestataire_likes',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'prestataire_id',
+              value: presta.id,
+            ),
+            callback: _onPrestaLike,
+          )
+          .subscribe();
+
+      _prestaReviewsChannel = SupabaseService.client
+          .channel('live-presta-reviews-${presta.id}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'avis',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'prestataire_id',
+              value: presta.id,
+            ),
+            callback: (_) => _onPrestaActivityChange(),
+          )
+          .subscribe();
     }
 
     try {
@@ -172,6 +259,42 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
     } catch (_) {
       _subscribedSupportThreadId = null;
     }
+
+    refreshInAppNotificationsSync(ref);
+    _startForegroundSyncTimer();
+  }
+
+  void _onPrestaLike(PostgresChangePayload payload) {
+    if (!mounted) return;
+
+    final clientName =
+        payload.newRecord['client_display_name'] as String? ?? 'Une cliente';
+    final clientId = payload.newRecord['client_id'] as String? ?? '';
+    final prestaId = payload.newRecord['prestataire_id'] as String? ?? '';
+    final createdAtRaw = payload.newRecord['created_at'] as String?;
+    final createdAt = createdAtRaw == null
+        ? DateTime.now()
+        : DateTime.tryParse(createdAtRaw) ?? DateTime.now();
+
+    ref.read(inAppNotificationsProvider.notifier).enqueue(
+          InAppNotification(
+            id: 'prestataire_like_${clientId}_${prestaId}_'
+                '${createdAt.millisecondsSinceEpoch}',
+            title: DiscNotif.prestataireLikeTitle,
+            body: DiscNotif.prestataireLikeBody(clientName),
+            createdAt: createdAt,
+            read: false,
+            actionType: 'prestataire_like',
+            prestataireId: prestaId.isEmpty ? null : prestaId,
+            audience: InAppNotificationAudience.prestataire.wire,
+          ),
+        );
+    refreshInAppNotificationsSync(ref);
+  }
+
+  void _onPrestaActivityChange() {
+    if (!mounted) return;
+    refreshInAppNotificationsSync(ref);
   }
 
   void _onUserSupportMessage(String userId, PostgresChangePayload payload) {
@@ -215,6 +338,14 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
   @override
   Widget build(BuildContext context) {
     if (AppConfig.hasSupabase) {
+      final user = switch (ref.watch(authNotifierProvider)) {
+        AsyncData(:final value) => value,
+        _ => null,
+      };
+      if (user != null) {
+        ref.watch(inAppNotificationsSyncProvider);
+      }
+
       ref.listen(isOnlineProvider, (prev, online) {
         if (online && prev == false) {
           WidgetsBinding.instance.addPostFrameCallback((_) {

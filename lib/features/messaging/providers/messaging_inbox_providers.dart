@@ -8,6 +8,7 @@ import '../../../services/supabase/messaging/messaging_service_core_providers.da
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../models/chat_inbox_key.dart';
 import '../models/messaging_inbox_role.dart';
+import 'message_provider.dart';
 import 'messaging_refresh_signal_provider.dart';
 
 export '../models/messaging_inbox_role.dart';
@@ -34,7 +35,6 @@ final conversationsInboxProvider = FutureProvider.autoDispose
   }
 });
 
-/// Total messages non lus (badge onglet + en-tête inbox). Conservé hors autoDispose.
 final messagingUnreadCountProvider =
     FutureProvider.family<int, MessagingInboxRole>((ref, role) async {
   ref.watch(messagingRefreshSignalProvider);
@@ -62,7 +62,6 @@ final messagingUnreadCountProvider =
 
 final chatInboxItemProvider = FutureProvider.autoDispose
     .family<ConversationInboxItem?, ChatInboxKey>((ref, key) async {
-  final bookingId = key.bookingId;
   final service = ref.watch(messagingServiceProvider);
   final user = switch (ref.watch(authNotifierProvider)) {
     AsyncData(:final value) => value,
@@ -70,25 +69,28 @@ final chatInboxItemProvider = FutureProvider.autoDispose
   };
   if (service == null || user == null) return null;
 
+  final conversationId = await ref.watch(
+    chatConversationIdProvider(key).future,
+  );
+
   final explicitRole = key.viewerRole;
   if (explicitRole != null) {
     return _resolveChatInboxItem(
       ref: ref,
       service: service,
-      bookingId: bookingId,
+      conversationId: conversationId,
       userId: user.id,
       viewerRole: explicitRole,
     );
   }
 
-  final conv = await service.getByBookingId(bookingId);
+  final conv = await service.getByConversationId(conversationId);
   if (conv == null) return null;
 
   final client = await ref.watch(currentClientProfileProvider.future);
   final presta = await ref.watch(currentPrestataireProvider.future);
 
-  final viewingAsClient =
-      client != null && conv.clientId == client.id;
+  final viewingAsClient = client != null && conv.clientId == client.id;
   final viewingAsPresta =
       presta != null && conv.prestataireId == presta.id;
 
@@ -96,7 +98,7 @@ final chatInboxItemProvider = FutureProvider.autoDispose
     return _resolveChatInboxItem(
       ref: ref,
       service: service,
-      bookingId: bookingId,
+      conversationId: conversationId,
       userId: user.id,
       viewerRole: MessagingInboxRole.client,
     );
@@ -106,7 +108,7 @@ final chatInboxItemProvider = FutureProvider.autoDispose
     return _resolveChatInboxItem(
       ref: ref,
       service: service,
-      bookingId: bookingId,
+      conversationId: conversationId,
       userId: user.id,
       viewerRole: MessagingInboxRole.prestataire,
     );
@@ -116,7 +118,7 @@ final chatInboxItemProvider = FutureProvider.autoDispose
     return _resolveChatInboxItem(
       ref: ref,
       service: service,
-      bookingId: bookingId,
+      conversationId: conversationId,
       userId: user.id,
       viewerRole: MessagingInboxRole.client,
     );
@@ -126,7 +128,7 @@ final chatInboxItemProvider = FutureProvider.autoDispose
     return _resolveChatInboxItem(
       ref: ref,
       service: service,
-      bookingId: bookingId,
+      conversationId: conversationId,
       userId: user.id,
       viewerRole: MessagingInboxRole.prestataire,
     );
@@ -138,7 +140,7 @@ final chatInboxItemProvider = FutureProvider.autoDispose
 Future<ConversationInboxItem?> _resolveChatInboxItem({
   required Ref ref,
   required MessagingService service,
-  required String bookingId,
+  required String conversationId,
   required String userId,
   required MessagingInboxRole viewerRole,
 }) async {
@@ -147,11 +149,11 @@ Future<ConversationInboxItem?> _resolveChatInboxItem({
 
   final items = await ref.watch(conversationsInboxProvider(inboxRole).future);
   for (final item in items) {
-    if (item.conversation.reservationId == bookingId) return item;
+    if (item.conversation.id == conversationId) return item;
   }
 
-  return service.resolveInboxItemForBooking(
-    bookingId: bookingId,
+  return service.resolveInboxItemForConversation(
+    conversationId: conversationId,
     currentUserId: userId,
     peerIsPrestataire: peerIsPrestataire,
   );

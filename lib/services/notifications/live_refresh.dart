@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/booking/providers/booking_session_providers.dart';
+import '../../features/messaging/models/chat_inbox_key.dart';
 import '../../features/messaging/providers/message_provider.dart';
 import '../../features/messaging/providers/messaging_inbox_providers.dart';
 import '../../features/messaging/providers/messaging_refresh_signal_provider.dart';
@@ -17,11 +18,17 @@ import '../../services/notifications/in_app_notifications_provider.dart';
 /// Rafraîchit badges messages, inbox et fil chat après un événement live.
 void refreshMessagingLiveState(
   WidgetRef ref, {
+  String? conversationId,
   String? bookingId,
 }) {
   bumpMessagingRefreshFromWidgetRef(ref);
+  if (conversationId != null && conversationId.isNotEmpty) {
+    ref.invalidate(messagesProvider(conversationId));
+  }
   if (bookingId != null && bookingId.isNotEmpty) {
-    ref.invalidate(messagesProvider(bookingId));
+    ref.invalidate(
+      chatConversationIdProvider(ChatRouteKey(bookingId: bookingId)),
+    );
   }
   ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
   ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));

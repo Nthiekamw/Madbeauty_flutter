@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../features/auth/providers/auth_notifier.dart';
+import '../../../features/likes/logic/toggle_prestataire_like.dart';
 import '../../../features/likes/providers/client_prestataire_likes_provider.dart';
 import '../../../shared/theme/app_colors.dart';
-import '../../../shared/widgets/app/app_snack_bar.dart';
 
 /// Pouce « like » client sur un profil prestataire.
 class PrestataireLikeButton extends ConsumerStatefulWidget {
@@ -33,6 +32,7 @@ class _PrestataireLikeButtonState extends ConsumerState<PrestataireLikeButton>
 
   late final AnimationController _scaleController;
   late final Animation<double> _scale;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -53,32 +53,19 @@ class _PrestataireLikeButtonState extends ConsumerState<PrestataireLikeButton>
   }
 
   Future<void> _onTap() async {
-    final user = switch (ref.read(authNotifierProvider)) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
-    if (user == null) {
-      if (!mounted) return;
-      AppSnackBar.show(context, message: DiscLike.loginRequired);
-      return;
-    }
-
-    final wasLiked = ref.read(isPrestataireLikedProvider(widget.prestataireId));
-
+    if (_busy) return;
+    setState(() => _busy = true);
     try {
-      await ref
-          .read(clientLikedPrestataireIdsProvider.notifier)
-          .toggle(widget.prestataireId);
+      await togglePrestataireLike(
+        context: context,
+        ref: ref,
+        prestataireId: widget.prestataireId,
+      );
+      if (!mounted) return;
       await _scaleController.forward();
       await _scaleController.reverse();
-      if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        message: wasLiked ? DiscLike.removedFeedback : DiscLike.addedFeedback,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      AppSnackBar.show(context, message: DiscLike.toggleError);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -115,7 +102,7 @@ class _PrestataireLikeButtonState extends ConsumerState<PrestataireLikeButton>
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: _onTap,
+              onTap: _busy ? null : _onTap,
               child: SizedBox(
                 width: size,
                 height: size,

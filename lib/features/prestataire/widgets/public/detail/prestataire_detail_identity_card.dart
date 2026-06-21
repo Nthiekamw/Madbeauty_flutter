@@ -7,13 +7,15 @@ import '../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/theme/discovery_styles.dart';
+import '../../../../../features/likes/logic/toggle_prestataire_like.dart';
+import '../../../../../features/likes/providers/client_prestataire_likes_provider.dart';
 import '../../../../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../../providers/profile/prestataire_response_time_provider.dart';
 import '../../../../reviews/providers/prestataire_note_moyenne_provider.dart';
 import 'sections/prestataire_detail_surface.dart';
 
 /// Carte stats et actions (identité affichée dans le hero).
-class PrestataireDetailIdentityCard extends ConsumerWidget {
+class PrestataireDetailIdentityCard extends ConsumerStatefulWidget {
   const PrestataireDetailIdentityCard({
     super.key,
     required this.profile,
@@ -30,24 +32,50 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
   final VoidCallback? onMessage;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PrestataireDetailIdentityCard> createState() =>
+      _PrestataireDetailIdentityCardState();
+}
+
+class _PrestataireDetailIdentityCardState
+    extends ConsumerState<PrestataireDetailIdentityCard> {
+  static const _likeColor = Color(0xFF2563EB);
+
+  bool _likeBusy = false;
+
+  Future<void> _toggleLike() async {
+    if (_likeBusy || widget.isOwnProfile) return;
+    setState(() => _likeBusy = true);
+    try {
+      await togglePrestataireLike(
+        context: context,
+        ref: ref,
+        prestataireId: widget.profile.id,
+      );
+    } finally {
+      if (mounted) setState(() => _likeBusy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final pad = DiscoveryResponsive.of(context).horizontalPadding;
 
     final liveNote = switch (ref.watch(
-      prestataireNoteMoyenneProvider(profile.id),
+      prestataireNoteMoyenneProvider(widget.profile.id),
     )) {
       AsyncData(:final value) => value,
       _ => null,
     };
-    final rating = liveNote ?? profile.noteMoyenne;
+    final rating = liveNote ?? widget.profile.noteMoyenne;
     final respondsQuickly = ref
-        .watch(prestataireRespondsQuicklyProvider(profile.id))
+        .watch(prestataireRespondsQuicklyProvider(widget.profile.id))
         .maybeWhen(data: (v) => v, orElse: () => false);
     final likesCount = ref
-        .watch(prestataireLikesCountProvider(profile.id))
+        .watch(prestataireLikesCountProvider(widget.profile.id))
         .maybeWhen(data: (v) => v, orElse: () => 0);
+    final isLiked = ref.watch(isPrestataireLikedProvider(widget.profile.id));
 
     return Padding(
       padding: EdgeInsets.fromLTRB(pad, 0, pad, 0),
@@ -77,7 +105,7 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                   child: _StatPill(
                     icon: Icons.content_cut_rounded,
                     iconColor: primary,
-                    label: '$servicesCount',
+                    label: '${widget.servicesCount}',
                     hint: DiscPrestaDetail.statServices,
                     centered: true,
                   ),
@@ -85,11 +113,19 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatPill(
-                    icon: Icons.thumb_up_rounded,
-                    iconColor: AppColors.brandBrownMid,
+                    icon: isLiked
+                        ? Icons.thumb_up_rounded
+                        : Icons.thumb_up_outlined,
+                    iconColor:
+                        isLiked ? _likeColor : AppColors.brandBrownMid,
                     label: '$likesCount',
-                    hint: DiscPrestaDetail.statLikes,
+                    hint: isLiked
+                        ? DiscLike.unlikeTooltip
+                        : DiscLike.likeTooltip,
                     centered: true,
+                    onTap: widget.isOwnProfile || _likeBusy ? null : _toggleLike,
+                    active: isLiked,
+                    activeColor: _likeColor,
                   ),
                 ),
                 if (respondsQuickly) ...[
@@ -106,14 +142,14 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                 ],
               ],
             ),
-              if (!isOwnProfile) ...[
+              if (!widget.isOwnProfile) ...[
                 const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                       flex: 3,
                       child: FilledButton.icon(
-                        onPressed: onBook,
+                        onPressed: widget.onBook,
                         icon: const Icon(Icons.calendar_month_rounded, size: 17),
                         label: Text(
                           DiscPrestaDetail.actionBook,
@@ -137,12 +173,12 @@ class PrestataireDetailIdentityCard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (onMessage != null) ...[
+                    if (widget.onMessage != null) ...[
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
                         child: OutlinedButton.icon(
-                          onPressed: onMessage,
+                          onPressed: widget.onMessage,
                           icon: const Icon(
                             Icons.chat_bubble_outline_rounded,
                             size: 16,
@@ -187,6 +223,9 @@ class _StatPill extends StatelessWidget {
     required this.label,
     required this.hint,
     this.centered = false,
+    this.onTap,
+    this.active = false,
+    this.activeColor,
   });
 
   final IconData icon;
@@ -194,51 +233,67 @@ class _StatPill extends StatelessWidget {
   final String label;
   final String hint;
   final bool centered;
+  final VoidCallback? onTap;
+  final bool active;
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final fill = isDark
-        ? AppColors.darkSurfaceContainerHigh
-        : AppColors.filterChipInactive;
+    final fill = active && activeColor != null
+        ? activeColor!.withValues(alpha: 0.12)
+        : (isDark
+            ? AppColors.darkSurfaceContainerHigh
+            : AppColors.filterChipInactive);
+
+    final child = Container(
+      width: centered ? double.infinity : null,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: DiscoveryStyles.chipBorderRadius,
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: centered ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment:
+            centered ? MainAxisAlignment.center : MainAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: iconColor),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: centered ? TextAlign.center : TextAlign.start,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontFamily: AppFonts.display,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Tooltip(
       message: hint,
-      child: Container(
-        width: centered ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: DiscoveryStyles.chipBorderRadius,
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: centered ? MainAxisSize.max : MainAxisSize.min,
-          mainAxisAlignment:
-              centered ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: [
-            Icon(icon, size: 15, color: iconColor),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: centered ? TextAlign.center : TextAlign.start,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurface,
-                ),
+      child: onTap == null
+          ? child
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: DiscoveryStyles.chipBorderRadius,
+                child: child,
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

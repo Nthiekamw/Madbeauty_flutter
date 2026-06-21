@@ -57,9 +57,18 @@ void navigateFromPushDataWithRouter(
       }
       return;
     case 'message':
-      if (bookingId != null) {
+      final conversationId = _str(data, 'conversation_id') ??
+          _str(data, 'conversationId');
+      if (conversationId != null) {
         router.pushNamed(
           AppRouteNames.chat,
+          pathParameters: {'conversationId': conversationId},
+        );
+        return;
+      }
+      if (bookingId != null) {
+        router.pushNamed(
+          AppRouteNames.chatFromBooking,
           pathParameters: {'bookingId': bookingId},
         );
       }

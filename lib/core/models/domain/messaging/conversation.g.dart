@@ -11,7 +11,7 @@ _Conversation _$ConversationFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       clientId: json['client_id'] as String,
       prestataireId: json['prestataire_id'] as String,
-      reservationId: json['reservation_id'] as String,
+      reservationId: json['reservation_id'] as String?,
       lastMessageAt: const NullableIsoDateTimeConverter().fromJson(
         json['last_message_at'],
       ),

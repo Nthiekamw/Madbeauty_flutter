@@ -12,7 +12,7 @@ abstract class Conversation with _$Conversation {
     required String id,
     required String clientId,
     required String prestataireId,
-    required String reservationId,
+    @JsonKey(name: 'reservation_id') String? reservationId,
     @NullableIsoDateTimeConverter() DateTime? lastMessageAt,
   }) = _Conversation;
 

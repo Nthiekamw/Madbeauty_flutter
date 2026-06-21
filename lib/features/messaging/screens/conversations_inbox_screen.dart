@@ -184,9 +184,9 @@ class _ConversationsInboxScreenState
                     return ConversationListTile(
                       item: item,
                       onTap: () =>
-                          _openChat(item.conversation.reservationId),
+                          _openChat(item.conversation.id),
                       onLongPress: () => _confirmDeleteChat(
-                        item.conversation.reservationId,
+                        item.conversation.id,
                       ),
                     );
                   },
@@ -205,9 +205,9 @@ class _ConversationsInboxScreenState
     await ref.read(conversationsInboxProvider(widget.role).future);
   }
 
-  Future<void> _openChat(String bookingId) async {
+  Future<void> _openChat(String conversationId) async {
     await context.pushChat(
-      bookingId,
+      conversationId,
       as: widget.role == MessagingInboxRole.client ? 'client' : 'prestataire',
     );
     if (!mounted) return;
@@ -215,7 +215,7 @@ class _ConversationsInboxScreenState
     ref.invalidate(messagingUnreadCountProvider(widget.role));
   }
 
-  Future<void> _confirmDeleteChat(String bookingId) async {
+  Future<void> _confirmDeleteChat(String conversationId) async {
     final confirmed = await confirmChatDeletion(
       context,
       title: DiscChat.deleteChatTitle,
@@ -227,7 +227,7 @@ class _ConversationsInboxScreenState
     if (service == null) return;
 
     try {
-      await service.deleteChat(bookingId: bookingId);
+      await service.deleteConversation(conversationId: conversationId);
       ref.invalidate(conversationsInboxProvider(widget.role));
       ref.invalidate(messagingUnreadCountProvider(widget.role));
       if (!mounted) return;

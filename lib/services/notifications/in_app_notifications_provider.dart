@@ -46,7 +46,10 @@ final scopedUnreadInAppNotificationsCountProvider =
 });
 
 /// Synchronise la boîte de notifications depuis les réservations Supabase.
-final inAppNotificationsSyncProvider = FutureProvider.autoDispose<void>((ref) async {
+final inAppNotificationsSyncProvider = FutureProvider<void>((ref) async {
+  final link = ref.keepAlive();
+  ref.onDispose(link.close);
+
   final synced = await fetchActivityNotifications(ref);
   await ref.read(inAppNotificationsProvider.notifier).mergeSynced(synced);
 });

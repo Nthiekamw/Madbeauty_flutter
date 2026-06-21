@@ -124,6 +124,16 @@ class _BookingPushCoordinatorState
       case 'user_support_message':
         refreshUserSupportLiveState(ref);
         return;
+      case 'prestataire_like':
+      case 'prestataire_review':
+      case 'prestataire_verification_approved':
+      case 'prestataire_verification_revoked':
+      case 'prestataire_catalog_visibility':
+      case 'bug_report':
+      case 'bug_report_status':
+      case 'slot_waitlist':
+        refreshInAppNotificationsSync(ref);
+        return;
       case 'booking_status':
         break;
       default:

@@ -17,8 +17,8 @@ import '../prestataire_public_route.dart';
 
 List<RouteBase> buildDetailRoutes() => [
       GoRoute(
-        name: AppRouteNames.chat,
-        path: '${AppRoutes.chat}/:bookingId',
+        name: AppRouteNames.chatFromBooking,
+        path: '${AppRoutes.chat}/booking/:bookingId',
         builder: (context, state) {
           final id = state.pathParameters['bookingId']!;
           final as = state.uri.queryParameters['as'];
@@ -28,6 +28,20 @@ List<RouteBase> buildDetailRoutes() => [
             _ => null,
           };
           return ChatScreen(bookingId: id, viewerRole: viewerRole);
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.chat,
+        path: '${AppRoutes.chat}/:conversationId',
+        builder: (context, state) {
+          final id = state.pathParameters['conversationId']!;
+          final as = state.uri.queryParameters['as'];
+          final viewerRole = switch (as) {
+            'client' => MessagingInboxRole.client,
+            'prestataire' => MessagingInboxRole.prestataire,
+            _ => null,
+          };
+          return ChatScreen(conversationId: id, viewerRole: viewerRole);
         },
       ),
       GoRoute(

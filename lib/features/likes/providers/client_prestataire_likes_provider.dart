@@ -47,10 +47,21 @@ class ClientLikedPrestataireIdsNotifier extends AsyncNotifier<Set<String>> {
   }
 
   Future<void> toggle(String prestataireId) async {
-    final client = await ref.read(currentClientProfileProvider.future);
-    if (client == null) {
-      throw StateError('Profil client requis pour liker.');
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null) {
+      throw StateError('Utilisateur non connecté.');
     }
+
+    final profileService = ref.read(clientProfileServiceProvider);
+    if (profileService == null) {
+      throw StateError('Service profil client indisponible.');
+    }
+
+    final client = await profileService.ensureForUserId(user.id);
+    ref.invalidate(currentClientProfileProvider);
 
     final service = ref.read(prestataireLikeServiceProvider);
     if (service == null) {

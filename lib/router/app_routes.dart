@@ -104,6 +104,7 @@ abstract final class AppRouteNames {
   static const String clientMessages = 'client-messages';
   static const String clientProfile = 'client-profile';
   static const String chat = 'chat';
+  static const String chatFromBooking = 'chat-from-booking';
   static const String editClientAccount = 'edit-client-account';
   static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
