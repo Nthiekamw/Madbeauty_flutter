@@ -1,0 +1,59 @@
+
+    <!-- ██ MODÉRATION MOBILE ████████████████████████████████ -->
+    <div class="section" id="sec-verifications">
+      <div class="page-header"><div><h2>Vérifications prestataires</h2><p>Demandes de badge vérifié</p></div>
+        <button class="btn btn-primary btn-sm" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Actualiser</button></div>
+      <div class="card"><table class="data-table"><thead><tr><th>Prestataire</th><th>Salon</th><th>Ville</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="verifications-tbody"></tbody></table></div>
+    </div>
+
+    <div class="section" id="sec-content-reports">
+      <div class="page-header"><div><h2>Signalements contenu</h2><p>Profils, avis et contenus signalés</p></div></div>
+      <div class="card"><table class="data-table"><thead><tr><th>Signaleur</th><th>Cible</th><th>Raison</th><th>Date</th><th>Actions</th></tr></thead><tbody id="content-reports-tbody"></tbody></table></div>
+    </div>
+
+    <div class="section" id="sec-photos">
+      <div class="page-header"><div><h2>Photos réalisations</h2><p>Modération des portfolios prestataires</p></div></div>
+      <div class="card"><table class="data-table"><thead><tr><th>Prestataire</th><th>Aperçu</th><th>Légende</th><th>Date</th><th>Actions</th></tr></thead><tbody id="photos-tbody"></tbody></table></div>
+    </div>
+
+    <!-- ██ GESTION MOBILE ████████████████████████████████████ -->
+    <div class="section" id="sec-audit">
+      <div class="page-header"><div><h2>Journal d'audit</h2><p>Historique des actions administrateur</p></div></div>
+      <div class="card"><table class="data-table"><thead><tr><th>Admin</th><th>Action</th><th>Entité</th><th>Date</th></tr></thead><tbody id="audit-tbody"></tbody></table></div>
+    </div>
+
+    <div class="section" id="sec-push">
+      <div class="page-header"><div><h2>Notifications push</h2><p>Envoyer une notification à l'audience</p></div></div>
+      <div class="card" style="max-width:520px;">
+        <div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="push-title" placeholder="Titre"></div>
+        <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" id="push-body" rows="3" placeholder="Corps du message"></textarea></div>
+        <div class="form-group"><label class="form-label">Audience</label>
+          <select class="form-input" id="push-audience"><option value="all">Tous</option><option value="client">Clients</option><option value="prestataire">Prestataires</option></select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-outline btn-sm" onclick="previewPush()">Prévisualiser</button>
+          <button class="btn btn-primary btn-sm" onclick="sendPush()">Envoyer</button>
+        </div>
+        <p id="push-result" style="margin-top:12px;font-size:13px;color:var(--text3);"></p>
+      </div>
+    </div>
+
+    <div class="section" id="sec-trial">
+      <div class="page-header"><div><h2>Essai catalogue</h2><p>Durée d'essai prestataires sans abonnement</p></div></div>
+      <div class="card" style="max-width:420px;">
+        <div class="form-group"><label class="form-label">Jours d'essai</label><input class="form-input" type="number" id="trial-days" min="1"></div>
+        <p id="trial-stats" style="font-size:13px;color:var(--text3);margin-bottom:12px;"></p>
+        <button class="btn btn-primary btn-sm" onclick="saveTrialDays()">Enregistrer</button>
+      </div>
+    </div>
+
+    <div class="section" id="sec-platform-fee">
+      <div class="page-header"><div><h2>Commission réservation</h2><p>Frais plateforme par RDV</p></div></div>
+      <div class="card" style="max-width:420px;">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Frais (centimes)</label><input class="form-input" type="number" id="fee-cents" min="0"></div>
+          <div class="form-group"><label class="form-label">RDV gratuits</label><input class="form-input" type="number" id="fee-free" min="0"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="savePlatformFee()">Enregistrer</button>
+      </div>
+    </div>

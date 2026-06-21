@@ -1,13 +1,13 @@
 {
-    "name": "madbeauty",
-    "short_name": "madbeauty",
+    "name": "MadBeauty Admin",
+    "short_name": "MB Admin",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0A0A0A",
-    "theme_color": "#4A3328",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
-    "prefer_related_applications": false,
+    "background_color": "#2C1810",
+    "theme_color": "#2C1810",
+    "description": "Tableau de bord administrateur MadBeauty",
+    "orientation": "any",
+    "prefer_related_applications": true,
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -18,18 +18,6 @@
             "src": "icons/Icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-maskable-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "maskable"
-        },
-        {
-            "src": "icons/Icon-maskable-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
         }
     ]
 }

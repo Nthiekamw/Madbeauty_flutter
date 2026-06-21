@@ -8,7 +8,7 @@ import {
   serviceClient,
 } from "../_shared/stripe_booking.ts";
 
-type Audience = "all" | "client" | "prestataire" | "user";
+type Audience = "all" | "client" | "prestataire" | "user" | "users";
 
 type NavTarget =
   | "none"
@@ -26,6 +26,7 @@ interface Body {
   body?: string;
   audience?: string;
   userId?: string;
+  userIds?: string[];
   dryRun?: boolean;
   excludeBanned?: boolean;
   nav?: string;
@@ -96,7 +97,7 @@ async function roleUserIds(
 async function fetchRecipientTokens(
   supabase: ReturnType<typeof serviceClient>,
   audience: Audience,
-  opts: { userId?: string; excludeBanned: boolean },
+  opts: { userId?: string; userIds?: string[]; excludeBanned: boolean },
 ): Promise<Array<{ user_id: string; fcm_token: string }>> {
   const admins = await adminUserIds(supabase);
   const recipients: Array<{ user_id: string; fcm_token: string }> = [];
@@ -123,6 +124,36 @@ async function fetchRecipientTokens(
         user_id: String(data.user_id),
         fcm_token: String(data.fcm_token),
       });
+    }
+    return recipients;
+  }
+
+  if (audience === "users") {
+    const ids = (opts.userIds ?? []).map((id) => String(id).trim()).filter(Boolean);
+    if (ids.length === 0) return [];
+    const uniqueIds = [...new Set(ids)].filter((id) => !admins.has(id));
+    const chunkSize = 100;
+    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      const chunk = uniqueIds.slice(i, i + chunkSize);
+      let query = supabase
+        .from("user_profiles")
+        .select(profileSelect)
+        .in("user_id", chunk)
+        .not("fcm_token", "is", null);
+      if (opts.excludeBanned) {
+        query = query.eq("is_banned", false);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.error("user_profiles batch:", error);
+        continue;
+      }
+      for (const row of data ?? []) {
+        const uid = String(row.user_id ?? "");
+        const token = String(row.fcm_token ?? "").trim();
+        if (!uid || !token) continue;
+        recipients.push({ user_id: uid, fcm_token: token });
+      }
     }
     return recipients;
   }
@@ -232,6 +263,9 @@ Deno.serve(async (req) => {
     const body = String(payload.body ?? "").trim();
     const audience = String(payload.audience ?? "all").trim() as Audience;
     const userId = payload.userId ? String(payload.userId).trim() : undefined;
+    const userIds = Array.isArray(payload.userIds)
+      ? payload.userIds.map((id) => String(id).trim()).filter(Boolean)
+      : undefined;
     const dryRun = payload.dryRun === true;
     const excludeBanned = payload.excludeBanned !== false;
     const navRaw = String(payload.nav ?? "none").trim() as NavTarget;
@@ -267,16 +301,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    const validAudiences: Audience[] = ["all", "client", "prestataire", "user"];
+    const validAudiences: Audience[] = ["all", "client", "prestataire", "user", "users"];
     if (!validAudiences.includes(audience)) {
       return jsonResponse({ error: "Audience invalide" }, 400);
     }
     if (audience === "user" && !userId) {
       return jsonResponse({ error: "userId requis pour l’audience user" }, 400);
     }
+    if (audience === "users" && (!userIds || userIds.length === 0)) {
+      return jsonResponse({ error: "userIds requis pour l’audience users" }, 400);
+    }
 
     const recipients = await fetchRecipientTokens(admin, audience, {
       userId,
+      userIds,
       excludeBanned,
     });
     const recipientCount = recipients.length;
@@ -319,12 +357,17 @@ Deno.serve(async (req) => {
       actor_user_id: user.id,
       action: "send_push",
       entity_type: "push_broadcast",
-      entity_id: audience === "user" ? (userId ?? "user") : audience,
+      entity_id: audience === "user"
+        ? (userId ?? "user")
+        : audience === "users"
+        ? `batch_${userIds?.length ?? 0}`
+        : audience,
       metadata: {
         title,
         body,
         audience,
         user_id: userId ?? null,
+        user_ids: userIds ?? null,
         recipients: recipientCount,
         sent,
         failed,

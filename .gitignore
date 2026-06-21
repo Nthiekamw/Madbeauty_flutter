@@ -27,6 +27,7 @@ migrate_working_dir/
 .env
 .env.*
 !.env.example
+web/admin/config.js
 supabase/firebase-service-account.json
 **/firebase-service-account.json
 !**/firebase-service-account.json.example
