@@ -8,6 +8,9 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/models/user_role.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -87,81 +90,99 @@ class _BecomeClientScreenState extends ConsumerState<BecomeClientScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+
+    final formBody = DiscoveryFormScrollView(
+      children: [
+        if (!useWeb)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: _loading ? null : _goBack,
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+          ),
+        if (!useWeb) ...[
+          Text(
+            DiscProfile.becomeClientScreenTitle,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Text(
+          DiscProfile.becomeClientScreenBody,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 16),
+        DiscoverySurfaceCard(
+          padding: const EdgeInsets.all(18),
+          includeHorizontalMargin: !useWeb,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                DiscProfile.becomeClientCardTitle,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const _BenefitRow(text: DiscProfile.becomeClientBenefit1),
+              const SizedBox(height: 8),
+              const _BenefitRow(text: DiscProfile.becomeClientBenefit2),
+              const SizedBox(height: 8),
+              const _BenefitRow(text: DiscProfile.becomeClientBenefit3),
+            ],
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _error!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+        AppButton(
+          onPressed: _loading ? null : _submit,
+          child: Text(
+            _loading
+                ? DiscPrestaForm.saving
+                : DiscProfile.becomeClientScreenSubmit,
+          ),
+        ),
+      ],
+    );
+
+    final body = useWeb ? WebFlowPanel(child: formBody) : formBody;
 
     return PopScope(
       canPop: !_loading && context.canPop(),
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && !_loading) _goBack();
       },
-      child: DiscoveryBrandScaffold(
-        body: DiscoveryFormScrollView(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: _loading ? null : _goBack,
-                icon: const Icon(Icons.arrow_back_rounded),
-              ),
-            ),
-            Text(
-              DiscProfile.becomeClientScreenTitle,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.4,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              DiscProfile.becomeClientScreenBody,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            DiscoverySurfaceCard(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    DiscProfile.becomeClientCardTitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const _BenefitRow(text: DiscProfile.becomeClientBenefit1),
-                  const SizedBox(height: 8),
-                  const _BenefitRow(text: DiscProfile.becomeClientBenefit2),
-                  const SizedBox(height: 8),
-                  const _BenefitRow(text: DiscProfile.becomeClientBenefit3),
-                ],
-              ),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
+      child: useWeb
+          ? WebFlowScaffold(
+              appBar: AppBar(
+                title: const Text(DiscProfile.becomeClientScreenTitle),
+                leading: IconButton(
+                  onPressed: _loading ? null : _goBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
                 ),
               ),
-            ],
-            const SizedBox(height: 20),
-            AppButton(
-              onPressed: _loading ? null : _submit,
-              child: Text(
-                _loading
-                    ? DiscPrestaForm.saving
-                    : DiscProfile.becomeClientScreenSubmit,
-              ),
-            ),
-          ],
-        ),
-      ),
+              body: body,
+            )
+          : DiscoveryBrandScaffold(body: body),
     );
   }
 }

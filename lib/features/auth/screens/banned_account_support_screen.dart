@@ -17,10 +17,9 @@ import '../../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../../services/supabase/bug_report/bug_report_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 
 /// Formulaire support in-app après suspension de compte (signalement + chat).
@@ -149,10 +148,24 @@ class _BannedAccountSupportScreenState
     setState(() => _screenshot = file);
   }
 
+  Future<void> _handleBack() async {
+    if (_submitting) return;
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+    } else if (widget.banAppealFlow) {
+      await _finishBanAppealFlowIfNeeded();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final banReason = widget.banReason?.trim();
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final padding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 8, 20, 32);
 
     return PopScope(
       canPop: !_submitting,
@@ -161,131 +174,117 @@ class _BannedAccountSupportScreenState
           unawaited(_finishBanAppealFlowIfNeeded());
         }
       },
-      child: DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: _submitting
-                  ? null
-                  : () async {
-                      final router = GoRouter.of(context);
-                      if (router.canPop()) {
-                        router.pop();
-                      } else if (widget.banAppealFlow) {
-                        await _finishBanAppealFlowIfNeeded();
-                      }
-                    },
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          const DiscoveryFeatureHeader(
-            title: AuthStrings.bannedSupportTitle,
-            subtitle: AuthStrings.bannedSupportSubtitle,
-            icon: Icons.support_agent_rounded,
-          ),
-          Expanded(
-            child: DiscoveryConstrainedBody(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                children: [
-                  if (banReason != null && banReason.isNotEmpty)
-                    DiscoverySurfaceCard(
-                      includeHorizontalMargin: false,
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            color: theme.colorScheme.error,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              AuthStrings.accountBannedReason(banReason),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (banReason != null && banReason.isNotEmpty)
-                    const SizedBox(height: 16),
-                  TextField(
-                    controller: _descriptionController,
-                    enabled: !_submitting,
-                    maxLines: 6,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      labelText: AuthStrings.bannedSupportDescriptionLabel,
-                      hintText: AuthStrings.bannedSupportDescriptionHint,
-                      errorText: _descriptionError,
-                      alignLabelWithHint: true,
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (_) {
-                      if (_descriptionError != null) {
-                        setState(() => _descriptionError = null);
-                      }
-                    },
+      child: ProfileFlowScaffold(
+        title: AuthStrings.bannedSupportTitle,
+        subtitle: AuthStrings.bannedSupportSubtitle,
+        icon: Icons.support_agent_rounded,
+        onBack: () => unawaited(_handleBack()),
+        backEnabled: !_submitting,
+        body: ListView(
+          padding: padding,
+          children: [
+            if (useWeb)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  AuthStrings.bannedSupportSubtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
                   ),
-                  if (!kIsWeb) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      DiscBug.fieldScreenshot,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                ),
+              ),
+            if (banReason != null && banReason.isNotEmpty)
+              DiscoverySurfaceCard(
+                includeHorizontalMargin: false,
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: theme.colorScheme.error,
+                      size: 22,
                     ),
-                    const SizedBox(height: 8),
-                    if (_screenshot != null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_screenshot!.path),
-                          height: 160,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        AuthStrings.accountBannedReason(banReason),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _submitting
-                            ? null
-                            : () => setState(() => _screenshot = null),
-                        icon: const Icon(Icons.delete_outline_rounded),
-                        label: const Text(DiscBug.fieldScreenshotRemove),
-                      ),
-                    ] else
-                      OutlinedButton.icon(
-                        onPressed: _submitting ? null : _pickScreenshot,
-                        icon: const Icon(Icons.add_photo_alternate_outlined),
-                        label: const Text(DiscBug.fieldScreenshotAdd),
-                      ),
+                    ),
                   ],
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(AuthStrings.bannedSupportSubmit),
-                  ),
-                ],
+                ),
               ),
+            if (banReason != null && banReason.isNotEmpty)
+              const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              enabled: !_submitting,
+              maxLines: 6,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                labelText: AuthStrings.bannedSupportDescriptionLabel,
+                hintText: AuthStrings.bannedSupportDescriptionHint,
+                errorText: _descriptionError,
+                alignLabelWithHint: true,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (_) {
+                if (_descriptionError != null) {
+                  setState(() => _descriptionError = null);
+                }
+              },
             ),
-          ),
-        ],
-      ),
+            if (!kIsWeb) ...[
+              const SizedBox(height: 16),
+              Text(
+                DiscBug.fieldScreenshot,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_screenshot != null) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(_screenshot!.path),
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _submitting
+                      ? null
+                      : () => setState(() => _screenshot = null),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text(DiscBug.fieldScreenshotRemove),
+                ),
+              ] else
+                OutlinedButton.icon(
+                  onPressed: _submitting ? null : _pickScreenshot,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: const Text(DiscBug.fieldScreenshotAdd),
+                ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(AuthStrings.bannedSupportSubmit),
+            ),
+          ],
+        ),
       ),
     );
   }

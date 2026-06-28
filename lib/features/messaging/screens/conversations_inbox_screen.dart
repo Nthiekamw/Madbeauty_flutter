@@ -16,6 +16,8 @@ import '../../home/widgets/shared/client_home_section_header.dart';
 import '../../prestataire/widgets/shared/prestataire_section_header.dart';
 import '../models/conversation_inbox_item.dart';
 import '../widgets/inbox/conversation_list_tile.dart';
+import '../../../shared/layout/adaptive_safe_area.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/inbox/conversations_empty_state.dart';
@@ -50,7 +52,7 @@ class _ConversationsInboxScreenState
     if (user == null || isGuest) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        body: SafeArea(
+        body: AdaptiveSafeArea(
           child: ClientWorkspaceShell(
             subtitle: DiscChat.inboxTitle,
             panelOverlap: -8,
@@ -81,8 +83,9 @@ class _ConversationsInboxScreenState
     if (widget.role == MessagingInboxRole.client) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        body: SafeArea(
+        body: AdaptiveSafeArea(
           child: ClientWorkspaceShell(
+            title: ShellStrings.navClientMessages,
             subtitle: headerSubtitle,
             panelOverlap: -8,
             header: ClientWorkspaceHeader(
@@ -100,6 +103,8 @@ class _ConversationsInboxScreenState
 
     return PrestataireBrandScaffold(
       body: PrestataireWorkspaceShell(
+        title: ShellStrings.navPrestataireMessages,
+        subtitle: headerSubtitle,
         onRefresh: _refreshInbox,
         headerSubtitle: headerSubtitle,
         showMessagesAction: false,
@@ -117,6 +122,9 @@ class _ConversationsInboxScreenState
     AsyncValue<List<ConversationInboxItem>> inboxAsync,
     String headerSubtitle,
   ) {
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final hPad = useWeb ? 16.0 : 20.0;
+
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -127,22 +135,26 @@ class _ConversationsInboxScreenState
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              20,
+              hPad,
               widget.role == MessagingInboxRole.prestataire ? 4 : 12,
-              20,
+              hPad,
               8,
             ),
             child: widget.role == MessagingInboxRole.client
-                ? ClientHomeSectionHeader(
-                    title: DiscChat.inboxTitle,
-                    subtitle: headerSubtitle,
-                    icon: Icons.forum_rounded,
-                  )
-                : PrestataireSectionHeader(
-                    icon: Icons.forum_rounded,
-                    title: DiscChat.inboxTitle,
-                    subtitle: DiscPrestaWorkspace.messagesInboxSubtitle,
-                  ),
+                ? (DiscoveryResponsive.of(context).useWebSiteLayout
+                    ? const SizedBox.shrink()
+                    : ClientHomeSectionHeader(
+                        title: DiscChat.inboxTitle,
+                        subtitle: headerSubtitle,
+                        icon: Icons.forum_rounded,
+                      ))
+                : (useWeb
+                    ? const SizedBox.shrink()
+                    : PrestataireSectionHeader(
+                        icon: Icons.forum_rounded,
+                        title: DiscChat.inboxTitle,
+                        subtitle: DiscPrestaWorkspace.messagesInboxSubtitle,
+                      )),
           ),
         ),
         ...inboxAsync.when(
@@ -175,7 +187,7 @@ class _ConversationsInboxScreenState
 
             return [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 24),
                 sliver: SliverList.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),

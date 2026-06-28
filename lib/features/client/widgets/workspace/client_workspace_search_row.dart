@@ -29,7 +29,9 @@ class ClientWorkspaceSearchRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+    final hPad = DiscoveryResponsive.of(context).useWebSiteLayout
+        ? 16.0
+        : DiscoveryResponsive.of(context).horizontalPadding;
     final fieldHeight = compact ? 44.0 : 50.0;
     final fontSize = compact ? 13.0 : null;
 

@@ -19,6 +19,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
     this.fallbackAvatarUrl,
     this.playVideos = false,
     this.imagesOnly = true,
+    this.coverAlignment = Alignment.center,
   });
 
   final String prestataireId;
@@ -30,6 +31,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
   final bool playVideos;
   /// `true` sur les cartes (accueil, catalogue, favoris) : masque les vidéos.
   final bool imagesOnly;
+  final Alignment coverAlignment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,6 +50,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
             borderRadius: borderRadius,
             fallbackDisplayName: fallbackDisplayName,
             fallbackAvatarUrl: fallbackAvatarUrl,
+            coverAlignment: coverAlignment,
           );
         }
 
@@ -59,6 +62,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
           fallbackDisplayName: fallbackDisplayName,
           fallbackAvatarUrl: fallbackAvatarUrl,
           playVideos: playVideos && !imagesOnly,
+          coverAlignment: coverAlignment,
           onItemTap: (index) => FullscreenRealisationGallery.open(
             context,
             items: visible,
@@ -79,6 +83,7 @@ class PrestataireRealisationCarouselScope extends ConsumerWidget {
         borderRadius: borderRadius,
         fallbackDisplayName: fallbackDisplayName,
         fallbackAvatarUrl: fallbackAvatarUrl,
+        coverAlignment: coverAlignment,
       ),
     );
   }

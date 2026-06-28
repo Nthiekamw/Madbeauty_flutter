@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/widgets/layout/keyboard_dismiss_area.dart';
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../logic/prestataire_hub_constants.dart';
@@ -153,50 +156,46 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen>
 
     final focused = widget.focusedSection;
     final onboarding = PrestataireHubOnboardingDraft.isActive;
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
 
-    return PopScope(
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop && onboarding) {
-          unawaited(_form.persistHubDraftOnExit());
-        }
-      },
-      child: PrestataireBrandScaffold(
-        appBar: prestataireBrandAppBar(
-          context: context,
-          title: Text(
-            focused?.screenTitle ?? DiscPrestaProfile.editTitle,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).colorScheme.onSurface,
-              letterSpacing: -0.3,
+    final hubAppBar = prestataireBrandAppBar(
+      context: context,
+      title: Text(
+        focused?.screenTitle ?? DiscPrestaProfile.editTitle,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontFamily: AppFonts.display,
+          fontWeight: FontWeight.w800,
+          color: Theme.of(context).colorScheme.onSurface,
+          letterSpacing: -0.3,
+        ),
+      ),
+      actions: [
+        if (onboarding &&
+            focused == null &&
+            _form.currentStep >= PrestataireHubConstants.optionalFromStep &&
+            _form.currentStep <
+                PrestataireHubConstants.wizardStepCount - 1)
+          TextButton(
+            onPressed: _form.saving ? null : _save.completeLater,
+            child: Text(
+              compactTopAction
+                  ? DiscPrestaForm.onboardingFinishLater
+                  : DiscPrestaForm.completeLater,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
-          actions: [
-            if (onboarding &&
-                focused == null &&
-                _form.currentStep >= PrestataireHubConstants.optionalFromStep &&
-                _form.currentStep <
-                    PrestataireHubConstants.wizardStepCount - 1)
-              TextButton(
-                onPressed: _form.saving ? null : _save.completeLater,
-                child: Text(
-                  compactTopAction
-                      ? DiscPrestaForm.onboardingFinishLater
-                      : DiscPrestaForm.completeLater,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        body: KeyboardDismissArea(
-          child: async.when(
-            data: (data) {
-              _form.hydrate(data);
-              return PrestataireHubScreenBody(
+      ],
+    );
+
+    final hubBody = KeyboardDismissArea(
+      child: async.when(
+        data: (data) {
+          _form.hydrate(data);
+          return WebFlowPanel(
+            child: PrestataireHubScreenBody(
                 data: data,
                 focusedSection: focused,
                 currentStep: _form.currentStep,
@@ -300,15 +299,25 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen>
                     .pickHoraireTime(context, _form, i, false),
                 onCapaciteChanged: _form.setCapacite,
                 onboardingWizard: focused == null,
-              );
-            },
-            error: (_, __) => PrestataireProfileLoadError(
-              onRetry: () => ref.invalidate(prestataireProfileFormProvider),
-            ),
-            loading: () => const DiscoveryDetailSkeleton(),
+              ),
+            );
+          },
+          error: (_, __) => PrestataireProfileLoadError(
+            onRetry: () => ref.invalidate(prestataireProfileFormProvider),
           ),
+          loading: () => const DiscoveryDetailSkeleton(),
         ),
-      ),
+      );
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && onboarding) {
+          unawaited(_form.persistHubDraftOnExit());
+        }
+      },
+      child: useWeb
+          ? WebFlowScaffold(appBar: hubAppBar, body: hubBody)
+          : PrestataireBrandScaffold(appBar: hubAppBar, body: hubBody),
     );
   }
 }

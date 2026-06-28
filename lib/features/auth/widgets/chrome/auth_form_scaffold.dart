@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
 import '../../../../shared/widgets/layout/auth_brand_background.dart';
@@ -46,8 +46,97 @@ class AuthFormScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = DiscoveryResponsive.of(context);
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final headerCompact = compact || keyboardOpen;
+    final useWebCard = layout.useWebAuthFormLayout;
+
+    Widget formColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(8, headerCompact ? 0 : 8, 16, 0),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: isBackEnabled ? onBack : null,
+                icon: const Icon(Icons.arrow_back_rounded),
+                tooltip:
+                    MaterialLocalizations.of(context).backButtonTooltip,
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+        if (showLogo && !headerCompact) ...[
+          Center(
+            child: AuthMarketingLogo(
+              width: logoWidth,
+              showTagline: showLogoTagline,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (showTitle || subtitle != null || headerAccessory != null)
+          _AuthFormHeader(
+            theme: theme,
+            title: title,
+            subtitle: subtitle,
+            headerAccessory: headerAccessory,
+            headerCompact: headerCompact,
+            hideSubtitle: keyboardOpen,
+            showTitle: showTitle,
+            centerTitle: centerTitle,
+          ),
+        SizedBox(
+          height: headerAccessory != null
+              ? (headerCompact ? 8 : 12)
+              : (headerCompact ? 8 : 16),
+        ),
+        Expanded(
+          child: KeyboardDismissArea(
+            child: scrollable
+                ? SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      0,
+                      24,
+                      headerCompact ? 12 : 24,
+                    ),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: child,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                    child: child,
+                  ),
+          ),
+        ),
+        if (bottomBar != null)
+          _AuthFormBottomBar(
+            theme: theme,
+            headerCompact: headerCompact,
+            child: bottomBar!,
+          ),
+      ],
+    );
+
+    if (useWebCard) {
+      formColumn = DecoratedBox(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: formColumn,
+        ),
+      );
+    }
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -57,77 +146,23 @@ class AuthFormScaffold extends StatelessWidget {
         children: [
           const AuthBrandBackground(),
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(8, headerCompact ? 0 : 8, 16, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: isBackEnabled ? onBack : null,
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        tooltip:
-                            MaterialLocalizations.of(context).backButtonTooltip,
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
-                ),
-                if (showLogo && !headerCompact) ...[
-                  Center(
-                    child: AuthMarketingLogo(
-                      width: logoWidth,
-                      showTagline: showLogoTagline,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                if (showTitle || subtitle != null || headerAccessory != null)
-                  _AuthFormHeader(
-                    theme: theme,
-                    title: title,
-                    subtitle: subtitle,
-                    headerAccessory: headerAccessory,
-                    headerCompact: headerCompact,
-                    hideSubtitle: keyboardOpen,
-                    showTitle: showTitle,
-                    centerTitle: centerTitle,
-                  ),
-                SizedBox(
-                  height: headerAccessory != null
-                      ? (headerCompact ? 8 : 12)
-                      : (headerCompact ? 8 : 16),
-                ),
-                Expanded(
-                  child: KeyboardDismissArea(
-                    child: scrollable
-                        ? SingleChildScrollView(
-                            padding: EdgeInsets.fromLTRB(
-                              24,
-                              0,
-                              24,
-                              headerCompact ? 12 : 24,
-                            ),
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            child: child,
-                          )
-                        : Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                            child: child,
-                          ),
-                  ),
-                ),
-                if (bottomBar != null)
-                  _AuthFormBottomBar(
-                    theme: theme,
-                    headerCompact: headerCompact,
-                    child: bottomBar!,
-                  ),
-              ],
-            ),
+            child: layout.useWebAuthFormLayout
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final formWidth = layout.authFormMaxWidthFor(
+                        constraints.maxWidth,
+                      );
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          width: formWidth,
+                          height: constraints.maxHeight,
+                          child: formColumn,
+                        ),
+                      );
+                    },
+                  )
+                : formColumn,
           ),
         ],
       ),

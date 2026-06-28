@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/app_router.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/layout/auth_brand_background.dart';
 import '../../guest/guest_mode_provider.dart';
@@ -43,6 +44,86 @@ class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
+    final layout = DiscoveryResponsive.of(context);
+    final useWebLayout = layout.useWebAuthFormLayout;
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!useWebLayout) ...[
+          const SizedBox(height: 24),
+          const AuthMarketingLogo(width: 260),
+          const Spacer(flex: 2),
+        ],
+        Text(
+          AuthStrings.welcomeTitle,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineLarge?.copyWith(
+            fontFamily: AppFonts.display,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+            height: 1.1,
+            fontSize: useWebLayout ? 32 : null,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          AuthStrings.welcomeSubtitle,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontFamily: AppFonts.body,
+            color: onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 28),
+        const _WelcomeFeatureRow(
+          icon: Icons.person_outline,
+          label: AuthStrings.welcomeFeatureDualRole,
+        ),
+        const SizedBox(height: 10),
+        const _WelcomeFeatureRow(
+          icon: Icons.lock_outline,
+          label: AuthStrings.welcomeFeatureSecure,
+        ),
+        if (!useWebLayout) const Spacer(flex: 3),
+        if (useWebLayout) const SizedBox(height: 32),
+        FilledButton(
+          onPressed: () {
+            ref.read(guestModeProvider.notifier).disable();
+            context.push(AppRoutes.register);
+          },
+          child: Text(AuthStrings.welcomeRegister),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: () {
+            ref.read(guestModeProvider.notifier).disable();
+            context.push(AppRoutes.login);
+          },
+          child: Text(AuthStrings.welcomeLogin),
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: () {
+            ref.read(guestModeProvider.notifier).enable();
+            context.goNamed(AppRouteNames.clientHome);
+          },
+          child: Text(AuthStrings.welcomeContinueGuest),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          AuthStrings.welcomeGuestHint,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontFamily: AppFonts.body,
+            color: onSurfaceVariant,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -51,82 +132,42 @@ class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
         children: [
           const AuthBrandBackground(),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 24),
-                  const AuthMarketingLogo(width: 260),
-                  const Spacer(flex: 2),
-                  Text(
-                    AuthStrings.welcomeTitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                      height: 1.1,
+            child: useWebLayout
+                ? Center(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: layout.horizontalPadding,
+                        vertical: 24,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: layout.authFormMaxWidthFor(
+                            MediaQuery.sizeOf(context).width,
+                          ),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withValues(
+                              alpha: 0.94,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: theme.colorScheme.outline
+                                  .withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+                            child: content,
+                          ),
+                        ),
+                      ),
                     ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: content,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AuthStrings.welcomeSubtitle,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontFamily: AppFonts.body,
-                      color: onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  const _WelcomeFeatureRow(
-                    icon: Icons.person_outline,
-                    label: AuthStrings.welcomeFeatureDualRole,
-                  ),
-                  const SizedBox(height: 10),
-                  const _WelcomeFeatureRow(
-                    icon: Icons.lock_outline,
-                    label: AuthStrings.welcomeFeatureSecure,
-                  ),
-                  const Spacer(flex: 3),
-                  FilledButton(
-                    onPressed: () {
-                      ref.read(guestModeProvider.notifier).disable();
-                      context.push(AppRoutes.register);
-                    },
-                    child: Text(AuthStrings.welcomeRegister),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      ref.read(guestModeProvider.notifier).disable();
-                      context.push(AppRoutes.login);
-                    },
-                    child: Text(AuthStrings.welcomeLogin),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      ref.read(guestModeProvider.notifier).enable();
-                      context.goNamed(AppRouteNames.clientHome);
-                    },
-                    child: Text(AuthStrings.welcomeContinueGuest),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AuthStrings.welcomeGuestHint,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: AppFonts.body,
-                      color: onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
           ),
         ],
       ),

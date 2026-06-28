@@ -23,6 +23,7 @@ class PrestataireDetailBottomBar extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final layout = DiscoveryResponsive.of(context);
+    final hPad = layout.pageHorizontalPadding(flow: true);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -46,15 +47,12 @@ class PrestataireDetailBottomBar extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          layout.horizontalPadding,
+          hPad,
           10,
-          layout.horizontalPadding,
+          hPad,
           10 + bottom,
         ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
-            child: Row(
+        child: Row(
               children: [
                 if (minPrice != null) ...[
                   Column(
@@ -108,8 +106,6 @@ class PrestataireDetailBottomBar extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
       ),
     );
   }

@@ -32,6 +32,7 @@ class BookingPushNotifications {
   StreamSubscription<RemoteMessage>? _onOpenedAppSub;
   bool _localNotificationsReady = false;
   bool _inboxOpenedAppAttached = false;
+  static bool _loggedPushUnavailable = false;
   void Function(RemoteMessage)? _onInboxMessage;
   void Function(RemoteMessage)? _onNotificationOpened;
   void Function(Map<String, dynamic>)? _onPushDataOpened;
@@ -78,11 +79,14 @@ class BookingPushNotifications {
     required ProfileService? profileService,
   }) async {
     if (!isConfigured) {
-      if (kDebugMode) {
-        debugPrint(
-          'BookingPushNotifications: Firebase non configuré – exécuter '
-          '`dart run flutterfire_cli:flutterfire configure`.',
-        );
+      if (kDebugMode && !_loggedPushUnavailable) {
+        _loggedPushUnavailable = true;
+        final hint = kIsWeb
+            ? 'notifications push désactivées sur le web '
+                '(notifications in-app Supabase uniquement).'
+            : 'Firebase non configuré – exécuter '
+                '`dart run flutterfire_cli:flutterfire configure`.';
+        debugPrint('BookingPushNotifications: $hint');
       }
       return;
     }

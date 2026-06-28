@@ -5,6 +5,8 @@ abstract final class DiscProfile {
   static const sectionMyInfo = 'Mes informations';
   static const sectionPreferences = 'Mes préférences';
   static const sectionAccount = 'Mon compte';
+  static const webPageSubtitle =
+      'Paramètres, préférences et espace client ou prestataire';
 
   static const labelEmail = 'E-mail';
   static const labelPhone = 'Téléphone';
@@ -18,6 +20,12 @@ abstract final class DiscProfile {
   static const prefPushHint = 'Alertes réservations et rappels';
   static const prefPushInactiveHint =
       'Non activées — autorise-les pour ne rien manquer';
+  static const prefPushWebHint =
+      'Alertes in-app pendant ta session sur le navigateur';
+  static const prefPushWebInactiveHint =
+      'Active les alertes in-app (réservations, messages)';
+  static const prefPushWebFootnote =
+      'Pour les notifications quand l’app est fermée, installe l’application mobile.';
   static const prefPushPromptTitle = 'Active les notifications';
   static const prefPushPromptBody =
       'Reçois les confirmations de réservation, les messages et les rappels '
@@ -401,6 +409,7 @@ abstract final class DiscProfile {
       'Impossible de supprimer le compte pour l’instant. Réessaie plus tard.';
 
   static const prefPushEnabled = 'Notifications activées.';
+  static const prefPushWebEnabled = 'Alertes in-app activées.';
   static const prefPushDisabled = 'Notifications désactivées.';
   static const prefPushDenied =
       'Autorise les notifications dans les réglages du téléphone.';

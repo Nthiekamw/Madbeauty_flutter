@@ -93,16 +93,19 @@ abstract final class PostAuthNavigation {
 
     if (await _redirectIfBannedWithContainer(router, container)) return null;
 
-    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
-    if (becomeResume != null) {
-      if (BecomePrestataireFlowResume.needsPrestataireRole) {
-        await LocalCacheService.instance.setSelectedRole('prestataire');
-      }
-      return becomeResume;
-    }
-
     final roles = await container.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
+
+    // Brouillon local uniquement si le rôle prestataire n'est pas encore sur le serveur.
+    if (!roles.any((r) => r == UserRole.prestataire)) {
+      final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+      if (becomeResume != null) {
+        if (BecomePrestataireFlowResume.needsPrestataireRole) {
+          await LocalCacheService.instance.setSelectedRole('prestataire');
+        }
+        return becomeResume;
+      }
+    }
 
     if (roles.any((r) => r == UserRole.admin)) {
       await LocalCacheService.instance.setSelectedRole('admin');

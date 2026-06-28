@@ -13,6 +13,9 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/auth/post_signup_profile_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -314,6 +317,7 @@ class _BecomePrestataireScreenState
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
 
     if (!_draftLoaded) {
       final draft = BecomePrestataireDraftStore.instance.read();
@@ -330,21 +334,16 @@ class _BecomePrestataireScreenState
       }
     }
 
-    return PopScope(
-      canPop: !_loading && context.canPop(),
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && !_loading) _goBack();
-      },
-      child: DiscoveryBrandScaffold(
-        body: DiscoveryFormScrollView(
+    final formBody = DiscoveryFormScrollView(
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: _loading ? null : _goBack,
-                icon: const Icon(Icons.arrow_back_rounded),
+            if (!useWeb)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: _loading ? null : _goBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
               ),
-            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
@@ -424,16 +423,17 @@ class _BecomePrestataireScreenState
               ),
             ),
             const SizedBox(height: 18),
-            Text(
-              DiscProfile.becomePrestaScreenTitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.4,
+            if (!useWeb)
+              Text(
+                DiscProfile.becomePrestaScreenTitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+            if (!useWeb) const SizedBox(height: 8),
             Text(
               DiscProfile.becomePrestaScreenBody,
               textAlign: TextAlign.center,
@@ -445,6 +445,7 @@ class _BecomePrestataireScreenState
             const SizedBox(height: 16),
             DiscoverySurfaceCard(
               padding: const EdgeInsets.all(14),
+              includeHorizontalMargin: !useWeb,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -560,8 +561,27 @@ class _BecomePrestataireScreenState
               ),
             ),
           ],
-        ),
-      ),
+        );
+
+    final body = useWeb ? WebFlowPanel(child: formBody) : formBody;
+
+    return PopScope(
+      canPop: !_loading && context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_loading) _goBack();
+      },
+      child: useWeb
+          ? WebFlowScaffold(
+              appBar: AppBar(
+                title: const Text(DiscProfile.becomePrestaScreenTitle),
+                leading: IconButton(
+                  onPressed: _loading ? null : _goBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
+              ),
+              body: body,
+            )
+          : DiscoveryBrandScaffold(body: body),
     );
   }
 }

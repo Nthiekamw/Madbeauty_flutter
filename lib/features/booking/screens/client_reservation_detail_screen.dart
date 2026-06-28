@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -92,65 +95,68 @@ class _ClientReservationDetailScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
     final detailAsync = ref.watch(
       clientReservationDetailProvider(widget.reservationId),
     );
+    final listPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 8, 20, 32);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscBk.detailTitle)),
-      body: detailAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.all(20),
-          child: DiscoveryListSkeleton(rowCount: 3, rowHeight: 88),
-        ),
-        error: (_, __) => Center(
-          child: DiscoveryEmptyState(
-            icon: Icons.cloud_off_outlined,
-            title: CoreStrings.networkErrorTitle,
-            body: DiscBk.listErrBody,
-            iconColor: theme.colorScheme.error,
-            actionLabel: DiscList.retry,
-            onAction: () => ref.invalidate(
-              clientReservationDetailProvider(widget.reservationId),
-            ),
+    final body = detailAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(20),
+        child: DiscoveryListSkeleton(rowCount: 3, rowHeight: 88),
+      ),
+      error: (_, __) => Center(
+        child: DiscoveryEmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: CoreStrings.networkErrorTitle,
+          body: DiscBk.listErrBody,
+          iconColor: theme.colorScheme.error,
+          actionLabel: DiscList.retry,
+          onAction: () => ref.invalidate(
+            clientReservationDetailProvider(widget.reservationId),
           ),
         ),
-        data: (item) {
-          if (item == null) {
-            return Center(
-              child: DiscoveryEmptyState(
-                icon: Icons.event_busy_outlined,
-                title: DiscBk.detailNotFoundTitle,
-                body: DiscBk.detailNotFoundBody,
-                iconColor: theme.colorScheme.onSurfaceVariant,
-              ),
-            );
-          }
+      ),
+      data: (item) {
+        if (item == null) {
+          return Center(
+            child: DiscoveryEmptyState(
+              icon: Icons.event_busy_outlined,
+              title: DiscBk.detailNotFoundTitle,
+              body: DiscBk.detailNotFoundBody,
+              iconColor: theme.colorScheme.onSurfaceVariant,
+            ),
+          );
+        }
 
-          final ui = clientReservationUiStatusFromStatut(item.statut);
-          final chip = chipColorsForReservationStatus(theme.colorScheme, ui);
-          final prestataireLabel =
-              item.prestataireName?.trim().isNotEmpty == true
-                  ? item.prestataireName!.trim()
-                  : DiscBk.unknownPresta;
-          final serviceLabel =
-              item.serviceName?.trim().isNotEmpty == true
-                  ? item.serviceName!.trim()
-                  : DiscBk.unknownSvc;
-          final canCancel = clientReservationCanCancel(ui);
-          final canMessage = clientReservationCanMessage(ui);
+        final ui = clientReservationUiStatusFromStatut(item.statut);
+        final chip = chipColorsForReservationStatus(theme.colorScheme, ui);
+        final prestataireLabel =
+            item.prestataireName?.trim().isNotEmpty == true
+                ? item.prestataireName!.trim()
+                : DiscBk.unknownPresta;
+        final serviceLabel =
+            item.serviceName?.trim().isNotEmpty == true
+                ? item.serviceName!.trim()
+                : DiscBk.unknownSvc;
+        final canCancel = clientReservationCanCancel(ui);
+        final canMessage = clientReservationCanMessage(ui);
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              ReservationPendingBanner(statut: item.statut),
-              if (ui == ClientReservationUiStatus.cancelled && item.hasRejectReason) ...[
-                const SizedBox(height: 10),
-                ReservationRejectReasonBox(reason: item.notesPrestataire!),
-              ],
-              const SizedBox(height: 12),
-              DiscoverySurfaceCard(
-                padding: const EdgeInsets.all(16),
+        return ListView(
+          padding: listPadding,
+          children: [
+            ReservationPendingBanner(statut: item.statut),
+            if (ui == ClientReservationUiStatus.cancelled && item.hasRejectReason) ...[
+              const SizedBox(height: 10),
+              ReservationRejectReasonBox(reason: item.notesPrestataire!),
+            ],
+            const SizedBox(height: 12),
+            DiscoverySurfaceCard(
+              padding: const EdgeInsets.all(16),
+              includeHorizontalMargin: !useWeb,
                 child: Row(
                   children: [
                     AppAvatar(
@@ -204,6 +210,7 @@ class _ClientReservationDetailScreenState
               const SizedBox(height: 12),
               DiscoverySurfaceCard(
                 padding: const EdgeInsets.all(16),
+                includeHorizontalMargin: !useWeb,
                 child: Column(
                   children: [
                     _DetailRow(
@@ -239,6 +246,7 @@ class _ClientReservationDetailScreenState
                 const SizedBox(height: 12),
                 DiscoverySurfaceCard(
                   padding: const EdgeInsets.all(16),
+                  includeHorizontalMargin: !useWeb,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -342,7 +350,11 @@ class _ClientReservationDetailScreenState
             ],
           );
         },
-      ),
+      );
+
+    return WebFlowScaffold(
+      appBar: AppBar(title: const Text(DiscBk.detailTitle)),
+      body: useWeb ? WebFlowPanel(child: body) : body,
     );
   }
 }

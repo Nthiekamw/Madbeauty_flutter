@@ -16,6 +16,8 @@ class DiscoveryConstrainedBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layout = DiscoveryResponsive.of(context);
+    if (layout.useWebSiteLayout) return child;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(

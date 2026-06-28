@@ -5,15 +5,17 @@ import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_text_styles.dart';
+import '../../../shared/widgets/app/app_button.dart';
+import '../../../shared/widgets/layout/web_client_page_header.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../models/home_profile_snapshot.dart';
 import '../providers/home_profile_provider.dart';
 import '../widgets/header/client_home_hero_header.dart';
 import '../widgets/layout/client_home_scroll_content.dart';
-import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/app_text_styles.dart';
-import '../../../shared/widgets/app/app_button.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -78,6 +80,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     final isDark = theme.brightness == Brightness.dark;
+    final useWebLayout = DiscoveryResponsive.of(context).useWebSiteLayout;
+
+    if (useWebLayout) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const WebClientPageHeader(
+              title: ShellStrings.navClientHome,
+              subtitle: DiscClientWorkspace.homeWebSubtitle,
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor:

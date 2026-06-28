@@ -15,6 +15,7 @@ class AppNetworkImage extends StatelessWidget {
     this.placeholder,
     this.error,
     this.filterQuality = FilterQuality.medium,
+    this.alignment = Alignment.center,
   });
 
   final String url;
@@ -25,6 +26,7 @@ class AppNetworkImage extends StatelessWidget {
   final Widget? placeholder;
   final Widget? error;
   final FilterQuality filterQuality;
+  final Alignment alignment;
 
   bool get _hasUrl => url.trim().isNotEmpty;
 
@@ -66,6 +68,7 @@ class AppNetworkImage extends StatelessWidget {
         : CachedNetworkImage(
             imageUrl: url,
             fit: fit,
+            alignment: alignment,
             width: _finiteWidth,
             height: _finiteHeight,
             memCacheWidth: memCache.width,

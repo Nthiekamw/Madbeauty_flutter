@@ -1,0 +1,16 @@
+# App Flutter Web MadBeauty — artefact dans build/web/
+# Build : scripts/build_flutter_web_ci.sh (CI ou local avant deploy)
+# Deploy : npx netlify-cli deploy --prod --dir=build/web --config=netlify-app.toml
+
+[build]
+  publish = "build/web"
+  command = "bash scripts/build_flutter_web_ci.sh"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Routage client go_router (SPA)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

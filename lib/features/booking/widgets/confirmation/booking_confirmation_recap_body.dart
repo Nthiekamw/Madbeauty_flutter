@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/utils/currency_format.dart';
 import '../../logic/booking_formatters.dart';
@@ -64,10 +65,13 @@ class BookingConfirmationRecapBody extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
+    final layout = DiscoveryResponsive.of(context);
+    final useWeb = layout.useWebSiteLayout;
+    final hPad = useWeb ? 20.0 : 20.0;
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + bottomInset),
+      padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 24 + bottomInset),
       children: [
         BookingConfirmationHeroCard(
           prestataireName: prestataireName,

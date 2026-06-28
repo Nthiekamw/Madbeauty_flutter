@@ -11,7 +11,9 @@ import '../../services/notifications/booking_reminders_sync.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../features/reviews/widgets/client_review_prompt_coordinator.dart';
+import '../../shared/layout/adaptive_shell_scaffold.dart';
 import '../../shared/widgets/layout/offline_shell.dart';
+import 'client_shell_destinations.dart';
 import 'client_shell_nav_bar.dart';
 
 class ClientShellScaffold extends ConsumerStatefulWidget {
@@ -36,6 +38,7 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(LocalCacheService.instance.setSelectedRole('client'));
+      unawaited(LocalCacheService.instance.setSignupShellRole('client'));
       if (widget.navigationShell.currentIndex ==
           ClientShellScaffold.homeTabIndex) {
         unawaited(
@@ -81,31 +84,41 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
       _lastSelectedIndex = selectedIndex;
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    final destinations = ClientShellDestinations.build(
+      reservationsBadge: pendingCount,
+      messagesBadge: messagesUnread,
+    );
+
+    void onTab(int index) {
+      if (index == ClientShellScaffold.reservationsTabIndex) {
+        invalidateClientReservations(ref);
+      }
+      if (index == ClientShellScaffold.messagesTabIndex) {
+        ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
+        ref.invalidate(
+          messagingUnreadCountProvider(MessagingInboxRole.client),
+        );
+      }
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == selectedIndex,
+      );
+    }
+
+    return AdaptiveShellScaffold(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onTab,
+      destinations: destinations,
+      pageTitle: destinations[selectedIndex].label,
+      bottomNavigationBar: ClientShellNavBar(
+        selectedIndex: selectedIndex,
+        reservationsBadgeCount: pendingCount,
+        messagesBadgeCount: messagesUnread,
+        onTap: onTab,
+      ),
       body: ClientReviewPromptCoordinator(
         child: OfflineShell(child: navigationShell),
       ),
-      bottomNavigationBar: ClientShellNavBar(
-          selectedIndex: selectedIndex,
-          reservationsBadgeCount: pendingCount,
-          messagesBadgeCount: messagesUnread,
-          onTap: (index) {
-            if (index == ClientShellScaffold.reservationsTabIndex) {
-              invalidateClientReservations(ref);
-            }
-            if (index == ClientShellScaffold.messagesTabIndex) {
-              ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-              ref.invalidate(
-                messagingUnreadCountProvider(MessagingInboxRole.client),
-              );
-            }
-            navigationShell.goBranch(
-              index,
-              initialLocation: index == selectedIndex,
-            );
-          },
-        ),
     );
   }
 }

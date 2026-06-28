@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Métriques responsive pour accueil, recherche et cartes prestataires.
@@ -13,16 +14,34 @@ class DiscoveryResponsive {
   static const double compactBreakpoint = 360;
   static const double tabletBreakpoint = 600;
   static const double wideBreakpoint = 900;
+  static const double desktopBreakpoint = 1200;
 
   bool get isCompact => width < compactBreakpoint;
   bool get isTablet => width >= tabletBreakpoint;
   bool get isWide => width >= wideBreakpoint;
+  bool get isDesktop => width >= desktopBreakpoint;
 
-  double get horizontalPadding => isCompact ? 16 : (isTablet ? 24 : 20);
+  /// Web tablette / desktop (≥ 600 px) : navigation et auth type « site ».
+  bool get useWebSiteLayout => kIsWeb && width >= tabletBreakpoint;
+
+  /// Web téléphone ou app native : même expérience que l'app mobile.
+  bool get useNativeMobileExperience => !kIsWeb || width < tabletBreakpoint;
+
+  /// Navigation latérale (Flutter Web tablette+).
+  bool get useSidebarNavigation => useWebSiteLayout;
+
+  /// Conservé pour compatibilité — le web mobile utilise la bottom nav native.
+  bool get useWebTopNavigation => false;
+
+  double get horizontalPadding {
+    if (useSidebarNavigation) return 32;
+    return isCompact ? 16 : (isTablet ? 24 : 20);
+  }
 
   /// Largeur utile du contenu (centré sur grands écrans).
   double get contentMaxWidth {
-    if (isWide) return 960;
+    if (kIsWeb && isDesktop) return 1280;
+    if (isWide) return 1080;
     if (isTablet) return 720;
     return width;
   }
@@ -32,26 +51,129 @@ class DiscoveryResponsive {
   /// Cartes horizontales accueil : 3 cartes visibles sur téléphone.
   double get homeListCardWidth {
     final inner = width - horizontalPadding * 2;
+    if (kIsWeb && isDesktop) {
+      return (inner / 4.8).clamp(148.0, 220.0);
+    }
     if (isTablet) {
       return (inner / 3.8).clamp(148.0, 188.0);
     }
     return ((inner - homeListCardGap * 2) / 3).clamp(98.0, 130.0);
   }
 
-  double get homeListCardHeight => homeListCardWidth * 1.48;
+  double get homeListCardHeight {
+    final ratio = useWebSiteLayout && isTablet ? 1.56 : 1.48;
+    return homeListCardWidth * ratio;
+  }
 
-  double get homeListPhotoHeight => homeListCardHeight * 0.65;
+  /// Part photo / texte : réserve une zone texte lisible sous l'image.
+  double homeListPhotoHeightFor(double cardHeight) {
+    final minText = homeListMinTextZoneHeight;
+    final maxPhoto = cardHeight - minText - 6;
+    final preferred = cardHeight * 0.68;
+    return preferred.clamp(cardHeight * 0.55, maxPhoto);
+  }
+
+  double get homeListMinTextZoneHeight {
+    if (useWebSiteLayout && isWide) return 48;
+    if (isTablet) return 44;
+    return 40;
+  }
+
+  double homeListTitleFontSize(double cardWidth) =>
+      (cardWidth * 0.092).clamp(11.0, 15.0);
+
+  double homeListBodyFontSize(double cardWidth) =>
+      (cardWidth * 0.078).clamp(10.0, 13.0);
+
+  /// Cartes portrait « Tendances cette semaine » (plus grandes que la grille accueil).
+  double get homeTrendingCardWidth {
+    const gap = 12.0;
+    final inner = width - horizontalPadding * 2;
+    if (useWebSiteLayout) {
+      if (isDesktop) return ((inner - gap * 3) / 4.2).clamp(168.0, 260.0);
+      if (isWide) return ((inner - gap * 2) / 3.5).clamp(164.0, 230.0);
+      return ((inner - gap * 2) / 3.2).clamp(160.0, 210.0);
+    }
+    if (isTablet) {
+      return ((inner - gap * 2) / 3.0).clamp(156.0, 200.0);
+    }
+    // ~2 cartes visibles sur téléphone pour un format portrait plus lisible.
+    return ((inner - gap) / 2.15).clamp(148.0, 172.0);
+  }
+
+  double get homeTrendingCardHeight => homeTrendingCardWidth * 1.52;
+
+  double homeTrendingTitleFontSize(double cardWidth) =>
+      (cardWidth * 0.075).clamp(11.0, 14.0);
+
+  double homeTrendingBodyFontSize(double cardWidth) =>
+      (cardWidth * 0.065).clamp(9.5, 12.0);
+
+  static const double homeTrendingCardGap = 12;
+
+  @Deprecated('Use homeListPhotoHeightFor(cardHeight)')
+  double get homeListPhotoHeight => homeListCardHeight * 0.68;
+
+  static const double homePromoBannerAspectWidth = 1024;
+  static const double homePromoBannerAspectHeight = 682;
+
+  /// Hero promo pleine largeur (BoxFit.cover, hauteur bornée).
+  ({double width, double height}) homePromoBannerDimensions(
+    double parentWidth, {
+    required double horizontalPadding,
+  }) {
+    final width = parentWidth + horizontalPadding * 2;
+    var height = width *
+        homePromoBannerAspectHeight /
+        homePromoBannerAspectWidth;
+
+    if (useNativeMobileExperience) {
+      height = height.clamp(150, 220);
+    } else if (isDesktop) {
+      height = height.clamp(220, 340);
+    } else {
+      height = height.clamp(200, 300);
+    }
+
+    return (width: width, height: height);
+  }
+
+  /// @deprecated Utiliser [homePromoBannerDimensions].
+  @Deprecated('Use homePromoBannerDimensions(parentWidth, horizontalPadding: pad)')
+  double homePromoBannerHeight(double bannerWidth) {
+    return homePromoBannerDimensions(
+      bannerWidth,
+      horizontalPadding: 0,
+    ).height;
+  }
 
   /// Colonnes catalogue en mode grille.
-  int get catalogGridColumns => 2;
+  int get catalogGridColumns {
+    if (useWebSiteLayout) {
+      if (isDesktop) return 4;
+      if (isWide || width >= 720) return 3;
+      return 2;
+    }
+    if (isWide) return 3;
+    return 2;
+  }
 
   static const double catalogGridSpacing = 10;
 
-  /// Largeur d'une cellule grille catalogue (2 colonnes).
+  /// Espacement grille catalogue (plus aéré sur web).
+  double get catalogGridGap =>
+      useWebSiteLayout ? 16 : catalogGridSpacing;
+
+  /// Largeur d'une cellule grille catalogue (colonnes adaptatives).
   double catalogGridCellWidth() {
-    final inner = (contentMaxWidth < width ? contentMaxWidth : width) -
-        horizontalPadding * 2;
-    return (inner - catalogGridSpacing) / catalogGridColumns;
+    final cols = catalogGridColumns;
+    final innerWidth = useWebSiteLayout
+        ? width
+        : (contentMaxWidth < width ? contentMaxWidth : width);
+    final hInset = useWebSiteLayout ? webShellHorizontalPadding * 2 : horizontalPadding * 2;
+    final inner = innerWidth - hInset;
+    final gap = catalogGridGap;
+    return (inner - gap * (cols - 1)) / cols;
   }
 
   /// Hauteur d'une tuile grille catalogue (ratio carte / largeur).
@@ -90,5 +212,63 @@ class DiscoveryResponsive {
 
   /// Boutons Continuer / Retour du stepper empilés.
   bool get stackStepperActions => isCompact;
+
+  /// Connexion / inscription centrés : web tablette+ uniquement.
+  bool get useWebAuthFormLayout => useWebSiteLayout;
+
+  /// Largeur max contenu shell web (Accueil, Catalogue, etc.).
+  double get webShellContentMaxWidth {
+    if (isDesktop) return 1200;
+    if (isWide) return 1080;
+    return 960;
+  }
+
+  /// Padding horizontal contenu shell web.
+  double get webShellHorizontalPadding {
+    if (isDesktop) return 40;
+    if (isWide) return 32;
+    return 24;
+  }
+
+  /// Padding vertical haut des pages shell web.
+  double get webShellTopPadding => isDesktop ? 28 : 22;
+
+  /// Rayons cartes shell web.
+  double get webShellCardRadius => isDesktop ? 20 : 18;
+
+  /// Colonne max parcours web (fiche prestataire, réservation).
+  double get webFlowContentMaxWidth {
+    if (!useWebSiteLayout) return width;
+    if (isDesktop) return 880;
+    if (isWide) return 780;
+    return 680;
+  }
+
+  /// Padding horizontal parcours web (fiche, réservation).
+  double get webFlowHorizontalPadding {
+    if (isDesktop) return 28;
+    if (isWide) return 24;
+    return 20;
+  }
+
+  /// Padding horizontal page (shell ou parcours).
+  double pageHorizontalPadding({bool flow = false}) {
+    if (useWebSiteLayout) {
+      return flow ? webFlowHorizontalPadding : webShellHorizontalPadding;
+    }
+    return horizontalPadding;
+  }
+
+  /// Largeur max des formulaires auth (connexion, inscription, etc.).
+  double authFormMaxWidthFor(double parentWidth) {
+    if (useNativeMobileExperience) return parentWidth;
+    final cap = switch (width) {
+      >= desktopBreakpoint => 480.0,
+      >= wideBreakpoint => 460.0,
+      >= tabletBreakpoint => 440.0,
+      _ => 400.0,
+    };
+    return cap.clamp(280.0, parentWidth);
+  }
 }
 

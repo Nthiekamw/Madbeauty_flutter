@@ -56,10 +56,16 @@ class PrestataireHomeListCard extends StatelessWidget {
     final radius = HomeStyles.cardBorderRadius;
     final w = cardWidth ?? layout.homeListCardWidth;
     final h = cardHeight ?? layout.homeListCardHeight;
-    final rawPhotoH = photoHeight ?? layout.homeListPhotoHeight;
-    final textPadV = dense ? 2.0 : 3.0;
-    final textPadH = dense ? 5.0 : 6.0;
-    final textZoneH = h - rawPhotoH - textPadV;
+    final photoH =
+        photoHeight ?? layout.homeListPhotoHeightFor(h);
+    final textPadV = dense ? 4.0 : 6.0;
+    final textPadH = dense ? 6.0 : 8.0;
+    final textZoneH = (h - photoH - textPadV).clamp(
+      layout.homeListMinTextZoneHeight,
+      h * 0.45,
+    );
+    final titleSize = layout.homeListTitleFontSize(w);
+    final bodySize = layout.homeListBodyFontSize(w);
 
     return SizedBox(
       width: w,
@@ -95,19 +101,20 @@ class PrestataireHomeListCard extends StatelessWidget {
                   showRatingOnPhoto: showRatingOnPhoto,
                   distanceLabel: distanceLabel,
                   rating: rating,
-                  height: rawPhotoH,
+                  height: photoH,
                 ),
                 SizedBox(
                   height: textZoneH,
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
                       textPadH,
-                      dense ? 1 : 2,
+                      dense ? 2 : 4,
                       textPadH,
-                      dense ? 2 : 2,
+                      dense ? 3 : 4,
                     ),
                     child: _CardTextBody(
                       theme: theme,
+                      isDark: isDark,
                       safeTitle: safeTitle,
                       isVerified: profile.isVerified,
                       specialty: specialty,
@@ -116,6 +123,8 @@ class PrestataireHomeListCard extends StatelessWidget {
                       ville: ville,
                       km: km,
                       dense: dense,
+                      titleSize: titleSize,
+                      bodySize: bodySize,
                       showDistanceOnPhoto: showDistanceOnPhoto,
                       showRatingOnPhoto: showRatingOnPhoto,
                     ),
@@ -161,6 +170,7 @@ class _PhotoSection extends StatelessWidget {
       height: height,
       width: width,
       child: Stack(
+        fit: StackFit.expand,
         clipBehavior: Clip.hardEdge,
         children: [
           PrestataireCardPhotoHeader(
@@ -175,6 +185,7 @@ class _PhotoSection extends StatelessWidget {
             fallbackAvatarUrl: avatarUrl,
             compactBadge: true,
             microOverlay: true,
+            coverAlignment: const Alignment(0, -0.12),
           ),
           if (showDistanceOnPhoto && distanceLabel != null)
             Positioned(
@@ -204,6 +215,7 @@ class _PhotoSection extends StatelessWidget {
 class _CardTextBody extends StatelessWidget {
   const _CardTextBody({
     required this.theme,
+    required this.isDark,
     required this.safeTitle,
     required this.isVerified,
     required this.specialty,
@@ -211,12 +223,15 @@ class _CardTextBody extends StatelessWidget {
     required this.reviewCount,
     required this.ville,
     required this.km,
+    required this.titleSize,
+    required this.bodySize,
     this.dense = false,
     this.showDistanceOnPhoto = false,
     this.showRatingOnPhoto = false,
   });
 
   final ThemeData theme;
+  final bool isDark;
   final String safeTitle;
   final bool isVerified;
   final String? specialty;
@@ -224,14 +239,22 @@ class _CardTextBody extends StatelessWidget {
   final int? reviewCount;
   final String? ville;
   final double km;
+  final double titleSize;
+  final double bodySize;
   final bool dense;
   final bool showDistanceOnPhoto;
   final bool showRatingOnPhoto;
 
+  Color get _titleColor => isDark
+      ? AppColors.white.withValues(alpha: 0.96)
+      : theme.colorScheme.onSurface;
+
+  Color get _bodyColor => isDark
+      ? AppColors.white.withValues(alpha: 0.82)
+      : theme.colorScheme.onSurfaceVariant;
+
   @override
   Widget build(BuildContext context) {
-    final titleSize = dense ? 8.5 : 8.5;
-    final bodySize = dense ? 7.0 : 7.5;
     final showSpecialty = specialty != null && specialty!.isNotEmpty;
     final locationLine =
         showDistanceOnPhoto ? null : _locationLine();
@@ -253,8 +276,8 @@ class _CardTextBody extends StatelessWidget {
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.1,
+                  color: _titleColor,
+                  height: 1.15,
                   fontSize: titleSize,
                 ),
               ),
@@ -265,7 +288,7 @@ class _CardTextBody extends StatelessWidget {
                 child: Icon(
                   Icons.verified_rounded,
                   color: theme.colorScheme.primary,
-                  size: dense ? 10 : 11,
+                  size: (titleSize + 2).clamp(12.0, 16.0),
                 ),
               ),
           ],
@@ -277,9 +300,9 @@ class _CardTextBody extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: _bodyColor,
               fontSize: bodySize,
-              height: 1.1,
+              height: 1.15,
             ),
           ),
         ],
@@ -290,7 +313,7 @@ class _CardTextBody extends StatelessWidget {
             children: [
               Icon(
                 Icons.star_rounded,
-                size: dense ? 10 : 11,
+                size: (bodySize + 2).clamp(11.0, 14.0),
                 color: AppColors.starRating,
               ),
               const SizedBox(width: 2),
@@ -302,8 +325,8 @@ class _CardTextBody extends StatelessWidget {
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                    height: 1.1,
+                    color: _titleColor,
+                    height: 1.15,
                     fontSize: bodySize,
                   ),
                 ),
@@ -318,8 +341,8 @@ class _CardTextBody extends StatelessWidget {
             children: [
               Icon(
                 Icons.location_on_outlined,
-                size: dense ? 9 : 10,
-                color: theme.colorScheme.onSurfaceVariant,
+                size: (bodySize + 1).clamp(10.0, 13.0),
+                color: _bodyColor,
               ),
               const SizedBox(width: 2),
               Expanded(
@@ -328,9 +351,9 @@ class _CardTextBody extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: _bodyColor,
                     fontSize: bodySize,
-                    height: 1.1,
+                    height: 1.15,
                   ),
                 ),
               ),

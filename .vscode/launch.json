@@ -13,6 +13,17 @@
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart"
+    },
+    {
+      "name": "MadBeauty Web (Chrome + .env)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=7357",
+        "--dart-define-from-file=${workspaceFolder}/.env"
+      ]
     }
   ]
 }

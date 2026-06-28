@@ -16,8 +16,8 @@ import '../providers/booking_services_provider.dart';
 import '../providers/booked_slots_provider.dart';
 import '../widgets/shared/booking_message.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
-import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../widgets/flow/booking_step_one_content.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
@@ -78,8 +78,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     }
 
     final prestataireId = widget.prestataireId?.trim();
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final selection = ref.watch(bookingSelectionProvider);
     final availabilityAsync = prestataireId == null || prestataireId.isEmpty
         ? null
@@ -88,10 +86,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         ? null
         : ref.watch(isOwnPrestataireProfileProvider(prestataireId));
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? theme.colorScheme.surface
-          : AppColors.lightSurface,
+    return WebFlowScaffold(
       appBar: AppBar(title: const Text(DiscNav.bookingFlowTitle)),
       body: prestataireId == null || prestataireId.isEmpty
           ? const BookingMessage(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../firebase_runtime_helpers.dart';
 import '../../../../services/permissions/permissions_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
@@ -35,9 +36,14 @@ class _ProfilePreferencesSectionState
     });
 
     final prefs = ref.watch(profilePreferencesProvider);
-    final pushSubtitle = prefs.pushNotificationsEnabled
-        ? DiscProfile.prefPushHint
-        : DiscProfile.prefPushInactiveHint;
+    final nativePush = isFirebaseConfiguredForPush();
+    final pushSubtitle = nativePush
+        ? (prefs.pushNotificationsEnabled
+            ? DiscProfile.prefPushHint
+            : DiscProfile.prefPushInactiveHint)
+        : (prefs.pushNotificationsEnabled
+            ? DiscProfile.prefPushWebHint
+            : DiscProfile.prefPushWebInactiveHint);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,10 +61,27 @@ class _ProfilePreferencesSectionState
                 subtitle: pushSubtitle,
                 subtitleColor: prefs.pushNotificationsEnabled
                     ? null
-                    : Theme.of(context).colorScheme.error,
+                    : (nativePush
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.onSurfaceVariant),
                 value: prefs.pushNotificationsEnabled,
                 onChanged: (value) => _onPushChanged(context, ref, value),
               ),
+              if (!nativePush) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Text(
+                    DiscProfile.prefPushWebFootnote,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant
+                              .withValues(alpha: 0.85),
+                          height: 1.35,
+                        ),
+                  ),
+                ),
+              ],
               Divider(
                 height: 1,
                 indent: 16,
@@ -95,11 +118,15 @@ class _ProfilePreferencesSectionState
       AppSnackBar.show(
         context,
         message: enabled
-            ? DiscProfile.prefPushEnabled
+            ? (isFirebaseConfiguredForPush()
+                ? DiscProfile.prefPushEnabled
+                : DiscProfile.prefPushWebEnabled)
             : DiscProfile.prefPushDisabled,
       );
       return;
     }
+
+    if (!isFirebaseConfiguredForPush()) return;
 
     AppSnackBar.show(
       context,

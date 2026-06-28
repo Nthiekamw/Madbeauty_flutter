@@ -12,6 +12,10 @@ import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
 import '../../../core/models/user_role.dart';
 import '../../../services/supabase/bug_report/bug_report_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_page_frame.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -141,230 +145,265 @@ class _BugReportChatScreenState extends ConsumerState<BugReportChatScreen> {
       unawaited(_syncReceipts());
     });
 
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final bannerPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 12, 20, 0)
+        : const EdgeInsets.fromLTRB(16, 10, 16, 0);
+
+    final appBar = AppBar(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary?.title ?? title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (summary != null)
+            Text(
+              DiscBug.statusLabel(summary.status),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.adminAccentMid,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          else
+            Text(
+              DiscBug.openChat,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.adminAccentMid,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        if (isAdmin && summary != null && !summary.isTerminal)
+          TextButton.icon(
+            onPressed: _closing ? null : _closeDiscussion,
+            icon: _closing
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.error,
+                    ),
+                  )
+                : Icon(
+                    Icons.lock_outline_rounded,
+                    size: 18,
+                    color: theme.colorScheme.error,
+                  ),
+            label: Text(
+              DiscBug.chatCloseAction,
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+      flexibleSpace: useWeb
+          ? null
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.adminAccent.withValues(alpha: isDark ? 0.14 : 0.1),
+                    theme.colorScheme.surface.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+    );
+
+    final chatBody = Column(
+      children: [
+        if (isAdmin && !isClosed)
+          Padding(
+            padding: bannerPadding,
+            child: DiscoverySurfaceCard(
+              includeHorizontalMargin: false,
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.support_agent_rounded,
+                    color: AppColors.adminAccentMid,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      DiscBug.chatAdminHint,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (isClosed)
+          Padding(
+            padding: bannerPadding,
+            child: DiscoverySurfaceCard(
+              includeHorizontalMargin: false,
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lock_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      DiscBug.chatClosedBanner,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  if (summary != null)
+                    AdminStatusChip(
+                      label: DiscBug.statusLabel(summary.status),
+                      tone: adminBugStatusTone(summary.status),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        Expanded(
+          child: messagesAsync.when(
+            data: (messages) {
+              if (messages.isEmpty) {
+                return DiscoveryEmptyState(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  title: DiscBug.chatEmpty,
+                  body: isClosed
+                      ? DiscBug.chatClosedBanner
+                      : (isAdmin
+                          ? DiscBug.chatAdminHint
+                          : DiscBug.chatEmptyReporterHint),
+                  iconColor: AppColors.adminAccentMid,
+                );
+              }
+              return ListView.builder(
+                padding: EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: useWeb ? 12 : 4,
+                ),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  final message = messages[index];
+                  final isMine = message.senderId == currentUserId;
+                  return ChatBubble(
+                    text: message.content,
+                    isMine: isMine,
+                    receiptStatus: isMine
+                        ? chatOutgoingReceiptStatus(
+                            isRead: message.isRead,
+                            deliveredAt: message.deliveredAt,
+                          )
+                        : null,
+                    timeLabel: timeFormat.format(message.createdAt.toLocal()),
+                  );
+                },
+              );
+            },
+            loading: () => const DiscoveryListSkeleton(
+              rowCount: 4,
+              rowHeight: 56,
+              padding: EdgeInsets.all(16),
+            ),
+            error: (_, __) => Center(
+              child: Text(
+                DiscBug.chatLoadErr,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            ),
+          ),
+        ),
+        if (!isClosed)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                ),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: ChatComposer(
+                controller: _composer,
+                sending: _sending,
+                onSend: _send,
+              ),
+            ),
+          )
+        else
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                useWeb ? 20 : 16,
+                12,
+                useWeb ? 20 : 16,
+                16,
+              ),
+              child: Text(
+                DiscBug.chatClosedInputHint,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+
+    if (useWeb) {
+      return WebFlowScaffold(
+        appBar: appBar,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return WebFlowPageFrame(
+              applyBackground: false,
+              child: SizedBox(
+                height: constraints.maxHeight,
+                child: WebFlowPanel(
+                  child: chatBody,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: isDark
           ? theme.colorScheme.surface
           : AppColors.lightSurfaceContainer,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              summary?.title ?? title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            if (summary != null)
-              Text(
-                DiscBug.statusLabel(summary.status),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.adminAccentMid,
-                  fontWeight: FontWeight.w700,
-                ),
-              )
-            else
-              Text(
-                DiscBug.openChat,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.adminAccentMid,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          if (isAdmin && summary != null && !summary.isTerminal)
-            TextButton.icon(
-              onPressed: _closing ? null : _closeDiscussion,
-              icon: _closing
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.error,
-                      ),
-                    )
-                  : Icon(
-                      Icons.lock_outline_rounded,
-                      size: 18,
-                      color: theme.colorScheme.error,
-                    ),
-              label: Text(
-                DiscBug.chatCloseAction,
-                style: TextStyle(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-        ],
-        flexibleSpace: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.adminAccent.withValues(alpha: isDark ? 0.14 : 0.1),
-                theme.colorScheme.surface.withValues(alpha: 0),
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          if (isAdmin && !isClosed)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              child: DiscoverySurfaceCard(
-                includeHorizontalMargin: false,
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.support_agent_rounded,
-                      color: AppColors.adminAccentMid,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        DiscBug.chatAdminHint,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (isClosed)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              child: DiscoverySurfaceCard(
-                includeHorizontalMargin: false,
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_rounded,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        DiscBug.chatClosedBanner,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    if (summary != null)
-                      AdminStatusChip(
-                        label: DiscBug.statusLabel(summary.status),
-                        tone: adminBugStatusTone(summary.status),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          Expanded(
-            child: messagesAsync.when(
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return DiscoveryEmptyState(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    title: DiscBug.chatEmpty,
-                    body: isClosed
-                        ? DiscBug.chatClosedBanner
-                        : (isAdmin
-                            ? DiscBug.chatAdminHint
-                            : DiscBug.chatEmptyReporterHint),
-                    iconColor: AppColors.adminAccentMid,
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 4,
-                  ),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isMine = message.senderId == currentUserId;
-                    return ChatBubble(
-                      text: message.content,
-                      isMine: isMine,
-                      receiptStatus: isMine
-                          ? chatOutgoingReceiptStatus(
-                              isRead: message.isRead,
-                              deliveredAt: message.deliveredAt,
-                            )
-                          : null,
-                      timeLabel: timeFormat.format(message.createdAt.toLocal()),
-                    );
-                  },
-                );
-              },
-              loading: () => const DiscoveryListSkeleton(
-                rowCount: 4,
-                rowHeight: 56,
-                padding: EdgeInsets.all(16),
-              ),
-              error: (_, __) => Center(
-                child: Text(
-                  DiscBug.chatLoadErr,
-                  style: TextStyle(color: theme.colorScheme.error),
-                ),
-              ),
-            ),
-          ),
-          if (!isClosed)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.12),
-                  ),
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: ChatComposer(
-                  controller: _composer,
-                  sending: _sending,
-                  onSend: _send,
-                ),
-              ),
-            )
-          else
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Text(
-                  DiscBug.chatClosedInputHint,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+      appBar: appBar,
+      body: chatBody,
     );
   }
 }

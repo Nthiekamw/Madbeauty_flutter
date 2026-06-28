@@ -6,7 +6,8 @@ description: >-
   widgets, providers, routes, services, tests, docs, commits ou PR. Couvre la
   structure en trio (screens/widgets/providers), l’exploration de l’existant
   avant création de fichier, le découpage en sous-dossiers si un dossier est
-  trop chargé, et l’obligation d’un design responsive sur tous les écrans.
+  trop chargé, et l’obligation d’un design responsive sur mobile (tous types
+  d’écran) et sur Flutter Web.
 ---
 
 # MadBeauty — contexte projet
@@ -29,7 +30,7 @@ En cas d'arbitrage, préférer la solution la plus fiable en prod plutôt que la
 
 ## Stack
 
-- **Flutter / Dart 3.8+** — iOS & Android
+- **Flutter / Dart 3.8+** — iOS, Android et **Flutter Web** (déploiement Netlify)
 - **Riverpod 3** — état (`AsyncNotifier`, `Notifier`, `StreamProvider`)
 - **go_router** — navigation, `redirect`, routes nommées (`AppNavigationX`)
 - **Freezed + json_serializable** — modèles dans `lib/core/models/domain/`
@@ -48,14 +49,32 @@ En cas d'arbitrage, préférer la solution la plus fiable en prod plutôt que la
 
 **Règle** : pas de logique métier lourde dans les seuls widgets ; orchestration dans controllers/notifiers.
 
-## Design responsive (obligatoire)
+## Design responsive (obligatoire — mobile et web)
 
-**Toujours adapter le design à l’écran** — compact, téléphone, tablette et large. Aucun écran ne doit être pensé pour une seule taille.
+**L’app doit être responsive partout** : sur **mobile natif** (tous types d’écran, du plus petit téléphone à la tablette) **et sur le web** (navigateur étroit, tablette, desktop). Aucun écran ne doit être pensé pour une seule taille ni pour une seule plateforme.
+
+### Mobile natif (iOS / Android)
+
+- Compact (&lt; 360 px), téléphone (360–599 px), tablette (≥ 600 px)
+- Safe area, clavier, scroll, zones tactiles ≥ 44 px
+- Bottom navigation shell (client / prestataire) — inchangée sur natif
+
+### Flutter Web
+
+- Même breakpoints que mobile, **plus** comportements web dédiés :
+  - navigation adaptative (`AdaptiveShellScaffold` : rail latéral ≥ 600 px, barre du haut &lt; 600 px — pas de bottom nav style app)
+  - contenu centré avec `contentMaxWidth` (jusqu’à 1280 px)
+  - grilles catalogue 2 / 3 / 4 colonnes selon largeur
+  - lisibilité web (`WebReadabilityScope` : texte et icônes plus grands)
+- Tester au minimum : 375 px, 600 px, 900 px, 1280 px en Chrome
+
+### Règles communes
 
 - Avant toute UI : lire le skill **`madbeauty-responsive`**
 - Réutiliser `DiscoveryResponsive` (`lib/shared/layout/discovery_responsive.dart`) et les widgets `shared/` existants
 - Vérifier safe area, clavier, scroll, centrage `maxWidth` sur grands écrans
 - Pas de largeurs fixes sans `clamp` / breakpoint / `LayoutBuilder`
+- Ne pas dupliquer la logique `kIsWeb` : centraliser dans `DiscoveryResponsive` / shell adaptatif
 
 ### Dépendances interdites
 
@@ -140,7 +159,7 @@ Périmètre MVP vs V2 : `docs/FEATURES.md`.
 ## Skills complémentaires
 
 - **Design UI** (ergonomie, AppColors, composants) → skill `madbeauty-ui-design`
-- Design responsive (tous écrans) → skill `madbeauty-responsive`
+- Design responsive (mobile tous écrans + web) → skill `madbeauty-responsive`
 - Textes UI → skill `madbeauty-ui-strings`
 - Migrations / Edge Functions / RLS → skill `madbeauty-supabase`
 - **Polish UX** (shimmer, vide/erreur/retry, snackbars, placeholders) → skill `madbeauty-ux-states`

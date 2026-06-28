@@ -10,13 +10,21 @@ abstract final class AuthRoleCache {
   AuthRoleCache._();
 
   /// Persiste les rôles Supabase et recadre [selectedRole] si invalide.
+  ///
+  /// Ne remplace pas un [selectedRole] déjà valide côté serveur : c'est le
+  /// dernier espace actif (client / prestataire) choisi par l'utilisateur.
   static Future<void> persistServerRoles(List<UserRole> roles) async {
     final values = roles.map((r) => r.value).toList();
     await LocalCacheService.instance.setCachedServerRoles(values);
 
+    final lastActiveShell = LocalCacheService.instance.selectedRole;
+    if (lastActiveShell != null && values.contains(lastActiveShell)) {
+      return;
+    }
+
     final effective = resolveEffectiveRole(
       serverRoleValues: values,
-      cachedRole: LocalCacheService.instance.selectedRole,
+      cachedRole: lastActiveShell,
     );
 
     if (effective != null) {
@@ -28,7 +36,8 @@ abstract final class AuthRoleCache {
 
   static bool _keepCachedRoleOnAmbiguousRoles() {
     final cache = LocalCacheService.instance;
-    if (cache.selectedRole == 'prestataire') return true;
+    final last = cache.selectedRole;
+    if (last == 'client' || last == 'prestataire') return true;
     if (cache.signupShellRole == 'prestataire') return true;
     if (BecomePrestataireDraftStore.instance.hasDraft) return true;
     return false;
@@ -67,6 +76,9 @@ abstract final class AuthRoleCache {
     }
 
     if (serverRoleValues.length > 1) {
+      if (cachedRole != null && serverRoleValues.contains(cachedRole)) {
+        return cachedRole;
+      }
       if (signupIntent != null && serverRoleValues.contains(signupIntent)) {
         return signupIntent;
       }
@@ -89,12 +101,33 @@ abstract final class AuthRoleCache {
   static bool hasAdminAmong(List<String> serverRoleValues) =>
       serverRoleValues.contains('admin');
 
+  /// Vérifie complétion profil prestataire au bootstrap (splash) uniquement si
+  /// l'utilisateur est routé vers l'espace prestataire.
+  static bool shouldBootstrapPrestataireProfile() {
+    final cachedRoles = LocalCacheService.instance.cachedServerRoles;
+
+    if (!cachedRoles.contains('prestataire') &&
+        BecomePrestataireDraftStore.instance.hasDraft) {
+      return true;
+    }
+
+    final effective = resolveEffectiveRole(
+      serverRoleValues: cachedRoles,
+      cachedRole: LocalCacheService.instance.selectedRole,
+    );
+    return effective == 'prestataire';
+  }
+
   /// Chemin shell pour un utilisateur connecté (sync, pour [GoRouter.redirect]).
   static String preferredAuthenticatedPath() {
-    final resume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
-    if (resume != null) return resume;
-
     final cachedRoles = LocalCacheService.instance.cachedServerRoles;
+    final serverHasPrestataire = cachedRoles.contains('prestataire');
+
+    if (!serverHasPrestataire) {
+      final resume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
+      if (resume != null) return resume;
+    }
+
     if (hasAdminAmong(cachedRoles)) {
       return AppRoutes.adminHome;
     }
@@ -114,13 +147,15 @@ abstract final class AuthRoleCache {
       cachedRole: LocalCacheService.instance.selectedRole,
     );
 
-    final becomeDraft = BecomePrestataireDraftStore.instance.read();
-    if (becomeDraft != null &&
-        becomeDraft.step1Submitted &&
-        becomeDraft.step2Started &&
-        (effective == 'prestataire' ||
-            LocalCacheService.instance.signupShellRole == 'prestataire')) {
-      return AppRoutes.prestataireProfileEdit;
+    if (!serverHasPrestataire) {
+      final becomeDraft = BecomePrestataireDraftStore.instance.read();
+      if (becomeDraft != null &&
+          becomeDraft.step1Submitted &&
+          becomeDraft.step2Started &&
+          (effective == 'prestataire' ||
+              LocalCacheService.instance.signupShellRole == 'prestataire')) {
+        return AppRoutes.prestataireProfileEdit;
+      }
     }
 
     return switch (effective) {

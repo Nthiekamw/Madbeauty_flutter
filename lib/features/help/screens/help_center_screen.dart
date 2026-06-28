@@ -1,10 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
-import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 
 class HelpCenterScreen extends StatelessWidget {
@@ -13,88 +11,74 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final padding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 8, 20, 32);
 
-    return DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ProfileFlowScaffold(
+      title: DiscHelp.screenTitle,
+      icon: Icons.help_outline_rounded,
+      body: ListView(
+        padding: padding,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          const DiscoveryFeatureHeader(
-            title: DiscHelp.screenTitle,
-            icon: Icons.help_outline_rounded,
-          ),
-          Expanded(
-            child: DiscoveryConstrainedBody(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                children: [
-                  _Section(
-                    title: DiscHelp.sectionBooking,
-                    children: [
-                      _Tile(
-                        title: DiscHelp.bookingFlowTitle,
-                        body: DiscHelp.bookingFlowBody,
-                      ),
-                    _Tile(
-                      title: DiscHelp.cancelPolicyTitle,
-                      body: DiscHelp.cancelPolicyBody,
-                    ),
-                    _Tile(
-                      title: DiscHelp.waitlistTitle,
-                      body: DiscHelp.waitlistBody,
-                    ),
-                  ],
-                ),
-                  const SizedBox(height: 16),
-                  _Section(
-                    title: DiscHelp.sectionChat,
-                    children: [
-                    _Tile(
-                      title: DiscHelp.chatPolicyTitle,
-                      body: DiscHelp.chatPolicyBody,
-                    ),
-                    _Tile(
-                      title: DiscHelp.reportTitle,
-                      body: DiscHelp.reportBody,
-                    ),
-                  ],
-                ),
-                  const SizedBox(height: 16),
-                  _Section(
-                    title: DiscHelp.sectionReferral,
-                    children: [
-                      _Tile(
-                        title: DiscHelp.referralTitle,
-                        body: DiscHelp.referralBody,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _Section(
-                    title: DiscHelp.sectionPayment,
-                    children: [
-                      _Tile(
-                        title: DiscHelp.paymentTitle,
-                        body: DiscHelp.paymentBody,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    DiscHelp.contactSupport,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.45,
-                    ),
-                  ),
-                ],
+          _Section(
+            title: DiscHelp.sectionBooking,
+            children: [
+              _Tile(
+                title: DiscHelp.bookingFlowTitle,
+                body: DiscHelp.bookingFlowBody,
               ),
+              _Tile(
+                title: DiscHelp.cancelPolicyTitle,
+                body: DiscHelp.cancelPolicyBody,
+              ),
+              _Tile(
+                title: DiscHelp.waitlistTitle,
+                body: DiscHelp.waitlistBody,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Section(
+            title: DiscHelp.sectionChat,
+            children: [
+              _Tile(
+                title: DiscHelp.chatPolicyTitle,
+                body: DiscHelp.chatPolicyBody,
+              ),
+              _Tile(
+                title: DiscHelp.reportTitle,
+                body: DiscHelp.reportBody,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Section(
+            title: DiscHelp.sectionReferral,
+            children: [
+              _Tile(
+                title: DiscHelp.referralTitle,
+                body: DiscHelp.referralBody,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _Section(
+            title: DiscHelp.sectionPayment,
+            children: [
+              _Tile(
+                title: DiscHelp.paymentTitle,
+                body: DiscHelp.paymentBody,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            DiscHelp.contactSupport,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.45,
             ),
           ),
         ],

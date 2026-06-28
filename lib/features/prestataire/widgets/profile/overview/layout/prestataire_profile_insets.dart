@@ -6,8 +6,11 @@ import '../../../../../../../shared/layout/discovery_responsive.dart';
 abstract final class PrestataireProfileInsets {
   PrestataireProfileInsets._();
 
-  static double horizontal(BuildContext context) =>
-      DiscoveryResponsive.of(context).horizontalPadding;
+  static double horizontal(BuildContext context) {
+    final layout = DiscoveryResponsive.of(context);
+    if (layout.useWebSiteLayout) return layout.webShellHorizontalPadding;
+    return layout.horizontalPadding;
+  }
 
   static const sectionTop = 20.0;
   static const itemGap = 10.0;
@@ -15,6 +18,7 @@ abstract final class PrestataireProfileInsets {
 
   /// Marge bas de liste (barre d’onglets + safe area).
   static double listBottom(BuildContext context) {
+    if (DiscoveryResponsive.of(context).useWebSiteLayout) return 32;
     return MediaQuery.paddingOf(context).bottom + 88;
   }
 

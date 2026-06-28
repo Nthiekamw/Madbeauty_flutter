@@ -46,7 +46,7 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
             distanceOrigin: distanceOrigin,
             cardWidth: layout.homeListCardWidth,
             cardHeight: layout.homeListCardHeight,
-            photoHeight: layout.homeListPhotoHeight,
+            photoHeight: layout.homeListPhotoHeightFor(layout.homeListCardHeight),
             showDistanceOnPhoto: showDistanceOnPhoto,
             showRatingOnPhoto: showRatingOnPhoto,
             dense: dense,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../firebase_runtime_helpers.dart';
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../providers/profile_preferences_provider.dart';
@@ -11,6 +12,8 @@ Future<void> promptPushPermissionIfNeeded(
   BuildContext context,
   WidgetRef ref,
 ) async {
+  if (!isFirebaseConfiguredForPush()) return;
+
   await ref.read(profilePreferencesProvider.notifier).refreshFromSystem();
   if (!context.mounted) return;
 

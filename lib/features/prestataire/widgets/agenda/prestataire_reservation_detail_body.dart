@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../booking/logic/booking_formatters.dart';
@@ -33,6 +34,10 @@ class PrestataireReservationDetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final listPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 8, 20, 32);
     final status = clientReservationUiStatusFromStatut(item.statut);
     final chip = chipColorsForReservationStatus(theme.colorScheme, status);
     final canMarkDone = status == ClientReservationUiStatus.confirmed &&
@@ -41,10 +46,11 @@ class PrestataireReservationDetailBody extends StatelessWidget {
         !canMarkDone;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      padding: listPadding,
       children: [
         DiscoverySurfaceCard(
           padding: const EdgeInsets.all(16),
+          includeHorizontalMargin: !useWeb,
           child: Row(
             children: [
               Expanded(
@@ -98,6 +104,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
         const SizedBox(height: 12),
         DiscoverySurfaceCard(
           padding: const EdgeInsets.all(16),
+          includeHorizontalMargin: !useWeb,
           child: Column(
             children: [
               _DetailRow(
@@ -124,6 +131,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
           const SizedBox(height: 12),
           DiscoverySurfaceCard(
             padding: const EdgeInsets.all(16),
+            includeHorizontalMargin: !useWeb,
             child: _DetailRow(
               icon: Icons.chat_bubble_outline_rounded,
               label: DiscPrestaReservation.labelClientNote,
@@ -136,6 +144,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
           const SizedBox(height: 12),
           DiscoverySurfaceCard(
             padding: const EdgeInsets.all(16),
+            includeHorizontalMargin: !useWeb,
             child: _DetailRow(
               icon: Icons.info_outline_rounded,
               label: DiscPrestaReservation.labelRejectReason,

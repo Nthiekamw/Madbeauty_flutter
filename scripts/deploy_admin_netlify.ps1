@@ -4,4 +4,4 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 node (Join-Path $root 'scripts\generate_web_admin_config.js')
-npx netlify-cli deploy --prod
+npx --yes netlify-cli@26.1.0 deploy --prod --config=netlify.toml

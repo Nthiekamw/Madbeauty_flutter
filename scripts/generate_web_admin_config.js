@@ -1,12 +1,12 @@
 /**
- * Génère web/admin/config.js pour le back-office (local ou build Netlify).
+ * Génère web-admin/admin/config.js pour le back-office (local ou build Netlify).
  * Variables : SUPABASE_URL, SUPABASE_ANON_KEY (env ou fichier .env à la racine).
  */
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const outFile = path.join(root, 'web', 'admin', 'config.js');
+const outFile = path.join(root, 'web-admin', 'admin', 'config.js');
 
 function loadDotEnv(filePath) {
   const vars = {};

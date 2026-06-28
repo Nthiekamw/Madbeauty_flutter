@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/app_router.dart';
 import '../../../../services/storage/local_cache_service.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/auth_form_styles.dart';
 import '../../../../shared/widgets/layout/auth_brand_background.dart';
@@ -102,9 +103,145 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = DiscoveryResponsive.of(context);
     final primary = theme.colorScheme.primary;
     final progress = (_index + 1) / _pageCount;
     final isLast = _index == _pageCount - 1;
+    final useWebLayout = layout.useWebAuthFormLayout;
+
+    Widget bodyColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, useWebLayout ? 12 : 8, 12, 0),
+          child: Row(
+            children: [
+              Text(
+                AuthStrings.onboardingStep(_index + 1, _pageCount),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: _finish,
+                child: Text(
+                  AuthStrings.onboardingSkip,
+                  style: TextStyle(
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor:
+                  theme.colorScheme.outline.withValues(alpha: 0.2),
+              color: primary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _pageCount,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (context, i) =>
+                OnboardingPageContent(slide: _slides[i]),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_pageCount, (i) {
+              final active = i == _index;
+              return Semantics(
+                label: 'Page ${i + 1} sur $_pageCount',
+                selected: active,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                  width: active ? 32 : 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? primary
+                        : theme.colorScheme.outline.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+          child: FilledButton(
+            onPressed: _next,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(
+                borderRadius: AuthFormStyles.buttonBorderRadius,
+              ),
+            ),
+            child: Text(
+              isLast
+                  ? AuthStrings.onboardingCtaEnd
+                  : AuthStrings.onboardingCtaNext,
+            ),
+          ),
+        ),
+        if (_index > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Center(
+              child: TextButton.icon(
+                onPressed: _back,
+                icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                label: Text(
+                  AuthStrings.onboardingBack,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          SizedBox(height: useWebLayout ? 20 : 16),
+      ],
+    );
+
+    if (useWebLayout) {
+      bodyColumn = DecoratedBox(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: bodyColumn,
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -113,124 +250,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           const AuthBrandBackground(),
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
-                  child: Row(
-                    children: [
-                      Text(
-                        AuthStrings.onboardingStep(_index + 1, _pageCount),
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _finish,
-                        child: Text(
-                          AuthStrings.onboardingSkip,
-                          style: TextStyle(
-                            fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
+            child: useWebLayout
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final formWidth = layout.authFormMaxWidthFor(
+                        constraints.maxWidth,
+                      );
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: layout.horizontalPadding,
+                            vertical: 16,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor:
-                          theme.colorScheme.outline.withValues(alpha: 0.2),
-                      color: primary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _pageCount,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    itemBuilder: (context, i) =>
-                        OnboardingPageContent(slide: _slides[i]),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_pageCount, (i) {
-                      final active = i == _index;
-                      return Semantics(
-                        label: 'Page ${i + 1} sur $_pageCount',
-                        selected: active,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          width: active ? 32 : 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: active
-                                ? primary
-                                : theme.colorScheme.outline
-                                    .withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(6),
+                          child: SizedBox(
+                            width: formWidth,
+                            height: constraints.maxHeight - 32,
+                            child: bodyColumn,
                           ),
                         ),
                       );
-                    }),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                  child: FilledButton(
-                    onPressed: _next,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(54),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: AuthFormStyles.buttonBorderRadius,
-                      ),
-                    ),
-                    child: Text(
-                      isLast
-                          ? AuthStrings.onboardingCtaEnd
-                          : AuthStrings.onboardingCtaNext,
-                    ),
-                  ),
-                ),
-                if (_index > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Center(
-                      child: TextButton.icon(
-                        onPressed: _back,
-                        icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                        label: Text(
-                          AuthStrings.onboardingBack,
-                          style: const TextStyle(
-                            fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    },
                   )
-                else
-                  const SizedBox(height: 16),
-              ],
-            ),
+                : bodyColumn,
           ),
         ],
       ),

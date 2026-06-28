@@ -8,11 +8,13 @@ import '../providers/agenda/disponibilite_provider.dart';
 import '../providers/resolve_prestataire_id.dart';
 import '../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../widgets/profile/schedule/prestataire_indisponibilites_editor.dart';
 import '../widgets/profile/schedule/prestataire_weekly_horaires_editor.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../widgets/workspace/prestataire_brand_scaffold.dart';
+import '../widgets/workspace/layout/prestataire_brand_scaffold.dart';
+import '../widgets/workspace/prestataire_flow_scaffold.dart';
 
 class PrestataireHorairesScreen extends ConsumerStatefulWidget {
   const PrestataireHorairesScreen({super.key});
@@ -104,8 +106,12 @@ class _PrestataireHorairesScreenState
   Widget build(BuildContext context) {
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final listPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 16, 20, 32);
 
-    return PrestataireBrandScaffold(
+    return PrestataireFlowScaffold(
       appBar: prestataireBrandAppBar(
         context: context,
         title: const Text(DiscPrestaHoraires.title),
@@ -137,7 +143,7 @@ class _PrestataireHorairesScreenState
           }
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            padding: listPadding,
             children: [
               PrestataireWeeklyHorairesEditor(
                 jours: jours,

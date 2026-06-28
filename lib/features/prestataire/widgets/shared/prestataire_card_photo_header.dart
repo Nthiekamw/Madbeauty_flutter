@@ -17,6 +17,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
     this.compactBadge = false,
     this.microOverlay = false,
     this.showFavoriteButton = true,
+    this.coverAlignment = Alignment.center,
   });
 
   final String prestataireId;
@@ -29,6 +30,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
   /// Pastilles encore plus petites (cartes accueil).
   final bool microOverlay;
   final bool showFavoriteButton;
+  final Alignment coverAlignment;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,7 @@ class PrestataireCardPhotoHeader extends StatelessWidget {
           borderRadius: borderRadius,
           fallbackDisplayName: fallbackDisplayName,
           fallbackAvatarUrl: fallbackAvatarUrl,
+          coverAlignment: coverAlignment,
         ),
         Positioned(
           top: microOverlay ? 5 : 8,

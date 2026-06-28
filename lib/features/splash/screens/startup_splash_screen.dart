@@ -13,12 +13,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../features/auth/providers/my_roles_provider.dart';
 import '../../../features/auth/register/logic/register_wizard_submit_handler.dart';
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
-import '../../../features/prestataire/logic/prestataire_profile_completeness.dart';
-import '../../../features/prestataire/providers/profile/current_prestataire_provider.dart';
-import '../../../features/prestataire/providers/profile/prestataire_profile_form_provider.dart';
-import '../../../features/profile/logic/become_prestataire_flow_resume.dart';
-import '../../../features/profile/storage/become_prestataire_draft_store.dart';
-import '../../../features/prestataire/navigation/prestataire_hub_wizard_navigation.dart';
+import '../../../features/prestataire/navigation/prestataire_navigation.dart';
 import '../../../router/app_router.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
@@ -142,25 +137,6 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       return;
     }
 
-    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
-    if (user != null && becomeResume != null) {
-      if (BecomePrestataireFlowResume.needsPrestataireRole) {
-        await LocalCacheService.instance.setSelectedRole('prestataire');
-      }
-      if (becomeResume == AppRoutes.prestataireProfileEdit) {
-        await _navigate(() async {
-          if (!mounted) return;
-          await PrestataireHubWizardNavigation.openWizard(
-            context,
-            initialStep: 0,
-          );
-        });
-      } else {
-        await _go(becomeResume);
-      }
-      return;
-    }
-
     if (user != null) {
       if (!await AccountBanHandler.ensureNotBanned(
         container,
@@ -213,9 +189,6 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
 
   /// Chemin de handoff redirect, ou `null` si le splash doit rester (bootstrap en cours).
   Future<String?> _bootstrapAuthenticated(ProviderContainer container) async {
-    final becomeResume = BecomePrestataireFlowResume.pathAfterAuthBootstrap();
-    if (becomeResume != null) return becomeResume;
-
     final online = await container.read(connectivityServiceProvider).isOnline();
     if (!online) {
       if (kDebugMode) {
@@ -231,16 +204,6 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
           .read(myRolesProvider.future)
           .timeout(SplashConfig.bootstrapTimeout);
       await AuthRoleCache.persistServerRoles(roles);
-
-      _setStatus(ShellStrings.splashLoadingProfile);
-
-      final prestaProfile = await container
-          .read(currentPrestataireProvider.future)
-          .timeout(SplashConfig.bootstrapTimeout);
-      if (prestaProfile != null) {
-        await LocalCacheService.instance.setSelectedRole('prestataire');
-        await LocalCacheService.instance.setSignupShellRole('prestataire');
-      }
     } on TimeoutException {
       if (kDebugMode) {
         debugPrint('Splash: bootstrap timeout – cache local');
@@ -251,30 +214,12 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       }
     }
 
-    if (LocalCacheService.instance.selectedRole != 'prestataire' &&
-        LocalCacheService.instance.signupShellRole != 'prestataire' &&
-        !BecomePrestataireDraftStore.instance.hasDraft) {
+    if (!AuthRoleCache.shouldBootstrapPrestataireProfile()) {
       return AuthRoleCache.preferredAuthenticatedPath();
     }
 
     _setStatus(ShellStrings.splashLoadingProfile);
-    try {
-      final profile = await container
-          .read(prestataireProfileFormProvider.future)
-          .timeout(SplashConfig.bootstrapTimeout);
-      if (!profile.isProfessionallyComplete) {
-        return AppRoutes.prestataireProfileEdit;
-      }
-    } on TimeoutException {
-      if (kDebugMode) {
-        debugPrint('Splash: profil prestataire timeout');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('Splash: profil prestataire – $e\n$st');
-      }
-    }
-    return AuthRoleCache.preferredAuthenticatedPath();
+    return PrestataireNavigation.prestataireSpacePath(container);
   }
 
   @override

@@ -16,6 +16,7 @@ class RealisationMediaCover extends StatelessWidget {
     this.memoryBytes,
     this.localVideoPath,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
     this.playVideoPreview = false,
     this.showPlayBadge = true,
     this.playIconSize = 28,
@@ -26,6 +27,7 @@ class RealisationMediaCover extends StatelessWidget {
   final Uint8List? memoryBytes;
   final String? localVideoPath;
   final BoxFit fit;
+  final Alignment alignment;
   final bool playVideoPreview;
   final bool showPlayBadge;
   final double playIconSize;
@@ -78,10 +80,16 @@ class RealisationMediaCover extends StatelessWidget {
     final bytes = memoryBytes;
     final url = imageUrl;
     if (bytes != null) {
-      return Image.memory(bytes, fit: fit);
+      return Image.memory(bytes, fit: fit, alignment: alignment);
     }
     if (url != null) {
-      return AppNetworkImage(url: url, fit: fit);
+      return SizedBox.expand(
+        child: AppNetworkImage(
+          url: url,
+          fit: fit,
+          alignment: alignment,
+        ),
+      );
     }
     return const ColoredBox(color: AppColors.scrimDark12);
   }

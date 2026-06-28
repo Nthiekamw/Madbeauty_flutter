@@ -13,6 +13,8 @@ import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
+import '../../../shared/layout/adaptive_safe_area.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../client/widgets/workspace/client_workspace_header.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
@@ -140,8 +142,9 @@ class _ClientReservationsScreenState
     if (ref.watch(isGuestBrowsingProvider)) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: SafeArea(
+        body: AdaptiveSafeArea(
           child: ClientWorkspaceShell(
+            title: ShellStrings.navClientReservations,
             subtitle: DiscBk.reservationsSubtitle,
             panelOverlap: -8,
             header: const ClientWorkspaceHeader(
@@ -161,13 +164,16 @@ class _ClientReservationsScreenState
     final reservationsAsync = ref.watch(clientReservationsProvider);
 
     final theme = Theme.of(context);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final hPad = useWeb ? 16.0 : 20.0;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        body: SafeArea(
+        body: AdaptiveSafeArea(
           child: ClientWorkspaceShell(
+            title: ShellStrings.navClientReservations,
             subtitle: DiscBk.reservationsSubtitle,
             panelOverlap: -8,
             header: const ClientWorkspaceHeader(
@@ -175,8 +181,9 @@ class _ClientReservationsScreenState
               compact: true,
             ),
             top: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 0),
               child: DiscoverySurfaceCard(
+                includeHorizontalMargin: false,
                 padding: const EdgeInsets.all(5),
                 child: TabBar(
                   indicatorSize: TabBarIndicatorSize.tab,
@@ -265,6 +272,8 @@ class _ClientReservationsScreenState
     required String emptyTitle,
     required String emptyBody,
   }) {
+    final hPad = DiscoveryResponsive.of(context).useWebSiteLayout ? 16.0 : 20.0;
+
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refresh,
@@ -287,7 +296,7 @@ class _ClientReservationsScreenState
       onRefresh: _refresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 24),
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {

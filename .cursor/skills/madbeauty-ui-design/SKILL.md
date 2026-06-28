@@ -4,8 +4,8 @@ description: >-
   Design UI MadBeauty (Flutter) : écrans et widgets ergonomiques, intuitifs,
   attrayants, alignés sur l’identité visuelle et AppColors. Utiliser pour tout
   ajout ou changement de design, bannière, carte, formulaire, état vide, CTA,
-  alerte, onboarding, polish UX ou refonte visuelle. États async → skill
-  madbeauty-ux-states.
+  alerte, onboarding, polish UX ou refonte visuelle. Responsive mobile + web
+  → skill madbeauty-responsive. États async → skill madbeauty-ux-states.
 ---
 
 # MadBeauty — design UI
@@ -29,7 +29,7 @@ Quand on ajoute ou change du design, ça doit **toujours** être :
 - **Aligné sur l’appli** — réutiliser les patterns et composants existants
 - **Aligné sur les couleurs** — priorité à `lib/shared/theme/app_colors.dart` (`AppColors`), puis `Theme.of(context).colorScheme`
 
-Compléter avec les skills **`madbeauty-responsive`** (toutes tailles d’écran), **`madbeauty-ui-strings`** (textes dans les fichiers de constantes) et **`madbeauty-ux-states`** (shimmer, chargement, erreur, retry, snackbars).
+Compléter avec les skills **`madbeauty-responsive`** (mobile tous écrans + web), **`madbeauty-ui-strings`** (textes dans les fichiers de constantes) et **`madbeauty-ux-states`** (shimmer, chargement, erreur, retry, snackbars).
 
 ## Avant de coder une UI
 

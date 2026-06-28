@@ -1,9 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-
-import '../../core/constants/app_area.dart';
 import 'app_colors.dart';
 import 'app_fonts.dart';
 import 'auth_form_styles.dart';
+import '../../core/constants/app_area.dart';
 
 class AppTheme {
   AppTheme._();

@@ -16,6 +16,8 @@ import '../providers/booking_platform_fee_settings_provider.dart';
 import '../providers/client_prior_booking_count_provider.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
 import '../providers/prestataire_online_payment_provider.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
+import '../../../shared/layout/web_flow_panel.dart';
 import '../widgets/confirmation/booking_confirmation_recap_body.dart';
 import '../widgets/shared/booking_message.dart';
 import '../widgets/shared/booking_success_view.dart';
@@ -119,7 +121,7 @@ class _BookingConfirmationScreenState
       breakdown = null;
     }
 
-    return Scaffold(
+    return WebFlowScaffold(
       appBar: AppBar(
         title: const Text(DiscBk.recapTitle),
         centerTitle: true,
@@ -145,7 +147,8 @@ class _BookingConfirmationScreenState
           final prestataireName =
               salon != null && salon.isNotEmpty ? salon : 'Salon';
 
-          return BookingConfirmationRecapBody(
+          return WebFlowPanel(
+            child: BookingConfirmationRecapBody(
             prestataireName: prestataireName,
             avatarUrl: detail.avatarUrl,
             ville: profile.ville,
@@ -164,6 +167,7 @@ class _BookingConfirmationScreenState
             ctaLabel: _ctaLabel(breakdown),
             onPaymentModeChanged: (mode) => setState(() => _paymentMode = mode),
             onConfirm: _confirm,
+          ),
           );
         },
       ),

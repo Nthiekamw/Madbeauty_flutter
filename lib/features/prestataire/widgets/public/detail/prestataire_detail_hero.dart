@@ -34,7 +34,7 @@ class PrestataireDetailHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final r = DiscoveryResponsive.of(context);
-    final pad = r.horizontalPadding;
+    final pad = r.pageHorizontalPadding(flow: true);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
 
@@ -47,7 +47,11 @@ class PrestataireDetailHero extends ConsumerWidget {
       if (cp.isNotEmpty) cp,
     ].join(' · ');
 
-    final coverHeight = r.isTablet ? 228.0 : (r.isCompact ? 172.0 : 204.0);
+    final coverHeight = r.useWebSiteLayout
+        ? (r.isDesktop ? 300.0 : (r.isWide ? 272.0 : 248.0))
+        : r.isTablet
+            ? 228.0
+            : (r.isCompact ? 172.0 : 204.0);
     final avatarRadius = r.isTablet ? 44.0 : (r.isCompact ? 34.0 : 40.0);
     final identityBlock = avatarRadius * 2 +
         8 +

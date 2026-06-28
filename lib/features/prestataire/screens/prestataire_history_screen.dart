@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
@@ -44,9 +45,13 @@ class _PrestataireHistoryScreenState
     return PrestataireBrandScaffold(
       body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
+          title: ShellStrings.navPrestataireClients,
+          subtitle: DiscPrestaWorkspace.clientsSubtitle,
           child: DiscoveryListSkeleton(rowCount: 5, rowHeight: 88),
         ),
         error: (_, __) => PrestataireWorkspaceShell(
+          title: ShellStrings.navPrestataireClients,
+          subtitle: DiscPrestaWorkspace.clientsSubtitle,
           onRefresh: _reload,
           child: Center(
             child: DiscoveryEmptyState(
@@ -60,6 +65,8 @@ class _PrestataireHistoryScreenState
           ),
         ),
         data: (reservations) {
+          final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+          final hPad = useWeb ? 16.0 : 20.0;
           final all = listPrestataireClientSummaries(reservations);
           final q = _query.trim().toLowerCase();
           final clients = q.isEmpty
@@ -73,6 +80,8 @@ class _PrestataireHistoryScreenState
                   .toList();
 
           return PrestataireWorkspaceShell(
+            title: ShellStrings.navPrestataireClients,
+            subtitle: DiscPrestaWorkspace.clientsSubtitle,
             onRefresh: _reload,
             headerSubtitle: DiscPrestaWorkspace.clientsSubtitle,
             child: RefreshIndicator(
@@ -85,19 +94,21 @@ class _PrestataireHistoryScreenState
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                      child: DiscoverySectionHeader(
-                        title: DiscPrestaClients.pageTitle,
-                        subtitle: DiscPrestaWorkspace.clientsSubtitle,
-                        icon: Icons.groups_rounded,
-                        compact: true,
-                        showSubtitleWhenCompact: true,
-                      ),
+                      padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 12),
+                      child: useWeb
+                          ? const SizedBox.shrink()
+                          : DiscoverySectionHeader(
+                              title: DiscPrestaClients.pageTitle,
+                              subtitle: DiscPrestaWorkspace.clientsSubtitle,
+                              icon: Icons.groups_rounded,
+                              compact: true,
+                              showSubtitleWhenCompact: true,
+                            ),
                     ),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.cardSurfaceFor(theme.brightness),
@@ -132,7 +143,7 @@ class _PrestataireHistoryScreenState
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                      padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 8),
                       child: Text(
                         DiscPrestaWorkspace.clientsCount(clients.length),
                         style: theme.textTheme.labelLarge?.copyWith(
@@ -155,7 +166,7 @@ class _PrestataireHistoryScreenState
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                      padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
                       sliver: SliverList.separated(
                         itemCount: clients.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 10),

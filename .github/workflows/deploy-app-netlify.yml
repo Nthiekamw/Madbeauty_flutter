@@ -1,0 +1,72 @@
+# Déploie l'app Flutter Web (build/web) sur Netlify.
+#
+# Secrets GitHub requis :
+#   NETLIFY_AUTH_TOKEN     — token personnel Netlify
+#   NETLIFY_APP_SITE_ID    — ID du site Netlify dédié à l'app web
+#   SUPABASE_URL
+#   SUPABASE_ANON_KEY
+#   SUPABASE_WEB_REDIRECT_URL — URL publique de l'app (ex. https://madbeauty-app.netlify.app)
+# Optionnels : STRIPE_PUBLISHABLE_KEY, SUPABASE_EMAIL_REDIRECT_URL, SHARE_BASE_URL
+
+name: Deploy app web Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - features/v2
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'scripts/build_flutter_web_ci.sh'
+      - 'netlify-app.toml'
+      - '.github/workflows/deploy-app-netlify.yml'
+
+concurrency:
+  group: deploy-app-netlify
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_SITE_ID: 57ae5908-03b5-4f58-a603-a30ed899a685
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_WEB_REDIRECT_URL: ${{ secrets.SUPABASE_WEB_REDIRECT_URL }}
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      SUPABASE_EMAIL_REDIRECT_URL: ${{ secrets.SUPABASE_EMAIL_REDIRECT_URL }}
+      SHARE_BASE_URL: ${{ secrets.SHARE_BASE_URL }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Vérifier les secrets
+        run: |
+          missing=0
+          for name in SUPABASE_URL SUPABASE_ANON_KEY NETLIFY_AUTH_TOKEN SUPABASE_WEB_REDIRECT_URL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret manquant : $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Build Flutter Web
+        run: bash scripts/build_flutter_web_ci.sh
+
+      - name: Déployer sur Netlify
+        run: npx --yes netlify-cli@26.1.0 deploy --prod --dir=build/web --no-build

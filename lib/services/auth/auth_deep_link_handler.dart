@@ -34,6 +34,7 @@ abstract final class AuthDeepLinkHandler {
   };
 
   static bool isAuthCallbackUri(Uri uri) {
+    if (_isWebAuthCallback(uri)) return true;
     if (uri.scheme != ShareLinkConfig.customScheme) return false;
     if (!_authHosts.contains(uri.host)) return false;
     final params = normalizedQueryParameters(uri);
@@ -42,6 +43,16 @@ abstract final class AuthDeepLinkHandler {
         params.containsKey('error') ||
         params.containsKey('error_description') ||
         params.containsKey('access_token');
+  }
+
+  static bool _isWebAuthCallback(Uri uri) {
+    if (uri.scheme != 'http' && uri.scheme != 'https') return false;
+    final params = normalizedQueryParameters(uri);
+    return params.containsKey('code') ||
+        params.containsKey('token_hash') ||
+        params.containsKey('access_token') ||
+        params.containsKey('error') ||
+        params.containsKey('error_description');
   }
 
   static bool isPasswordRecoveryUri(Uri uri) {

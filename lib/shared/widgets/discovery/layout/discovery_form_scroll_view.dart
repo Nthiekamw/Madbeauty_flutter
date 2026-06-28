@@ -18,13 +18,26 @@ class DiscoveryFormScrollView extends StatelessWidget {
   Widget build(BuildContext context) {
     final layout = DiscoveryResponsive.of(context);
 
+    final maxWidth = layout.useWebSiteLayout
+        ? layout.webFlowContentMaxWidth
+        : layout.formMaxWidth;
+    final resolvedPadding = padding ??
+        (layout.useWebSiteLayout
+            ? EdgeInsets.fromLTRB(
+                layout.webFlowHorizontalPadding,
+                16,
+                layout.webFlowHorizontalPadding,
+                28,
+              )
+            : layout.formPadding);
+
     return KeyboardDismissArea(
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: layout.formMaxWidth),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: ListView(
-            padding: padding ?? layout.formPadding,
+            padding: resolvedPadding,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: children,
           ),

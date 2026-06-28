@@ -36,6 +36,7 @@ class PrestataireDetailMessagingSection extends ConsumerWidget {
         return Padding(
           padding: EdgeInsets.fromLTRB(pad, 18, pad, 0),
           child: PrestataireDetailSurface.cardMaterial(
+            context: context,
             theme: theme,
             child: switch (access.kind) {
               ClientPrestaChatAccessKind.ready => _ReadyContent(

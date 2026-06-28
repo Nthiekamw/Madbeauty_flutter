@@ -1,4 +1,4 @@
-# Déploie le back-office admin (dossier web/) sur Netlify.
+# Déploie le back-office admin (dossier web-admin/) sur Netlify.
 #
 # Secrets GitHub requis (Settings → Secrets and variables → Actions) :
 #   NETLIFY_AUTH_TOKEN  — https://app.netlify.com/user/applications#personal-access-tokens
@@ -17,7 +17,7 @@ on:
       - master
       - features/v2
     paths:
-      - 'web/**'
+      - 'web-admin/**'
       - 'scripts/generate_web_admin_config.js'
       - 'netlify.toml'
       - '.github/workflows/deploy-admin-netlify.yml'
@@ -56,4 +56,4 @@ jobs:
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
       - name: Déployer sur Netlify
-        run: npx --yes netlify-cli@26.1.0 deploy --prod
+        run: npx --yes netlify-cli@26.1.0 deploy --prod --config=netlify.toml

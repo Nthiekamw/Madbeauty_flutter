@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app/app_avatar.dart';
 import '../../models/conversation_inbox_item.dart';
 import 'conversation_read_status_badge.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/widgets/discovery/content/discovery_surface_card.dart';
 
 class ConversationListTile extends StatelessWidget {
   const ConversationListTile({
@@ -44,26 +45,32 @@ class ConversationListTile extends StatelessWidget {
         ? _reservationSubtitle()
         : (item.isLastMessageMine ? '${DiscChat.you}: $preview' : preview);
     final metaLine = '$presenceLabel · $messageLine';
+    final radius = DiscoveryCardChrome.radius(context);
+    final cardShadow = DiscoveryCardChrome.elevationShadow(context);
 
-    return Material(
-      color: AppColors.cardSurfaceFor(theme.brightness),
-      elevation: 0,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(14),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: hasUnread
-                  ? primary.withValues(alpha: 0.22)
-                  : theme.colorScheme.outline.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.28 : 0.1,
-                    ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: cardShadow,
+      ),
+      child: Material(
+        color: AppColors.cardSurfaceFor(theme.brightness),
+        elevation: 0,
+        borderRadius: BorderRadius.circular(radius),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(radius),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: hasUnread
+                    ? primary.withValues(alpha: 0.22)
+                    : DiscoveryCardChrome.borderSide(theme).color,
+              ),
             ),
-          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 11, 12, 11),
             child: Row(
@@ -152,6 +159,7 @@ class ConversationListTile extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

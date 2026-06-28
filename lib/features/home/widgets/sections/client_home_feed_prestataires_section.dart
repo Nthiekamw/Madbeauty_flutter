@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../providers/home_prestataire_entries_provider.dart';
 import '../shared/client_home_section_header.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../catalog/prestataire_catalog_section_empty.dart';
 import '../catalog/prestataire_home_trending_list.dart';
@@ -42,10 +43,14 @@ class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
             message: DiscHome.feedLoadFail,
             onRetry: () => ref.invalidate(homeFeedPrestataireEntriesProvider),
           ),
-          loading: () => const SizedBox(
-            height: 196,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
+          loading: () {
+            final height =
+                DiscoveryResponsive.of(context).homeTrendingCardHeight;
+            return SizedBox(
+              height: height,
+              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            );
+          },
         ),
       ],
     );

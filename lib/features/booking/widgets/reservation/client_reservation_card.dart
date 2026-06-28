@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/widgets/discovery/content/discovery_surface_card.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../logic/booking_formatters.dart';
 import '../../logic/client_reservation_ui_status.dart';
@@ -54,23 +55,28 @@ class ClientReservationCard extends StatelessWidget {
     final showMessage =
         onMessage != null && clientReservationCanMessage(uiStatus);
 
-    return Material(
-      color: AppColors.cardSurfaceFor(theme.brightness),
-      elevation: 0,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(
-              alpha: isDark ? 0.28 : 0.1,
+    final radius = DiscoveryCardChrome.radius(context);
+    final cardShadow = DiscoveryCardChrome.elevationShadow(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: cardShadow,
+      ),
+      child: Material(
+        color: AppColors.cardSurfaceFor(theme.brightness),
+        elevation: 0,
+        borderRadius: BorderRadius.circular(radius),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(color: DiscoveryCardChrome.borderSide(theme).color),
             ),
-          ),
-        ),
-        child: Column(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -227,8 +233,9 @@ class ClientReservationCard extends StatelessWidget {
               ),
             ),
           ],
+            ),
+          ),
         ),
-      ),
       ),
     );
   }

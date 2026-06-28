@@ -1,14 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../messaging/messaging_navigation.dart';
@@ -34,83 +33,57 @@ class _ClientHistoryScreenState extends ConsumerState<ClientHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     if (ref.watch(isGuestBrowsingProvider)) {
-      return DiscoveryBrandScaffold(
-        body: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-              ),
-            ),
-            const DiscoveryFeatureHeader(
-              title: DiscProfile.historyTitle,
-              subtitle: DiscProfile.historySubtitle,
-              icon: Icons.history_rounded,
-            ),
-            Expanded(
-              child: GuestAccountPrompt(
-                icon: Icons.history_rounded,
-                title: AuthStrings.guestReservationsTitle,
-                message: AuthStrings.guestReservationsBody,
-              ),
-            ),
-          ],
+      return ProfileFlowScaffold(
+        title: DiscProfile.historyTitle,
+        subtitle: DiscProfile.historySubtitle,
+        icon: Icons.history_rounded,
+        wrapPanel: false,
+        body: GuestAccountPrompt(
+          icon: Icons.history_rounded,
+          title: AuthStrings.guestReservationsTitle,
+          message: AuthStrings.guestReservationsBody,
         ),
       );
     }
 
     final reservationsAsync = ref.watch(clientReservationsProvider);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
 
-    return DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          const DiscoveryFeatureHeader(
-            title: DiscProfile.historyTitle,
-            subtitle: DiscProfile.historySubtitle,
-            icon: Icons.history_rounded,
-          ),
-          Expanded(
-            child: reservationsAsync.when(
-              loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
-              error: (_, __) => RefreshIndicator(
-                onRefresh: _refresh,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    DiscoveryEmptyState(
-                      icon: Icons.cloud_off_outlined,
-                      title: CoreStrings.networkErrorTitle,
-                      body: DiscBk.listErrBody,
-                      iconColor: Theme.of(context).colorScheme.error,
-                      actionLabel: DiscList.retry,
-                      onAction: _refresh,
-                    ),
-                  ],
-                ),
+    return ProfileFlowScaffold(
+      title: DiscProfile.historyTitle,
+      subtitle: DiscProfile.historySubtitle,
+      icon: Icons.history_rounded,
+      body: reservationsAsync.when(
+        loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
+        error: (_, __) => RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: DiscBk.listErrBody,
+                iconColor: Theme.of(context).colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: _refresh,
               ),
-              data: (all) => _HistoryList(
-                items: clientPastReservations(all),
-                onRefresh: _refresh,
-                onMessage: (id) => openChatForReservation(
-                      context,
-                      ref,
-                      id,
-                      viewerRole: MessagingInboxRole.client,
-                    ),
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
+        data: (all) => _HistoryList(
+          items: clientPastReservations(all),
+          onRefresh: _refresh,
+          onMessage: (id) => openChatForReservation(
+                context,
+                ref,
+                id,
+                viewerRole: MessagingInboxRole.client,
+              ),
+          listPadding: useWeb
+              ? const EdgeInsets.fromLTRB(20, 16, 20, 24)
+              : const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        ),
       ),
     );
   }
@@ -121,11 +94,13 @@ class _HistoryList extends StatelessWidget {
     required this.items,
     required this.onRefresh,
     required this.onMessage,
+    required this.listPadding,
   });
 
   final List<ClientReservationSummary> items;
   final Future<void> Function() onRefresh;
   final void Function(String reservationId) onMessage;
+  final EdgeInsets listPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +126,7 @@ class _HistoryList extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: listPadding,
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {

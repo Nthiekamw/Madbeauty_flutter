@@ -1,13 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../auth/guest/guest_mode_provider.dart';
@@ -26,29 +25,15 @@ class ClientReviewsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (ref.watch(isGuestBrowsingProvider)) {
-      return DiscoveryBrandScaffold(
-        body: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-              ),
-            ),
-            const DiscoveryFeatureHeader(
-              title: DiscReview.myReviewsTitle,
-              subtitle: DiscReview.myReviewsSubtitle,
-              icon: Icons.rate_review_outlined,
-            ),
-            Expanded(
-              child: GuestAccountPrompt(
-                icon: Icons.rate_review_outlined,
-                title: AuthStrings.guestProfileTitle,
-                message: AuthStrings.guestProfileBody,
-              ),
-            ),
-          ],
+      return ProfileFlowScaffold(
+        title: DiscReview.myReviewsTitle,
+        subtitle: DiscReview.myReviewsSubtitle,
+        icon: Icons.rate_review_outlined,
+        wrapPanel: false,
+        body: GuestAccountPrompt(
+          icon: Icons.rate_review_outlined,
+          title: AuthStrings.guestProfileTitle,
+          message: AuthStrings.guestProfileBody,
         ),
       );
     }
@@ -57,99 +42,87 @@ class ClientReviewsScreen extends ConsumerWidget {
     final clientId = ref.watch(currentClientProfileProvider).asData?.value?.id;
     final ownPrestaId =
         ref.watch(currentPrestataireProvider).asData?.value?.id;
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final listPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 24)
+        : const EdgeInsets.fromLTRB(20, 8, 20, 24);
 
-    return DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          const DiscoveryFeatureHeader(
-            title: DiscReview.myReviewsTitle,
-            subtitle: DiscReview.myReviewsSubtitle,
-            icon: Icons.rate_review_outlined,
-          ),
-          Expanded(
-            child: reviewsAsync.when(
-              loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 96),
-              error: (_, __) => RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(clientReviewsForCurrentClientProvider);
-                  await ref.read(clientReviewsForCurrentClientProvider.future);
-                },
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    DiscoveryEmptyState(
-                      icon: Icons.cloud_off_outlined,
-                      title: CoreStrings.networkErrorTitle,
-                      body: DiscBk.listErrBody,
-                      iconColor: Theme.of(context).colorScheme.error,
-                      actionLabel: DiscList.retry,
-                      onAction: () =>
-                          ref.invalidate(clientReviewsForCurrentClientProvider),
-                    ),
-                  ],
-                ),
+    return ProfileFlowScaffold(
+      title: DiscReview.myReviewsTitle,
+      subtitle: DiscReview.myReviewsSubtitle,
+      icon: Icons.rate_review_outlined,
+      body: reviewsAsync.when(
+        loading: () => const DiscoveryListSkeleton(rowCount: 4, rowHeight: 96),
+        error: (_, __) => RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(clientReviewsForCurrentClientProvider);
+            await ref.read(clientReviewsForCurrentClientProvider.future);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              DiscoveryEmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: CoreStrings.networkErrorTitle,
+                body: DiscBk.listErrBody,
+                iconColor: Theme.of(context).colorScheme.error,
+                actionLabel: DiscList.retry,
+                onAction: () =>
+                    ref.invalidate(clientReviewsForCurrentClientProvider),
               ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return ListView(
-                    children: const [
-                      DiscoveryEmptyState(
-                        icon: Icons.rate_review_outlined,
-                        title: DiscReview.emptyTitle,
-                        body: DiscReview.emptyBody,
-                      ),
-                    ],
-                  );
-                }
+            ],
+          ),
+        ),
+        data: (items) {
+          if (items.isEmpty) {
+            return ListView(
+              children: const [
+                DiscoveryEmptyState(
+                  icon: Icons.rate_review_outlined,
+                  title: DiscReview.emptyTitle,
+                  body: DiscReview.emptyBody,
+                ),
+              ],
+            );
+          }
 
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(clientReviewsForCurrentClientProvider);
-                    await ref.read(clientReviewsForCurrentClientProvider.future);
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(clientReviewsForCurrentClientProvider);
+              await ref.read(clientReviewsForCurrentClientProvider.future);
+            },
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: listPadding,
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return _ClientReviewCard(
+                  item: items[index],
+                  clientProfileId: clientId,
+                  ownPrestataireId: ownPrestaId,
+                  onTap: () async {
+                    final item = items[index];
+                    if (!item.canEditAsClient(
+                      clientId,
+                      ownPrestataireId: ownPrestaId,
+                    )) {
+                      await showViewReviewSheet(context, item: item);
+                      return;
+                    }
+                    final updated = await showEditReviewSheet(
+                      context,
+                      item: item,
+                    );
+                    if (updated == true) {
+                      ref.invalidate(clientReviewsForCurrentClientProvider);
+                    }
                   },
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _ClientReviewCard(
-                        item: items[index],
-                        clientProfileId: clientId,
-                        ownPrestataireId: ownPrestaId,
-                        onTap: () async {
-                          final item = items[index];
-                          if (!item.canEditAsClient(
-                            clientId,
-                            ownPrestataireId: ownPrestaId,
-                          )) {
-                            await showViewReviewSheet(context, item: item);
-                            return;
-                          }
-                          final updated = await showEditReviewSheet(
-                            context,
-                            item: item,
-                          );
-                          if (updated == true) {
-                            ref.invalidate(clientReviewsForCurrentClientProvider);
-                          }
-                        },
-                      );
-                    },
-                  ),
                 );
               },
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

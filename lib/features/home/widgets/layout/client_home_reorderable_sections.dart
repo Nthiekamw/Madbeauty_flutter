@@ -26,7 +26,11 @@ class ClientHomeReorderableSections extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pad = DiscoveryResponsive.of(context).horizontalPadding;
+    final layoutMetrics = DiscoveryResponsive.of(context);
+    final useWebLayout = layoutMetrics.useWebSiteLayout;
+    final pad = useWebLayout
+        ? layoutMetrics.webShellHorizontalPadding
+        : layoutMetrics.horizontalPadding;
     final layout = ref.watch(clientHomeLayoutProvider);
     final isLoggedIn = clientHomeIsLoggedIn(ref);
     final hasSupabase = AppConfig.hasSupabase;
@@ -40,11 +44,14 @@ class ClientHomeReorderableSections extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return ColoredBox(
-      color: isDark ? theme.colorScheme.surface : AppColors.lightSurface,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(pad, 2, pad, 28),
-        children: [
+    final listView = ListView(
+      padding: EdgeInsets.fromLTRB(
+        pad,
+        useWebLayout ? 8 : 2,
+        pad,
+        28,
+      ),
+      children: [
         for (var i = 0; i < visible.length; i++) ...[
           _sectionFor(visible[i]),
           if (i < visible.length - 1) const SizedBox(height: 18),
@@ -57,8 +64,19 @@ class ClientHomeReorderableSections extends ConsumerWidget {
           const SizedBox(height: 20),
           footer!,
         ],
-        ],
-      ),
+      ],
+    );
+
+    if (useWebLayout) {
+      return ColoredBox(
+        color: theme.colorScheme.surfaceContainerLowest,
+        child: listView,
+      );
+    }
+
+    return ColoredBox(
+      color: isDark ? theme.colorScheme.surface : AppColors.lightSurface,
+      child: listView,
     );
   }
 

@@ -17,6 +17,7 @@ class PrestataireDetailOwnProfileBanner extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(pad, 18, pad, 0),
       child: PrestataireDetailSurface.cardMaterial(
+        context: context,
         theme: theme,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(

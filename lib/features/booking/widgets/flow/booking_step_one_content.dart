@@ -15,6 +15,7 @@ import '../shared/booking_section_title.dart';
 import 'selected_service_header.dart';
 import 'service_choice_card.dart';
 import 'booking_waitlist_card.dart';
+import '../../../../shared/layout/web_flow_panel.dart';
 import 'slot_choice_wrap.dart';
 
 class BookingStepOneContent extends StatelessWidget {
@@ -55,11 +56,14 @@ class BookingStepOneContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pad = DiscoveryResponsive.of(context).horizontalPadding;
+    final layout = DiscoveryResponsive.of(context);
+    final useWeb = layout.useWebSiteLayout;
+    final pad = layout.pageHorizontalPadding(flow: true);
+    final innerPad = useWeb ? 20.0 : pad;
     final slots = daySlots;
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(pad, 12, pad, 24),
+    final listView = ListView(
+      padding: EdgeInsets.fromLTRB(innerPad, 12, innerPad, 24),
       children: [
         SelectedServiceHeader(service: selectedService),
         const SizedBox(height: 16),
@@ -136,6 +140,8 @@ class BookingStepOneContent extends StatelessWidget {
         ),
       ],
     );
+
+    return WebFlowPanel(child: listView);
   }
 }
 

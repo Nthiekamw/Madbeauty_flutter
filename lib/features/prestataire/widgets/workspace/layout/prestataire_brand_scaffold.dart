@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 
-/// Corps d'écran prestataire avec le fond brand (blobs crème / marron), aligné accueil client.
+/// Corps d'écran prestataire avec fond brand (mobile) ou fond neutre (web).
 class PrestataireBrandScaffold extends StatelessWidget {
   const PrestataireBrandScaffold({
     super.key,
@@ -15,6 +16,21 @@ class PrestataireBrandScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (DiscoveryResponsive.of(context).useWebSiteLayout) {
+      final theme = Theme.of(context);
+      if (appBar == null) {
+        return Scaffold(
+          backgroundColor: theme.colorScheme.surfaceContainerLowest,
+          body: body,
+        );
+      }
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        appBar: appBar,
+        body: body,
+      );
+    }
+
     if (appBar == null) {
       return DiscoveryBrandScaffold(body: body);
     }

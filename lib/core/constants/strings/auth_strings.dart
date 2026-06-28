@@ -18,6 +18,9 @@ abstract final class AuthStrings {
   static const String authGoogleSupabaseLinkFailed =
       'Compte Google reconnu mais la session n’a pas pu s’ouvrir. '
       'Vérifie que le fournisseur Google est activé dans Supabase (Auth → Providers).';
+  static const String authGoogleWebRedirectMissing =
+      'Connexion Google web : configure SUPABASE_WEB_REDIRECT_URL dans .env '
+      '(ex. http://localhost:7357) et ajoute cette URL dans Supabase → Auth → Redirect URLs.';
 
   static const String loginFieldEmail = 'E-mail';
   static const String loginFieldPassword = 'Mot de passe';

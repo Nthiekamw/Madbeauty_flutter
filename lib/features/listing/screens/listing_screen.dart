@@ -29,6 +29,7 @@ import '../widgets/header/listing_results_header.dart';
 import '../widgets/content/listing_map_view.dart';
 import '../widgets/content/listing_vertical_skeleton.dart';
 import '../widgets/content/listing_prestataires_scroll_view.dart';
+import '../../../shared/layout/adaptive_safe_area.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 
 /// Exploration / recherche : catalogue paginé, filtres, tri, pull-to-refresh.
@@ -359,9 +360,10 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     if (!AppConfig.hasSupabase) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        body: SafeArea(
-          child: ClientWorkspaceShell(
-            subtitle: DiscClientWorkspace.searchSubtitle,
+        body: AdaptiveSafeArea(
+        child: ClientWorkspaceShell(
+          title: ShellStrings.navClientSearch,
+          subtitle: DiscClientWorkspace.searchSubtitle,
             top: ClientWorkspaceSearchRow(
               controller: _searchController,
               onChanged: _onSearchChanged,
@@ -380,14 +382,15 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
+      body: AdaptiveSafeArea(
         child: ClientWorkspaceShell(
-          subtitle: DiscClientWorkspace.searchSubtitle,
-          panelOverlap: -8,
-          header: const ClientWorkspaceHeader(
+            title: ShellStrings.navClientSearch,
             subtitle: DiscClientWorkspace.searchSubtitle,
-            compact: true,
-          ),
+            panelOverlap: -8,
+            header: const ClientWorkspaceHeader(
+              subtitle: DiscClientWorkspace.searchSubtitle,
+              compact: true,
+            ),
           top: _searchTopFixed(),
           child: _buildMainBody(theme, catalogState),
         ),

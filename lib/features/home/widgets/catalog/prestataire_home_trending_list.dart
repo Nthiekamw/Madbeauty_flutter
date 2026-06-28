@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/utils/text_normalizer.dart';
@@ -21,18 +22,25 @@ class PrestataireHomeTrendingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final layout = DiscoveryResponsive.of(context);
+    final cardHeight = layout.homeTrendingCardHeight;
     final visible = entries.length <= limit
         ? entries
         : entries.sublist(0, limit);
 
     return SizedBox(
-      height: 196,
+      height: cardHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: visible.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) =>
+            SizedBox(width: DiscoveryResponsive.homeTrendingCardGap),
         itemBuilder: (context, index) {
-          return _TrendingCard(entry: visible[index]);
+          return _TrendingCard(
+            entry: visible[index],
+            cardWidth: layout.homeTrendingCardWidth,
+            cardHeight: cardHeight,
+          );
         },
       ),
     );
@@ -40,19 +48,29 @@ class PrestataireHomeTrendingList extends StatelessWidget {
 }
 
 class _TrendingCard extends StatelessWidget {
-  const _TrendingCard({required this.entry});
+  const _TrendingCard({
+    required this.entry,
+    required this.cardWidth,
+    required this.cardHeight,
+  });
 
   final PrestataireCatalogEntry entry;
+  final double cardWidth;
+  final double cardHeight;
 
   @override
   Widget build(BuildContext context) {
+    final layout = DiscoveryResponsive.of(context);
     final theme = Theme.of(context);
     final title = normalizeSingleLineText(entry.displayName);
     final safeTitle = title.isEmpty ? 'Salon' : title;
     final bookings = entry.reviewCount ?? 0;
+    final titleSize = layout.homeTrendingTitleFontSize(cardWidth);
+    final bodySize = layout.homeTrendingBodyFontSize(cardWidth);
+    final inset = (cardWidth * 0.06).clamp(8.0, 12.0);
 
     return SizedBox(
-      width: 132,
+      width: cardWidth,
       child: Material(
         color: AppColors.transparent,
         child: InkWell(
@@ -76,8 +94,8 @@ class _TrendingCard extends StatelessWidget {
                 children: [
                   PrestataireRealisationCarouselScope(
                     prestataireId: entry.profile.id,
-                    height: 196,
-                    width: 132,
+                    height: cardHeight,
+                    width: cardWidth,
                     fallbackDisplayName: safeTitle,
                     fallbackAvatarUrl: entry.avatarUrl,
                   ),
@@ -95,42 +113,37 @@ class _TrendingCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    left: 8,
-                    right: 8,
-                    bottom: 8,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.bottomLeft,
-                      child: SizedBox(
-                        width: 116,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              safeTitle,
-                              softWrap: true,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontFamily: AppFonts.display,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 9.5,
-                                color: AppColors.white,
-                                height: 1.12,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              DiscHome.trendingBookings(bookings),
-                              softWrap: true,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 8,
-                                color: AppColors.white.withValues(alpha: 0.88),
-                                height: 1.1,
-                              ),
-                            ),
-                          ],
+                    left: inset,
+                    right: inset,
+                    bottom: inset,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          safeTitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontFamily: AppFonts.display,
+                            fontWeight: FontWeight.w800,
+                            fontSize: titleSize,
+                            color: AppColors.white,
+                            height: 1.12,
+                          ),
                         ),
-                      ),
+                        SizedBox(height: (cardHeight * 0.012).clamp(2.0, 4.0)),
+                        Text(
+                          DiscHome.trendingBookings(bookings),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontSize: bodySize,
+                            color: AppColors.white.withValues(alpha: 0.88),
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -294,10 +294,24 @@ class AuthNotifier extends AsyncNotifier<User?> {
       return user;
     }
 
+    final redirectTo = AppConfig.authOAuthRedirectTo;
+    if (kIsWeb) {
+      if (redirectTo == null || redirectTo.trim().isEmpty) {
+        throw AppFailure(AuthStrings.authGoogleWebRedirectMissing);
+      }
+      if (kDebugMode) {
+        debugPrint(
+          '[GoogleAuth] web redirectTo: $redirectTo — '
+          'doit figurer dans Supabase → Auth → Redirect URLs',
+        );
+      }
+    }
+
     await _auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: AppConfig.authEmailRedirectTo,
-      authScreenLaunchMode: LaunchMode.externalApplication,
+      redirectTo: redirectTo,
+      authScreenLaunchMode:
+          kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
     return null;
   }

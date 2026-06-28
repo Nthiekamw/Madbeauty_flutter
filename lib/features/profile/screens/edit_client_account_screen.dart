@@ -15,6 +15,8 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_panel.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/phone_number_utils.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -249,9 +251,19 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     final clientAsync = ref.watch(currentClientProfileProvider);
 
     final email = user?.email?.trim() ?? '';
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
 
-    return DiscoveryBrandScaffold(
-      body: profileAsync.when(
+    final body = profileAsync.when(
+      loading: () => const DiscoveryDetailSkeleton(),
+      error: (_, __) => DiscoveryEmptyState(
+        icon: Icons.cloud_off_outlined,
+        title: CoreStrings.networkErrorTitle,
+        body: CoreStrings.networkErrorBody,
+        iconColor: Theme.of(context).colorScheme.error,
+        actionLabel: DiscList.retry,
+        onAction: () => ref.invalidate(currentUserProfileProvider),
+      ),
+      data: (profile) => clientAsync.when(
         loading: () => const DiscoveryDetailSkeleton(),
         error: (_, __) => DiscoveryEmptyState(
           icon: Icons.cloud_off_outlined,
@@ -259,31 +271,23 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
           body: CoreStrings.networkErrorBody,
           iconColor: Theme.of(context).colorScheme.error,
           actionLabel: DiscList.retry,
-          onAction: () => ref.invalidate(currentUserProfileProvider),
+          onAction: () => ref.invalidate(currentClientProfileProvider),
         ),
-        data: (profile) => clientAsync.when(
-          loading: () => const DiscoveryDetailSkeleton(),
-          error: (_, __) => DiscoveryEmptyState(
-            icon: Icons.cloud_off_outlined,
-            title: CoreStrings.networkErrorTitle,
-            body: CoreStrings.networkErrorBody,
-            iconColor: Theme.of(context).colorScheme.error,
-            actionLabel: DiscList.retry,
-            onAction: () => ref.invalidate(currentClientProfileProvider),
-          ),
-          data: (client) {
-            _bindFields(profile, client);
-            final displayName = profileDisplayName(profile: profile, email: email);
+        data: (client) {
+          _bindFields(profile, client);
+          final displayName =
+              profileDisplayName(profile: profile, email: email);
 
-            final layout = DiscoveryResponsive.of(context);
-            return DiscoveryFormScrollView(
-              padding: EdgeInsets.fromLTRB(
-                layout.horizontalPadding,
-                8,
-                layout.horizontalPadding,
-                20,
-              ),
-              children: [
+          final layout = DiscoveryResponsive.of(context);
+          return DiscoveryFormScrollView(
+            padding: EdgeInsets.fromLTRB(
+              useWeb ? 20 : layout.horizontalPadding,
+              useWeb ? 16 : 8,
+              useWeb ? 20 : layout.horizontalPadding,
+              20,
+            ),
+            children: [
+              if (!useWeb)
                 Row(
                   children: [
                     IconButton(
@@ -301,6 +305,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                     ),
                   ],
                 ),
+              if (!useWeb)
                 Text(
                   DiscProfile.editAccountSubtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -308,54 +313,72 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 20),
-                EditClientAccountAvatarSection(
-                  displayName: displayName,
-                  email: email,
-                  profile: profile,
-                  avatarBytes: _avatarPreviewBytes,
-                  loading: _savingPhoto,
-                  onChangePhoto: _savingPhoto ? null : _pickAndUploadPhoto,
-                ),
-                const SizedBox(height: 12),
-                DiscoverySurfaceCard(
-                  padding: const EdgeInsets.all(12),
-                  child: EditClientAccountForm(
-                    prenomController: _prenom,
-                    nomController: _nom,
-                    phoneController: _phone,
-                    phoneDialCode: _phoneDialCode,
-                    phoneError: _phoneError,
-                    onPhoneDialCodeChanged: (code) {
-                      setState(() {
-                        _phoneDialCode = code;
-                        _phoneError = null;
-                      });
-                    },
-                    onPhoneChanged: () {
-                      if (_phoneError != null) {
-                        setState(() => _phoneError = null);
-                      }
-                    },
-                    cityController: _city,
-                    email: email,
-                    prenomError: _prenomError,
-                    nomError: _nomError,
-                    errorText: _error,
+              if (!useWeb) const SizedBox(height: 20),
+              if (useWeb)
+                Text(
+                  DiscProfile.editAccountSubtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 16),
-                AppButton(
-                  onPressed: _saving ? null : _save,
-                  isLoading: _saving,
-                  child: Text(DiscProfile.editAccountSave),
+              if (useWeb) const SizedBox(height: 16),
+              EditClientAccountAvatarSection(
+                displayName: displayName,
+                email: email,
+                profile: profile,
+                avatarBytes: _avatarPreviewBytes,
+                loading: _savingPhoto,
+                onChangePhoto: _savingPhoto ? null : _pickAndUploadPhoto,
+              ),
+              const SizedBox(height: 12),
+              DiscoverySurfaceCard(
+                padding: const EdgeInsets.all(12),
+                includeHorizontalMargin: !useWeb,
+                child: EditClientAccountForm(
+                  prenomController: _prenom,
+                  nomController: _nom,
+                  phoneController: _phone,
+                  phoneDialCode: _phoneDialCode,
+                  phoneError: _phoneError,
+                  onPhoneDialCodeChanged: (code) {
+                    setState(() {
+                      _phoneDialCode = code;
+                      _phoneError = null;
+                    });
+                  },
+                  onPhoneChanged: () {
+                    if (_phoneError != null) {
+                      setState(() => _phoneError = null);
+                    }
+                  },
+                  cityController: _city,
+                  email: email,
+                  prenomError: _prenomError,
+                  nomError: _nomError,
+                  errorText: _error,
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+              const SizedBox(height: 16),
+              AppButton(
+                onPressed: _saving ? null : _save,
+                isLoading: _saving,
+                child: Text(DiscProfile.editAccountSave),
+              ),
+            ],
+          );
+        },
       ),
     );
+
+    if (useWeb) {
+      return WebFlowScaffold(
+        appBar: AppBar(title: const Text(DiscProfile.editAccountTitle)),
+        body: WebFlowPanel(child: body),
+      );
+    }
+
+    return DiscoveryBrandScaffold(body: body);
   }
 }
 

@@ -32,17 +32,12 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final responsive = DiscoveryResponsive.of(context);
-    final hPad = responsive.horizontalPadding;
+    final hPad = responsive.useWebSiteLayout ? 16.0 : responsive.horizontalPadding;
+    final gridGap = responsive.catalogGridGap;
     final origin = ref.watch(discoveryOriginProvider);
     final expandedId = ref.watch(listingExpandedCardIdProvider);
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: responsive.contentMaxWidth),
-          child: CustomScrollView(
+    final scrollView = CustomScrollView(
             controller: controller,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -67,6 +62,37 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                         distanceKm: km.isFinite ? km : null,
                       );
                     },
+                  ),
+                )
+              else if (responsive.catalogGridColumns > 2)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 16),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: responsive.catalogGridColumns,
+                      mainAxisSpacing: gridGap,
+                      crossAxisSpacing: gridGap,
+                      childAspectRatio: responsive.catalogGridCellWidth() /
+                          responsive.catalogGridTileHeight(),
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final entry = entries[index];
+                        final cellW = responsive.catalogGridCellWidth();
+                        final cardH = responsive.catalogGridTileHeight();
+                        final photoH = responsive.catalogGridPhotoHeight();
+                        return PrestataireHomeListCard(
+                          key: ValueKey('catalog-grid-${entry.profile.id}'),
+                          entry: entry,
+                          distanceOrigin: origin,
+                          cardWidth: cellW,
+                          cardHeight: cardH,
+                          photoHeight: photoH,
+                          dense: true,
+                        );
+                      },
+                      childCount: entries.length,
+                    ),
                   ),
                 )
               else
@@ -95,9 +121,11 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                   sliver: SliverToBoxAdapter(child: footer!),
                 ),
             ],
-          ),
-        ),
-      ),
+          );
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: scrollView,
     );
   }
 
@@ -185,7 +213,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                       .toggle(left.profile.id),
                 ),
               ),
-              const SizedBox(width: DiscoveryResponsive.catalogGridSpacing),
+              SizedBox(width: responsive.catalogGridGap),
               Expanded(
                 child: right == null
                     ? const SizedBox.shrink()

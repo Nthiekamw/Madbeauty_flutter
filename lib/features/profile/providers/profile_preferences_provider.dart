@@ -1,5 +1,9 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../firebase_runtime_helpers.dart';
+import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../services/storage/local_cache_service.dart';
 
@@ -41,6 +45,8 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
 
   /// Aligne le toggle avec l’autorisation système (ex. après création de compte).
   Future<void> refreshFromSystem() async {
+    if (!isFirebaseConfiguredForPush()) return;
+
     final permissions = ref.read(appPermissionsServiceProvider);
     final osGranted = await permissions.areNotificationsGranted();
     var enabled = LocalCacheService.instance.profilePushNotificationsEnabled;
@@ -58,6 +64,18 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
   }
 
   Future<bool> setPushNotifications(bool enabled) async {
+    if (!isFirebaseConfiguredForPush()) {
+      await LocalCacheService.instance.setProfilePushNotificationsEnabled(
+        enabled,
+      );
+      state = state.copyWith(pushNotificationsEnabled: enabled);
+      if (enabled) {
+        ref.invalidate(inAppNotificationsSyncProvider);
+        unawaited(ref.read(inAppNotificationsSyncProvider.future));
+      }
+      return true;
+    }
+
     final permissions = ref.read(appPermissionsServiceProvider);
 
     if (enabled) {

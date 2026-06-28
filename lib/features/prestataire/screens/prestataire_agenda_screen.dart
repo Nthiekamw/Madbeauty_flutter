@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
@@ -123,9 +124,13 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
     return PrestataireBrandScaffold(
       body: agendaAsync.when(
         loading: () => const PrestataireWorkspaceShell(
+          title: ShellStrings.navPrestataireAgenda,
+          subtitle: DiscPrestaWorkspace.agendaSubtitle,
           child: DiscoveryListSkeleton(rowCount: 5, rowHeight: 96),
         ),
         error: (_, __) => PrestataireWorkspaceShell(
+          title: ShellStrings.navPrestataireAgenda,
+          subtitle: DiscPrestaWorkspace.agendaSubtitle,
           onRefresh: _reload,
           child: Center(
             child: DiscoveryEmptyState(
@@ -139,6 +144,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
           ),
         ),
         data: (reservations) {
+          final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+          final hPad = useWeb ? 16.0 : 20.0;
           final filtered =
               filterPrestataireAgendaReservations(reservations, _tab);
           final grouped = groupReservationsByDay(filtered);
@@ -150,6 +157,8 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
             );
 
           return PrestataireWorkspaceShell(
+            title: ShellStrings.navPrestataireAgenda,
+            subtitle: DiscPrestaWorkspace.agendaSubtitle,
             onRefresh: _reload,
             headerSubtitle: DiscPrestaWorkspace.agendaSubtitle,
             child: RefreshIndicator(
@@ -162,19 +171,21 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                      child: DiscoverySectionHeader(
-                        title: DiscNav.prestAgenda,
-                        subtitle: DiscPrestaWorkspace.agendaSubtitle,
-                        icon: Icons.calendar_month_rounded,
-                        compact: true,
-                        showSubtitleWhenCompact: true,
-                      ),
+                      padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 12),
+                      child: useWeb
+                          ? const SizedBox.shrink()
+                          : DiscoverySectionHeader(
+                              title: DiscNav.prestAgenda,
+                              subtitle: DiscPrestaWorkspace.agendaSubtitle,
+                              icon: Icons.calendar_month_rounded,
+                              compact: true,
+                              showSubtitleWhenCompact: true,
+                            ),
                     ),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
                       child: PrestataireSegmentedTabs<PrestataireAgendaTab>(
                         tabs: PrestataireAgendaTab.values,
                         selected: _tab,
@@ -187,7 +198,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: EdgeInsets.symmetric(horizontal: hPad),
                         child: PrestataireAgendaWeekCalendar(
                           focusedDay: _focusedDay,
                           selectedDay: _selectedDay,
@@ -223,7 +234,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate(
                           _buildAgendaList(

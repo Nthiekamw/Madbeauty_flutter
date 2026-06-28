@@ -3,6 +3,7 @@
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_surface_card.dart';
 import '../../../logic/prestataire_clients_grouping.dart';
 import '../../shared/prestataire_client_identity_row.dart';
 
@@ -21,24 +22,29 @@ class PrestataireClientRowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final isDark = theme.brightness == Brightness.dark;
+    final radius = DiscoveryCardChrome.radius(context);
+    final cardShadow = DiscoveryCardChrome.elevationShadow(context);
 
-    return Material(
-      color: AppColors.cardSurfaceFor(theme.brightness),
-      elevation: 0,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(
-                alpha: isDark ? 0.28 : 0.1,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: cardShadow,
+      ),
+      child: Material(
+        color: AppColors.cardSurfaceFor(theme.brightness),
+        elevation: 0,
+        borderRadius: BorderRadius.circular(radius),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: DiscoveryCardChrome.borderSide(theme).color,
               ),
             ),
-          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
             child: Row(
@@ -118,6 +124,7 @@ class PrestataireClientRowCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -14,8 +14,10 @@ import '../../../services/offline/offline_actions.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
+import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
@@ -248,6 +250,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final theme = Theme.of(context);
 
     if (ref.watch(isGuestBrowsingProvider)) {
+      if (DiscoveryResponsive.of(context).useWebSiteLayout) {
+        return ClientWorkspaceShell(
+          title: ShellStrings.navClientProfile,
+          subtitle: DiscProfile.webPageSubtitle,
+          child: GuestAccountPrompt(
+            icon: Icons.person_outline,
+            title: AuthStrings.guestProfileTitle,
+            message: AuthStrings.guestProfileBody,
+          ),
+        );
+      }
       return DiscoveryBrandScaffold(
         body: Column(
           children: [
@@ -289,119 +302,134 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           orElse: () => false,
         );
 
-    return DiscoveryBrandScaffold(
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          DiscoveryConstrainedBody(
-            child: Padding(
-              padding: ProfilePageInsets.page(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (loadingProfile)
-                    DiscoveryShimmer.wrap(
-                      context: context,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: DiscoveryShimmer.colors(
-                                Theme.of(context),
-                              ).track,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  height: 18,
-                                  width: 140,
-                                  decoration: BoxDecoration(
-                                    color: DiscoveryShimmer.colors(
-                                      Theme.of(context),
-                                    ).track,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 14,
-                                  width: 200,
-                                  decoration: BoxDecoration(
-                                    color: DiscoveryShimmer.colors(
-                                      Theme.of(context),
-                                    ).track,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ProfileAccountHeader(
-                      profile: profile,
-                      displayName: displayName,
-                      email: email,
-                      avatarBytes: _avatarPreviewBytes,
-                      photoLoading: _savingPhoto,
-                      showAmbassadorBadge: isAmbassador,
-                      showAdminBadge: isAdmin,
-                      onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
-                      onEditName: _savingName ? null : () => _editName(profile),
-                    ),
-                  if (_savingName) ...[
-                    const SizedBox(height: 8),
-                    const LinearProgressIndicator(minHeight: 2),
-                  ],
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfileRoleSpaceSection(),
-                  if (!loadingProfile) ...[
-                    const SizedBox(height: ProfilePageInsets.sectionGap),
-                    ProfileMyInfoSection(email: email, phone: phone),
-                  ],
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfileFavoritesSection(),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfileAppearanceSection(),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfilePreferencesSection(),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  const ProfileAdminSection(),
-                  const ProfileAccountSection(),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  ProfileFooterActions(
-                    onSupportUser: () => openUserSupportChat(context, ref),
-                    onSignOut: _signOut,
-                    onDeleteAccount: _confirmDeleteAccount,
+    final useWebLayout = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final pagePadding = useWebLayout
+        ? const EdgeInsets.fromLTRB(20, 20, 20, 0)
+        : ProfilePageInsets.page(context);
+
+    final profileSections = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (loadingProfile)
+          DiscoveryShimmer.wrap(
+            context: context,
+            child: Row(
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: DiscoveryShimmer.colors(
+                      Theme.of(context),
+                    ).track,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: ProfilePageInsets.sectionGap),
-                  versionAsync.when(
-                    data: (version) => Text(
-                      '${ShellStrings.profileVersionLabel} $version',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 18,
+                        width: 140,
+                        decoration: BoxDecoration(
+                          color: DiscoveryShimmer.colors(
+                            Theme.of(context),
+                          ).track,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                    ),
-                    loading: () => const SizedBox(height: 8),
-                    error: (_, __) => const SizedBox(height: 8),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 14,
+                        width: 200,
+                        decoration: BoxDecoration(
+                          color: DiscoveryShimmer.colors(
+                            Theme.of(context),
+                          ).track,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          )
+        else
+          ProfileAccountHeader(
+            profile: profile,
+            displayName: displayName,
+            email: email,
+            avatarBytes: _avatarPreviewBytes,
+            photoLoading: _savingPhoto,
+            showAmbassadorBadge: isAmbassador,
+            showAdminBadge: isAdmin,
+            onEditPhoto: _savingPhoto ? null : _pickAndUploadPhoto,
+            onEditName: _savingName ? null : () => _editName(profile),
+          ),
+        if (_savingName) ...[
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(minHeight: 2),
+        ],
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfileRoleSpaceSection(),
+        if (!loadingProfile) ...[
+          const SizedBox(height: ProfilePageInsets.sectionGap),
+          ProfileMyInfoSection(email: email, phone: phone),
+        ],
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfileFavoritesSection(),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfileAppearanceSection(),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfilePreferencesSection(),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfileAdminSection(),
+        const ProfileAccountSection(),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        ProfileFooterActions(
+          onSupportUser: () => openUserSupportChat(context, ref),
+          onSignOut: _signOut,
+          onDeleteAccount: _confirmDeleteAccount,
+        ),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        versionAsync.when(
+          data: (version) => Text(
+            '${ShellStrings.profileVersionLabel} $version',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-        ],
-      ),
+          loading: () => const SizedBox(height: 8),
+          error: (_, __) => const SizedBox(height: 8),
+        ),
+      ],
     );
+
+    final profileBody = ListView(
+      padding: const EdgeInsets.only(bottom: 32),
+      children: [
+        Padding(
+          padding: pagePadding,
+          child: useWebLayout
+              ? profileSections
+              : DiscoveryConstrainedBody(child: profileSections),
+        ),
+      ],
+    );
+
+    if (useWebLayout) {
+      return ClientWorkspaceShell(
+        title: ShellStrings.navClientProfile,
+        subtitle: DiscProfile.webPageSubtitle,
+        child: profileBody,
+      );
+    }
+
+    return DiscoveryBrandScaffold(body: profileBody);
   }
 }
 

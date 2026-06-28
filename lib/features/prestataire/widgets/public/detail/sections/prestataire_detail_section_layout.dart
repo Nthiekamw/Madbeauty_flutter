@@ -96,11 +96,13 @@ class PrestataireDetailSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pad = DiscoveryResponsive.of(context).horizontalPadding;
+    final pad = DiscoveryResponsive.of(context).pageHorizontalPadding(flow: true);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(pad, 18, pad, 0),
+      padding: EdgeInsets.fromLTRB(pad, useWeb ? 14 : 18, pad, 0),
       child: PrestataireDetailSurface.cardMaterial(
+        context: context,
         theme: theme,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

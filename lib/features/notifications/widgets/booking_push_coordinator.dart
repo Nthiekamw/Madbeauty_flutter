@@ -88,10 +88,12 @@ class _BookingPushCoordinatorState
         }
 
         final profileSvc = ref.read(profileServiceProvider);
-        await BookingPushNotifications.instance.syncForUser(
-          userId: uid,
-          profileService: profileSvc,
-        );
+        if (BookingPushNotifications.instance.isConfigured) {
+          await BookingPushNotifications.instance.syncForUser(
+            userId: uid,
+            profileService: profileSvc,
+          );
+        }
         if (uid != null) {
           ref.invalidate(inAppNotificationsSyncProvider);
           unawaited(ref.read(inAppNotificationsSyncProvider.future));

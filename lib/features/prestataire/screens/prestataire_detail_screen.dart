@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../../messaging/messaging_navigation.dart';
@@ -26,6 +25,7 @@ import '../widgets/public/prestataire_public_horaires_section.dart';
 import '../../reviews/models/client_review_list_item.dart';
 import '../../reviews/widgets/edit_review_sheet.dart';
 import '../widgets/public/prestataire_public_reviews_live_section.dart';
+import '../../../shared/layout/web_flow_page_frame.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireDetailScreen extends ConsumerStatefulWidget {
@@ -119,7 +119,8 @@ class _PrestataireDetailScreenState
               ) ??
               false;
 
-          return Column(
+          return WebFlowPageFrame(
+            child: Column(
             children: [
               Expanded(
                 child: RefreshIndicator(
@@ -156,42 +157,26 @@ class _PrestataireDetailScreenState
                                 ),
                       ),
                       SliverToBoxAdapter(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: DiscoveryResponsive.of(context)
-                                  .contentMaxWidth,
-                            ),
-                            child: PrestataireDetailIdentityCard(
-                              profile: data.profile,
-                              servicesCount: data.services.length,
-                              isOwnProfile: isOwnProfile,
-                              onBook: () => context.pushBooking(
-                                prestataireId: data.profile.id,
-                              ),
-                              onMessage: canMessage
-                                  ? () => openChatWithPrestataire(
-                                        context,
-                                        ref,
-                                        data.profile.id,
-                                      )
-                                  : null,
-                            ),
+                        child: PrestataireDetailIdentityCard(
+                          profile: data.profile,
+                          servicesCount: data.services.length,
+                          isOwnProfile: isOwnProfile,
+                          onBook: () => context.pushBooking(
+                            prestataireId: data.profile.id,
                           ),
+                          onMessage: canMessage
+                              ? () => openChatWithPrestataire(
+                                    context,
+                                    ref,
+                                    data.profile.id,
+                                  )
+                              : null,
                         ),
                       ),
                       if (!isOwnProfile)
                         SliverToBoxAdapter(
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: DiscoveryResponsive.of(context)
-                                    .contentMaxWidth,
-                              ),
-                              child: PrestataireClientEngagementRow(
-                                prestataireId: data.profile.id,
-                              ),
-                            ),
+                          child: PrestataireClientEngagementRow(
+                            prestataireId: data.profile.id,
                           ),
                         ),
                       SliverPersistentHeader(
@@ -202,21 +187,13 @@ class _PrestataireDetailScreenState
                         ),
                       ),
                       SliverToBoxAdapter(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: DiscoveryResponsive.of(context)
-                                  .contentMaxWidth,
-                            ),
-                            child: _DetailContent(
-                              data: data,
-                              isOwnProfile: isOwnProfile,
-                              servicesKey: _servicesKey,
-                              galleryKey: _galleryKey,
-                              aboutKey: _aboutKey,
-                              reviewsKey: _reviewsKey,
-                            ),
-                          ),
+                        child: _DetailContent(
+                          data: data,
+                          isOwnProfile: isOwnProfile,
+                          servicesKey: _servicesKey,
+                          galleryKey: _galleryKey,
+                          aboutKey: _aboutKey,
+                          reviewsKey: _reviewsKey,
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -232,6 +209,7 @@ class _PrestataireDetailScreenState
                   ),
                 ),
             ],
+          ),
           );
         },
         error: (_, __) => PrestataireBrandScaffold(

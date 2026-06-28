@@ -60,7 +60,7 @@ class _PrestataireDetailIdentityCardState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final pad = DiscoveryResponsive.of(context).horizontalPadding;
+    final pad = DiscoveryResponsive.of(context).pageHorizontalPadding(flow: true);
 
     final liveNote = switch (ref.watch(
       prestataireNoteMoyenneProvider(widget.profile.id),
@@ -82,6 +82,7 @@ class _PrestataireDetailIdentityCardState
       child: Transform.translate(
         offset: const Offset(0, -6),
         child: PrestataireDetailSurface.cardMaterial(
+          context: context,
           theme: theme,
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
           child: Column(

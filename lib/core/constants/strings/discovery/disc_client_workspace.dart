@@ -12,6 +12,8 @@ abstract final class DiscClientWorkspace {
 
   static const searchSubtitle =
       'Parcourez les prestataires près de chez vous';
+  static const homeWebSubtitle =
+      'Découvrez les pros près de chez vous et réservez en quelques clics';
   static const searchHint =
       'Rechercher un service, un salon, une ville…';
   static const filterTooltip = 'Filtres et tri';

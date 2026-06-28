@@ -79,6 +79,8 @@ class _PrestataireDashboardScreenState
             );
 
             return PrestataireWorkspaceShell(
+              title: ShellStrings.navPrestataireDashboard,
+              subtitle: DiscPrestaWorkspace.dashboardWebSubtitle,
               onRefresh: _refresh,
               child: RefreshIndicator(
                 onRefresh: _refresh,
@@ -135,6 +137,8 @@ class _PrestataireDashboardScreenState
             onRetry: () => ref.invalidate(prestataireProfileFormProvider),
           ),
           loading: () => const PrestataireWorkspaceShell(
+            title: ShellStrings.navPrestataireDashboard,
+            subtitle: DiscPrestaWorkspace.dashboardWebSubtitle,
             child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 110),
           ),
         ),

@@ -5,6 +5,7 @@ import '../../../core/config/prestataire_subscription_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../services/stripe/stripe_subscription_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../shared/widgets/discovery/discovery_screen_header.dart';
@@ -16,7 +17,8 @@ import '../widgets/profile/subscription/prestataire_subscription_checkout_sectio
 import '../widgets/profile/subscription/prestataire_subscription_testimonials_section.dart';
 import '../widgets/profile/subscription/prestataire_subscription_tier_cards.dart';
 import '../widgets/subscription/prestataire_subscription_billing_cards_section.dart';
-import '../widgets/workspace/prestataire_brand_scaffold.dart';
+import '../widgets/workspace/layout/prestataire_brand_scaffold.dart';
+import '../widgets/workspace/prestataire_flow_scaffold.dart';
 
 /// Grille d’abonnement + paiement Stripe Checkout.
 class PrestataireSubscriptionScreen extends ConsumerStatefulWidget {
@@ -74,10 +76,14 @@ class _PrestataireSubscriptionScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final sectionPad = useWeb
+        ? const EdgeInsets.symmetric(horizontal: 20)
+        : const EdgeInsets.symmetric(horizontal: 20);
     final serviceCountAsync = ref.watch(prestatairePublishedServiceCountProvider);
     final statusAsync = ref.watch(prestataireSubscriptionStatusProvider);
 
-    return PrestataireBrandScaffold(
+    return PrestataireFlowScaffold(
       appBar: prestataireBrandAppBar(
         context: context,
         title: const Text(DiscPrestaSub.screenTitle),
@@ -99,7 +105,10 @@ class _PrestataireSubscriptionScreenState
         onRefresh: _refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 32),
+          padding: EdgeInsets.only(
+            top: useWeb ? 16 : 0,
+            bottom: 32,
+          ),
           children: [
             if (_refreshing)
               LinearProgressIndicator(
@@ -107,14 +116,27 @@ class _PrestataireSubscriptionScreenState
                 color: primary,
                 backgroundColor: primary.withValues(alpha: 0.12),
               ),
-            const DiscoveryScreenHeader(
-              title: DiscPrestaSub.heroTitle,
-              subtitle: DiscPrestaSub.heroBody,
-            ),
+            if (!useWeb)
+              const DiscoveryScreenHeader(
+                title: DiscPrestaSub.heroTitle,
+                subtitle: DiscPrestaSub.heroBody,
+              )
+            else
+              Padding(
+                padding: sectionPad,
+                child: Text(
+                  DiscPrestaSub.heroBody,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            if (useWeb) const SizedBox(height: 12),
             statusAsync.when(
               loading: () => const DiscoveryDetailSkeleton(),
               error: (_, __) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: sectionPad,
                 child: DiscoverySectionError(
                   message: DiscPrestaDash.loadErr,
                   onRetry: () {
@@ -125,7 +147,7 @@ class _PrestataireSubscriptionScreenState
               data: (status) {
                 if (status.isActive) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: sectionPad,
                     child: PrestataireSubscriptionActivePanel(
                       status: status,
                       tierLabel: _tierLabel(
@@ -140,11 +162,12 @@ class _PrestataireSubscriptionScreenState
 
                 if (status.needsAttention) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: sectionPad,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         DiscoverySurfaceCard(
+                          includeHorizontalMargin: false,
                           padding: const EdgeInsets.all(18),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,6 +204,7 @@ class _PrestataireSubscriptionScreenState
                         ),
                         const SizedBox(height: 14),
                         const DiscoverySurfaceCard(
+                          includeHorizontalMargin: false,
                           padding: EdgeInsets.all(18),
                           child: PrestataireSubscriptionBillingCardsSection(),
                         ),
@@ -206,7 +230,7 @@ class _PrestataireSubscriptionScreenState
                 return serviceCountAsync.when(
                   loading: () => const DiscoveryDetailSkeleton(),
                   error: (_, __) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: sectionPad,
                     child: DiscoverySectionError(
                       message: DiscPrestaDash.loadErr,
                       onRetry: () {
@@ -220,11 +244,12 @@ class _PrestataireSubscriptionScreenState
                       serviceCount,
                     );
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: sectionPad,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           DiscoverySurfaceCard(
+                            includeHorizontalMargin: false,
                             padding: const EdgeInsets.all(18),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

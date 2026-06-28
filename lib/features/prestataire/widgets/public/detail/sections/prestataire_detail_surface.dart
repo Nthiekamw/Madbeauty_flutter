@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/theme/discovery_styles.dart';
 
@@ -7,11 +8,16 @@ import '../../../../../../shared/theme/discovery_styles.dart';
 abstract final class PrestataireDetailSurface {
   PrestataireDetailSurface._();
 
-  static BoxDecoration cardDecoration(ThemeData theme) {
+  static BoxDecoration cardDecoration(BuildContext context, ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
+    final layout = DiscoveryResponsive.of(context);
+    final radius = layout.useWebSiteLayout
+        ? layout.webShellCardRadius
+        : DiscoveryStyles.cardBorderRadius.topLeft.x;
+
     return BoxDecoration(
       color: AppColors.cardSurfaceFor(theme.brightness),
-      borderRadius: DiscoveryStyles.cardBorderRadius,
+      borderRadius: BorderRadius.circular(radius),
       border: Border.all(
         color: theme.colorScheme.outline.withValues(
           alpha: isDark ? 0.28 : 0.08,
@@ -21,22 +27,30 @@ abstract final class PrestataireDetailSurface {
           ? null
           : [
               BoxShadow(
-                color: AppColors.brandBrown.withValues(alpha: 0.08),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                color: AppColors.brandBrown.withValues(
+                  alpha: layout.useWebSiteLayout ? 0.07 : 0.08,
+                ),
+                blurRadius: layout.useWebSiteLayout ? 18 : 10,
+                offset: Offset(0, layout.useWebSiteLayout ? 6 : 3),
               ),
             ],
     );
   }
 
   static Material cardMaterial({
+    required BuildContext context,
     required ThemeData theme,
     required Widget child,
     VoidCallback? onTap,
     EdgeInsetsGeometry padding = const EdgeInsets.all(16),
   }) {
-    final radius = DiscoveryStyles.cardBorderRadius;
-    final decoration = cardDecoration(theme);
+    final layout = DiscoveryResponsive.of(context);
+    final radius = BorderRadius.circular(
+      layout.useWebSiteLayout
+          ? layout.webShellCardRadius
+          : DiscoveryStyles.cardBorderRadius.topLeft.x,
+    );
+    final decoration = cardDecoration(context, theme);
 
     Widget content = Ink(
       decoration: decoration,

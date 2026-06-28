@@ -43,6 +43,7 @@ class PrestataireRealisationCarousel extends StatefulWidget {
     this.autoAdvanceInterval = const Duration(seconds: 3),
     this.playVideos = false,
     this.onItemTap,
+    this.coverAlignment = Alignment.center,
   });
 
   final List<RealisationCarouselItem> items;
@@ -55,6 +56,7 @@ class PrestataireRealisationCarousel extends StatefulWidget {
   final Duration autoAdvanceInterval;
   final bool playVideos;
   final void Function(int index)? onItemTap;
+  final Alignment coverAlignment;
 
   @override
   State<PrestataireRealisationCarousel> createState() =>
@@ -173,6 +175,7 @@ class _PrestataireRealisationCarouselState
         borderRadius: widget.borderRadius,
         displayName: widget.fallbackDisplayName,
         avatarUrl: widget.fallbackAvatarUrl,
+        coverAlignment: widget.coverAlignment,
       );
     }
 
@@ -182,6 +185,7 @@ class _PrestataireRealisationCarouselState
         size: size,
         borderRadius: widget.borderRadius,
         playVideos: widget.playVideos,
+        coverAlignment: widget.coverAlignment,
         onTap: widget.onItemTap != null ? () => widget.onItemTap!(0) : null,
       );
     }
@@ -204,6 +208,7 @@ class _PrestataireRealisationCarouselState
                   size: size,
                   borderRadius: BorderRadius.zero,
                   playVideos: widget.playVideos && index == _pageIndex,
+                  coverAlignment: widget.coverAlignment,
                   onTap: widget.onItemTap != null
                       ? () => widget.onItemTap!(index)
                       : null,
@@ -252,6 +257,7 @@ class _MediaFrame extends StatelessWidget {
     required this.size,
     required this.borderRadius,
     required this.playVideos,
+    this.coverAlignment = Alignment.center,
     this.onTap,
   });
 
@@ -259,6 +265,7 @@ class _MediaFrame extends StatelessWidget {
   final Size size;
   final BorderRadius borderRadius;
   final bool playVideos;
+  final Alignment coverAlignment;
   final VoidCallback? onTap;
 
   @override
@@ -267,6 +274,7 @@ class _MediaFrame extends StatelessWidget {
       mediaType: item.mediaType,
       imageUrl: item.url,
       fit: BoxFit.cover,
+      alignment: coverAlignment,
       playVideoPreview: playVideos && item.isVideo,
       showPlayBadge: item.isVideo && !playVideos,
       playIconSize: size.height < 120 ? 24 : 36,
@@ -275,7 +283,7 @@ class _MediaFrame extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
       child: SizedBox(
-        width: size.width > 0 ? size.width : null,
+        width: size.width > 0 ? size.width : double.infinity,
         height: size.height,
         child: onTap == null
             ? media
@@ -294,12 +302,14 @@ class _FallbackMedia extends StatelessWidget {
     required this.borderRadius,
     this.displayName,
     this.avatarUrl,
+    this.coverAlignment = Alignment.center,
   });
 
   final Size size;
   final BorderRadius borderRadius;
   final String? displayName;
   final String? avatarUrl;
+  final Alignment coverAlignment;
 
   @override
   Widget build(BuildContext context) {
@@ -312,13 +322,17 @@ class _FallbackMedia extends StatelessWidget {
         size: size,
         borderRadius: borderRadius,
         playVideos: false,
+        coverAlignment: coverAlignment,
       );
     }
+
+    final shortest = size.shortestSide > 0 ? size.shortestSide : 120.0;
+    final avatarRadius = (shortest * 0.26).clamp(28.0, 56.0);
 
     return ClipRRect(
       borderRadius: borderRadius,
       child: SizedBox(
-        width: size.width > 0 ? size.width : null,
+        width: size.width > 0 ? size.width : double.infinity,
         height: size.height,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -334,7 +348,7 @@ class _FallbackMedia extends StatelessWidget {
           child: Center(
             child: AppAvatar(
               displayName: displayName,
-              radius: 32,
+              radius: avatarRadius,
             ),
           ),
         ),

@@ -50,7 +50,10 @@ class OnboardingPageContent extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
     final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
-    final maxWidth = DiscoveryResponsive.of(context).contentMaxWidth;
+    final layout = DiscoveryResponsive.of(context);
+    final maxWidth = layout.useWebAuthFormLayout
+        ? layout.authFormMaxWidthFor(layout.width)
+        : layout.contentMaxWidth.clamp(280.0, 560.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {

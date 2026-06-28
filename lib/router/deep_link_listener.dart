@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/logic/web/browser_url_cleaner.dart';
+import '../core/config/app_config.dart';
 import '../core/constants/app_strings.dart';
 import '../core/models/user_role.dart';
 import '../features/auth/providers/auth_notifier.dart';
@@ -56,9 +58,25 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      if (AppConfig.hasSupabase) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(_handleWebAuthCallbackIfNeeded());
+        });
+      }
+      return;
+    }
     _listenIncomingLinks();
     _handleInitialLink();
+  }
+
+  Future<void> _handleWebAuthCallbackIfNeeded() async {
+    final uri = Uri.base;
+    if (!AuthDeepLinkHandler.isAuthCallbackUri(uri)) return;
+    if (_shouldSkipDuplicateAuthLink(uri)) return;
+    await _handleAuthCallback(uri);
+    if (!mounted) return;
+    stripOAuthParamsFromBrowserUrl(uri);
   }
 
   Future<void> _handleInitialLink() async {

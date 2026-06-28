@@ -23,8 +23,15 @@ abstract final class BecomePrestataireFlowResume {
     return draft != null && draft.isActive && draft.step1Submitted;
   }
 
+  /// Le brouillon « devenir prestataire » est stocké par navigateur/appareil.
+  /// Si Supabase accorde déjà le rôle prestataire, la complétion doit venir du serveur.
+  static bool get _serverHasPrestataireRole =>
+      LocalCacheService.instance.cachedServerRoles.contains('prestataire');
+
   /// Reprise après redémarrage : brouillon local ou profil prestataire incomplet.
   static String? pathAfterAuthBootstrap() {
+    if (_serverHasPrestataireRole) return null;
+
     final draftPath = pathIfPending();
     if (draftPath != null) return draftPath;
 

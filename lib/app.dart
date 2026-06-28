@@ -13,6 +13,7 @@ import 'features/notifications/widgets/booking_push_coordinator.dart';
 import 'features/notifications/widgets/prestataire_booking_notification_coordinator.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/router_theme_scope.dart';
+import 'shared/widgets/layout/web_readability_scope.dart';
 
 class MadBeautyApp extends ConsumerWidget {
   const MadBeautyApp({super.key});
@@ -44,6 +45,9 @@ class MadBeautyApp extends ConsumerWidget {
                     localizationsDelegates:
                         GlobalMaterialLocalizations.delegates,
                     routerConfig: router,
+                    builder: (context, child) => WebReadabilityScope(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   );
                 },
               ),

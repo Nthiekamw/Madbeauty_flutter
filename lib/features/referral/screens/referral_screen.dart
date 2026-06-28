@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/config/pricing_config.dart';
 import '../../../core/constants/app_strings.dart';
@@ -10,11 +9,10 @@ import '../../../services/supabase/referral/referral_service.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
-import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
-import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
-import '../../../shared/widgets/discovery/discovery_feature_header.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../logic/referral_pending_apply.dart';
 import '../logic/referral_share.dart';
@@ -90,88 +88,74 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final infoAsync = ref.watch(myReferralInfoProvider);
+    final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final listPadding = useWeb
+        ? const EdgeInsets.fromLTRB(20, 16, 20, 32)
+        : const EdgeInsets.fromLTRB(20, 4, 20, 32);
 
-    return DiscoveryBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          const DiscoveryFeatureHeader(
-            title: DiscReferral.screenTitle,
-            icon: Icons.card_giftcard_rounded,
-          ),
-          Expanded(
-            child: infoAsync.when(
-              loading: () => const DiscoveryDetailSkeleton(),
-              error: (_, __) => DiscoveryEmptyState(
-                icon: Icons.cloud_off_outlined,
-                title: CoreStrings.networkErrorTitle,
-                body: DiscReferral.loadErr,
-                iconColor: theme.colorScheme.error,
-                actionLabel: DiscList.retry,
-                onAction: () => ref.invalidate(myReferralInfoProvider),
+    return ProfileFlowScaffold(
+      title: DiscReferral.screenTitle,
+      icon: Icons.card_giftcard_rounded,
+      body: infoAsync.when(
+        loading: () => const DiscoveryDetailSkeleton(),
+        error: (_, __) => DiscoveryEmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: CoreStrings.networkErrorTitle,
+          body: DiscReferral.loadErr,
+          iconColor: theme.colorScheme.error,
+          actionLabel: DiscList.retry,
+          onAction: () => ref.invalidate(myReferralInfoProvider),
+        ),
+        data: (info) {
+          if (info == null) {
+            return Center(
+              child: Text(
+                DiscReferral.loadErr,
+                style: TextStyle(color: theme.colorScheme.error),
               ),
-              data: (info) {
-                if (info == null) {
-                  return Center(
-                    child: Text(
-                      DiscReferral.loadErr,
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                  );
-                }
-                return DiscoveryConstrainedBody(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                    children: [
-                      _ReferralHeroBanner(theme: theme),
-                      const SizedBox(height: 18),
-                      _ReferralCodeCard(
-                        theme: theme,
-                        code: info.code,
-                        onCopy: () async {
-                          await copyReferralCode(info.code);
-                          if (context.mounted) {
-                            AppSnackBar.success(
-                              context,
-                              DiscReferral.copied,
-                            );
-                          }
-                        },
-                        onShare: () => shareReferralInvite(info.code),
-                      ),
-                      const SizedBox(height: 14),
-                      _ReferralRewardsCard(theme: theme, info: info),
-                      const SizedBox(height: 14),
-                      _ReferralStatsCard(
-                        theme: theme,
-                        count: info.invitationsCount,
-                      ),
-                      if (!info.hasReferrer) ...[
-                        const SizedBox(height: 22),
-                        _ReferralEnterCodeSection(
-                          theme: theme,
-                          controller: _codeController,
-                          applying: _applying,
-                          onApply: _applyManualCode,
-                        ),
-                      ] else ...[
-                        const SizedBox(height: 18),
-                        _ReferralAlreadyReferredCard(theme: theme),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+            );
+          }
+          return ListView(
+            padding: listPadding,
+            children: [
+              _ReferralHeroBanner(theme: theme),
+              const SizedBox(height: 18),
+              _ReferralCodeCard(
+                theme: theme,
+                code: info.code,
+                onCopy: () async {
+                  await copyReferralCode(info.code);
+                  if (context.mounted) {
+                    AppSnackBar.success(
+                      context,
+                      DiscReferral.copied,
+                    );
+                  }
+                },
+                onShare: () => shareReferralInvite(info.code),
+              ),
+              const SizedBox(height: 14),
+              _ReferralRewardsCard(theme: theme, info: info),
+              const SizedBox(height: 14),
+              _ReferralStatsCard(
+                theme: theme,
+                count: info.invitationsCount,
+              ),
+              if (!info.hasReferrer) ...[
+                const SizedBox(height: 22),
+                _ReferralEnterCodeSection(
+                  theme: theme,
+                  controller: _codeController,
+                  applying: _applying,
+                  onApply: _applyManualCode,
+                ),
+              ] else ...[
+                const SizedBox(height: 18),
+                _ReferralAlreadyReferredCard(theme: theme),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

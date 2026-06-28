@@ -40,6 +40,21 @@ void main() {
       );
     });
 
+    test('détecte callback OAuth HTTPS (Flutter Web)', () {
+      expect(
+        AuthDeepLinkHandler.isAuthCallbackUri(
+          Uri.parse('http://localhost:7357/?code=pkce_code_abc'),
+        ),
+        isTrue,
+      );
+      expect(
+        AppDeepLinks.isAuthCallbackUri(
+          Uri.parse('https://app.madbeauty.com/?code=pkce_code_abc'),
+        ),
+        isTrue,
+      );
+    });
+
     test('normalise token_hash dans le fragment', () {
       final params = AuthDeepLinkHandler.normalizedQueryParameters(
         Uri.parse(

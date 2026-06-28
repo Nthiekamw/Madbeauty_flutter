@@ -17,6 +17,7 @@ abstract final class ClientNavigation {
     final roles = await ref.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);
     await LocalCacheService.instance.setSelectedRole('client');
+    await LocalCacheService.instance.setSignupShellRole('client');
     if (!context.mounted) return;
     context.goHome();
   }

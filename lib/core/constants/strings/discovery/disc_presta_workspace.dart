@@ -4,6 +4,9 @@ abstract final class DiscPrestaWorkspace {
 
   static String greeting(String name) => 'Bonjour $name ! 👋';
   static const spaceLabel = 'Espace prestataire 💇';
+  static const railSpaceLabel = 'Espace prestataire';
+  static const dashboardWebSubtitle =
+      'Vue d’ensemble de ton activité et de tes demandes';
   static const refreshTooltip = 'Actualiser';
   static const refreshShort = 'Actualiser';
   static const paymentsTooltip =

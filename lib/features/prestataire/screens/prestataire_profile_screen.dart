@@ -119,6 +119,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
     return PrestataireBrandScaffold(
       body: profileAsync.when(
         loading: () => const PrestataireWorkspaceShell(
+          title: ShellStrings.navPrestataireProfile,
+          subtitle: DiscPrestaWorkspace.profileHeaderSubtitle,
           child: DiscoveryDetailSkeleton(),
         ),
         error: (_, __) => PrestataireProfileLoadError(
@@ -137,6 +139,8 @@ class PrestataireProfileScreen extends ConsumerWidget {
               : DiscPrestaProfile.pageSubtitle;
 
           return PrestataireWorkspaceShell(
+            title: ShellStrings.navPrestataireProfile,
+            subtitle: DiscPrestaWorkspace.profileHeaderSubtitle,
             onRefresh: () => _refresh(ref),
             headerSubtitle: DiscPrestaWorkspace.profileHeaderSubtitle,
             child: RefreshIndicator(

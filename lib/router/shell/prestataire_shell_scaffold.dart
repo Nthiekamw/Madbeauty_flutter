@@ -9,7 +9,10 @@ import '../../features/prestataire/providers/agenda/prestataire_agenda_provider.
 import '../../services/notifications/booking_reminders_sync.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
+import '../../core/constants/app_strings.dart';
+import '../../shared/layout/adaptive_shell_scaffold.dart';
 import '../../shared/widgets/layout/offline_shell.dart';
+import 'prestataire_shell_destinations.dart';
 import 'prestataire_shell_nav_bar.dart';
 
 class PrestataireShellScaffold extends ConsumerStatefulWidget {
@@ -38,6 +41,7 @@ class _PrestataireShellScaffoldState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(LocalCacheService.instance.setSelectedRole('prestataire'));
+      unawaited(LocalCacheService.instance.setSignupShellRole('prestataire'));
       final index = widget.navigationShell.currentIndex;
       if (index == dashboardTabIndex || index == agendaTabIndex) {
         unawaited(
@@ -79,26 +83,36 @@ class _PrestataireShellScaffoldState
       _lastSelectedIndex = selectedIndex;
     }
 
-    return Scaffold(
-      body: OfflineShell(child: navigationShell),
+    final destinations =
+        PrestataireShellDestinations.build(messagesBadge: messagesUnread);
+
+    void onTab(int index) {
+      if (index == messagesTabIndex) {
+        ref.invalidate(
+          conversationsInboxProvider(MessagingInboxRole.prestataire),
+        );
+        ref.invalidate(
+          messagingUnreadCountProvider(MessagingInboxRole.prestataire),
+        );
+      }
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      );
+    }
+
+    return AdaptiveShellScaffold(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onTab,
+      destinations: destinations,
+      pageTitle: destinations[selectedIndex].label,
+      railSpaceLabel: DiscPrestaWorkspace.railSpaceLabel,
       bottomNavigationBar: PrestataireShellNavBar(
         selectedIndex: selectedIndex,
         messagesUnread: messagesUnread,
-        onSelected: (index) {
-          if (index == messagesTabIndex) {
-            ref.invalidate(
-              conversationsInboxProvider(MessagingInboxRole.prestataire),
-            );
-            ref.invalidate(
-              messagingUnreadCountProvider(MessagingInboxRole.prestataire),
-            );
-          }
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
+        onSelected: onTab,
       ),
+      body: OfflineShell(child: navigationShell),
     );
   }
 }
