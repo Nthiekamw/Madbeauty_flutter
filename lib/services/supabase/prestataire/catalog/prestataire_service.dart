@@ -16,6 +16,17 @@ class PrestataireService {
   final SupabaseClient _client;
   final ProfileService _profileService;
 
+  Future<List<PrestataireProfile>> _excludeBannedProfiles(
+    List<PrestataireProfile> profiles,
+  ) async {
+    if (profiles.isEmpty) return const [];
+    final bannedUserIds = await _profileService.getBannedUserIds(
+      profiles.map((p) => p.userId).toList(),
+    );
+    if (bannedUserIds.isEmpty) return profiles;
+    return profiles.where((p) => !bannedUserIds.contains(p.userId)).toList();
+  }
+
   Future<List<PrestataireCatalogEntry>> getAll({
     PrestataireFilters filters = const PrestataireFilters(),
   }) => SupabaseErrorHandler.run(
@@ -38,6 +49,7 @@ class PrestataireService {
       var profiles = (profilesRes as List<dynamic>)
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .toList();
+      profiles = await _excludeBannedProfiles(profiles);
       if (profiles.isEmpty) return [];
 
       final specialtyData = await getSpecialtyDataForPrestataires(
@@ -98,19 +110,20 @@ class PrestataireService {
             for (final id in prestataireIds)
               if (profilesById.containsKey(id)) profilesById[id]!,
           ];
-          if (ordered.isEmpty) return [];
+          final visibleOrdered = await _excludeBannedProfiles(ordered);
+          if (visibleOrdered.isEmpty) return [];
 
           final specialtyData = await getSpecialtyDataForPrestataires(
-            ordered.map((p) => p.id).toList(),
+            visibleOrdered.map((p) => p.id).toList(),
           );
           final reviewCounts = await _reviewCountsForPrestataires(
-            ordered.map((p) => p.id).toList(),
+            visibleOrdered.map((p) => p.id).toList(),
           );
           final userProfiles = await _profileService.getByUserIds(
-            ordered.map((p) => p.userId).toList(),
+            visibleOrdered.map((p) => p.userId).toList(),
           );
 
-          return ordered.map((p) {
+          return visibleOrdered.map((p) {
             final userProfile = userProfiles[p.userId];
             return PrestataireCatalogEntry(
               profile: p,
@@ -138,7 +151,9 @@ class PrestataireService {
           .eq('id', id)
           .maybeSingle();
       if (response == null) return null;
-      return PrestataireProfile.fromJson(Map<String, dynamic>.from(response));
+      final profile = PrestataireProfile.fromJson(Map<String, dynamic>.from(response));
+      final visible = await _excludeBannedProfiles([profile]);
+      return visible.isEmpty ? null : visible.first;
     },
   );
 
@@ -242,9 +257,10 @@ class PrestataireService {
           .limit(fetchCap);
 
       final rows = response as List<dynamic>;
-      final all = rows
+      final allProfiles = rows
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .toList();
+      final all = await _excludeBannedProfiles(allProfiles);
 
       double distanceKm(PrestataireProfile p) {
         final la = p.latitude;
@@ -289,10 +305,11 @@ class PrestataireService {
           .order('note_moyenne', ascending: false)
           .limit(limit);
 
-      return (response as List<dynamic>)
+      final profiles = (response as List<dynamic>)
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .where((p) => p.noteMoyenne != null)
           .toList();
+      return _excludeBannedProfiles(profiles);
     },
   );
 

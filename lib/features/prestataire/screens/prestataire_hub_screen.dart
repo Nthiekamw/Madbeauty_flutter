@@ -63,6 +63,7 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen>
       focusedSection: widget.focusedSection,
       initialStep: widget.initialStep,
     );
+    _form.onPricingChangedSideEffect = _syncPlannedServiceCount;
     _form.addListener(_onFormChanged);
     if (widget.initialStep != null && widget.focusedSection == null) {
       unawaited(

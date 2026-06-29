@@ -240,6 +240,7 @@ class _PricingCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AppTextField(
+              key: ValueKey('svc-prix-${service.id ?? name}'),
               controller: service.prixController,
               label: DiscPrestaForm.svcPrice,
               errorText: service.prixError,

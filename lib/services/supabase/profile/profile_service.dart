@@ -75,6 +75,27 @@ class ProfileService {
     );
   }
 
+  Future<Set<String>> getBannedUserIds(List<String> userIds) async {
+    if (userIds.isEmpty) return const {};
+    return SupabaseErrorHandler.run(
+      operation: 'profile.getBannedUserIds',
+      action: () async {
+        final response = await _client
+            .from('user_profiles')
+            .select('user_id')
+            .eq('is_banned', true)
+            .inFilter('user_id', userIds);
+        final out = <String>{};
+        for (final raw in response as List<dynamic>) {
+          final row = Map<String, dynamic>.from(raw as Map);
+          final userId = row['user_id'] as String?;
+          if (userId != null && userId.isNotEmpty) out.add(userId);
+        }
+        return out;
+      },
+    );
+  }
+
   Future<void> update(UserProfile profile) => SupabaseErrorHandler.run(
         operation: 'profile.update',
         action: () async {

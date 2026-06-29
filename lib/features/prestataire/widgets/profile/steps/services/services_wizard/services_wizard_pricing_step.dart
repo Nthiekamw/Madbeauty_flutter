@@ -35,41 +35,61 @@ class ServicesWizardPricingStep extends StatelessWidget {
     final serviceConfigured =
         service != null && isServiceWizardConfigured(service!);
 
+    Widget buildHeader({required bool configured}) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (main != null) ...[
+            Text(
+              DiscPrestaForm.servicesWizardActivePrestation(
+                PrestataireServiceCatalog.label(main!),
+              ),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+          ],
+          if (specialtyLabel != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                DiscPrestaForm.servicesWizardActiveSpecialty(specialtyLabel!),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                  color: configured ? primary : null,
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          Text(
+            DiscPrestaForm.servicesWizardPricingHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (main != null) ...[
-          Text(
-            DiscPrestaForm.servicesWizardActivePrestation(
-              PrestataireServiceCatalog.label(main!),
+        if (service != null)
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              service!.prixController,
+              service!.dureeController,
+            ]),
+            builder: (context, _) => buildHeader(
+              configured: isServiceWizardConfigured(service!),
             ),
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 2),
-        ],
-        if (specialtyLabel != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Text(
-              DiscPrestaForm.servicesWizardActiveSpecialty(specialtyLabel!),
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w800,
-                color: serviceConfigured ? primary : null,
-              ),
-            ),
-          ),
-        const SizedBox(height: 4),
-        Text(
-          DiscPrestaForm.servicesWizardPricingHint,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.35,
-          ),
-        ),
+          )
+        else
+          buildHeader(configured: serviceConfigured),
         const SizedBox(height: 14),
         if (service != null)
           PrestataireServicePricingStep(

@@ -76,6 +76,11 @@ class RegisterWizardSubmitHandler {
 
     if (!form.validateExtrasStep()) return;
 
+    if (form.roleChoice == null) {
+      form.setError(AuthStrings.registerValidationRoleEmpty);
+      return;
+    }
+
     form.setLoading(true);
 
     if (!mounted()) return;
@@ -316,7 +321,7 @@ class RegisterWizardSubmitHandler {
       await AuthRoleCache.persistServerRoles(serverRoles);
       container.invalidate(myRolesProvider);
     } catch (e) {
-      if (!_isRoleSyncForbidden(e)) rethrow;
+      if (!_isRoleSyncBestEffortError(e)) rethrow;
     }
   }
 
@@ -329,7 +334,7 @@ class RegisterWizardSubmitHandler {
       await AuthRoleCache.persistServerRoles(serverRoles);
       container.invalidate(myRolesProvider);
     } catch (e) {
-      if (!_isRoleSyncForbidden(e)) rethrow;
+      if (!_isRoleSyncBestEffortError(e)) rethrow;
     }
   }
 
@@ -424,10 +429,21 @@ class RegisterWizardSubmitHandler {
     return failure.message == AuthStrings.authEmailNotConfirmed;
   }
 
-  bool _isRoleSyncForbidden(Object error) {
+  bool _isRoleSyncBestEffortError(Object error) {
+    if (error is PostgrestException) {
+      return RoleService.isDuplicateRoleError(error) || error.code == '42501';
+    }
     if (error is SupabaseServiceException) {
-      return error.code == '42501' ||
-          error.message == AuthStrings.roleChoiceSyncForbidden;
+      if (error.code == '42501' ||
+          error.code == '23505' ||
+          error.code == '409' ||
+          error.message == AuthStrings.roleChoiceSyncForbidden) {
+        return true;
+      }
+      final cause = error.cause;
+      if (cause is PostgrestException) {
+        return RoleService.isDuplicateRoleError(cause) || cause.code == '42501';
+      }
     }
     if (error is AppFailure) {
       return error.message == AuthStrings.roleChoiceSyncForbidden;

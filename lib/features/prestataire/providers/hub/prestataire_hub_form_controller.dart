@@ -115,6 +115,9 @@ class PrestataireHubFormController extends ChangeNotifier {
   var horairesFromDraft = false;
   String? horairesError;
 
+  /// Mise à jour légère (ex. compteur abonnement) sans rebuild global du hub.
+  VoidCallback? onPricingChangedSideEffect;
+
   bool get shouldPersistHoraires =>
       focusedSection == PrestataireProfileEditSection.horaires ||
       (focusedSection == null && horaireWeek != null);
@@ -850,6 +853,7 @@ class PrestataireHubFormController extends ChangeNotifier {
       pricingError = null;
     }
     _schedulePersistHubDraft();
+    onPricingChangedSideEffect?.call();
   }
 
   void toggleHoraireDay(int index, bool enabled) {

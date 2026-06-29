@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/discovery_promo_images.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
@@ -24,29 +25,25 @@ class _PromoSlide {
 
 const _kPromoSlides = [
   _PromoSlide(
-    url:
-        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=400&fit=crop&q=80',
+    url: DiscoveryPromoImages.hairSalonListing,
     icon: Icons.content_cut_rounded,
     tagline: 'Coiffure & couleur',
     body: 'Trouvez le salon idéal pour votre prochaine transformation.',
   ),
   _PromoSlide(
-    url:
-        'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop&q=80',
+    url: DiscoveryPromoImages.manicureListing,
     icon: Icons.back_hand_outlined,
     tagline: 'Manucure & nail art',
     body: 'Des prestas créatives pour des ongles qui vous ressemblent.',
   ),
   _PromoSlide(
-    url:
-        'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=400&fit=crop&q=80',
+    url: DiscoveryPromoImages.makeupListing,
     icon: Icons.face_retouching_natural_rounded,
     tagline: 'Maquillage & glow',
     body: 'Préparez votre look pour une occasion spéciale.',
   ),
   _PromoSlide(
-    url:
-        'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&h=400&fit=crop&q=80',
+    url: DiscoveryPromoImages.spaListing,
     icon: Icons.spa_rounded,
     tagline: 'Soins & bien-être',
     body: 'Offrez-vous un moment de détente près de chez vous.',

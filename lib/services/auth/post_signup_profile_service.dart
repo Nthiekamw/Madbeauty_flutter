@@ -25,16 +25,17 @@ class PostSignupProfileService {
     return SupabaseErrorHandler.run(
       operation: 'postSignup.updateUserIdentity',
       action: () async {
-        await _client
-            .from('user_profiles')
-            .update({
-              'nom': nom.trim().isEmpty ? null : nom.trim(),
-              'prenom': prenom.trim().isEmpty ? null : prenom.trim(),
-              if (phone != null && phone.trim().isNotEmpty)
-                'telephone': phone.trim(),
-              'updated_at': DateTime.now().toUtc().toIso8601String(),
-            })
-            .eq('user_id', userId);
+        await _client.from('user_profiles').upsert(
+          {
+            'user_id': userId,
+            'nom': nom.trim().isEmpty ? null : nom.trim(),
+            'prenom': prenom.trim().isEmpty ? null : prenom.trim(),
+            if (phone != null && phone.trim().isNotEmpty)
+              'telephone': phone.trim(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          },
+          onConflict: 'user_id',
+        );
       },
     );
   }

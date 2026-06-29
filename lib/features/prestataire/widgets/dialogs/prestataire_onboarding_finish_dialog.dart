@@ -45,27 +45,9 @@ Future<void> showPrestataireOnboardingFinishDialog({
                 ),
                 const SizedBox(height: 6),
                 ...requiredMissing.map(
-                  (label) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'â€¢ ',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.error,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.error,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  (label) => _OnboardingFinishBulletRow(
+                    label: label,
+                    color: theme.colorScheme.error,
                   ),
                 ),
               ],
@@ -79,16 +61,7 @@ Future<void> showPrestataireOnboardingFinishDialog({
                 ),
                 const SizedBox(height: 6),
                 ...optionalMissing.map(
-                  (label) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('â€¢ '),
-                        Expanded(child: Text(label)),
-                      ],
-                    ),
-                  ),
+                  (label) => _OnboardingFinishBulletRow(label: label),
                 ),
               ],
             ],
@@ -115,5 +88,44 @@ Future<void> showPrestataireOnboardingFinishDialog({
       );
     },
   );
+}
+
+class _OnboardingFinishBulletRow extends StatelessWidget {
+  const _OnboardingFinishBulletRow({
+    required this.label,
+    this.color,
+  });
+
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = color ?? theme.colorScheme.onSurface;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 7, right: 8),
+            child: Icon(
+              Icons.circle,
+              size: 6,
+              color: textColor.withValues(alpha: 0.72),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 

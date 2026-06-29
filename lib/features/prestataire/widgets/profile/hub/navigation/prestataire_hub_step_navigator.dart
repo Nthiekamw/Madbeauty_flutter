@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../layout/prestataire_hub_step_meta.dart';
 
-const _kHubStepChipWidth = 118.0;
+const _kHubStepChipWidth = 136.0;
 const _kHubStepChipGap = 8.0;
+const _kHubStepChipMinHeight = 88.0;
 
 /// Navigation horizontale entre étapes (numérotée, scroll auto).
 class PrestataireHubStepNavigator extends StatefulWidget {
@@ -123,6 +124,7 @@ class _HubStepChip extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: _kHubStepChipWidth,
+          constraints: const BoxConstraints(minHeight: _kHubStepChipMinHeight),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
@@ -164,14 +166,19 @@ class _HubStepChip extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  color: fg,
-                  height: 1.15,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    title,
+                    maxLines: 3,
+                    softWrap: true,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: fg,
+                      height: 1.2,
+                    ),
+                  ),
                 ),
               ),
             ],

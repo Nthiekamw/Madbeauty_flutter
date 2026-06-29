@@ -19,7 +19,8 @@ class GeocodingService {
       if (locations.isEmpty) return null;
       final first = locations.first;
       return GeoPoint(latitude: first.latitude, longitude: first.longitude);
-    } on Exception {
+    } on Object {
+      // Le plugin peut lever Error (ex. null check) sur web — ne pas bloquer l'inscription.
       return null;
     }
   }
@@ -42,7 +43,7 @@ class GeocodingService {
         if (value != null && value.isNotEmpty) return value;
       }
       return null;
-    } on Exception {
+    } on Object {
       return null;
     }
   }

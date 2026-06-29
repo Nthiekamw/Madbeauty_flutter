@@ -63,7 +63,6 @@ class _PrestataireServicesGuidedWizardState
 
   void _onPricingChanged() {
     widget.onPricingChanged();
-    setState(() {});
   }
 
   void _openSpecialty({String? specialtyId, String? customLabel}) {
@@ -74,31 +73,34 @@ class _PrestataireServicesGuidedWizardState
       return;
     }
 
+    widget.catalogSelection.selectedMains.add(main);
+    if (specialtyId != null) {
+      widget.catalogSelection.specialtyIdsByMain
+          .putIfAbsent(main, () => {})
+          .add(specialtyId);
+    } else if (customLabel != null) {
+      final label = customLabel.trim();
+      final list = widget.catalogSelection.customSpecialtiesByMain
+          .putIfAbsent(main, () => []);
+      if (!list.any((e) => e.toLowerCase() == label.toLowerCase())) {
+        list.add(label);
+      }
+    }
+    widget.onCatalogChanged();
+
     setState(() {
-      widget.catalogSelection.selectedMains.add(main);
       if (specialtyId != null) {
-        widget.catalogSelection.specialtyIdsByMain
-            .putIfAbsent(main, () => {})
-            .add(specialtyId);
         _activeSpecialtyId = specialtyId;
         _activeCustomSpecialty = null;
       } else if (customLabel != null) {
-        final label = customLabel.trim();
-        final list = widget.catalogSelection.customSpecialtiesByMain
-            .putIfAbsent(main, () => []);
-        if (!list.any((e) => e.toLowerCase() == label.toLowerCase())) {
-          list.add(label);
-        }
-        _activeCustomSpecialty = label;
+        _activeCustomSpecialty = customLabel.trim();
         _activeSpecialtyId = null;
         _customSpecialtyController.clear();
       }
-      _step = ServicesWizardStep.pricing;
+      _step = widget.externalPricing
+          ? ServicesWizardStep.specialty
+          : ServicesWizardStep.pricing;
     });
-    widget.onCatalogChanged();
-    if (widget.externalPricing) {
-      setState(() => _step = ServicesWizardStep.specialty);
-    }
   }
 
   void _deselectCatalogSpecialty(String specialtyId) {
@@ -179,6 +181,11 @@ class _PrestataireServicesGuidedWizardState
   List<PrestataireServiceFieldSet> _configuredServices() =>
       widget.services.where(isServiceWizardConfigured).toList(growable: false);
 
+  void _leavePricingStep(VoidCallback navigate) {
+    widget.onPricingChanged();
+    setState(navigate);
+  }
+
   void _back() {
     setState(() {
       switch (_step) {
@@ -199,34 +206,52 @@ class _PrestataireServicesGuidedWizardState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final specialtyCount = widget.catalogSelection.specialtyCount;
-    final configured = widget.services.where(isServiceWizardConfigured).length;
-    final progressTarget = specialtyCount > 0 ? specialtyCount : 1;
-
-    final configuredList = _configuredServices();
-    final allConfigured =
-        specialtyCount > 0 && configured == specialtyCount;
+    final pricingListenable =
+        prestataireServicesPricingListenable(widget.services);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const ServicesWizardAssistantHeader(),
         const SizedBox(height: PrestataireHubLayout.sectionGap),
-        ServiceWizardShineFrame(
-          shine: allConfigured,
-          borderRadius: 14,
-          child: PrestataireHubMetricBanner(
-            icon: Icons.content_cut_rounded,
-            label: DiscPrestaForm.hubServicesProgressLabel,
-            value: specialtyCount == 0 ? '0' : '$configured / $specialtyCount',
-            progress: specialtyCount == 0
-                ? 0
-                : (configured / progressTarget).clamp(0.0, 1.0),
-          ),
+        ListenableBuilder(
+          listenable: pricingListenable,
+          builder: (context, _) {
+            final configured =
+                widget.services.where(isServiceWizardConfigured).length;
+            final progressTarget = specialtyCount > 0 ? specialtyCount : 1;
+            final allConfigured =
+                specialtyCount > 0 && configured == specialtyCount;
+
+            return ServiceWizardShineFrame(
+              shine: allConfigured,
+              borderRadius: 14,
+              child: PrestataireHubMetricBanner(
+                icon: Icons.content_cut_rounded,
+                label: DiscPrestaForm.hubServicesProgressLabel,
+                value:
+                    specialtyCount == 0 ? '0' : '$configured / $specialtyCount',
+                progress: specialtyCount == 0
+                    ? 0
+                    : (configured / progressTarget).clamp(0.0, 1.0),
+              ),
+            );
+          },
         ),
-        if (configuredList.isNotEmpty) ...[
-          const SizedBox(height: PrestataireHubLayout.sectionGap),
-          ServicesWizardConfiguredStrip(services: configuredList),
-        ],
+        ListenableBuilder(
+          listenable: pricingListenable,
+          builder: (context, _) {
+            final configuredList = _configuredServices();
+            if (configuredList.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: PrestataireHubLayout.sectionGap),
+                ServicesWizardConfiguredStrip(services: configuredList),
+              ],
+            );
+          },
+        ),
         const SizedBox(height: PrestataireHubLayout.sectionGap),
         ServicesWizardStepIndicator(current: _step),
         const SizedBox(height: PrestataireHubLayout.sectionGap),
@@ -244,27 +269,34 @@ class _PrestataireServicesGuidedWizardState
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
             child: switch (_step) {
-              ServicesWizardStep.prestation => ServicesWizardPrestationStep(
+              ServicesWizardStep.prestation => ListenableBuilder(
                   key: const ValueKey('prestation'),
-                  activeMain: _activeMain,
-                  onPick: _openPrestation,
-                  isMainConfigured: _mainHasConfigured,
-                  errorText: widget.catalogError,
-                ),
-              ServicesWizardStep.specialty => ServicesWizardSpecialtyStep(
-                  key: const ValueKey('specialty'),
-                  main: _activeMain!,
-                  selection: widget.catalogSelection,
-                  customController: _customSpecialtyController,
-                  isSpecialtyConfigured: _isSpecialtyConfigured,
-                  onPickSpecialty: (id) => _openSpecialty(specialtyId: id),
-                  onDeselectSpecialty: _deselectCatalogSpecialty,
-                  onAddCustom: () => _openSpecialty(
-                    customLabel: _customSpecialtyController.text,
+                  listenable: pricingListenable,
+                  builder: (context, _) => ServicesWizardPrestationStep(
+                    activeMain: _activeMain,
+                    onPick: _openPrestation,
+                    isMainConfigured: _mainHasConfigured,
+                    errorText: widget.catalogError,
                   ),
-                  onPickCustom: (label) => _openSpecialty(customLabel: label),
-                  onDeselectCustom: _deselectCustomSpecialty,
-                  errorText: widget.catalogError,
+                ),
+              ServicesWizardStep.specialty => ListenableBuilder(
+                  key: const ValueKey('specialty'),
+                  listenable: pricingListenable,
+                  builder: (context, _) => ServicesWizardSpecialtyStep(
+                    main: _activeMain!,
+                    selection: widget.catalogSelection,
+                    customController: _customSpecialtyController,
+                    isSpecialtyConfigured: _isSpecialtyConfigured,
+                    onPickSpecialty: (id) => _openSpecialty(specialtyId: id),
+                    onDeselectSpecialty: _deselectCatalogSpecialty,
+                    onAddCustom: () => _openSpecialty(
+                      customLabel: _customSpecialtyController.text,
+                    ),
+                    onPickCustom: (label) =>
+                        _openSpecialty(customLabel: label),
+                    onDeselectCustom: _deselectCustomSpecialty,
+                    errorText: widget.catalogError,
+                  ),
                 ),
               ServicesWizardStep.pricing => ServicesWizardPricingStep(
                   key: const ValueKey('pricing'),
@@ -273,12 +305,12 @@ class _PrestataireServicesGuidedWizardState
                   service: _activeServiceField(),
                   pricingError: widget.pricingError,
                   onPricingChanged: _onPricingChanged,
-                  onAnotherSpecialty: () => setState(() {
+                  onAnotherSpecialty: () => _leavePricingStep(() {
                     _step = ServicesWizardStep.specialty;
                     _activeSpecialtyId = null;
                     _activeCustomSpecialty = null;
                   }),
-                  onAnotherPrestation: () => setState(() {
+                  onAnotherPrestation: () => _leavePricingStep(() {
                     _step = ServicesWizardStep.prestation;
                     _activeMain = null;
                     _activeSpecialtyId = null;

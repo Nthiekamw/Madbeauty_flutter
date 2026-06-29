@@ -22,6 +22,24 @@ int? parsePrestataireServiceDuration(String raw) {
   return int.tryParse(text);
 }
 
+/// Écoute prix/durée/nom pour rafraîchir l'UI sans rebuild global du wizard.
+Listenable prestataireServicesPricingListenable(
+  List<PrestataireServiceFieldSet> services,
+) {
+  if (services.isEmpty) {
+    return Listenable.merge(const []);
+  }
+  return Listenable.merge(
+    [
+      for (final service in services) ...[
+        service.nomController,
+        service.prixController,
+        service.dureeController,
+      ],
+    ],
+  );
+}
+
 /// Prestation entièrement renseignée (nom, catégorie, prix, durée).
 bool isServiceWizardConfigured(PrestataireServiceFieldSet service) {
   final prix = parsePrestataireServicePrice(service.prixController.text) ?? 0;
@@ -88,14 +106,23 @@ class _ServiceWizardShineFrameState extends State<ServiceWizardShineFrame>
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.shine) return widget.child;
-
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
 
+    // Structure stable : évite la perte de focus clavier lors du passage shine.
     return AnimatedBuilder(
       animation: _pulse,
       builder: (context, child) {
+        if (!widget.shine) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(color: Colors.transparent, width: 0),
+            ),
+            child: child,
+          );
+        }
+
         final wave = _pulse.value;
         final borderColor = Color.lerp(
           AppColors.brandGold,

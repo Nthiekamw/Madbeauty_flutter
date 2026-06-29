@@ -34,6 +34,11 @@ class KeyboardDismissArea extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
+        final focus = FocusManager.instance.primaryFocus;
+        if (focus != null) {
+          final renderObject = focus.context?.findRenderObject();
+          if (renderObject is RenderEditable) return;
+        }
         if (_hitTargetAcceptsTextInput(details.globalPosition, context)) return;
         unfocus();
       },

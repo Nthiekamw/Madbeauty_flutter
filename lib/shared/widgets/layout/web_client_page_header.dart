@@ -6,6 +6,7 @@ import '../../../core/models/domain/user/user_profile.dart';
 import '../../../features/auth/guest/guest_mode_provider.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/home/providers/home_profile_provider.dart';
+import '../../../features/home/widgets/layout/client_home_settings_sheet.dart';
 import '../../../features/notifications/widgets/in_app_notifications_sheet.dart';
 import '../../../features/profile/providers/current_user_profile_provider.dart';
 import '../../../services/notifications/in_app_notification_audience.dart';
@@ -120,6 +121,7 @@ class WebClientPageHeader extends ConsumerWidget {
                 avatarUrl: avatarUrl,
                 avatarName: avatarName,
                 unreadNotif: unreadNotif,
+                onSettings: () => showClientHomeSettingsSheet(context, ref),
                 onNotifications: () => showInAppNotificationsSheet(
                   context,
                   ref,
@@ -160,6 +162,7 @@ class _WebProfileChip extends StatelessWidget {
     required this.avatarUrl,
     required this.avatarName,
     required this.unreadNotif,
+    required this.onSettings,
     required this.onNotifications,
   });
 
@@ -167,6 +170,7 @@ class _WebProfileChip extends StatelessWidget {
   final String? avatarUrl;
   final String avatarName;
   final int unreadNotif;
+  final VoidCallback onSettings;
   final VoidCallback onNotifications;
 
   @override
@@ -200,6 +204,12 @@ class _WebProfileChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
+            _WebIconButton(
+              icon: Icons.settings_rounded,
+              tooltip: DiscHome.settingsTooltip,
+              onTap: onSettings,
+            ),
+            const SizedBox(width: 6),
             _WebIconButton(
               icon: Icons.notifications_outlined,
               tooltip: DiscClientWorkspace.notificationsTooltip,

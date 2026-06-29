@@ -117,7 +117,7 @@ class DiscoveryResponsive {
   static const double homePromoBannerAspectWidth = 1024;
   static const double homePromoBannerAspectHeight = 682;
 
-  /// Hero promo pleine largeur (BoxFit.cover, hauteur bornée).
+  /// Hero promo (texte + mosaïque, hauteur bornée).
   ({double width, double height}) homePromoBannerDimensions(
     double parentWidth, {
     required double horizontalPadding,
@@ -128,11 +128,11 @@ class DiscoveryResponsive {
         homePromoBannerAspectWidth;
 
     if (useNativeMobileExperience) {
-      height = height.clamp(150, 220);
+      height = height.clamp(210, 280);
     } else if (isDesktop) {
-      height = height.clamp(220, 340);
+      height = height.clamp(280, 400);
     } else {
-      height = height.clamp(200, 300);
+      height = height.clamp(250, 360);
     }
 
     return (width: width, height: height);

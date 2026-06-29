@@ -15,7 +15,17 @@ class UserSupportService {
         operation: 'userSupport.ensureMyThread',
         action: () async {
           final result = await _client.rpc('ensure_user_support_thread');
-          return result as String;
+          final threadId = _parseThreadId(result);
+          if (threadId == null || threadId.isEmpty) {
+            throw StateError('ensure_user_support_thread returned empty id');
+          }
+          return threadId;
         },
       );
+
+  static String? _parseThreadId(dynamic result) {
+    if (result == null) return null;
+    if (result is String) return result.trim();
+    return result.toString().trim();
+  }
 }

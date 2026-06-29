@@ -228,8 +228,8 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
     try {
       final supportService = ref.read(userSupportServiceProvider);
       if (supportService != null) {
-        _subscribedSupportThreadId = await supportService.ensureMyThread();
-        final threadId = _subscribedSupportThreadId!;
+        final threadId = await supportService.ensureMyThread();
+        _subscribedSupportThreadId = threadId;
         _userSupportChannel = SupabaseService.client
             .channel('live-user-support-${user.id}')
             .onPostgresChanges(
