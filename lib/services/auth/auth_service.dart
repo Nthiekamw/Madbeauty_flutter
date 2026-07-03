@@ -128,5 +128,21 @@ class AuthService {
         ),
       );
 
+  /// Apple natif : échange l’id_token Apple contre une session Supabase.
+  Future<AuthResponse> signInWithAppleIdToken({
+    required String idToken,
+    required String nonce,
+  }) =>
+      _runAuth(
+        () => _auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: idToken,
+          nonce: nonce,
+        ),
+      );
+
+  /// Nonce brut pour Sign in with Apple (hash SHA-256 côté client).
+  String generateRawNonce() => _auth.generateRawNonce();
+
 }
 

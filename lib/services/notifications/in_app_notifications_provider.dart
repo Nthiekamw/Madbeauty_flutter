@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'in_app_notification.dart';
 import 'in_app_notification_audience.dart';
 import 'in_app_notifications_sync.dart';
+import '../../features/auth/providers/auth_notifier.dart';
 
 const _prefsKeyPrefix = 'in_app_notifications.v1';
 const _dismissedIdsKeyPrefix = 'in_app_notifications_dismissed.v1';
@@ -50,8 +51,14 @@ final inAppNotificationsSyncProvider = FutureProvider<void>((ref) async {
   final link = ref.keepAlive();
   ref.onDispose(link.close);
 
+  final userId = ref.read(authNotifierProvider).asData?.value?.id;
+  final notifier = ref.read(inAppNotificationsProvider.notifier);
+  if (userId != null) {
+    await notifier.bindToUser(userId);
+  }
+
   final synced = await fetchActivityNotifications(ref);
-  await ref.read(inAppNotificationsProvider.notifier).mergeSynced(synced);
+  await notifier.mergeSynced(synced);
 });
 
 class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
@@ -60,6 +67,10 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   String? _activeUserId;
   final Set<String> _dismissedIds = {};
   List<InAppNotification> _lastSynced = const [];
+  Future<void> _mergeQueue = Future.value();
+
+  static final _reservationNotificationId =
+      RegExp(r'^(client|prestataire)_reservation_([0-9a-f-]{36})');
 
   @override
   List<InAppNotification> build() => const [];
@@ -173,9 +184,8 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
   Future<void> clear() async {
     await _hydrateOnce();
     await _hydrateDismissedIds();
-    _dismissedIds
-      ..addAll(state.map((e) => e.id))
-      ..addAll(_lastSynced.map((e) => e.id));
+    _rememberDismissed(state);
+    _rememberDismissed(_lastSynced);
     state = const [];
     await _persist();
     await _persistDismissedIds();
@@ -214,13 +224,10 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
     final removed = state
         .where((e) => inAppNotificationMatchesAudience(e, audience))
         .toList();
-    _dismissedIds
-      ..addAll(removed.map((e) => e.id))
-      ..addAll(
-        _lastSynced
-            .where((e) => inAppNotificationMatchesAudience(e, audience))
-            .map((e) => e.id),
-      );
+    _rememberDismissed(removed);
+    _rememberDismissed(
+      _lastSynced.where((e) => inAppNotificationMatchesAudience(e, audience)),
+    );
     state = [
       for (final n in state)
         if (!inAppNotificationMatchesAudience(n, audience)) n,
@@ -231,23 +238,31 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
 
   Future<void> dismiss(String id) async {
     await _hydrateDismissedIds();
-    _dismissedIds.add(id);
+    final fromState = state.where((e) => e.id == id);
+    if (fromState.isNotEmpty) {
+      _rememberDismissed(fromState);
+    } else {
+      _dismissedIds.add(id);
+    }
     state = state.where((e) => e.id != id).toList();
     await _persist();
     await _persistDismissedIds();
   }
 
   /// Fusionne les alertes issues de l'activité Supabase (réservations).
-  Future<void> mergeSynced(List<InAppNotification> incoming) async {
+  Future<void> mergeSynced(List<InAppNotification> incoming) {
+    _mergeQueue = _mergeQueue.then((_) => _mergeSynced(incoming));
+    return _mergeQueue;
+  }
+
+  Future<void> _mergeSynced(List<InAppNotification> incoming) async {
     if (_activeUserId == null) return;
     await _hydrateOnce();
     await _hydrateDismissedIds();
     _lastSynced = incoming;
     if (incoming.isEmpty) return;
 
-    final filtered = incoming
-        .where((n) => !_dismissedIds.contains(n.id))
-        .toList();
+    final filtered = incoming.where((n) => !_isDismissed(n)).toList();
     if (filtered.isEmpty && state.isEmpty) return;
 
     final byId = <String, InAppNotification>{
@@ -267,6 +282,40 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
     }
     state = next;
     await _persist();
+  }
+
+  void _rememberDismissed(Iterable<InAppNotification> notifications) {
+    for (final notification in notifications) {
+      _dismissedIds.addAll(_dismissalKeysFor(notification));
+    }
+  }
+
+  Set<String> _dismissalKeysFor(InAppNotification notification) {
+    final keys = <String>{notification.id};
+    final reservationId =
+        notification.reservationId ?? notification.bookingId;
+    if (reservationId != null) {
+      keys.add('reservation:$reservationId');
+    }
+
+    final match = _reservationNotificationId.firstMatch(notification.id);
+    if (match != null) {
+      keys.add('${match.group(1)}_reservation_${match.group(2)}');
+    }
+    return keys;
+  }
+
+  bool _isDismissed(InAppNotification notification) {
+    final keys = _dismissalKeysFor(notification);
+    for (final key in keys) {
+      if (_dismissedIds.contains(key)) return true;
+    }
+    for (final dismissed in _dismissedIds) {
+      for (final key in keys) {
+        if (dismissed.startsWith(key)) return true;
+      }
+    }
+    return false;
   }
 
   void enqueue(InAppNotification n) {

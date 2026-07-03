@@ -15,6 +15,7 @@ import '../../navigation/auth_session_cache.dart';
 import '../../providers/auth_notifier.dart';
 import '../../providers/auth_redirect_providers.dart';
 import '../../widgets/auth_success_dialog.dart';
+import '../../../../services/auth/apple_auth_service.dart';
 import '../providers/login_controller.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../screens/login_page.dart';
@@ -32,6 +33,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _googleSignInPending = false;
+  bool _appleSignInPending = false;
   bool _welcomeHandled = false;
 
   @override
@@ -78,10 +80,22 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     }
   }
 
+  Future<void> _apple() async {
+    FocusScope.of(context).unfocus();
+    final opened =
+        await ref.read(loginControllerProvider.notifier).startAppleSignIn();
+    if (!mounted) return;
+    if (opened) {
+      _appleSignInPending = true;
+      unawaited(_completeLoginWithWelcome());
+    }
+  }
+
   Future<void> _completeLoginWithWelcome() async {
     if (_welcomeHandled || !mounted) return;
     _welcomeHandled = true;
     _googleSignInPending = false;
+    _appleSignInPending = false;
 
     final container = ProviderScope.containerOf(context);
     final router = container.read(goRouterProvider);
@@ -139,7 +153,9 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     });
 
     ref.listen(authNotifierProvider, (previous, next) {
-      if (!_googleSignInPending || _welcomeHandled) return;
+      if ((!_googleSignInPending && !_appleSignInPending) || _welcomeHandled) {
+        return;
+      }
       final user = switch (next) {
         AsyncData(:final value) => value,
         _ => null,
@@ -177,6 +193,7 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
       onPasswordChanged:
           ref.read(loginControllerProvider.notifier).onPasswordChanged,
       onGoogle: _google,
+      onApple: AppleAuthService.isNativeAppleSignInAvailable() ? _apple : null,
       onForgotPassword: context.pushForgotPassword,
     );
   }

@@ -16,15 +16,44 @@ class PrestataireService {
   final SupabaseClient _client;
   final ProfileService _profileService;
 
-  Future<List<PrestataireProfile>> _excludeBannedProfiles(
+  String get _catalogTrialCutoffIso =>
+      DateTime.now().toUtc().toIso8601String();
+
+  /// Filtres SQL alignés sur [prestataire_is_catalog_visible] (abonnement / essai).
+  PostgrestFilterBuilder<PostgrestList> _applyCatalogVisibilityQuery(
+    PostgrestFilterBuilder<PostgrestList> query,
+  ) {
+    return query
+        .eq('is_hidden', false)
+        .or(
+          'subscription_status.eq.active,'
+          'subscription_status.eq.trialing,'
+          'catalog_trial_ends_at.gt.$_catalogTrialCutoffIso',
+        );
+  }
+
+  /// Vérifie ban + visibilité via RPC security definer (RLS bloque is_banned côté client).
+  Future<List<PrestataireProfile>> _keepCatalogVisibleProfiles(
     List<PrestataireProfile> profiles,
   ) async {
     if (profiles.isEmpty) return const [];
-    final bannedUserIds = await _profileService.getBannedUserIds(
-      profiles.map((p) => p.userId).toList(),
-    );
-    if (bannedUserIds.isEmpty) return profiles;
-    return profiles.where((p) => !bannedUserIds.contains(p.userId)).toList();
+    try {
+      final response = await _client.rpc(
+        'filter_catalog_visible_prestataire_ids',
+        params: {'p_ids': profiles.map((p) => p.id).toList()},
+      );
+      final visibleIds = <String>{};
+      if (response is List) {
+        for (final raw in response) {
+          final id = raw?.toString();
+          if (id != null && id.isNotEmpty) visibleIds.add(id);
+        }
+      }
+      if (visibleIds.isEmpty) return const [];
+      return profiles.where((p) => visibleIds.contains(p.id)).toList();
+    } catch (_) {
+      return profiles;
+    }
   }
 
   Future<List<PrestataireCatalogEntry>> getAll({
@@ -33,23 +62,14 @@ class PrestataireService {
     operation: 'prestataire.getAll',
     action: () async {
       final to = filters.offset + filters.limit - 1;
-      final trialCutoff = DateTime.now().toUtc().toIso8601String();
-      final profilesRes = await _client
-          .from('prestataire_profiles')
-          .select()
-          .eq('is_hidden', false)
-          .or(
-            'subscription_status.eq.active,'
-            'subscription_status.eq.trialing,'
-            'catalog_trial_ends_at.gt.$trialCutoff',
-          )
-          .order('created_at', ascending: false)
-          .range(filters.offset, to);
+      final profilesRes = await _applyCatalogVisibilityQuery(
+        _client.from('prestataire_profiles').select(),
+      ).order('created_at', ascending: false).range(filters.offset, to);
 
       var profiles = (profilesRes as List<dynamic>)
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .toList();
-      profiles = await _excludeBannedProfiles(profiles);
+      profiles = await _keepCatalogVisibleProfiles(profiles);
       if (profiles.isEmpty) return [];
 
       final specialtyData = await getSpecialtyDataForPrestataires(
@@ -93,10 +113,9 @@ class PrestataireService {
         action: () async {
           if (prestataireIds.isEmpty) return [];
 
-          final profilesRes = await _client
-              .from('prestataire_profiles')
-              .select()
-              .inFilter('id', prestataireIds);
+          final profilesRes = await _applyCatalogVisibilityQuery(
+            _client.from('prestataire_profiles').select(),
+          ).inFilter('id', prestataireIds);
 
           final profilesById = <String, PrestataireProfile>{};
           for (final raw in profilesRes as List<dynamic>) {
@@ -110,7 +129,7 @@ class PrestataireService {
             for (final id in prestataireIds)
               if (profilesById.containsKey(id)) profilesById[id]!,
           ];
-          final visibleOrdered = await _excludeBannedProfiles(ordered);
+          final visibleOrdered = await _keepCatalogVisibleProfiles(ordered);
           if (visibleOrdered.isEmpty) return [];
 
           final specialtyData = await getSpecialtyDataForPrestataires(
@@ -152,7 +171,7 @@ class PrestataireService {
           .maybeSingle();
       if (response == null) return null;
       final profile = PrestataireProfile.fromJson(Map<String, dynamic>.from(response));
-      final visible = await _excludeBannedProfiles([profile]);
+      final visible = await _keepCatalogVisibleProfiles([profile]);
       return visible.isEmpty ? null : visible.first;
     },
   );
@@ -250,17 +269,15 @@ class PrestataireService {
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getNearby',
     action: () async {
-      final response = await _client
-          .from('prestataire_profiles')
-          .select()
-          .order('created_at', ascending: false)
-          .limit(fetchCap);
+      final response = await _applyCatalogVisibilityQuery(
+        _client.from('prestataire_profiles').select(),
+      ).order('created_at', ascending: false).limit(fetchCap);
 
       final rows = response as List<dynamic>;
       final allProfiles = rows
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .toList();
-      final all = await _excludeBannedProfiles(allProfiles);
+      final all = await _keepCatalogVisibleProfiles(allProfiles);
 
       double distanceKm(PrestataireProfile p) {
         final la = p.latitude;
@@ -298,9 +315,9 @@ class PrestataireService {
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getBestRated',
     action: () async {
-      final response = await _client
-          .from('prestataire_profiles')
-          .select()
+      final response = await _applyCatalogVisibilityQuery(
+        _client.from('prestataire_profiles').select(),
+      )
           .not('note_moyenne', 'is', null)
           .order('note_moyenne', ascending: false)
           .limit(limit);
@@ -309,7 +326,7 @@ class PrestataireService {
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
           .where((p) => p.noteMoyenne != null)
           .toList();
-      return _excludeBannedProfiles(profiles);
+      return _keepCatalogVisibleProfiles(profiles);
     },
   );
 

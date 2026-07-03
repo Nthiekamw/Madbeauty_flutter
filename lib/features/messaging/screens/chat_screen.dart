@@ -16,8 +16,9 @@ import '../../../core/models/domain/messaging/message.dart';
 import '../../../features/auth/providers/auth_notifier.dart';
 
 import '../../booking/logic/booking_formatters.dart';
-import '../../../services/supabase/messaging/messaging_providers.dart';
+import '../../../services/notifications/live_refresh.dart';
 import '../../../services/supabase/messaging/message_service.dart';
+import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../providers/message_provider.dart';
@@ -38,7 +39,6 @@ import '../../../services/supabase/trust/content_report_service.dart';
 import '../widgets/chat/chat_screen_app_bar.dart';
 import '../widgets/chat/chat_delete_confirmation.dart';
 import '../models/chat_inbox_key.dart';
-import '../providers/messaging_inbox_providers.dart';
 
 
 
@@ -65,7 +65,8 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   bool _sending = false;
@@ -74,6 +75,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   int _lastMessageCount = 0;
   ConversationInboxItem? _lastHeader;
   Timer? _presenceRefresh;
+  String? _activeConversationId;
 
   ChatRouteKey get _routeKey => ChatRouteKey(
         conversationId: widget.conversationId,
@@ -84,10 +86,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _presenceRefresh = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
       ref.invalidate(chatInboxItemProvider(_routeKey));
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    final conversationId = _activeConversationId;
+    if (conversationId == null || conversationId.isEmpty) return;
+    ref.invalidate(messagesProvider(conversationId));
+    refreshMessagingInbox(ref);
   }
 
   @override
@@ -103,6 +115,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
 
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _presenceRefresh?.cancel();
     _controller.dispose();
 
@@ -173,14 +186,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       userId: user.id,
     );
 
-    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.client));
-
-    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.prestataire));
-
-    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-
-    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
-
+    refreshMessagingInbox(ref);
   }
 
 
@@ -245,8 +251,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         content: text,
       );
       _controller.clear();
-      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
+      refreshMessagingInbox(ref);
     } on MessageValidationException catch (error) {
       if (mounted) {
         final result =
@@ -266,10 +271,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _invalidateInbox() {
-    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-    ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
-    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.client));
-    ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.prestataire));
+    refreshMessagingInbox(ref);
   }
 
   Future<void> _confirmDeleteChat(String conversationId) async {
@@ -429,8 +431,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         senderId: user.id,
         imageUrl: imageUrl,
       );
-      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-      ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
+      refreshMessagingInbox(ref);
     } catch (_) {
       if (mounted) {
         AppSnackBar.show(context, message: DiscChat.imagePickError);
@@ -510,6 +511,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildChatBody(BuildContext context, String conversationId) {
+    _activeConversationId = conversationId;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = theme.colorScheme.surface;

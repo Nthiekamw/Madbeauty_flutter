@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/config/app_config.dart';
 import '../features/auth/guest/guest_mode_provider.dart';
 import '../features/auth/navigation/post_auth_navigation.dart';
 import '../features/auth/providers/auth_redirect_providers.dart';
@@ -32,7 +33,8 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     AsyncData(:final value) => value,
     _ => null,
   };
-  final hasSession = ref.read(authServiceProvider).currentSession != null;
+  final hasSession = AppConfig.hasSupabase &&
+      ref.read(authServiceProvider).currentSession != null;
   final isAuthenticated = hasSession && user != null;
 
   final location = state.matchedLocation;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../services/notifications/live_refresh.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
@@ -212,8 +213,7 @@ class _ConversationsInboxScreenState
   }
 
   Future<void> _refreshInbox() async {
-    ref.invalidate(conversationsInboxProvider(widget.role));
-    ref.invalidate(messagingUnreadCountProvider(widget.role));
+    refreshMessagingInbox(ref, role: widget.role);
     await ref.read(conversationsInboxProvider(widget.role).future);
   }
 
@@ -223,8 +223,7 @@ class _ConversationsInboxScreenState
       as: widget.role == MessagingInboxRole.client ? 'client' : 'prestataire',
     );
     if (!mounted) return;
-    ref.invalidate(conversationsInboxProvider(widget.role));
-    ref.invalidate(messagingUnreadCountProvider(widget.role));
+    refreshMessagingInbox(ref, role: widget.role);
   }
 
   Future<void> _confirmDeleteChat(String conversationId) async {

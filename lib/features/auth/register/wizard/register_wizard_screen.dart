@@ -110,6 +110,14 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
         onOAuthConnected: _onOAuthConnected,
       );
 
+  Future<void> _appleSignIn() => _oauth.appleSignIn(
+        ref: ref,
+        context: context,
+        mounted: () => mounted,
+        form: _form,
+        onOAuthConnected: _onOAuthConnected,
+      );
+
   Future<void> _recoverGoogleSessionIfNeeded() => _oauth.recoverGoogleSessionIfNeeded(
         ref: ref,
         form: _form,
@@ -265,6 +273,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
         theme: theme,
         onSurfaceVariant: onSurfaceVariant,
         onGoogleSignIn: _form.googleSigningIn ? null : _googleSignIn,
+        onAppleSignIn: _form.googleSigningIn ? null : _appleSignIn,
         onPickClientAvatar: _pickClientAvatar,
       ),
     );

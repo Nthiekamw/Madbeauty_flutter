@@ -248,10 +248,7 @@ class MessageService {
           .eq('conversation_id', conversationId)
           .order('created_at', ascending: true)
           .listen(
-            (rows) {
-              if (controller.isClosed) return;
-              controller.add(_decodeMessages(rows));
-            },
+            (_) => unawaited(emitLatest()),
             onError: controller.addError,
           );
 

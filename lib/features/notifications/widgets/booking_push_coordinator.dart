@@ -18,6 +18,7 @@ import '../../../services/notifications/booking_push_notifications.dart';
 import '../../../services/notifications/booking_reminders_sync.dart';
 import '../../../services/notifications/live_refresh.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
+import '../../../services/storage/review_prompt_store.dart';
 import '../../../services/notifications/push_navigation.dart'
     show
         handlePushMessageNavigationWithRouter,
@@ -80,11 +81,13 @@ class _BookingPushCoordinatorState
           await ref
               .read(clientFavoritePrestataireIdsProvider.notifier)
               .purgeForLogout();
+          await ReviewPromptStore.instance.bindToUser(null);
         }
         _lastAuthUserIdSeen = uid;
 
         if (uid != null) {
           await ref.read(inAppNotificationsProvider.notifier).bindToUser(uid);
+          await ReviewPromptStore.instance.bindToUser(uid);
         }
 
         final profileSvc = ref.read(profileServiceProvider);

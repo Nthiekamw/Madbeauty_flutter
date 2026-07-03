@@ -12,6 +12,7 @@ import '../../features/prestataire/providers/analytics/prestataire_analytics_pro
 import '../../features/prestataire/providers/analytics/stats_provider.dart';
 import '../../features/prestataire/providers/dashboard/prestataire_dashboard_provider.dart';
 import '../../features/prestataire/providers/profile/current_prestataire_provider.dart';
+import '../../features/messaging/providers/messaging_refresh_signal_provider.dart';
 import '../../services/supabase/support/user_support_providers.dart';
 import '../../services/notifications/in_app_notifications_provider.dart';
 
@@ -20,8 +21,8 @@ void refreshMessagingLiveState(
   WidgetRef ref, {
   String? conversationId,
   String? bookingId,
+  MessagingInboxRole? inboxRole,
 }) {
-  bumpMessagingRefreshFromWidgetRef(ref);
   if (conversationId != null && conversationId.isNotEmpty) {
     ref.invalidate(messagesProvider(conversationId));
   }
@@ -30,11 +31,28 @@ void refreshMessagingLiveState(
       chatConversationIdProvider(ChatRouteKey(bookingId: bookingId)),
     );
   }
-  ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-  ref.invalidate(conversationsInboxProvider(MessagingInboxRole.prestataire));
-  ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.client));
-  ref.invalidate(messagingUnreadCountProvider(MessagingInboxRole.prestataire));
+  refreshMessagingInbox(ref, role: inboxRole);
   refreshInAppNotificationsSync(ref);
+}
+
+/// Recharge la liste inbox (client et/ou prestataire).
+void refreshMessagingInbox(
+  WidgetRef ref, {
+  MessagingInboxRole? role,
+}) {
+  bumpMessagingRefreshFromWidgetRef(ref);
+
+  void refreshRole(MessagingInboxRole r) {
+    ref.invalidate(conversationsInboxProvider(r));
+    ref.invalidate(messagingUnreadCountProvider(r));
+  }
+
+  if (role != null) {
+    refreshRole(role);
+    return;
+  }
+  refreshRole(MessagingInboxRole.client);
+  refreshRole(MessagingInboxRole.prestataire);
 }
 
 /// Rafraîchit badges réservations et listes après un événement live.

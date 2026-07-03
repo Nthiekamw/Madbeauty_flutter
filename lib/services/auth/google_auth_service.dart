@@ -19,6 +19,9 @@ class GoogleAuthService {
   static const String firebaseWebClientId =
       '138830696039-v93u9uvt39ugt7vu5ern1mohgf1078dg.apps.googleusercontent.com';
 
+  static const String firebaseIosClientId =
+      '138830696039-hi486049vacsddcuq5lfu9611ag8omaj.apps.googleusercontent.com';
+
   static bool _googleSignInInitialized = false;
   static Completer<void>? _initCompleter;
 
@@ -52,6 +55,9 @@ class GoogleAuthService {
     _initCompleter = Completer<void>();
     try {
       await GoogleSignIn.instance.initialize(
+        clientId: defaultTargetPlatform == TargetPlatform.iOS
+            ? firebaseIosClientId
+            : null,
         serverClientId: firebaseWebClientId,
       );
       _googleSignInInitialized = true;

@@ -10,6 +10,8 @@ import '../../../../../shared/widgets/app/app_text_field.dart';
 import '../../../../../shared/widgets/phone/phone_number_field.dart';
 import '../../../widgets/auth_form_card.dart';
 import '../../../widgets/auth_google_button.dart';
+import '../../../widgets/auth_apple_button.dart';
+import '../../../../../services/auth/apple_auth_service.dart';
 import '../../../widgets/auth_or_divider.dart';
 import '../../../widgets/auth_role_card.dart';
 import '../../../widgets/auth_step_section.dart';
@@ -27,12 +29,14 @@ class RegisterWizardIdentityStep extends StatelessWidget {
     required this.formEnabled,
     required this.onSurfaceVariant,
     required this.onGoogleSignIn,
+    this.onAppleSignIn,
   });
 
   final RegisterWizardFormController form;
   final bool formEnabled;
   final Color onSurfaceVariant;
   final VoidCallback? onGoogleSignIn;
+  final VoidCallback? onAppleSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +51,26 @@ class RegisterWizardIdentityStep extends StatelessWidget {
               title: AuthStrings.registerSectionQuick,
               subtitle: AuthStrings.registerSectionQuickHint,
               icon: Icons.bolt_outlined,
-              child: AuthGoogleButton(
-                label: AuthStrings.registerActionGoogle,
-                enabled: formEnabled,
-                isLoading: form.googleSigningIn,
-                onPressed: onGoogleSignIn,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AuthGoogleButton(
+                    label: AuthStrings.registerActionGoogle,
+                    enabled: formEnabled,
+                    isLoading: form.googleSigningIn,
+                    onPressed: onGoogleSignIn,
+                  ),
+                  if (AppleAuthService.isNativeAppleSignInAvailable() &&
+                      onAppleSignIn != null) ...[
+                    const SizedBox(height: 10),
+                    AuthAppleButton(
+                      label: AuthStrings.registerActionApple,
+                      enabled: formEnabled,
+                      isLoading: form.googleSigningIn,
+                      onPressed: onAppleSignIn,
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: RegisterWizardConstants.sectionGap),

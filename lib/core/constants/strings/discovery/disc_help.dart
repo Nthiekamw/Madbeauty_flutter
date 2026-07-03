@@ -49,4 +49,11 @@ abstract final class DiscHelp {
       'un comportement inapproprié.';
 
   static const contactSupport = 'Une question ? Contacte le support via ton e-mail d’inscription.';
+
+  static const sectionLegal = 'Informations légales';
+  static const privacyPolicyTitle = 'Politique de confidentialité';
+  static const privacyPolicyHint =
+      'Données collectées, finalités, sous-traitants et tes droits (RGPD).';
+  static const openPrivacyPolicyErr =
+      'Impossible d’ouvrir la politique de confidentialité. Réessaie plus tard.';
 }

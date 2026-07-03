@@ -158,23 +158,88 @@ class RegisterWizardOAuthHandler {
     if (!mounted()) return;
     form.onOAuthConnected();
     _stopGoogleSessionWatch();
-    AppSnackBar.success(context, AuthStrings.registerGoogleConnected);
+    AppSnackBar.success(
+      context,
+      isAppleOAuthUser(user)
+          ? AuthStrings.registerAppleConnected
+          : AuthStrings.registerGoogleConnected,
+    );
     unawaited(form.persistDraft(pendingGoogleSignIn: false));
   }
 
   static bool isGoogleOAuthUser(User user) {
-    if (user.identities?.any((id) => id.provider == 'google') ?? false) {
+    return isOAuthProviderUser(user, 'google');
+  }
+
+  static bool isAppleOAuthUser(User user) {
+    return isOAuthProviderUser(user, 'apple');
+  }
+
+  static bool isOAuthProviderUser(User user, String provider) {
+    if (user.identities?.any((id) => id.provider == provider) ?? false) {
       return true;
     }
-    final provider = user.appMetadata['provider'] as String?;
-    if (provider == 'google') return true;
+    final mainProvider = user.appMetadata['provider'] as String?;
+    if (mainProvider == provider) return true;
     final providers = user.appMetadata['providers'];
-    if (providers is List && providers.any((p) => p == 'google')) {
+    if (providers is List && providers.any((p) => p == provider)) {
       return true;
     }
-    final iss = user.userMetadata?['iss'] as String? ??
-        user.appMetadata['iss'] as String?;
-    return iss != null && iss.contains('accounts.google.com');
+    if (provider == 'google') {
+      final iss = user.userMetadata?['iss'] as String? ??
+          user.appMetadata['iss'] as String?;
+      return iss != null && iss.contains('accounts.google.com');
+    }
+    return false;
+  }
+
+  Future<void> appleSignIn({
+    required WidgetRef ref,
+    required BuildContext context,
+    required bool Function() mounted,
+    required RegisterWizardFormController form,
+    required Future<void> Function(User user) onOAuthConnected,
+  }) async {
+    FocusScope.of(context).unfocus();
+    form.setError(null);
+
+    if (!await ensureOnline(context, ref)) return;
+
+    if (!AppConfig.hasSupabase) {
+      form.setError(ShellStrings.supabaseMissingTitle);
+      return;
+    }
+
+    final existingUser = ref.read(authServiceProvider).currentSession?.user;
+    if (existingUser != null && isAppleOAuthUser(existingUser)) {
+      await onOAuthConnected(existingUser);
+      return;
+    }
+
+    form.googleLaunched = true;
+    form.setGoogleSigningIn(true);
+
+    try {
+      final user =
+          await ref.read(authNotifierProvider.notifier).signInWithApple();
+      if (!mounted()) return;
+      if (user != null) {
+        await onOAuthConnected(user);
+        return;
+      }
+      form.setError(AuthStrings.authAppleSupabaseLinkFailed);
+    } on AppFailure catch (e) {
+      if (!mounted()) return;
+      form.setError(e.message);
+    } catch (_) {
+      if (!mounted()) return;
+      form.setError(CoreStrings.errorUnexpected);
+    } finally {
+      if (mounted()) {
+        form.setGoogleSigningIn(false);
+        form.googleLaunched = false;
+      }
+    }
   }
 
   Future<void> recoverGoogleSessionIfNeeded({
@@ -188,7 +253,8 @@ class RegisterWizardOAuthHandler {
     if (!form.googleSigningIn &&
         !form.googleLaunched &&
         !form.pendingGoogleSignIn &&
-        !isGoogleOAuthUser(user)) {
+        !isGoogleOAuthUser(user) &&
+        !isAppleOAuthUser(user)) {
       return;
     }
     await onOAuthConnected(user);

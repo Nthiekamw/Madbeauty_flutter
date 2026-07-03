@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/runtime_providers.dart';
 import '../../../features/auth/logic/account_ban_handler.dart';
@@ -112,7 +113,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     final cache = LocalCacheService.instance;
     final registerDraftStore = RegisterWizardDraftStore.instance;
     final registerDraft = registerDraftStore.read();
-    final hasSession =
+    final hasSession = AppConfig.hasSupabase &&
         container.read(authServiceProvider).currentSession != null;
 
     if (registerDraft != null && registerDraft.isActive) {
@@ -166,6 +167,7 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
   ) async {
     final draft = RegisterWizardDraftStore.instance.read();
     if (draft == null || !draft.isActive) return false;
+    if (!AppConfig.hasSupabase) return false;
 
     final session = container.read(authServiceProvider).currentSession;
     final user = session?.user;

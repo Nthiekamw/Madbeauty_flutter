@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../../services/storage/review_prompt_store.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
@@ -108,6 +109,11 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
         ref.invalidate(reviewsByPrestataireProvider(prestaId));
         ref.invalidate(prestataireNoteMoyenneProvider(prestaId));
       }
+      final authUserId = ref.read(authNotifierProvider).asData?.value?.id;
+      if (authUserId != null) {
+        await ReviewPromptStore.instance.bindToUser(authUserId);
+      }
+      await ReviewPromptStore.instance.markHandled(widget.bookingId);
       if (mounted) {
         AppSnackBar.show(context, message: DiscReview.success);
         Navigator.of(context).pop(true);

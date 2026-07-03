@@ -25,6 +25,21 @@
 - [ ] Client ID / secret renseignés dans Supabase.
 - [ ] Pour le natif mobile : le `serverClientId` dans `GoogleAuthService` correspond au client **Web** Google.
 
+## Apple (Sign in with Apple)
+
+- [ ] App ID `com.nthiekamw.madbeauty` : capability **Sign In with Apple** activée.
+- [ ] **Authentication → Providers → Apple** : activé dans Supabase (Services ID, clé `.p8`, Team ID, Key ID).
+- [ ] `ios/Runner/Runner.entitlements` : `com.apple.developer.applesignin` présent.
+- [ ] Détail : `docs/IOS_APPLE_PUSH_SETUP.md`
+
+## Notifications push iOS
+
+- [ ] `flutterfire configure` → `GoogleService-Info.plist` dans `ios/Runner/`.
+- [ ] Clé APNs uploadée dans Firebase Console (Cloud Messaging).
+- [ ] Capabilities Xcode : Push Notifications + Remote notifications.
+- [ ] `aps-environment` dans `Runner.entitlements` (`development` en dev, `production` en prod).
+- [ ] Checklist complète : `docs/BOOKING_PUSH_NOTIFICATIONS.md` + `docs/IOS_APPLE_PUSH_SETUP.md`
+
 ## Rate limits
 
 - [ ] **Authentication → Rate limits** : valeurs adaptées au trafic (inscription, reset MDP, e-mails).
@@ -46,5 +61,6 @@
 
 - [ ] Tester inscription e-mail → lien de confirmation → reprise wizard.
 - [ ] Tester connexion Google (Android + iOS).
+- [ ] Tester connexion Apple (iOS).
 - [ ] Tester mot de passe oublié → deep link → nouveau mot de passe.
 - [ ] Vérifier qu’un compte non confirmé ne peut pas accéder aux routes protégées.

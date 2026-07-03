@@ -1,4 +1,4 @@
-﻿{
+{
   "project_info": {
     "project_number": "138830696039",
     "project_id": "fluxetudiant",
@@ -39,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "138830696039-o2oig2n896orvetqfakm2rh4c4rsg5b0.apps.googleusercontent.com",
+              "client_id": "138830696039-hi486049vacsddcuq5lfu9611ag8omaj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.madbeauty.madbeauty"
+                "bundle_id": "com.nthiekamw.madbeauty"
               }
             }
           ]

@@ -77,6 +77,9 @@ abstract final class SupabaseDomainCodec {
     if (m['content'] == null && m['contenu'] != null) {
       m['content'] = m['contenu'];
     }
+    if (m['booking_id'] == null) {
+      m['booking_id'] = '';
+    }
     return Message.fromJson(m);
   }
 }

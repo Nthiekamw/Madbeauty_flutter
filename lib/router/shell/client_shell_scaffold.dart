@@ -8,6 +8,7 @@ import '../../features/profile/providers/profile_tab_visibility_provider.dart';
 import '../../features/booking/providers/booking_session_providers.dart';
 import '../../features/home/providers/home_feed_provider.dart';
 import '../../services/notifications/booking_reminders_sync.dart';
+import '../../services/notifications/live_refresh.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../features/reviews/widgets/client_review_prompt_coordinator.dart';
@@ -94,10 +95,7 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
         invalidateClientReservations(ref);
       }
       if (index == ClientShellScaffold.messagesTabIndex) {
-        ref.invalidate(conversationsInboxProvider(MessagingInboxRole.client));
-        ref.invalidate(
-          messagingUnreadCountProvider(MessagingInboxRole.client),
-        );
+        refreshMessagingInbox(ref, role: MessagingInboxRole.client);
       }
       navigationShell.goBranch(
         index,

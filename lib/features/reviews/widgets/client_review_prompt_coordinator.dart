@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../features/auth/guest/guest_mode_provider.dart';
+import '../../../features/auth/providers/auth_notifier.dart';
 import '../../../features/booking/logic/client_reservation_ui_status.dart';
 import 'package:madbeauty/core/models/domain/booking/client_reservation_summary.dart';
 import '../../../services/storage/review_prompt_store.dart';
@@ -76,6 +77,15 @@ class _ClientReviewPromptCoordinatorState
   Future<void> _maybePrompt(List<ClientReservationSummary> list) async {
     if (_sheetOpen || !mounted || ref.read(isGuestBrowsingProvider)) return;
 
+    final authUser = ref.read(authNotifierProvider).asData?.value;
+    if (authUser == null) return;
+    if (SupabaseService.client.auth.currentSession == null) return;
+
+    await ReviewPromptStore.instance.bindToUser(authUser.id);
+
+    final client = ref.read(currentClientProfileProvider).asData?.value;
+    if (client == null) return;
+
     final handled = ReviewPromptStore.instance.handledBookingIds;
     final service = ref.read(reviewServiceProvider);
     if (service == null) return;
@@ -85,7 +95,12 @@ class _ClientReviewPromptCoordinatorState
       if (ui != ClientReservationUiStatus.done) continue;
       if (handled.contains(item.id)) continue;
 
-      final reviewed = await service.hasReviewed(item.id);
+      bool reviewed = false;
+      try {
+        reviewed = await service.hasReviewed(item.id);
+      } catch (_) {
+        continue;
+      }
       if (!mounted) return;
       if (reviewed) {
         await ReviewPromptStore.instance.markHandled(item.id);
@@ -118,6 +133,20 @@ class _ClientReviewPromptCoordinatorState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authNotifierProvider, (prev, next) {
+      final prevUid = switch (prev) {
+        AsyncData(:final value) => value?.id,
+        _ => null,
+      };
+      final nextUid = switch (next) {
+        AsyncData(:final value) => value?.id,
+        _ => null,
+      };
+      if (prevUid != nextUid) {
+        unawaited(ReviewPromptStore.instance.bindToUser(nextUid));
+      }
+    });
+
     if (!ref.watch(isGuestBrowsingProvider)) {
       final clientAsync = ref.watch(currentClientProfileProvider);
       clientAsync.whenData((client) {
@@ -148,4 +177,3 @@ class _ClientReviewPromptCoordinatorState
     return widget.child;
   }
 }
-

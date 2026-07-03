@@ -58,7 +58,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
       out.add(
         InAppNotification(
-          id: 'prestataire_reservation_${item.id}_${item.statut}',
+          id: 'prestataire_reservation_${item.id}',
           title: title,
           body: DiscNotif.bookingBody(
             clientOrSalon: item.clientName,
@@ -67,6 +67,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           createdAt: item.dateHeure,
           read: status != ClientReservationUiStatus.pending,
           actionType: type,
+          reservationId: item.id,
           audience: InAppNotificationAudience.prestataire.wire,
         ),
       );
@@ -242,7 +243,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
       out.add(
         InAppNotification(
-          id: 'client_reservation_${item.id}_${item.statut}',
+          id: 'client_reservation_${item.id}',
           title: title,
           body: DiscNotif.bookingBody(
             clientOrSalon: salon,
@@ -254,6 +255,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
           actionType: type,
           prestataireId: item.prestataireId,
           serviceId: item.serviceId,
+          reservationId: item.id,
           audience: InAppNotificationAudience.client.wire,
         ),
       );

@@ -54,6 +54,7 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
     switch (state) {
       case AppLifecycleState.resumed:
         refreshInAppNotificationsSync(ref);
+        refreshMessagingInbox(ref);
         _startForegroundSyncTimer();
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) unawaited(_resubscribe());
@@ -326,8 +327,13 @@ class _LiveUpdatesCoordinatorState extends ConsumerState<LiveUpdatesCoordinator>
 
   void _onMessagesChange(PostgresChangePayload payload) {
     if (!mounted) return;
+    final conversationId = payload.newRecord['conversation_id'] as String?;
     final bookingId = payload.newRecord['booking_id'] as String?;
-    refreshMessagingLiveState(ref, bookingId: bookingId);
+    refreshMessagingLiveState(
+      ref,
+      conversationId: conversationId,
+      bookingId: bookingId,
+    );
   }
 
   void _onReservationsChange() {

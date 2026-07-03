@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Politique de confidentialité de MadBeauty — réservation beauté et coiffure afro.">
+  <title>Politique de confidentialité — MadBeauty</title>
+  <style>
+    :root {
+      --brand: #c09267;
+      --text: #6b4e31;
+      --muted: #9a7b62;
+      --bg: #f4e9dc;
+      --card: #ffffff;
+      --border: #e5d6c4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+    header {
+      background: linear-gradient(135deg, var(--brand), #b08258);
+      color: #fff;
+      padding: 2.5rem 1.25rem 2rem;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 0.35rem; font-size: 1.75rem; font-weight: 800; }
+    header p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
+    main {
+      max-width: 720px;
+      margin: -1.25rem auto 3rem;
+      padding: 0 1rem;
+    }
+    article {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      box-shadow: 0 8px 32px rgba(107, 78, 49, 0.08);
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin: 1.75rem 0 0.5rem;
+      color: var(--text);
+    }
+    h2:first-of-type { margin-top: 0; }
+    p, li { font-size: 0.95rem; }
+    ul { padding-left: 1.25rem; }
+    li { margin-bottom: 0.35rem; }
+    .updated { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.25rem; }
+    a { color: #8a5f35; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 0 1rem 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MadBeauty</h1>
+    <p>Politique de confidentialité</p>
+  </header>
+  <main>
+    <article>
+      <p class="updated">Dernière mise à jour : 3 juillet 2026</p>
+
+      <p>
+        La présente politique décrit comment <strong>MadBeauty</strong> (« nous », « l’application »)
+        collecte et traite tes données personnelles lorsque tu utilises l’application mobile
+        ou le site web MadBeauty, en qualité de <strong>cliente</strong> ou de
+        <strong>prestataire</strong> de services beauté.
+      </p>
+
+      <h2>1. Responsable du traitement</h2>
+      <p>
+        MadBeauty<br>
+        Contact : <a href="mailto:support@madbeauty.app">support@madbeauty.app</a>
+      </p>
+
+      <h2>2. Données collectées</h2>
+      <p>Selon ton utilisation, nous pouvons traiter :</p>
+      <ul>
+        <li><strong>Compte</strong> : prénom, nom, adresse e-mail, mot de passe (haché), photo de profil, rôles (client / prestataire).</li>
+        <li><strong>Profil prestataire</strong> : nom du salon, description, spécialités, photos de réalisations, tarifs, disponibilités.</li>
+        <li><strong>Réservations</strong> : services choisis, créneaux, statuts, historique.</li>
+        <li><strong>Messagerie</strong> : contenu des échanges entre clientes et prestataires (modération automatique de certains contenus sensibles).</li>
+        <li><strong>Localisation</strong> : position approximative lorsque tu l’autorises, pour afficher les prestataires à proximité.</li>
+        <li><strong>Paiements</strong> : identifiants de transaction et statuts via <strong>Stripe</strong> (nous ne stockons pas tes coordonnées bancaires complètes).</li>
+        <li><strong>Notifications</strong> : jeton d’appareil (FCM) si tu acceptes les notifications push.</li>
+        <li><strong>Technique</strong> : logs, identifiants d’appareil, données de diagnostic et de sécurité.</li>
+      </ul>
+
+      <h2>3. Finalités</h2>
+      <ul>
+        <li>Création et gestion de ton compte.</li>
+        <li>Mise en relation, réservation et suivi des prestations.</li>
+        <li>Paiements en ligne et facturation prestataires (Stripe Connect).</li>
+        <li>Envoi de notifications (rappels, messages, alertes créneaux).</li>
+        <li>Amélioration du service, support, prévention de la fraude et modération.</li>
+        <li>Respect de nos obligations légales.</li>
+      </ul>
+
+      <h2>4. Bases légales (RGPD)</h2>
+      <ul>
+        <li><strong>Exécution du contrat</strong> : compte, réservations, messagerie.</li>
+        <li><strong>Consentement</strong> : géolocalisation, notifications push, connexion via Google ou Apple lorsque tu choisis ces options.</li>
+        <li><strong>Intérêt légitime</strong> : sécurité, amélioration du service, statistiques agrégées.</li>
+        <li><strong>Obligation légale</strong> : conservation comptable le cas échéant.</li>
+      </ul>
+
+      <h2>5. Sous-traitants et destinataires</h2>
+      <p>Tes données peuvent être traitées par :</p>
+      <ul>
+        <li><strong>Supabase</strong> — hébergement base de données, authentification, stockage fichiers (Union européenne / prestataires conformes).</li>
+        <li><strong>Stripe</strong> — paiements et comptes Connect prestataires.</li>
+        <li><strong>Google Firebase</strong> — notifications push (FCM).</li>
+        <li><strong>Google / Apple</strong> — connexion OAuth si tu l’utilises.</li>
+        <li><strong>Netlify</strong> — hébergement du site web le cas échéant.</li>
+      </ul>
+      <p>Ces prestataires n’accèdent qu’aux données nécessaires à leur mission.</p>
+
+      <h2>6. Durée de conservation</h2>
+      <p>
+        Les données sont conservées tant que ton compte est actif, puis archivées ou supprimées
+        dans un délai raisonnable après suppression du compte, sauf obligation légale de
+        conservation plus longue (ex. données de paiement).
+      </p>
+
+      <h2>7. Tes droits</h2>
+      <p>Conformément au RGPD, tu disposes des droits suivants :</p>
+      <ul>
+        <li>Accès, rectification, effacement.</li>
+        <li>Limitation et opposition au traitement.</li>
+        <li>Portabilité des données fournies.</li>
+        <li>Retrait du consentement à tout moment (sans affecter la licéité du traitement antérieur).</li>
+      </ul>
+      <p>
+        Pour exercer tes droits : <a href="mailto:support@madbeauty.app">support@madbeauty.app</a>.
+        Tu peux aussi supprimer ton compte depuis l’application (Profil → Supprimer mon compte).
+      </p>
+      <p>
+        Réclamation auprès de la CNIL :
+        <a href="https://www.cnil.fr" rel="noopener noreferrer">www.cnil.fr</a>.
+      </p>
+
+      <h2>8. Sécurité</h2>
+      <p>
+        Nous mettons en œuvre des mesures techniques et organisationnelles adaptées
+        (chiffrement en transit, contrôle d’accès, politiques de sécurité base de données).
+        Aucune transmission sur Internet n’est toutefois totalement sans risque.
+      </p>
+
+      <h2>9. Mineurs</h2>
+      <p>
+        MadBeauty s’adresse aux personnes de <strong>18 ans et plus</strong>.
+        Nous ne collectons pas sciemment de données concernant des mineurs.
+      </p>
+
+      <h2>10. Transferts hors UE</h2>
+      <p>
+        Certains sous-traitants peuvent être situés hors Union européenne.
+        Dans ce cas, des garanties appropriées sont mises en place (clauses contractuelles types
+        ou décisions d’adéquation le cas échéant).
+      </p>
+
+      <h2>11. Modifications</h2>
+      <p>
+        Nous pouvons mettre à jour cette politique. La date en tête de page sera révisée.
+        En cas de changement important, nous t’en informerons par un moyen approprié.
+      </p>
+    </article>
+  </main>
+  <footer>© MadBeauty — Tous droits réservés.</footer>
+</body>
+</html>

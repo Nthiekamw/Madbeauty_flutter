@@ -13,9 +13,12 @@ import 'messaging_refresh_signal_provider.dart';
 
 export '../models/messaging_inbox_role.dart';
 
-final conversationsInboxProvider = FutureProvider.autoDispose
+final conversationsInboxProvider = FutureProvider
     .family<List<ConversationInboxItem>, MessagingInboxRole>((ref, role) async {
   ref.watch(messagingRefreshSignalProvider);
+  final link = ref.keepAlive();
+  ref.onDispose(link.close);
+
   final service = ref.watch(messagingServiceProvider);
   final user = switch (ref.watch(authNotifierProvider)) {
     AsyncData(:final value) => value,

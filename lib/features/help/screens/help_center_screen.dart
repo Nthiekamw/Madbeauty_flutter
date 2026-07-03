@@ -1,8 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../core/config/legal_urls_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/utils/app_url_launcher.dart';
+import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 
 class HelpCenterScreen extends StatelessWidget {
@@ -73,6 +77,20 @@ class HelpCenterScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          _Section(
+            title: DiscHelp.sectionLegal,
+            children: [
+              DiscoverySurfaceCard(
+                child: DiscoveryMenuTile(
+                  icon: Icons.privacy_tip_outlined,
+                  title: DiscHelp.privacyPolicyTitle,
+                  subtitle: DiscHelp.privacyPolicyHint,
+                  onTap: () => _openPrivacyPolicy(context),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
           Text(
             DiscHelp.contactSupport,
@@ -84,6 +102,20 @@ class HelpCenterScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final opened = await AppUrlLauncher.openInApp(
+      context,
+      LegalUrlsConfig.privacyPolicyUrl,
+    );
+    if (!opened && context.mounted) {
+      AppSnackBar.show(
+        context,
+        message: DiscHelp.openPrivacyPolicyErr,
+        kind: AppSnackKind.error,
+      );
+    }
   }
 }
 

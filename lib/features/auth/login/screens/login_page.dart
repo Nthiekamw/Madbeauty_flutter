@@ -9,6 +9,7 @@ import '../../widgets/auth_forgot_password_link.dart';
 import '../../widgets/auth_form_card.dart';
 import '../../widgets/auth_form_scaffold.dart';
 import '../../widgets/auth_google_button.dart';
+import '../../widgets/auth_apple_button.dart';
 import '../../widgets/auth_or_divider.dart';
 
 /// Page de connexion : Google ou e-mail + mot de passe.
@@ -30,6 +31,7 @@ class LoginPage extends StatefulWidget {
     required this.onEmailChanged,
     required this.onPasswordChanged,
     required this.onGoogle,
+    this.onApple,
     required this.onForgotPassword,
   });
 
@@ -48,6 +50,7 @@ class LoginPage extends StatefulWidget {
   final ValueChanged<String> onEmailChanged;
   final ValueChanged<String> onPasswordChanged;
   final VoidCallback onGoogle;
+  final VoidCallback? onApple;
   final VoidCallback onForgotPassword;
 
   @override
@@ -195,6 +198,14 @@ class _LoginPageState extends State<LoginPage> {
                     enabled: !widget.isLoading,
                     onPressed: widget.onGoogle,
                   ),
+                  if (widget.onApple != null) ...[
+                    const SizedBox(height: 10),
+                    AuthAppleButton(
+                      label: AuthStrings.loginActionApple,
+                      enabled: !widget.isLoading,
+                      onPressed: widget.onApple,
+                    ),
+                  ],
                 ],
               ],
             ),

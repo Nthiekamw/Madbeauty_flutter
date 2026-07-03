@@ -2,7 +2,12 @@
 abstract final class CoreStrings {
   CoreStrings._();
 
+  /// Nom sous l’icône (iOS/Android) et marque in-app — court pour éviter la troncature.
   static const String appName = 'MadBeauty';
+
+  /// Nom App Store Connect (unique mondial).
+  static const String appStoreListingName = 'MadBeauty';
+
   static const String tagline =
       'Trouve ton pro, prends rendez-vous ou développe ton activité beauté.';
 

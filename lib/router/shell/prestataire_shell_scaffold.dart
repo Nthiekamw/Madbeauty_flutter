@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/profile/providers/profile_tab_visibility_provider.dart';
 import '../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
 import '../../services/notifications/booking_reminders_sync.dart';
+import '../../services/notifications/live_refresh.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../core/constants/app_strings.dart';
@@ -88,12 +89,7 @@ class _PrestataireShellScaffoldState
 
     void onTab(int index) {
       if (index == messagesTabIndex) {
-        ref.invalidate(
-          conversationsInboxProvider(MessagingInboxRole.prestataire),
-        );
-        ref.invalidate(
-          messagingUnreadCountProvider(MessagingInboxRole.prestataire),
-        );
+        refreshMessagingInbox(ref, role: MessagingInboxRole.prestataire);
       }
       navigationShell.goBranch(
         index,

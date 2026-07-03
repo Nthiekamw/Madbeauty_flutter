@@ -1,5 +1,5 @@
 // Identifiant App Store / production (Release).
 APPLICATION_BUNDLE_ID = com.nthiekamw.madbeauty
 
-// Nom App Store Connect : MadBeautyWorld (voir CoreStrings.appStoreListingName).
+// Nom App Store Connect : MadBeauty (voir CoreStrings.appStoreListingName).
 // Nom sous l’icône : aligné sur le listing (peut être tronqué sur petits écrans).

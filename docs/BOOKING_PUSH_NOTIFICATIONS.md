@@ -32,7 +32,19 @@ npx supabase db push
 
    ```bash
    dart pub global activate flutterfire_cli
-   flutterfire configure
+   export PATH="$PATH:$HOME/.pub-cache/bin"
+   flutterfire configure --ios-bundle-id=com.nthiekamw.madbeauty
+   ```
+
+   Si `flutterfire` est introuvable, ajoutez `$HOME/.pub-cache/bin` à votre `~/.zshrc`, ou lancez :
+   `dart pub global run flutterfire_cli:flutterfire configure`
+
+   Si vous voyez `cannot load such file -- xcodeproj`, installez le gem Ruby puis relancez :
+
+   ```bash
+   gem install xcodeproj --user-install
+   export GEM_HOME="$HOME/.gem/ruby/2.6.0"
+   flutterfire configure --ios-bundle-id=com.nthiekamw.madbeauty --yes
    ```
 
    Cela régénère `lib/firebase_options.dart`, `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`, etc.

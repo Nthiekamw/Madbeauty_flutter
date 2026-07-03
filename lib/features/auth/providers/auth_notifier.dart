@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../services/auth/auth_service.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../services/auth/google_auth_service.dart';
+import '../../../services/auth/apple_auth_service.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -32,6 +33,10 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 final googleAuthServiceProvider = Provider<GoogleAuthService>((ref) {
   return GoogleAuthService(ref.watch(authServiceProvider));
+});
+
+final appleAuthServiceProvider = Provider<AppleAuthService>((ref) {
+  return AppleAuthService(ref.watch(authServiceProvider));
 });
 
 final roleServiceProvider = Provider<RoleService>((ref) {
@@ -314,6 +319,28 @@ class AuthNotifier extends AsyncNotifier<User?> {
           kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
     return null;
+  }
+
+  /// Apple natif (iOS / macOS) → session Supabase.
+  Future<User?> signInWithApple() async {
+    if (!ref.read(authSupabaseEnabledProvider)) return null;
+
+    final appleAuth = ref.read(appleAuthServiceProvider);
+    if (!appleAuth.canUseNativeApple) {
+      throw AppFailure(AuthStrings.authAppleUnavailable);
+    }
+
+    final response = await appleAuth.signInWithAppleNative();
+    final user = await _resolveUserAfterAuth(response);
+    if (user == null) {
+      throw AppFailure(AuthStrings.authAppleSupabaseLinkFailed);
+    }
+    await _cacheCurrentEmail(user);
+    state = AsyncData(user);
+    if (kDebugMode) {
+      debugPrint('[AppleAuth] session Supabase OK: ${user.email}');
+    }
+    return user;
   }
 
   /// Après ouverture du lien « mot de passe oublié » (session recovery).

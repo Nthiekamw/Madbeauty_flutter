@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../services/supabase/messaging/messaging_providers.dart';
 import '../models/chat_inbox_key.dart';
+import 'messaging_refresh_signal_provider.dart';
 
 /// Résout l’identifiant du fil (depuis conversationId ou bookingId legacy).
 final chatConversationIdProvider = FutureProvider.autoDispose
@@ -21,6 +22,7 @@ final chatConversationIdProvider = FutureProvider.autoDispose
 /// Flux Realtime des messages d’un fil ([conversationId]).
 final messagesProvider = StreamProvider.autoDispose
     .family<List<Message>, String>((ref, conversationId) {
+  ref.watch(messagingRefreshSignalProvider);
   final service = ref.watch(messageServiceProvider);
   if (service == null) return const Stream.empty();
   return service.getMessages(conversationId);

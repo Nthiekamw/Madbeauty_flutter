@@ -18,6 +18,15 @@ abstract final class AuthStrings {
   static const String authGoogleSupabaseLinkFailed =
       'Compte Google reconnu mais la session n’a pas pu s’ouvrir. '
       'Vérifie que le fournisseur Google est activé dans Supabase (Auth → Providers).';
+  static const String loginActionApple = 'Continuer avec Apple';
+  static const String registerActionApple = 'Continuer avec Apple';
+  static const String authAppleSignInCanceled = 'Connexion Apple annulée.';
+  static const String authAppleUnavailable =
+      'Connexion Apple disponible uniquement sur iPhone et iPad.';
+  static const String authAppleSupabaseLinkFailed =
+      'Compte Apple reconnu mais la session n’a pas pu s’ouvrir. '
+      'Vérifie que le fournisseur Apple est activé dans Supabase (Auth → Providers).';
+  static const String registerAppleConnected = 'Connecté avec Apple';
   static const String authGoogleWebRedirectMissing =
       'Connexion Google web : configure SUPABASE_WEB_REDIRECT_URL dans .env '
       '(ex. http://localhost:7357) et ajoute cette URL dans Supabase → Auth → Redirect URLs.';

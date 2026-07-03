@@ -156,13 +156,31 @@ class MessagingService {
               .eq(column, profileId)
               .order('last_message_at', ascending: false);
 
-          final conversations = (convRows as List<dynamic>)
-              .map(
-                (r) => SupabaseDomainCodec.conversation(
-                  Map<String, dynamic>.from(r as Map),
-                ),
-              )
-              .toList();
+          final byId = <String, Conversation>{};
+          for (final raw in convRows as List<dynamic>) {
+            final conv = SupabaseDomainCodec.conversation(
+              Map<String, dynamic>.from(raw as Map),
+            );
+            byId[conv.id] = conv;
+          }
+
+          final fromMessages = await _loadConversationsFromMessages(
+            column: column,
+            profileId: profileId,
+          );
+          for (final conv in fromMessages) {
+            byId.putIfAbsent(conv.id, () => conv);
+          }
+
+          final conversations = byId.values.toList()
+            ..sort((a, b) {
+              final ta = a.lastMessageAt;
+              final tb = b.lastMessageAt;
+              if (ta == null && tb == null) return 0;
+              if (ta == null) return 1;
+              if (tb == null) return -1;
+              return tb.compareTo(ta);
+            });
 
           if (conversations.isEmpty) return [];
 
@@ -213,6 +231,47 @@ class MessagingService {
           ];
         },
       );
+
+  Future<List<Conversation>> _loadConversationsFromMessages({
+    required String column,
+    required String profileId,
+  }) async {
+    final resRows = await _client
+        .from('reservations')
+        .select('id')
+        .eq(column, profileId);
+
+    final bookingIds = <String>[
+      for (final raw in resRows as List<dynamic>)
+        if ((raw as Map)['id'] is String) (raw)['id'] as String,
+    ];
+    if (bookingIds.isEmpty) return const [];
+
+    final msgRows = await _client
+        .from('messages')
+        .select('conversation_id')
+        .inFilter('booking_id', bookingIds)
+        .isFilter('deleted_at', null);
+
+    final convIds = <String>{
+      for (final raw in msgRows as List<dynamic>)
+        if ((raw as Map)['conversation_id'] is String)
+          (raw)['conversation_id'] as String,
+    };
+    if (convIds.isEmpty) return const [];
+
+    final convRows = await _client
+        .from('conversations')
+        .select()
+        .inFilter('id', convIds.toList());
+
+    return [
+      for (final raw in convRows as List<dynamic>)
+        SupabaseDomainCodec.conversation(
+          Map<String, dynamic>.from(raw as Map),
+        ),
+    ];
+  }
 
   ConversationInboxItem _toInboxItem({
     required Conversation conv,

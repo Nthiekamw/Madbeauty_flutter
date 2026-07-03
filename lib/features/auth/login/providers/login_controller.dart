@@ -156,4 +156,33 @@ class LoginController extends Notifier<LoginViewState> {
       return false;
     }
   }
+
+  Future<bool> startAppleSignIn() async {
+    if (!AppConfig.hasSupabase) {
+      state = state.copyWith(requestSupabaseSnack: true);
+      return false;
+    }
+    try {
+      final user =
+          await ref.read(authNotifierProvider.notifier).signInWithApple();
+      if (!ref.mounted) return false;
+      if (user != null) {
+        state = state.copyWith(
+          shouldPopRoute: true,
+          clearSubmitError: true,
+        );
+        return true;
+      }
+      state = state.copyWith(clearSubmitError: true);
+      return true;
+    } on AppFailure catch (e) {
+      if (!ref.mounted) return false;
+      state = state.copyWith(submitError: e.message);
+      return false;
+    } catch (_) {
+      if (!ref.mounted) return false;
+      state = state.copyWith(submitError: CoreStrings.errorUnexpected);
+      return false;
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_strings.dart';
 import '../../features/auth/providers/auth_notifier.dart';
 import '../../router/navigation_extensions.dart';
+import '../../services/notifications/live_refresh.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../../services/supabase/profile/client_profile_providers.dart';
 import '../../shared/widgets/app/app_snack_bar.dart';
@@ -34,19 +35,19 @@ Future<void> openChatForReservation(
       }
       return;
     }
-    await messageService.ensureThreadForBooking(reservationId);
+
+    final conv = await messageService.ensureThreadForBooking(reservationId);
+    refreshMessagingInbox(ref, role: viewerRole);
+
     if (!context.mounted) return;
-    final conv = await messagingService.getByBookingId(reservationId);
-    if (conv == null) {
-      if (context.mounted) {
-        AppSnackBar.show(context, message: DiscChat.loadError);
-      }
-      return;
-    }
-    context.pushChat(
+
+    await context.pushChat(
       conv.id,
       as: viewerRole == MessagingInboxRole.client ? 'client' : 'prestataire',
     );
+
+    if (!context.mounted) return;
+    refreshMessagingInbox(ref, role: viewerRole);
   } catch (_) {
     if (context.mounted) {
       AppSnackBar.show(context, message: DiscChat.loadError);
@@ -108,14 +109,12 @@ Future<void> openChatWithPrestataire(
           AppSnackBar.show(context, message: DiscChat.loadError);
           return;
         }
-        await messageService.ensureThreadForBooking(bookingId);
+        final conv = await messageService.ensureThreadForBooking(bookingId);
+        refreshMessagingInbox(ref, role: MessagingInboxRole.client);
         if (!context.mounted) return;
-        final conv = await messagingService.getByBookingId(bookingId);
-        if (conv == null) {
-          AppSnackBar.show(context, message: DiscChat.loadError);
-          return;
-        }
         await context.pushChat(conv.id, as: 'client');
+        if (!context.mounted) return;
+        refreshMessagingInbox(ref, role: MessagingInboxRole.client);
     }
   } catch (_) {
     if (context.mounted) {
@@ -123,4 +122,3 @@ Future<void> openChatWithPrestataire(
     }
   }
 }
-
