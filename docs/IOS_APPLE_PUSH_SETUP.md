@@ -72,4 +72,4 @@ Voir `docs/BOOKING_PUSH_NOTIFICATIONS.md` : migration FCM, Edge Functions, secre
 
 Aucune capability Apple Maps requise : l’app utilise **OpenStreetMap** (`flutter_map`) + **géolocalisation** (`geolocator`).
 
-Permission déjà déclarée : `NSLocationWhenInUseUsageDescription` dans `Info.plist`.
+Permissions déclarées dans `Info.plist` : `NSLocationWhenInUseUsageDescription` et `NSLocationAlwaysAndWhenInUseUsageDescription` (requis App Store si un SDK référence l’API « always »).

@@ -51,6 +51,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MadBeauty utilise ta position pour afficher les prestataires autour de toi sur la carte.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>MadBeauty utilise ta position pour afficher les prestataires autour de toi sur la carte lorsque tu utilises l’application.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>MadBeauty accède à ta photothèque pour choisir une photo de profil, des réalisations pour ton salon ou des images à envoyer dans le chat.</string>
 	<key>NSCameraUsageDescription</key>
