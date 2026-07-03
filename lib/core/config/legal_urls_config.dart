@@ -9,4 +9,7 @@ abstract final class LegalUrlsConfig {
     'PRIVACY_POLICY_URL',
     defaultValue: 'https://madbeauty-app.netlify.app/privacy.html',
   );
+
+  /// Contact support / RGPD (en attendant support@madbeauty.app).
+  static const String supportEmail = 'williamnthiekam392@gmail.com';
 }
