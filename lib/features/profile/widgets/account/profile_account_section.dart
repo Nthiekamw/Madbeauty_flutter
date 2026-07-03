@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
-import '../../../../services/stripe/stripe_service.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../auth/guest/guest_mode_provider.dart';
@@ -14,18 +13,14 @@ class ProfileAccountSection extends ConsumerWidget {
     super.key,
     this.topSection,
     this.menuPrefix,
-    this.showClientPaymentMethods = true,
     this.showClientReviews = true,
   });
 
-  /// Contenu optionnel au-dessus des entrées compte (ex. paiements prestataire).
+  /// Contenu optionnel au-dessus des entrées compte.
   final Widget? topSection;
 
   /// Tuiles insérées en tête du menu compte (ex. abonnement prestataire).
   final Widget? menuPrefix;
-
-  /// Cartes bancaires client (Stripe Customer). Désactivé sur le profil prestataire.
-  final bool showClientPaymentMethods;
 
   /// « Mes avis » (avis laissés en tant que cliente). Masqué sur le profil prestataire.
   final bool showClientReviews;
@@ -33,8 +28,6 @@ class ProfileAccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isGuest = ref.watch(isGuestBrowsingProvider);
-    final showPaymentMethods =
-        showClientPaymentMethods && StripeService.isConfigured;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,15 +52,6 @@ class ProfileAccountSection extends ConsumerWidget {
                 title: DiscProfile.actionEditAccount,
                 onTap: () => context.pushEditClientAccount(),
               ),
-              if (showPaymentMethods) ...[
-                _divider(context),
-                DiscoveryMenuTile(
-                  icon: Icons.payment_rounded,
-                  title: DiscPaymentMethods.sectionTitle,
-                  subtitle: DiscPaymentMethods.clientAccountMenuHint,
-                  onTap: () => context.pushClientPaymentMethods(),
-                ),
-              ],
               if (showClientReviews) ...[
                 _divider(context),
                 DiscoveryMenuTile(
@@ -118,6 +102,4 @@ class ProfileAccountSection extends ConsumerWidget {
       color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12),
     );
   }
-
 }
-

@@ -2,7 +2,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
-import '../../../../../router/navigation_extensions.dart';
 import '../../../../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../logic/prestataire_profile_completeness.dart';
@@ -13,9 +12,6 @@ import '../../../models/prestataire_reservation_item.dart';
 import '../../../providers/dashboard/prestataire_dashboard_layout_provider.dart';
 import '../../../providers/profile/prestataire_profile_form_provider.dart';
 import '../../analytics/prestataire_analytics_panel.dart';
-import '../../profile/subscription/prestataire_payout_setup_hint.dart';
-import 'prestataire_dashboard_action_card.dart';
-import '../layout/prestataire_dashboard_insets.dart';
 import '../layout/prestataire_dashboard_layout_tile.dart';
 import '../layout/prestataire_dashboard_section_empty.dart';
 
@@ -150,24 +146,7 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
   }
 
   List<Widget> _footerTiles(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    if (!_profileComplete) {
-      return const [SizedBox(height: 24)];
-    }
-    return [
-      PrestataireDashboardActionCard(
-        icon: Icons.card_membership_rounded,
-        title: DiscPrestaSub.dashboardBannerTitle,
-        subtitle: DiscPrestaSub.dashboardBannerBody,
-        accent: theme.colorScheme.tertiary,
-        onTap: () => context.pushPrestataireSubscription(),
-      ),
-      Padding(
-        padding: PrestataireDashboardInsets.page(context),
-        child: const PrestatairePayoutSetupHint(compact: true),
-      ),
-      const SizedBox(height: 24),
-    ];
+    return const [SizedBox(height: 24)];
   }
 
   int? _badgeCount(

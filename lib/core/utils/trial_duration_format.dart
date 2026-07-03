@@ -15,8 +15,8 @@ abstract final class TrialDurationFormat {
 
   static String onboardingBody(int days) =>
       'Tu bénéficies de ${labelShort(days)} d’essai gratuit pour apparaître dans le catalogue. '
-      'Ensuite, active ton abonnement pour rester visible et gérer tes réservations.';
+      'Complète ton profil pour inspirer confiance et recevoir des réservations.';
 
   static String checkoutTrialHint(int days) =>
-      '${labelShort(days)} d’essai offerts à l’abonnement — aucun prélèvement avant la fin de l’essai.';
+      '${labelShort(days)} d’essai catalogue offerts — aucun paiement dans l’app.';
 }

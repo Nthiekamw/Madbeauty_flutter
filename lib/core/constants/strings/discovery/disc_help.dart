@@ -12,15 +12,14 @@ abstract final class DiscHelp {
   static const bookingFlowBody =
       '1. Choisis un prestataire et un service.\n'
       '2. Sélectionne un créneau.\n'
-      '3. Paie si le prestataire accepte le paiement en ligne.\n'
+      '3. Confirme ta réservation.\n'
       '4. Attends la confirmation du prestataire : le chat s’ouvre ensuite.';
 
   static const cancelPolicyTitle = 'Annulation';
   static const cancelPolicyBody =
       'Tu peux annuler une réservation en attente ou confirmée depuis '
       '« Mes réservations ». En cas de refus par le prestataire, tu seras '
-      'informé du motif. Les remboursements suivent les règles Stripe '
-      'lorsque un paiement en ligne a été effectué.';
+      'informé du motif.';
 
   static const chatPolicyTitle = 'Chat sécurisé';
   static const chatPolicyBody =
@@ -33,10 +32,10 @@ abstract final class DiscHelp {
       'Dans ton profil, ouvre « Parrainage » pour copier ou partager ton code. '
       'Ton amie le saisit à l’inscription ou après connexion.';
 
-  static const paymentTitle = 'Paiement en ligne';
+  static const paymentTitle = 'Règlement sur place';
   static const paymentBody =
-      'Le paiement sécurise ta réservation. Le prestataire reçoit les fonds '
-      'après la prestation selon les règles Stripe Connect.';
+      'Le montant de la prestation se règle directement chez le prestataire le jour J. '
+      'Aucun paiement dans l’application.';
 
   static const waitlistTitle = 'Alerte créneau';
   static const waitlistBody =

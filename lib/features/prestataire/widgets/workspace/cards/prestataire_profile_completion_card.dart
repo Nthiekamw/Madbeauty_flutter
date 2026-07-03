@@ -44,7 +44,6 @@ class PrestataireProfileCompletionCard extends ConsumerWidget {
           hasHoraires: hasHoraires,
           onChecklist: (item) => _openChecklist(context, item),
           onEnhancement: (item) => _openEnhancement(context, item),
-          onPayments: () => context.goPrestataireProfile(),
         );
 
         const accent = AppColors.errorLight;

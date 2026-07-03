@@ -231,7 +231,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
                     ),
                     child: const ProfileAccountSection(
                       menuPrefix: PrestataireProfileAccountMenu(),
-                      showClientPaymentMethods: false,
                       showClientReviews: false,
                     ),
                   ),

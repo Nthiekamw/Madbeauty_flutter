@@ -125,8 +125,8 @@ abstract final class DiscPrestaForm {
   static const hubGoalHoraires =
       'Indique tes créneaux habituels pour recevoir des réservations.';
   static const hubGoalSubscription =
-      'Optionnel : profite de l’essai gratuit ou active ton abonnement plus tard. '
-      'Tu peux enregistrer ton profil sans payer maintenant.';
+      'Optionnel : profite de l’essai catalogue gratuit. '
+      'Tu peux enregistrer ton profil sans autre étape.';
   static const hubSectionWorkPlace = 'Où travailles-tu ?';
   static const hubSectionWorkPlaceHint =
       'Les clientes savent si tu les reçois chez toi, à domicile ou les deux.';
@@ -146,16 +146,15 @@ abstract final class DiscPrestaForm {
       'Active au moins un jour avec des horaires cohérents. '
       'Les congés sont optionnels : tu peux les ajouter maintenant ou plus tard.';
   static const hubTipSubscription =
-      'L’abonnement n’est pas obligatoire pour enregistrer ton profil. '
-      'Tu bénéficies d’un essai catalogue gratuit ; tu pourras t’abonner plus tard.';
+      'L’essai catalogue est offert à l’inscription. '
+      'Complète ta fiche pour inspirer confiance.';
   static String hubStepTip(int stepIndex) => switch (stepIndex) {
         0 => hubTipBasics,
         1 => hubTipLocation,
         2 => hubTipServices,
         3 => hubTipHoraires,
         4 => hubTipGallery,
-        5 => hubTipComfort,
-        _ => hubTipSubscription,
+        _ => hubTipComfort,
       };
   static const hubAvatarPickHint = 'Choisis une photo ou une illustration ci-dessous.';
   static const hubServicesProgressLabel = 'Prestations configurées';

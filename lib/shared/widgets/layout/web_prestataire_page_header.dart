@@ -137,7 +137,6 @@ class WebPrestatairePageHeader extends ConsumerWidget {
                   audience: InAppNotificationAudience.prestataire,
                 ),
                 onMessages: () => context.goPrestataireMessages(),
-                onPayments: () => context.pushPrestataireSubscription(),
               );
 
               if (stackActions) {
@@ -178,7 +177,6 @@ class _WebPrestaProfileChip extends StatelessWidget {
     required this.showMessagesAction,
     required this.onNotifications,
     required this.onMessages,
-    required this.onPayments,
     this.onRefresh,
   });
 
@@ -191,7 +189,6 @@ class _WebPrestaProfileChip extends StatelessWidget {
   final bool showMessagesAction;
   final VoidCallback onNotifications;
   final VoidCallback onMessages;
-  final VoidCallback onPayments;
   final Future<void> Function()? onRefresh;
 
   @override
@@ -251,11 +248,6 @@ class _WebPrestaProfileChip extends StatelessWidget {
                 tooltip: DiscPrestaWorkspace.refreshTooltip,
                 onTap: () => onRefresh!(),
               ),
-            _WebIconButton(
-              icon: Icons.credit_card_outlined,
-              tooltip: DiscPrestaWorkspace.paymentsTooltip,
-              onTap: onPayments,
-            ),
             _WebIconButton(
               icon: Icons.notifications_outlined,
               tooltip: DiscPrestaWorkspace.notificationsTooltip,

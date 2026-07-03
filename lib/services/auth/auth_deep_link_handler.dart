@@ -27,10 +27,6 @@ abstract final class AuthDeepLinkHandler {
 
   static const _authHosts = {
     'login-callback',
-    'stripe-connect-return',
-    'stripe-connect-refresh',
-    'subscription-return',
-    'client-payment-return',
   };
 
   static bool isAuthCallbackUri(Uri uri) {

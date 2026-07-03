@@ -312,14 +312,6 @@ class _HeaderActions extends ConsumerWidget {
             onTap: () => onRefresh!(),
           ),
         _HeaderIconButton(
-          icon: Icons.credit_card_outlined,
-          tooltip: DiscPrestaWorkspace.paymentsTooltip,
-          size: buttonSize,
-          iconSize: iconSize,
-          gap: gap,
-          onTap: () => context.pushPrestataireSubscription(),
-        ),
-        _HeaderIconButton(
           icon: Icons.notifications_outlined,
           tooltip: DiscPrestaWorkspace.notificationsTooltip,
           badge: unreadNotif,

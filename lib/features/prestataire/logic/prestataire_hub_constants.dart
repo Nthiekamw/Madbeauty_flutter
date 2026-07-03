@@ -9,7 +9,7 @@ abstract final class PrestataireHubConstants {
 
   static const galleryMaxPhotos = 10;
   static const galleryMaxVideos = 3;
-  static const wizardStepCount = 7;
+  static const wizardStepCount = 6;
   static const optionalFromStep = 4;
 
   static const defaultAvatarUrls = DefaultAvatarUrls.urls;
@@ -39,9 +39,5 @@ const List<PrestataireHubStepMeta> kPrestataireHubSteps = [
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepComfort,
     icon: Icons.favorite_rounded,
-  ),
-  PrestataireHubStepMeta(
-    title: DiscPrestaForm.stepSubscription,
-    icon: Icons.card_membership_outlined,
   ),
 ];

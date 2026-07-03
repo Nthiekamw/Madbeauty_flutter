@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/models/domain/prestataire/prestataire_subscription_status.dart';
-import '../../../../services/stripe/stripe_subscription_providers.dart';
+import '../../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../../logic/prestataire_profile_completeness.dart';
 import '../profile/prestataire_profile_form_provider.dart';
 

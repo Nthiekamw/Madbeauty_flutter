@@ -2,7 +2,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -16,7 +15,6 @@ import 'services/notifications/booking_local_reminders.dart';
 import 'services/notifications/prestataire_catalog_visibility_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
 import 'services/storage/local_cache_service.dart';
-import 'services/stripe/stripe_service.dart';
 import 'services/supabase/supabase_service.dart';
 
 Future<void> main() async {
@@ -47,21 +45,11 @@ Future<void> main() async {
         debugPrint('GoogleAuthService.warmUp ignoré au démarrage: $e\n$st');
       }
     }
-    // FCM uniquement — best-effort, ne bloque pas le démarrage.
     await ensureFirebaseInitialized();
   }
 
-  if (!kIsWeb && StripeService.isConfigured) {
-    Stripe.publishableKey = StripeService.publishableKey;
-    Stripe.merchantIdentifier = 'merchant.com.madbeauty.madbeauty';
-    await Stripe.instance.applySettings();
-  }
-
   if (kDebugMode) {
-    debugPrint(
-      'MadBeauty config: supabase=${AppConfig.hasSupabase} '
-      'stripe=${StripeService.isConfigured}',
-    );
+    debugPrint('MadBeauty config: supabase=${AppConfig.hasSupabase}');
   }
 
   runApp(
@@ -75,4 +63,3 @@ Future<void> main() async {
     ),
   );
 }
-

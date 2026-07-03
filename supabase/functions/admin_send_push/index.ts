@@ -6,7 +6,7 @@ import {
 import {
   requireAuthUser,
   serviceClient,
-} from "../_shared/stripe_booking.ts";
+} from "../_shared/supabase_auth.ts";
 
 type Audience = "all" | "client" | "prestataire" | "user" | "users";
 

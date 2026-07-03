@@ -34,8 +34,7 @@ abstract final class DiscBk {
   static const recapTrust =
       'Vérifie les informations ci-dessus. Ta réservation ne sera enregistrée qu’après confirmation.';
   static const recapCancelPolicy =
-      'Tu pourras annuler depuis « Mes réservations » tant que le rendez-vous n’a pas eu lieu. '
-      'En cas de paiement en ligne, le remboursement suit les règles Stripe.';
+      'Tu pourras annuler depuis « Mes réservations » tant que le rendez-vous n’a pas eu lieu.';
   static const doneBodyPaid =
       'Ton paiement est enregistré et ta réservation est confirmée. Le prestataire pourra la valider sous peu.';
   static const recapPrestaBadTitle = 'Prestataire introuvable';

@@ -9,9 +9,6 @@ abstract final class DiscPrestaWorkspace {
       'Vue d’ensemble de ton activité et de tes demandes';
   static const refreshTooltip = 'Actualiser';
   static const refreshShort = 'Actualiser';
-  static const paymentsTooltip =
-      'Abonnement MadBeauty (catalogue) — distinct de l’encaissement des prestations';
-  static const paymentsShort = 'Abonnement';
   static const notificationsTooltip = 'Notifications';
   static const notificationsShort = 'Alertes';
   static const messagesTooltip = 'Messages';
@@ -22,7 +19,7 @@ abstract final class DiscPrestaWorkspace {
   static const messagesInboxHeaderSubtitle = 'Messages clients';
   static const agendaSubtitle = 'Planning et demandes de réservation';
   static const clientsSubtitle = 'Historique et fidélisation';
-  static const profileHeaderSubtitle = 'Compte, paiements et réglages pro';
+  static const profileHeaderSubtitle = 'Compte et réglages pro';
 
   static const completionTitle =
       'Complétez votre profil pour recevoir des clients';

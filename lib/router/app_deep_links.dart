@@ -9,26 +9,17 @@ abstract final class AppDeepLinks {
 
   static const _authHosts = {
     'login-callback',
-    'stripe-connect-return',
-    'stripe-connect-refresh',
     'subscription-return',
-    'client-payment-return',
   };
 
   /// URI OAuth / confirmation e-mail / recovery (`login-callback`, etc.).
   static bool isAuthCallbackUri(Uri uri) =>
       AuthDeepLinkHandler.isAuthCallbackUri(uri);
 
-  /// Route après retour Stripe Checkout abonnement (`subscription-return`).
+  /// Route après retour deep link abonnement (`subscription-return`).
   static String? subscriptionReturnPath(Uri uri) {
     if (uri.host != 'subscription-return') return null;
     return AppRoutes.prestataireSubscription;
-  }
-
-  /// Route après portail Stripe client (`client-payment-return`).
-  static String? clientPaymentReturnPath(Uri uri) {
-    if (uri.host != 'client-payment-return') return null;
-    return AppRoutes.clientPaymentMethods;
   }
 
   /// Chemin go_router (`/prestataire/:id`) ou `null` si non géré ici.

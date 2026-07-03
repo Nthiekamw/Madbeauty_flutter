@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
-import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../models/prestataire_subscription_status.dart';
-import '../../subscription/prestataire_subscription_billing_cards_section.dart';
 
-/// État abonnement actif sur l’écran « Mon abonnement ».
+/// État d’accès catalogue sur l’écran « Accès catalogue ».
 class PrestataireSubscriptionActivePanel extends ConsumerStatefulWidget {
   const PrestataireSubscriptionActivePanel({
     super.key,
@@ -36,16 +34,8 @@ class _PrestataireSubscriptionActivePanelState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final busy = widget.refreshing;
-    final period = widget.status.periodEnd;
-    final periodText = period != null
-        ? DiscPrestaSub.renewsOn.replaceFirst(
-            '%s',
-            MaterialLocalizations.of(context).formatShortDate(period.toLocal()),
-          )
-        : null;
-    final intervalLabel = widget.status.interval == 'year'
-        ? DiscPrestaSub.activeIntervalYearly
-        : DiscPrestaSub.activeIntervalMonthly;
+    final inTrial = widget.status.isInCatalogTrial;
+    final trialDays = widget.status.catalogTrialDaysRemaining;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +72,9 @@ class _PrestataireSubscriptionActivePanelState
                           border: Border.all(color: AppColors.successBorder35),
                         ),
                         child: Text(
-                          DiscPrestaSub.activeHeroBadge,
+                          inTrial
+                              ? DiscPrestaSub.statusCatalogTrial
+                              : DiscPrestaSub.activeHeroBadge,
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: AppColors.success,
                             fontWeight: FontWeight.w800,
@@ -109,7 +101,9 @@ class _PrestataireSubscriptionActivePanelState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    DiscPrestaSub.activeHeroBody,
+                    inTrial && trialDays != null
+                        ? DiscPrestaSub.trialBannerBody(trialDays)
+                        : DiscPrestaSub.activeHeroBody,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.4,
@@ -120,18 +114,6 @@ class _PrestataireSubscriptionActivePanelState
                     icon: Icons.layers_rounded,
                     label: DiscPrestaSub.activeTierLabel(widget.tierLabel),
                   ),
-                  const SizedBox(height: 8),
-                  _InfoRow(
-                    icon: Icons.event_repeat_rounded,
-                    label: intervalLabel,
-                  ),
-                  if (periodText != null) ...[
-                    const SizedBox(height: 8),
-                    _InfoRow(
-                      icon: Icons.calendar_today_rounded,
-                      label: periodText,
-                    ),
-                  ],
                   const SizedBox(height: 18),
                   if (busy)
                     const Center(
@@ -153,60 +135,6 @@ class _PrestataireSubscriptionActivePanelState
                 ],
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        const DiscoverySurfaceCard(
-          padding: EdgeInsets.all(18),
-          child: PrestataireSubscriptionBillingCardsSection(),
-        ),
-        const SizedBox(height: 14),
-        DiscoverySurfaceCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      DiscPrestaSub.activeConnectHintTitle,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      DiscPrestaSub.activeConnectHintBodyShort,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => context.pushPrestatairePaymentMethods(),
-                      child: const Text(DiscPrestaSub.activeConnectHintCta),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ],

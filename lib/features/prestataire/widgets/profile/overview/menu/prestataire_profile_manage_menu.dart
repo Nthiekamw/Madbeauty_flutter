@@ -61,18 +61,6 @@ class PrestataireProfileManageMenu extends StatelessWidget {
             color: theme.colorScheme.outline.withValues(alpha: 0.12),
           ),
           DiscoveryMenuTile(
-            icon: Icons.card_membership_rounded,
-            title: DiscPrestaSub.profileTileTitle,
-            subtitle: DiscPrestaSub.profileTileSubtitle,
-            onTap: () => context.pushPrestataireSubscription(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
             icon: Icons.rate_review_outlined,
             title: DiscReview.receivedReviewsTitle,
             subtitle: DiscReview.receivedReviewsSubtitle,

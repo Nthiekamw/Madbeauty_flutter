@@ -26,7 +26,7 @@ class PrestataireCatalogVisibilityReminders {
       _channelId,
       'Visibilité catalogue pro',
       description:
-          'Rappels pour activer ton abonnement et apparaître dans le catalogue.',
+          'Rappels pour compléter ton profil et apparaître dans le catalogue.',
       importance: Importance.defaultImportance,
     );
     final android = FlutterLocalNotificationsPlugin()
@@ -89,7 +89,7 @@ class PrestataireCatalogVisibilityReminders {
             _channelId,
             'Visibilité catalogue pro',
             channelDescription:
-                'Rappels pour activer ton abonnement professionnel.',
+                'Rappels pour retrouver ta visibilité sur le catalogue.',
             importance: Importance.defaultImportance,
           ),
           iOS: const DarwinNotificationDetails(),

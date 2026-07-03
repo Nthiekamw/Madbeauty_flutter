@@ -13,7 +13,7 @@ import '../../../services/notifications/in_app_notification_audience.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/notifications/prestataire_catalog_visibility_reminders.dart';
 import '../../../services/notifications/prestataire_visibility_notify_service.dart';
-import '../../../services/stripe/stripe_subscription_providers.dart';
+import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../../auth/providers/my_roles_provider.dart';
 import '../../prestataire/providers/profile/prestataire_profile_form_provider.dart';
 

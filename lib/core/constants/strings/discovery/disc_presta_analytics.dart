@@ -22,7 +22,7 @@ abstract final class DiscPrestaAnalytics {
   static const loadErr = 'Impossible de charger les statistiques.';
   static const noData = '—';
   static const revenueBreakdown =
-      'Stripe capturé + paiements sur place (prestations confirmées ou terminées).';
+      'Prestations confirmées ou terminées (règlement sur place).';
   static const dashboardPeriodLabel = 'Période affichée';
   static const dashboardRevenueHeadline = 'Tu as gagné';
   static const dashboardRevenueHint =

@@ -20,7 +20,6 @@ export 'catalog/service_beaute.dart';
 export 'messaging/conversation.dart';
 export 'messaging/conversation_inbox_item.dart';
 export 'messaging/message.dart';
-export 'payment/client_payment_method.dart';
 export 'prestataire/prestataire_dashboard_data.dart';
 export 'reviews/avis.dart';
 export 'reviews/review.dart';

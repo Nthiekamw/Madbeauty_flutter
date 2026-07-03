@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_strings.dart';
 import '../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 
 /// Critères alignés spec onboarding prestataire.
@@ -148,7 +147,6 @@ List<PrestataireProfileProgressChipAction> prestataireProfileProgressChipActions
   required bool hasHoraires,
   required void Function(PrestaCompletionChecklistItem item) onChecklist,
   required void Function(PrestaProfileEnhancementItem item) onEnhancement,
-  required VoidCallback onPayments,
 }) {
   final chips = <PrestataireProfileProgressChipAction>[];
 
@@ -166,15 +164,6 @@ List<PrestataireProfileProgressChipAction> prestataireProfileProgressChipActions
       PrestataireProfileProgressChipAction(
         label: '+ ${item.label}',
         onTap: () => onEnhancement(item),
-        required: false,
-      ),
-    );
-  }
-  if (data.isProfessionallyComplete) {
-    chips.add(
-      PrestataireProfileProgressChipAction(
-        label: '+ ${DiscStripeConnect.chipLabel}',
-        onTap: onPayments,
         required: false,
       ),
     );

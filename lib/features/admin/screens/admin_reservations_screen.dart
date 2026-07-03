@@ -247,7 +247,7 @@ class _ReservationCard extends StatelessWidget {
             Text('Montant : $amountLabel'),
             if (item.stripePaymentIntentId != null)
               Text(
-                'Stripe: ${item.stripePaymentIntentId}',
+                'Réf. paiement archivé : ${item.stripePaymentIntentId}',
                 style: Theme.of(context).textTheme.labelSmall,
               ),
           ],

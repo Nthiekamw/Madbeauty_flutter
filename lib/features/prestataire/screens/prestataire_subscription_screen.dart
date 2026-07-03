@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/prestataire_subscription_config.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../services/stripe/stripe_subscription_providers.dart';
+import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
@@ -13,14 +13,11 @@ import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../logic/prestataire_subscription_refresh.dart';
 import '../providers/subscription/prestataire_subscription_provider.dart';
 import '../widgets/profile/subscription/prestataire_subscription_active_panel.dart';
-import '../widgets/profile/subscription/prestataire_subscription_checkout_section.dart';
 import '../widgets/profile/subscription/prestataire_subscription_testimonials_section.dart';
-import '../widgets/profile/subscription/prestataire_subscription_tier_cards.dart';
-import '../widgets/subscription/prestataire_subscription_billing_cards_section.dart';
 import '../widgets/workspace/layout/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_flow_scaffold.dart';
 
-/// Grille d’abonnement + paiement Stripe Checkout.
+/// Statut d’accès catalogue prestataire (essai / visibilité).
 class PrestataireSubscriptionScreen extends ConsumerStatefulWidget {
   const PrestataireSubscriptionScreen({super.key});
 
@@ -56,7 +53,6 @@ class _PrestataireSubscriptionScreenState
 
   Future<void> _refresh() async {
     if (_refreshing) return;
-    if (ref.read(stripePrestaSubscriptionServiceProvider) == null) return;
 
     setState(() => _refreshing = true);
     try {
@@ -77,9 +73,7 @@ class _PrestataireSubscriptionScreenState
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
     final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
-    final sectionPad = useWeb
-        ? const EdgeInsets.symmetric(horizontal: 20)
-        : const EdgeInsets.symmetric(horizontal: 20);
+    const sectionPad = EdgeInsets.symmetric(horizontal: 20);
     final serviceCountAsync = ref.watch(prestatairePublishedServiceCountProvider);
     final statusAsync = ref.watch(prestataireSubscriptionStatusProvider);
 
@@ -145,84 +139,16 @@ class _PrestataireSubscriptionScreenState
                 ),
               ),
               data: (status) {
-                if (status.isActive) {
+                if (status.hasCatalogAccess) {
                   return Padding(
                     padding: sectionPad,
                     child: PrestataireSubscriptionActivePanel(
                       status: status,
                       tierLabel: _tierLabel(
-                        status.tier ??
-                            PrestataireSubscriptionConfig.solo.id,
+                        status.tier ?? PrestataireSubscriptionConfig.solo.id,
                       ),
                       refreshing: _refreshing,
                       onRefresh: _refresh,
-                    ),
-                  );
-                }
-
-                if (status.needsAttention) {
-                  return Padding(
-                    padding: sectionPad,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        DiscoverySurfaceCard(
-                          includeHorizontalMargin: false,
-                          padding: const EdgeInsets.all(18),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: theme.colorScheme.error,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      DiscPaymentMethods.subscriptionStatusPastDue,
-                                      style: theme.textTheme.titleSmall?.copyWith(
-                                        fontFamily: AppFonts.display,
-                                        fontWeight: FontWeight.w800,
-                                        color: theme.colorScheme.error,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                DiscPrestaSub.statusPastDue,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        const DiscoverySurfaceCard(
-                          includeHorizontalMargin: false,
-                          padding: EdgeInsets.all(18),
-                          child: PrestataireSubscriptionBillingCardsSection(),
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: _refreshing ? null : _refresh,
-                          icon: _refreshing
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text(DiscPrestaSub.refreshStatus),
-                        ),
-                      ],
                     ),
                   );
                 }
@@ -243,11 +169,40 @@ class _PrestataireSubscriptionScreenState
                         PrestataireSubscriptionConfig.tierForServiceCount(
                       serviceCount,
                     );
+                    final trialDays = status.catalogTrialDaysRemaining;
+
                     return Padding(
                       padding: sectionPad,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          DiscoverySurfaceCard(
+                            includeHorizontalMargin: false,
+                            padding: const EdgeInsets.all(18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DiscPrestaSub.notVisibleBannerTitle,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontFamily: AppFonts.display,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  status.isInCatalogTrial && trialDays != null
+                                      ? DiscPrestaSub.trialBannerBody(trialDays)
+                                      : DiscPrestaSub.notVisibleBannerBody,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    height: 1.4,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
                           DiscoverySurfaceCard(
                             includeHorizontalMargin: false,
                             padding: const EdgeInsets.all(18),
@@ -285,28 +240,6 @@ class _PrestataireSubscriptionScreenState
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            DiscPrestaSub.plansSectionTitle,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            DiscPrestaSub.plansSectionSubtitle,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              height: 1.35,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          PrestataireSubscriptionTierCards(
-                            currentTierId: currentTier.id,
-                          ),
-                          const SizedBox(height: 20),
-                          const PrestataireSubscriptionCheckoutSection(),
                         ],
                       ),
                     );

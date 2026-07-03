@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/supabase_error_handler.dart';
@@ -8,8 +7,6 @@ import '../../../core/logic/booking/booking_create_failure.dart';
 import '../../../core/models/domain/booking/prestataire_reservation_item.dart';
 import '../../../core/models/domain/booking/reservation.dart';
 import '../../../core/models/domain/prestataire/prestataire_analytics_reservation.dart';
-import '../../stripe/stripe_booking_payment_service.dart';
-import '../../stripe/stripe_service.dart';
 import '../profile/profile_service.dart';
 import 'booking_mappers.dart';
 import 'booking_session_context.dart';
@@ -121,7 +118,6 @@ class BookingPrestataireOps {
 
         final s = BookingMappers.normalizeStatut(snapshot['statut']);
         if (const {'terminee', 'done', 'completed'}.contains(s)) {
-          await _captureStripePaymentIfNeeded(bookingId);
           return;
         }
         if (s != 'confirmee' && s != 'confirmed') {
@@ -148,7 +144,6 @@ class BookingPrestataireOps {
 
         final got = updated as List<dynamic>;
         if (got.isNotEmpty) {
-          await _captureStripePaymentIfNeeded(bookingId);
           return;
         }
 
@@ -162,7 +157,6 @@ class BookingPrestataireOps {
         }
         final retryS = BookingMappers.normalizeStatut(retry['statut']);
         if (const {'terminee', 'done', 'completed'}.contains(retryS)) {
-          await _captureStripePaymentIfNeeded(bookingId);
           return;
         }
 
@@ -262,13 +256,4 @@ class BookingPrestataireOps {
     );
   }
 
-  Future<void> _captureStripePaymentIfNeeded(String bookingId) async {
-    if (!StripeService.isConfigured || !AppConfig.hasSupabase) return;
-    try {
-      await StripeBookingPaymentService(_client)
-          .capturePaymentForReservation(bookingId);
-    } catch (_) {
-      // La réservation reste terminée ; la capture pourra être relancée côté serveur.
-    }
-  }
 }

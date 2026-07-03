@@ -5,17 +5,14 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/booking/booking_platform_fee_settings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
-import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_confirmation_submit.dart';
-import '../logic/booking_payment_flow.dart';
 import '../logic/booking_pricing.dart';
 import '../providers/booking_platform_fee_settings_provider.dart';
 import '../providers/client_prior_booking_count_provider.dart';
 import '../providers/is_own_prestataire_profile_provider.dart';
-import '../providers/prestataire_online_payment_provider.dart';
 import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/layout/web_flow_panel.dart';
 import '../widgets/confirmation/booking_confirmation_recap_body.dart';
@@ -50,11 +47,8 @@ class _BookingConfirmationScreenState
   bool _isSubmitting = false;
   bool _isSuccess = false;
   bool _queuedOffline = false;
-  bool _paidWithStripe = false;
   bool _paidOnSite = false;
   String? _errorMessage;
-  BookingPaymentPhase _paymentPhase = BookingPaymentPhase.idle;
-  BookingPaymentModeKind _paymentMode = BookingPaymentModeKind.onSite;
 
   @override
   Widget build(BuildContext context) {
@@ -68,11 +62,9 @@ class _BookingConfirmationScreenState
           onViewReservations: () => context.goMyReservations(),
           body: _queuedOffline
               ? DiscBk.doneBodyQueued
-              : _paidWithStripe
-                  ? DiscBk.doneBodyPaid
-                  : _paidOnSite
-                      ? DiscPay.doneBodyOnSite
-                      : DiscBk.doneBody,
+              : _paidOnSite
+                  ? DiscPay.doneBodyOnSite
+                  : DiscBk.doneBody,
         ),
       );
     }
@@ -83,23 +75,13 @@ class _BookingConfirmationScreenState
     final isOwnProfile = ref
         .watch(isOwnPrestataireProfileProvider(widget.prestataireId))
         .maybeWhen(data: (value) => value, orElse: () => false);
-    final depositAvailableAsync = ref.watch(
-      prestataireDepositAvailableProvider(widget.prestataireId),
-    );
-    final depositAvailable = depositAvailableAsync.maybeWhen(
-      data: (value) => value,
-      orElse: () => false,
-    );
     final priorCount = ref.watch(clientPriorBookingCountProvider).maybeWhen(
           data: (value) => value,
           orElse: () => 0,
         );
     final referralDiscountPercent =
         ref.watch(clientReferralDiscountPercentProvider);
-    final stripeAvailable = BookingPaymentFlow.isPaymentAvailable;
-    final effectiveMode = depositAvailable && stripeAvailable
-        ? _paymentMode
-        : BookingPaymentModeKind.onSite;
+    const effectiveMode = BookingPaymentModeKind.onSite;
 
     final platformFeeSettings = ref
         .watch(bookingPlatformFeeSettingsProvider)
@@ -113,7 +95,7 @@ class _BookingConfirmationScreenState
         servicePriceEur: widget.price,
         paymentMode: effectiveMode,
         priorBookingCount: priorCount,
-        prestataireAcceptsConnect: depositAvailable,
+        prestataireAcceptsConnect: false,
         platformFeeSettings: feeSettings,
         referralDiscountPercent: referralDiscountPercent,
       );
@@ -149,48 +131,24 @@ class _BookingConfirmationScreenState
 
           return WebFlowPanel(
             child: BookingConfirmationRecapBody(
-            prestataireName: prestataireName,
-            avatarUrl: detail.avatarUrl,
-            ville: profile.ville,
-            serviceName: widget.serviceName,
-            dateTime: widget.dateTime,
-            durationMinutes: widget.durationMinutes,
-            price: widget.price,
-            breakdown: breakdown,
-            effectiveMode: effectiveMode,
-            acceptsOnline: depositAvailable,
-            stripeAvailable: stripeAvailable,
-            isOwnProfile: isOwnProfile,
-            isSubmitting: _isSubmitting,
-            acceptsOnlineLoading: depositAvailableAsync.isLoading,
-            errorMessage: _errorMessage,
-            ctaLabel: _ctaLabel(breakdown),
-            onPaymentModeChanged: (mode) => setState(() => _paymentMode = mode),
-            onConfirm: _confirm,
-          ),
+              prestataireName: prestataireName,
+              avatarUrl: detail.avatarUrl,
+              ville: profile.ville,
+              serviceName: widget.serviceName,
+              dateTime: widget.dateTime,
+              durationMinutes: widget.durationMinutes,
+              price: widget.price,
+              breakdown: breakdown,
+              isOwnProfile: isOwnProfile,
+              isSubmitting: _isSubmitting,
+              errorMessage: _errorMessage,
+              ctaLabel: _isSubmitting ? DiscBk.recapCta : DiscPay.recapCtaOnSite,
+              onConfirm: _confirm,
+            ),
           );
         },
       ),
     );
-  }
-
-  String _ctaLabel(BookingPricingBreakdown? breakdown) {
-    if (!_isSubmitting) {
-      if (breakdown == null) return DiscBk.recapCta;
-      if (breakdown.requiresInAppPayment) {
-        return DiscPay.recapCtaPayAmount.replaceFirst(
-          '%s',
-          CurrencyFormat.eur(breakdown.totalChargeEur, decimals: true),
-        );
-      }
-      return DiscPay.recapCtaOnSite;
-    }
-    return switch (_paymentPhase) {
-      BookingPaymentPhase.preparing => DiscPay.preparing,
-      BookingPaymentPhase.presenting => DiscPay.preparing,
-      BookingPaymentPhase.confirming => DiscPay.confirming,
-      BookingPaymentPhase.idle => DiscBk.recapCta,
-    };
   }
 
   Future<void> _confirm() async {
@@ -207,11 +165,6 @@ class _BookingConfirmationScreenState
       serviceName: widget.serviceName,
       price: widget.price,
       dateTime: widget.dateTime,
-      paymentMode: _paymentMode,
-      onPhase: (phase) {
-        if (!mounted) return;
-        setState(() => _paymentPhase = phase);
-      },
       onError: _showConfirmError,
     );
 
@@ -222,7 +175,6 @@ class _BookingConfirmationScreenState
       _isSubmitting = false;
       _isSuccess = true;
       _queuedOffline = result.queuedOffline;
-      _paidWithStripe = result.paidWithStripe;
       _paidOnSite = result.paidOnSite;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -235,7 +187,6 @@ class _BookingConfirmationScreenState
     if (!mounted) return;
     setState(() {
       _isSubmitting = false;
-      _paymentPhase = BookingPaymentPhase.idle;
       _errorMessage = message;
     });
     AppSnackBar.show(

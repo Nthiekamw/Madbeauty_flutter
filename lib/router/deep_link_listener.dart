@@ -114,15 +114,6 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
       return;
     }
 
-    final clientPaymentPath = AppDeepLinks.clientPaymentReturnPath(uri);
-    if (clientPaymentPath != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(goRouterProvider).go(clientPaymentPath);
-      });
-      return;
-    }
-
     final path = AppDeepLinks.routePathFromUri(uri);
     if (path == null) return;
 

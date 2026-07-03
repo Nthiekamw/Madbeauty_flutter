@@ -5,11 +5,11 @@ import '../../../services/supabase/prestataire/profile_form/prestataire_profile_
 import '../../profile/logic/prestataire_hub_onboarding_draft.dart';
 import '../logic/prestataire_profile_completeness.dart';
 
-/// Point d’entrée unique du parcours profil prestataire (7 étapes, hub).
+/// Point d’entrée unique du parcours profil prestataire (6 étapes, hub).
 abstract final class PrestataireHubWizardNavigation {
   PrestataireHubWizardNavigation._();
 
-  static const hubStepCount = 7;
+  static const hubStepCount = 6;
 
   /// Première étape hub à traiter selon l’état du profil.
   static int hubStepFromProfileData(
@@ -32,7 +32,6 @@ abstract final class PrestataireHubWizardNavigation {
         PrestaProfileEnhancementItem.clientExperience => 5,
       };
     }
-    // L’abonnement (étape 7) est optionnel : ne pas y renvoyer automatiquement.
     return 0;
   }
 
@@ -44,7 +43,7 @@ abstract final class PrestataireHubWizardNavigation {
     }
   }
 
-  /// Ouvre le hub profil en mode assistant (7 étapes).
+  /// Ouvre le hub profil en mode assistant (6 étapes).
   static Future<void> openWizard(
     BuildContext context, {
     int? initialStep,
