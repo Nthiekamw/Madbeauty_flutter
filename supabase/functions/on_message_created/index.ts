@@ -134,6 +134,9 @@ Deno.serve(async (req) => {
       );
     }
 
+    const recipientRole =
+      recipientUserId === clientUserId ? "client" : "prestataire";
+
     const { data: profile } = await supabase
       .from("user_profiles")
       .select("fcm_token")
@@ -156,6 +159,7 @@ Deno.serve(async (req) => {
       body,
       data: {
         type: "message",
+        role: recipientRole,
         ...(effectiveConversationId
           ? { conversation_id: effectiveConversationId }
           : {}),

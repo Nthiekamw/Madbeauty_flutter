@@ -6,6 +6,7 @@ import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../services/supabase/messaging/messaging_service.dart';
 import '../../../services/supabase/messaging/messaging_service_core_providers.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
+import '../logic/messaging_viewer_role_inference.dart';
 import '../models/chat_inbox_key.dart';
 import '../models/messaging_inbox_role.dart';
 import 'message_provider.dart';
@@ -30,11 +31,21 @@ final conversationsInboxProvider = FutureProvider
     case MessagingInboxRole.client:
       final client = await ref.watch(currentClientProfileProvider.future);
       if (client == null) return [];
-      return service.listInboxForClient(client.id, user.id);
+      final prestaForClient = await ref.watch(currentPrestataireProvider.future);
+      return service.listInboxForClient(
+        client.id,
+        user.id,
+        ownPrestataireProfileId: prestaForClient?.id,
+      );
     case MessagingInboxRole.prestataire:
       final presta = await ref.watch(currentPrestataireProvider.future);
       if (presta == null) return [];
-      return service.listInboxForPrestataire(presta.id, user.id);
+      final clientForPresta = await ref.watch(currentClientProfileProvider.future);
+      return service.listInboxForPrestataire(
+        presta.id,
+        user.id,
+        ownClientProfileId: clientForPresta?.id,
+      );
   }
 });
 
@@ -97,47 +108,21 @@ final chatInboxItemProvider = FutureProvider.autoDispose
   final viewingAsPresta =
       presta != null && conv.prestataireId == presta.id;
 
-  if (viewingAsClient && !viewingAsPresta) {
-    return _resolveChatInboxItem(
-      ref: ref,
-      service: service,
-      conversationId: conversationId,
-      userId: user.id,
-      viewerRole: MessagingInboxRole.client,
-    );
-  }
+  if (!viewingAsClient && !viewingAsPresta) return null;
 
-  if (viewingAsPresta && !viewingAsClient) {
-    return _resolveChatInboxItem(
-      ref: ref,
-      service: service,
-      conversationId: conversationId,
-      userId: user.id,
-      viewerRole: MessagingInboxRole.prestataire,
-    );
-  }
+  final viewerRole = viewingAsClient && viewingAsPresta
+      ? (messagingViewerRoleFromActiveShell() ?? MessagingInboxRole.client)
+      : viewingAsClient
+          ? MessagingInboxRole.client
+          : MessagingInboxRole.prestataire;
 
-  if (viewingAsClient) {
-    return _resolveChatInboxItem(
-      ref: ref,
-      service: service,
-      conversationId: conversationId,
-      userId: user.id,
-      viewerRole: MessagingInboxRole.client,
-    );
-  }
-
-  if (viewingAsPresta) {
-    return _resolveChatInboxItem(
-      ref: ref,
-      service: service,
-      conversationId: conversationId,
-      userId: user.id,
-      viewerRole: MessagingInboxRole.prestataire,
-    );
-  }
-
-  return null;
+  return _resolveChatInboxItem(
+    ref: ref,
+    service: service,
+    conversationId: conversationId,
+    userId: user.id,
+    viewerRole: viewerRole,
+  );
 });
 
 Future<ConversationInboxItem?> _resolveChatInboxItem({

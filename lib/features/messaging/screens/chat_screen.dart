@@ -32,6 +32,7 @@ import '../models/conversation_inbox_item.dart';
 
 import '../logic/chat_message_moderator.dart';
 import '../logic/chat_message_templates.dart';
+import '../logic/messaging_viewer_role_inference.dart';
 import '../widgets/chat/chat_composer.dart';
 import '../widgets/chat/chat_message_list.dart';
 import '../../trust/widgets/report_content_sheet.dart';
@@ -80,8 +81,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   ChatRouteKey get _routeKey => ChatRouteKey(
         conversationId: widget.conversationId,
         bookingId: widget.bookingId,
-        viewerRole: widget.viewerRole,
+        viewerRole: _effectiveViewerRole,
       );
+
+  MessagingInboxRole? get _effectiveViewerRole =>
+      widget.viewerRole ?? messagingViewerRoleFromActiveShell();
 
   @override
   void initState() {
@@ -525,10 +529,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final messagesAsync = ref.watch(messagesProvider(conversationId));
 
     final headerForRole = headerAsync.asData?.value ?? _lastHeader;
-    final isPresta = widget.viewerRole == MessagingInboxRole.prestataire ||
-        (widget.viewerRole == null &&
-            headerForRole != null &&
-            !headerForRole.showSalonName);
+    final isPresta = _effectiveViewerRole == MessagingInboxRole.prestataire;
     final quickTemplates = isPresta
         ? ChatMessageTemplates.prestataire
         : ChatMessageTemplates.client;

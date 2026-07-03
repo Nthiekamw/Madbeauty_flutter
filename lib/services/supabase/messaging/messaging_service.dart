@@ -121,24 +121,28 @@ class MessagingService {
 
   Future<List<ConversationInboxItem>> listInboxForClient(
     String clientProfileId,
-    String currentUserId,
-  ) =>
+    String currentUserId, {
+    String? ownPrestataireProfileId,
+  }) =>
       _listInbox(
         column: 'client_id',
         profileId: clientProfileId,
         currentUserId: currentUserId,
         peerIsPrestataire: true,
+        ownDualRoleCounterpartProfileId: ownPrestataireProfileId,
       );
 
   Future<List<ConversationInboxItem>> listInboxForPrestataire(
     String prestataireProfileId,
-    String currentUserId,
-  ) =>
+    String currentUserId, {
+    String? ownClientProfileId,
+  }) =>
       _listInbox(
         column: 'prestataire_id',
         profileId: prestataireProfileId,
         currentUserId: currentUserId,
         peerIsPrestataire: false,
+        ownDualRoleCounterpartProfileId: ownClientProfileId,
       );
 
   Future<List<ConversationInboxItem>> _listInbox({
@@ -146,6 +150,7 @@ class MessagingService {
     required String profileId,
     required String currentUserId,
     required bool peerIsPrestataire,
+    String? ownDualRoleCounterpartProfileId,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'messaging.listInbox',
@@ -172,7 +177,7 @@ class MessagingService {
             byId.putIfAbsent(conv.id, () => conv);
           }
 
-          final conversations = byId.values.toList()
+          var conversations = byId.values.toList()
             ..sort((a, b) {
               final ta = a.lastMessageAt;
               final tb = b.lastMessageAt;
@@ -181,6 +186,13 @@ class MessagingService {
               if (tb == null) return -1;
               return tb.compareTo(ta);
             });
+
+          conversations = _filterDualRoleSelfConversations(
+            conversations,
+            column: column,
+            profileId: profileId,
+            ownDualRoleCounterpartProfileId: ownDualRoleCounterpartProfileId,
+          );
 
           if (conversations.isEmpty) return [];
 
@@ -270,7 +282,60 @@ class MessagingService {
         SupabaseDomainCodec.conversation(
           Map<String, dynamic>.from(raw as Map),
         ),
+    ].where((conv) => _conversationMatchesInboxColumn(
+          conv,
+          column: column,
+          profileId: profileId,
+        )).toList();
+  }
+
+  bool _conversationMatchesInboxColumn(
+    Conversation conv, {
+    required String column,
+    required String profileId,
+  }) {
+    return switch (column) {
+      'client_id' => conv.clientId == profileId,
+      'prestataire_id' => conv.prestataireId == profileId,
+      _ => false,
+    };
+  }
+
+  /// Exclut les fils où le même compte est client et prestataire (réservation avec soi-même).
+  ///
+  /// Conservés uniquement dans la boîte client pour éviter un doublon identique côté prestataire.
+  List<Conversation> _filterDualRoleSelfConversations(
+    List<Conversation> conversations, {
+    required String column,
+    required String profileId,
+    String? ownDualRoleCounterpartProfileId,
+  }) {
+    final counterpartId = ownDualRoleCounterpartProfileId?.trim();
+    if (counterpartId == null || counterpartId.isEmpty) {
+      return conversations;
+    }
+
+    return [
+      for (final conv in conversations)
+        if (!_isDualRoleSelfConversation(
+          conv,
+          column: column,
+          profileId: profileId,
+          counterpartProfileId: counterpartId,
+        ))
+          conv,
     ];
+  }
+
+  bool _isDualRoleSelfConversation(
+    Conversation conv, {
+    required String column,
+    required String profileId,
+    required String counterpartProfileId,
+  }) {
+    return column == 'prestataire_id' &&
+        conv.prestataireId == profileId &&
+        conv.clientId == counterpartProfileId;
   }
 
   ConversationInboxItem _toInboxItem({

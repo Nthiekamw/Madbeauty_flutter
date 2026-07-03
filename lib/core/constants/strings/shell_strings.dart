@@ -8,6 +8,10 @@ abstract final class ShellStrings {
   static const String splashLoadingRoles = 'Chargement de ton compte…';
   static const String splashLoadingProfile = 'Préparation de ton espace…';
   static const String splashAlmostReady = 'Presque prêt…';
+  static const String splashBiometricUnlock =
+      'Déverrouille l’app pour continuer…';
+  static const String splashBiometricRetry = 'Réessayer';
+  static const String splashBiometricUsePassword = 'Se connecter autrement';
 
   static const String signInOrSignUp = 'Connexion / inscription';
   static const String openPrestataireSpace = 'Espace prestataire';

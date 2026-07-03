@@ -8,6 +8,8 @@ import '../core/config/app_config.dart';
 import '../features/auth/guest/guest_mode_provider.dart';
 import '../features/auth/navigation/post_auth_navigation.dart';
 import '../features/auth/providers/auth_redirect_providers.dart';
+import '../services/auth/biometric_auth_providers.dart';
+import '../services/auth/biometric_auth_service.dart';
 import '../features/auth/guest/guest_route_policy.dart';
 import '../features/auth/logic/auth_role_cache.dart';
 import '../features/auth/providers/auth_notifier.dart';
@@ -140,6 +142,13 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
     }
     if (publicRoutes.contains(location)) return null;
     return AppRoutes.welcome;
+  }
+
+  if (LocalCacheService.instance.profileBiometricUnlockEnabled &&
+      BiometricAuthService.isPlatformSupported &&
+      !ref.read(biometricUnlockSessionProvider)) {
+    if (location != AppRoutes.splash) return AppRoutes.splash;
+    return null;
   }
 
   final handoffTarget = ref.read(splashRedirectTargetProvider);

@@ -55,6 +55,8 @@
 	<string>MadBeauty accède à ta photothèque pour choisir une photo de profil, des réalisations pour ton salon ou des images à envoyer dans le chat.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>MadBeauty utilise l’appareil photo pour prendre une photo de profil ou illustrer tes réalisations beauté.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>MadBeauty utilise Face ID pour déverrouiller l’accès à ton compte à l’ouverture de l’application.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

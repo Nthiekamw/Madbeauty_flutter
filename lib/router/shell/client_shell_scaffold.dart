@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/profile/providers/profile_tab_visibility_provider.dart';
 import '../../features/booking/providers/booking_session_providers.dart';
 import '../../features/home/providers/home_feed_provider.dart';
 import '../../services/notifications/booking_reminders_sync.dart';
@@ -64,11 +63,6 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
     final selectedIndex = widget.navigationShell.currentIndex;
 
     if (_lastSelectedIndex != selectedIndex) {
-      if (selectedIndex == ClientShellScaffold.profileTabIndex) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(profileTabVisibleTickProvider.notifier).markVisible();
-        });
-      }
       if (selectedIndex == ClientShellScaffold.homeTabIndex) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_lastSelectedIndex != null &&

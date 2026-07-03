@@ -16,6 +16,8 @@ import '../../../features/auth/register/logic/register_wizard_submit_handler.dar
 import '../../../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../../../features/prestataire/navigation/prestataire_navigation.dart';
 import '../../../router/app_router.dart';
+import '../../../services/auth/biometric_auth_providers.dart';
+import '../../../services/auth/biometric_auth_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/brand/brand_logo.dart';
@@ -37,6 +39,8 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
   late final AnimationController _intro;
   late final DateTime _displayStartedAt;
   String _statusText = ShellStrings.splashInitializing;
+  bool _biometricGateActive = false;
+  ProviderContainer? _bootContainer;
 
   @override
   void initState() {
@@ -145,6 +149,13 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
       )) {
         return;
       }
+      if (!await _ensureBiometricUnlock(container)) {
+        _bootContainer = container;
+        if (mounted) {
+          setState(() => _biometricGateActive = true);
+        }
+        return;
+      }
       final handoffTarget = await _bootstrapAuthenticated(container);
       if (!mounted) return;
       if (handoffTarget != null) {
@@ -160,6 +171,65 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
     } else {
       await _go(AppRoutes.welcome);
     }
+  }
+
+  Future<bool> _ensureBiometricUnlock(ProviderContainer container) async {
+    final cache = LocalCacheService.instance;
+    if (!cache.profileBiometricUnlockEnabled) {
+      container.read(biometricUnlockSessionProvider.notifier).unlock();
+      return true;
+    }
+
+    if (container.read(biometricUnlockSessionProvider)) {
+      return true;
+    }
+
+    if (!BiometricAuthService.isPlatformSupported) {
+      container.read(biometricUnlockSessionProvider.notifier).unlock();
+      return true;
+    }
+
+    final bio = container.read(biometricAuthServiceProvider);
+    final availability = await bio.checkAvailability();
+    if (!availability.isUsable) {
+      container.read(biometricUnlockSessionProvider.notifier).unlock();
+      return true;
+    }
+
+    _setStatus(ShellStrings.splashBiometricUnlock);
+    final ok = await bio.authenticate(
+      reason: DiscProfile.prefBiometricAuthReason,
+    );
+    if (ok) {
+      container.read(biometricUnlockSessionProvider.notifier).unlock();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _retryBiometricUnlock() async {
+    final container = _bootContainer;
+    if (container == null || !mounted) return;
+
+    if (await _ensureBiometricUnlock(container)) {
+      if (!mounted) return;
+      setState(() => _biometricGateActive = false);
+      final handoffTarget = await _bootstrapAuthenticated(container);
+      if (!mounted) return;
+      if (handoffTarget != null) {
+        await _navigate(() async => _handoffSplashToRedirect(handoffTarget));
+      }
+    }
+  }
+
+  Future<void> _signOutFromBiometricGate() async {
+    final container = _bootContainer;
+    if (container == null) return;
+    container.read(biometricUnlockSessionProvider.notifier).lock();
+    await container.read(authNotifierProvider.notifier).signOut();
+    if (!mounted) return;
+    setState(() => _biometricGateActive = false);
+    await _go(AppRoutes.welcome);
   }
 
   Future<bool> _tryFinalizeRegistrationDraft(
@@ -274,6 +344,9 @@ class _StartupSplashScreenState extends ConsumerState<StartupSplashScreen>
                     statusText: _statusText,
                     indicatorColor: style.indicatorColor,
                     textColor: style.statusColor,
+                    biometricGateActive: _biometricGateActive,
+                    onBiometricRetry: _retryBiometricUnlock,
+                    onBiometricSignOut: _signOutFromBiometricGate,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -315,14 +388,22 @@ class _SplashLoadingFooter extends StatelessWidget {
     required this.statusText,
     required this.indicatorColor,
     required this.textColor,
+    this.biometricGateActive = false,
+    this.onBiometricRetry,
+    this.onBiometricSignOut,
   });
 
   final String statusText;
   final Color indicatorColor;
   final Color textColor;
+  final bool biometricGateActive;
+  final VoidCallback? onBiometricRetry;
+  final VoidCallback? onBiometricSignOut;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Semantics(
       label: statusText,
       liveRegion: true,
@@ -331,15 +412,17 @@ class _SplashLoadingFooter extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: indicatorColor,
+            if (!biometricGateActive) ...[
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: indicatorColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 14),
+            ],
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 280),
               switchInCurve: Curves.easeOut,
@@ -348,13 +431,25 @@ class _SplashLoadingFooter extends StatelessWidget {
                 statusText,
                 key: ValueKey<String>(statusText),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: AppFonts.body,
                       color: textColor,
                       letterSpacing: 0.15,
                     ),
               ),
             ),
+            if (biometricGateActive) ...[
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: onBiometricRetry,
+                child: const Text(ShellStrings.splashBiometricRetry),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: onBiometricSignOut,
+                child: const Text(ShellStrings.splashBiometricUsePassword),
+              ),
+            ],
           ],
         ),
       ),

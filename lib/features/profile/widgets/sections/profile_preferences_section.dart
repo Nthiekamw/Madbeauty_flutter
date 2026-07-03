@@ -1,17 +1,15 @@
-﻿import 'dart:async';
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../firebase_runtime_helpers.dart';
+import '../../../../services/auth/biometric_auth_providers.dart';
+import '../../../../services/auth/biometric_auth_service.dart';
 import '../../../../services/permissions/permissions_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
-import '../../logic/profile_push_permission_prompt.dart';
 import '../../providers/profile_preferences_provider.dart';
-import '../../providers/profile_tab_visibility_provider.dart';
 import '../layout/profile_section_title.dart';
 
 class ProfilePreferencesSection extends ConsumerStatefulWidget {
@@ -26,16 +24,8 @@ class _ProfilePreferencesSectionState
     extends ConsumerState<ProfilePreferencesSection> {
   @override
   Widget build(BuildContext context) {
-    ref.listen<int>(profileTabVisibleTickProvider, (previous, next) {
-      if (previous == null || next <= previous) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          unawaited(promptPushPermissionIfNeeded(context, ref));
-        }
-      });
-    });
-
     final prefs = ref.watch(profilePreferencesProvider);
+    final biometricAsync = ref.watch(biometricAvailabilityProvider);
     final nativePush = isFirebaseConfiguredForPush();
     final pushSubtitle = nativePush
         ? (prefs.pushNotificationsEnabled
@@ -89,6 +79,37 @@ class _ProfilePreferencesSectionState
                 color: Theme.of(context).colorScheme.outline.withValues(
                   alpha: 0.1,
                 ),
+              ),
+              biometricAsync.when(
+                data: (availability) {
+                  if (!availability.isUsable) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      _PreferenceToggle(
+                        icon: _biometricIcon(availability),
+                        title: _biometricTitle(availability),
+                        subtitle: prefs.biometricUnlockEnabled
+                            ? DiscProfile.prefBiometricHint
+                            : DiscProfile.prefBiometricInactiveHint,
+                        value: prefs.biometricUnlockEnabled,
+                        onChanged: (value) =>
+                            _onBiometricChanged(context, ref, value),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: Theme.of(context).colorScheme.outline.withValues(
+                          alpha: 0.1,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
               _PreferenceToggle(
                 icon: Icons.my_location_rounded,
@@ -200,6 +221,52 @@ class _ProfilePreferencesSectionState
     if (open == true && context.mounted) {
       await ref.read(appPermissionsServiceProvider).openSystemSettings();
     }
+  }
+
+  Future<void> _onBiometricChanged(
+    BuildContext context,
+    WidgetRef ref,
+    bool enabled,
+  ) async {
+    final ok = await ref
+        .read(profilePreferencesProvider.notifier)
+        .setBiometricUnlock(enabled);
+    if (!context.mounted) return;
+
+    if (ok) {
+      AppSnackBar.show(
+        context,
+        message: enabled
+            ? DiscProfile.prefBiometricEnabled
+            : DiscProfile.prefBiometricDisabled,
+      );
+      return;
+    }
+
+    AppSnackBar.show(
+      context,
+      message: enabled
+          ? DiscProfile.prefBiometricSetupFailed
+          : DiscProfile.prefBiometricDisabled,
+      kind: AppSnackKind.warning,
+    );
+  }
+
+  String _biometricTitle(BiometricAvailability availability) {
+    if (availability.label == DiscProfile.prefBiometricFaceIdLabel) {
+      return DiscProfile.prefBiometric;
+    }
+    if (availability.label == DiscProfile.prefBiometricFingerprintLabel) {
+      return DiscProfile.prefBiometricFingerprint;
+    }
+    return DiscProfile.prefBiometricTouchId;
+  }
+
+  IconData _biometricIcon(BiometricAvailability availability) {
+    if (availability.label == DiscProfile.prefBiometricFaceIdLabel) {
+      return Icons.face_rounded;
+    }
+    return Icons.fingerprint_rounded;
   }
 }
 

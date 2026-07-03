@@ -2,6 +2,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/messaging/logic/messaging_viewer_role_inference.dart';
 import '../../router/app_router.dart';
 import 'in_app_notification.dart';
 
@@ -59,10 +60,14 @@ void navigateFromPushDataWithRouter(
     case 'message':
       final conversationId = _str(data, 'conversation_id') ??
           _str(data, 'conversationId');
+      final as = messagingAsQueryParam(pushRole: role);
+      final queryParams =
+          as != null && as.isNotEmpty ? {'as': as} : const <String, String>{};
       if (conversationId != null) {
         router.pushNamed(
           AppRouteNames.chat,
           pathParameters: {'conversationId': conversationId},
+          queryParameters: queryParams,
         );
         return;
       }
@@ -70,6 +75,7 @@ void navigateFromPushDataWithRouter(
         router.pushNamed(
           AppRouteNames.chatFromBooking,
           pathParameters: {'bookingId': bookingId},
+          queryParameters: queryParams,
         );
       }
       return;

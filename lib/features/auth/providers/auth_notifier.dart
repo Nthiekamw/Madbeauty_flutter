@@ -10,6 +10,7 @@ import '../../../services/auth/auth_service.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../services/auth/google_auth_service.dart';
 import '../../../services/auth/apple_auth_service.dart';
+import '../../../services/auth/biometric_auth_providers.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
 import '../../../services/storage/local_cache_service.dart';
@@ -88,6 +89,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
       LocalCacheService.lastSignedInEmailKey,
       email,
     );
+  }
+
+  void _markBiometricSessionUnlocked() {
+    ref.read(biometricUnlockSessionProvider.notifier).unlock();
   }
 
   Future<void> _clearAuthCache() async {
@@ -175,6 +180,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       );
       final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
       await _cacheCurrentEmail(user);
+      _markBiometricSessionUnlocked();
       state = AsyncData(user);
       return user;
     } catch (_) {
@@ -187,6 +193,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> signOut() async {
     if (!ref.read(authSupabaseEnabledProvider)) return;
+    ref.read(biometricUnlockSessionProvider.notifier).lock();
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await _auth.signOut();
@@ -226,6 +233,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       final sessionUser = _auth.currentSession?.user;
       if (sessionUser != null) {
         await _cacheCurrentEmail(sessionUser);
+        _markBiometricSessionUnlocked();
         state = AsyncData(sessionUser);
       } else {
         state = AsyncData(previousUser);
@@ -277,6 +285,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
         _auth.currentSession?.user ?? _auth.currentUser;
     if (existing != null && _isGoogleUser(existing)) {
       await _cacheCurrentEmail(existing);
+      _markBiometricSessionUnlocked();
       state = AsyncData(existing);
       if (kDebugMode) {
         debugPrint('[GoogleAuth] session existante réutilisée: ${existing.email}');
@@ -292,6 +301,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
         throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
       }
       await _cacheCurrentEmail(user);
+      _markBiometricSessionUnlocked();
       state = AsyncData(user);
       if (kDebugMode) {
         debugPrint('[GoogleAuth] session Supabase OK: ${user.email}');
@@ -336,6 +346,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       throw AppFailure(AuthStrings.authAppleSupabaseLinkFailed);
     }
     await _cacheCurrentEmail(user);
+    _markBiometricSessionUnlocked();
     state = AsyncData(user);
     if (kDebugMode) {
       debugPrint('[AppleAuth] session Supabase OK: ${user.email}');

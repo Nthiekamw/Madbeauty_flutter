@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/profile/providers/profile_tab_visibility_provider.dart';
 import '../../features/prestataire/providers/agenda/prestataire_agenda_provider.dart';
 import '../../services/notifications/booking_reminders_sync.dart';
 import '../../services/notifications/live_refresh.dart';
@@ -66,11 +65,6 @@ class _PrestataireShellScaffoldState
     final selectedIndex = navigationShell.currentIndex;
 
     if (_lastSelectedIndex != selectedIndex) {
-      if (selectedIndex == profileTabIndex) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(profileTabVisibleTickProvider.notifier).markVisible();
-        });
-      }
       if (selectedIndex == dashboardTabIndex ||
           selectedIndex == agendaTabIndex) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

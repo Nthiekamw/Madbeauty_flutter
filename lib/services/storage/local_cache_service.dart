@@ -14,6 +14,8 @@ class LocalCacheService {
   static const String profilePushNotificationsKey =
       'profile.push_notifications_enabled';
   static const String profileGeolocationKey = 'profile.geolocation_enabled';
+  static const String profileBiometricUnlockKey =
+      'profile.biometric_unlock_enabled';
   /// `true` une fois que la demande de permission système (push) a été faite au moins une fois.
   static const String pushPermissionPromptedKey =
       'push.permission_prompted_v1';
@@ -110,6 +112,12 @@ class LocalCacheService {
 
   Future<bool> setProfileGeolocationEnabled(bool value) =>
       _prefs.setBool(profileGeolocationKey, value);
+
+  bool get profileBiometricUnlockEnabled =>
+      _prefs.getBool(profileBiometricUnlockKey) ?? false;
+
+  Future<bool> setProfileBiometricUnlockEnabled(bool value) =>
+      _prefs.setBool(profileBiometricUnlockKey, value);
 
   String? get clientHomeLayoutJson => getString(clientHomeLayoutKey);
 

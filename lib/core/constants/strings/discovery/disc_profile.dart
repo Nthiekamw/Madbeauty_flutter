@@ -36,6 +36,26 @@ abstract final class DiscProfile {
   static const prefLocation = 'Géolocalisation';
   static const prefLocationHint = 'Pros près de toi et tri par distance';
 
+  static const prefBiometric = 'Déverrouiller avec Face ID';
+  static const prefBiometricTouchId = 'Déverrouiller avec Touch ID';
+  static const prefBiometricFingerprint = 'Déverrouiller avec empreinte';
+  static const prefBiometricGeneric = 'Déverrouillage biométrique';
+  static const prefBiometricHint =
+      'Protège l’accès à ton compte à l’ouverture de l’app';
+  static const prefBiometricInactiveHint =
+      'Désactivé — connexion classique à chaque ouverture';
+  static const prefBiometricFaceIdLabel = 'Face ID';
+  static const prefBiometricFingerprintLabel = 'empreinte digitale';
+  static const prefBiometricGenericLabel = 'biométrie';
+  static const prefBiometricAuthReason =
+      'Déverrouille MadBeauty pour accéder à ton compte.';
+  static const prefBiometricEnabled = 'Déverrouillage biométrique activé.';
+  static const prefBiometricDisabled = 'Déverrouillage biométrique désactivé.';
+  static const prefBiometricUnavailable =
+      'Biométrie indisponible sur cet appareil.';
+  static const prefBiometricSetupFailed =
+      'Impossible d’activer la biométrie. Vérifie les réglages de ton téléphone.';
+
   static const actionEditAccount = 'Modifier mon compte';
 
   static const editAccountTitle = 'Modifier mon compte';

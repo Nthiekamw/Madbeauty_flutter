@@ -3,27 +3,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../firebase_runtime_helpers.dart';
+import '../../../services/auth/biometric_auth_providers.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../../core/constants/app_strings.dart';
 
 class ProfilePreferencesState {
   const ProfilePreferencesState({
     required this.pushNotificationsEnabled,
     required this.geolocationEnabled,
+    required this.biometricUnlockEnabled,
   });
 
   final bool pushNotificationsEnabled;
   final bool geolocationEnabled;
+  final bool biometricUnlockEnabled;
 
   ProfilePreferencesState copyWith({
     bool? pushNotificationsEnabled,
     bool? geolocationEnabled,
+    bool? biometricUnlockEnabled,
   }) {
     return ProfilePreferencesState(
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       geolocationEnabled: geolocationEnabled ?? this.geolocationEnabled,
+      biometricUnlockEnabled:
+          biometricUnlockEnabled ?? this.biometricUnlockEnabled,
     );
   }
 }
@@ -40,6 +47,7 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
     return ProfilePreferencesState(
       pushNotificationsEnabled: cache.profilePushNotificationsEnabled,
       geolocationEnabled: cache.profileGeolocationEnabled,
+      biometricUnlockEnabled: cache.profileBiometricUnlockEnabled,
     );
   }
 
@@ -104,5 +112,29 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
     state = state.copyWith(geolocationEnabled: enabled);
     return true;
   }
-}
 
+  Future<bool> setBiometricUnlock(bool enabled) async {
+    if (!enabled) {
+      await LocalCacheService.instance.setProfileBiometricUnlockEnabled(false);
+      ref.read(biometricUnlockSessionProvider.notifier).lock();
+      state = state.copyWith(biometricUnlockEnabled: false);
+      return true;
+    }
+
+    final bio = ref.read(biometricAuthServiceProvider);
+    final availability = await bio.checkAvailability();
+    if (!availability.isUsable) {
+      return false;
+    }
+
+    final ok = await bio.authenticate(
+      reason: DiscProfile.prefBiometricAuthReason,
+    );
+    if (!ok) return false;
+
+    await LocalCacheService.instance.setProfileBiometricUnlockEnabled(true);
+    ref.read(biometricUnlockSessionProvider.notifier).unlock();
+    state = state.copyWith(biometricUnlockEnabled: true);
+    return true;
+  }
+}
