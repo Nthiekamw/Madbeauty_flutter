@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../../services/storage/local_cache_service.dart';
-import '../../../shared/widgets/app/app_snack_bar.dart';
+import '../../profile/logic/account_deletion_flow.dart';
 import '../../support/navigation/user_support_navigation.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
@@ -59,50 +58,7 @@ class PrestataireProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(DiscProfile.deleteAccountTitle),
-        content: const Text(DiscProfile.deleteAccountBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(CoreStrings.actionCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DiscProfile.deleteAccountConfirm),
-          ),
-        ],
-      ),
-    );
-    if (go != true || !context.mounted) return;
-
-    try {
-      await LocalCacheService.instance.setProfilePushNotificationsEnabled(
-        false,
-      );
-      await LocalCacheService.instance.setProfileGeolocationEnabled(false);
-      await ref.read(authNotifierProvider.notifier).signOut();
-      if (context.mounted) {
-        AppSnackBar.show(
-          context,
-          message: DiscProfile.deleteAccountDone,
-          kind: AppSnackKind.success,
-        );
-      }
-    } catch (_) {
-      if (context.mounted) {
-        AppSnackBar.show(
-          context,
-          message: DiscProfile.deleteAccountErr,
-          kind: AppSnackKind.error,
-        );
-      }
-    }
+    await runAccountDeletionRequestFlow(context: context, ref: ref);
   }
 
   Future<void> _refresh(WidgetRef ref) async {

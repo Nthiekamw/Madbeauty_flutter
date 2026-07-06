@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/models/domain/prestataire/prestataire_subscription_status.dart';
 import '../../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../../logic/prestataire_profile_completeness.dart';
@@ -55,6 +56,13 @@ final prestataireIsCatalogVisibleProvider = Provider<bool>((ref) {
 final prestataireCanManageBookingsProvider = Provider<bool>((ref) {
   return ref.watch(prestataireHasActiveSubscriptionProvider);
 });
+
+/// Attend le statut catalogue si besoin (évite un faux « visibilité requise » au 1er clic).
+Future<bool> resolvePrestataireCanManageBookings(WidgetRef ref) async {
+  if (!AppConfig.hasSupabase) return false;
+  final status = await ref.read(prestataireSubscriptionStatusProvider.future);
+  return status.hasCatalogAccess;
+}
 
 PrestataireSubscriptionStatus prestataireSubscriptionStatusOrEmpty(
   AsyncValue<PrestataireSubscriptionStatus> async,

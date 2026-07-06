@@ -12,6 +12,7 @@ import '../logic/prestataire_agenda_filters.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/agenda/prestataire_agenda_provider.dart';
+import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../widgets/agenda/prestataire_agenda_week_calendar.dart';
 import '../widgets/workspace/prestataire_compact_appointment_card.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
@@ -118,6 +119,7 @@ class _PrestataireAgendaScreenState extends ConsumerState<PrestataireAgendaScree
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(prestataireSubscriptionStatusProvider);
     final theme = Theme.of(context);
     final agendaAsync = ref.watch(prestataireAgendaProvider);
 

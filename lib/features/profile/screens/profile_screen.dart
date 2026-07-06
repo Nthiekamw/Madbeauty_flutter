@@ -11,7 +11,6 @@ import '../../support/navigation/user_support_navigation.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/offline/offline_actions.dart';
-import '../../../services/storage/local_cache_service.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../shared/layout/discovery_responsive.dart';
@@ -26,6 +25,7 @@ import '../../auth/providers/my_roles_provider.dart';
 import '../../../core/models/user_role.dart';
 import '../widgets/sections/profile_role_space_section.dart';
 import '../../home/providers/home_profile_provider.dart';
+import '../logic/account_deletion_flow.dart';
 import '../logic/profile_display.dart';
 import '../providers/app_version_provider.dart';
 import '../providers/current_user_profile_provider.dart';
@@ -80,50 +80,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _confirmDeleteAccount() async {
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(DiscProfile.deleteAccountTitle),
-        content: const Text(DiscProfile.deleteAccountBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(CoreStrings.actionCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DiscProfile.deleteAccountConfirm),
-          ),
-        ],
-      ),
-    );
-    if (go != true || !mounted) return;
-
-    try {
-      await LocalCacheService.instance.setProfilePushNotificationsEnabled(
-        false,
-      );
-      await LocalCacheService.instance.setProfileGeolocationEnabled(false);
-      await ref.read(authNotifierProvider.notifier).signOut();
-      if (mounted) {
-        AppSnackBar.show(
-          context,
-          message: DiscProfile.deleteAccountDone,
-          kind: AppSnackKind.success,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        AppSnackBar.show(
-          context,
-          message: DiscProfile.deleteAccountErr,
-          kind: AppSnackKind.error,
-        );
-      }
-    }
+    await runAccountDeletionRequestFlow(context: context, ref: ref);
   }
 
   void _invalidateProfile() {

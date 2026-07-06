@@ -13,6 +13,7 @@ import '../../../services/auth/apple_auth_service.dart';
 import '../../../services/auth/biometric_auth_providers.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
+import '../../../services/offline/offline_cache_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 import '../../profile/storage/become_prestataire_draft_store.dart';
 
@@ -96,6 +97,11 @@ class AuthNotifier extends AsyncNotifier<User?> {
   }
 
   Future<void> _clearAuthCache() async {
+    final userId = state.value?.id;
+    await OfflineCacheService.instance.clearLegacyUserScopedKeys();
+    if (userId != null) {
+      await OfflineCacheService.instance.clearUserScopedCache(userId);
+    }
     await LocalCacheService.instance.remove(LocalCacheService.lastSignedInEmailKey);
     await LocalCacheService.instance.remove(LocalCacheService.profileSnapshotKey);
     await LocalCacheService.instance.clearSelectedRole();
@@ -103,6 +109,18 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await LocalCacheService.instance.clearCachedServerRoles();
     await LocalCacheService.instance.setGuestModeActive(false);
     await BecomePrestataireDraftStore.instance.clear();
+  }
+
+  /// Purge l'ancien cache global et les données d'un compte précédent si changement.
+  Future<void> _prepareOfflineCacheForSession(
+    User user, {
+    User? previousUser,
+  }) async {
+    await OfflineCacheService.instance.clearLegacyUserScopedKeys();
+    final previousId = previousUser?.id;
+    if (previousId != null && previousId != user.id) {
+      await OfflineCacheService.instance.clearUserScopedCache(previousId);
+    }
   }
 
   Future<User?> _readInitialUser() async {
@@ -179,6 +197,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
         password: password,
       );
       final user = response.user ?? _auth.currentSession?.user ?? _auth.currentUser;
+      if (user != null) {
+        await _prepareOfflineCacheForSession(user, previousUser: previousUser);
+      }
       await _cacheCurrentEmail(user);
       _markBiometricSessionUnlocked();
       state = AsyncData(user);
@@ -232,6 +253,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
       // response.user au routeur : sinon redirection hors du wizard d'inscription.
       final sessionUser = _auth.currentSession?.user;
       if (sessionUser != null) {
+        await _prepareOfflineCacheForSession(
+          sessionUser,
+          previousUser: previousUser,
+        );
         await _cacheCurrentEmail(sessionUser);
         _markBiometricSessionUnlocked();
         state = AsyncData(sessionUser);
@@ -300,6 +325,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       if (user == null) {
         throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
       }
+      await _prepareOfflineCacheForSession(user);
       await _cacheCurrentEmail(user);
       _markBiometricSessionUnlocked();
       state = AsyncData(user);
@@ -345,6 +371,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     if (user == null) {
       throw AppFailure(AuthStrings.authAppleSupabaseLinkFailed);
     }
+    await _prepareOfflineCacheForSession(user);
     await _cacheCurrentEmail(user);
     _markBiometricSessionUnlocked();
     state = AsyncData(user);

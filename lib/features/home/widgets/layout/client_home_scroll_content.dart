@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../logic/client_home_refresh.dart';
 import 'client_home_reorderable_sections.dart';
 
 /// Contenu scrollable partagé (connecté + invité).
@@ -15,8 +16,11 @@ class ClientHomeScrollContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ClientHomeReorderableSections(
-      footer: footer,
+    return RefreshIndicator(
+      onRefresh: () => refreshClientHome(ref),
+      child: ClientHomeReorderableSections(
+        footer: footer,
+      ),
     );
   }
 }

@@ -96,7 +96,7 @@ class LocalCacheService {
       _prefs.setBool(guestModeActiveKey, value);
 
   bool get profilePushNotificationsEnabled =>
-      _prefs.getBool(profilePushNotificationsKey) ?? false;
+      _prefs.getBool(profilePushNotificationsKey) ?? true;
 
   Future<bool> setProfilePushNotificationsEnabled(bool value) =>
       _prefs.setBool(profilePushNotificationsKey, value);

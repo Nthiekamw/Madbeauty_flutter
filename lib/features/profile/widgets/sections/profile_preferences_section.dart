@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -22,6 +24,17 @@ class ProfilePreferencesSection extends ConsumerStatefulWidget {
 
 class _ProfilePreferencesSectionState
     extends ConsumerState<ProfilePreferencesSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        ref.read(profilePreferencesProvider.notifier).refreshFromSystem(),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final prefs = ref.watch(profilePreferencesProvider);
@@ -49,11 +62,6 @@ class _ProfilePreferencesSectionState
                 icon: Icons.notifications_active_outlined,
                 title: DiscProfile.prefPush,
                 subtitle: pushSubtitle,
-                subtitleColor: prefs.pushNotificationsEnabled
-                    ? null
-                    : (nativePush
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.onSurfaceVariant),
                 value: prefs.pushNotificationsEnabled,
                 onChanged: (value) => _onPushChanged(context, ref, value),
               ),
@@ -154,26 +162,6 @@ class _ProfilePreferencesSectionState
       message: DiscProfile.prefPushDenied,
       kind: AppSnackKind.warning,
     );
-    final open = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(DiscProfile.prefPush),
-        content: const Text(DiscProfile.prefPushDenied),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(CoreStrings.actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DiscProfile.prefOpenSettings),
-          ),
-        ],
-      ),
-    );
-    if (open == true && context.mounted) {
-      await ref.read(appPermissionsServiceProvider).openSystemSettings();
-    }
   }
 
   Future<void> _onGeoChanged(
@@ -275,7 +263,6 @@ class _PreferenceToggle extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.subtitleColor,
     required this.value,
     required this.onChanged,
   });
@@ -283,7 +270,6 @@ class _PreferenceToggle extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Color? subtitleColor;
   final bool value;
   final ValueChanged<bool> onChanged;
 
@@ -313,7 +299,7 @@ class _PreferenceToggle extends StatelessWidget {
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: subtitleColor ?? theme.colorScheme.onSurfaceVariant,
+          color: theme.colorScheme.onSurfaceVariant,
           height: 1.3,
         ),
       ),

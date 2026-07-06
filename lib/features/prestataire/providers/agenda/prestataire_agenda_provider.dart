@@ -9,6 +9,7 @@ import '../../../../services/notifications/booking_reminders_sync.dart';
 import '../../../../services/offline/offline_cache_service.dart';
 import '../../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../../services/supabase/supabase_service.dart';
+import '../../../auth/providers/auth_notifier.dart';
 import '../../models/prestataire_reservation_item.dart';
 import '../profile/current_prestataire_provider.dart';
 import '../dashboard/prestataire_dashboard_provider.dart';
@@ -41,16 +42,23 @@ class PrestataireAgendaNotifier
     final presta = await ref.watch(currentPrestataireProvider.future);
     if (presta == null) return const [];
 
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null) return const [];
+
     final service = ref.read(bookingServiceProvider);
     if (service == null) return const [];
 
     final loader = ref.read(offlineDataLoaderProvider);
     final cache = OfflineCacheService.instance;
+    final userId = user.id;
 
     final items = await loader.load<List<PrestataireReservationItem>>(
       fallback: const <PrestataireReservationItem>[],
-      readCache: cache.readPrestataireAgenda,
-      writeCache: cache.savePrestataireAgenda,
+      readCache: () => cache.readPrestataireAgenda(userId),
+      writeCache: (data) => cache.savePrestataireAgenda(userId, data),
       fetchRemote: () => service.listForCurrentPrestataire(),
     );
 

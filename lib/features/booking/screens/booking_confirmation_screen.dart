@@ -179,7 +179,11 @@ class _BookingConfirmationScreenState
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      AppSnackBar.success(context, DiscBk.bookingCreatedSnack);
+      AppSnackBar.success(
+        context,
+        DiscBk.bookingCreatedSnack,
+        position: AppSnackBarPosition.top,
+      );
     });
   }
 

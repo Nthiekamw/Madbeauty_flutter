@@ -11,13 +11,30 @@ enum AppSnackKind {
   warning,
 }
 
+/// Position verticale du snackbar.
+enum AppSnackBarPosition {
+  bottom,
+  top,
+}
+
 /// Snackbars Material 3 flottants, arrondis et alignés sur la charte MadBeauty.
 abstract final class AppSnackBar {
   AppSnackBar._();
 
   static const double _radius = 18;
-  static const EdgeInsets _margin = EdgeInsets.fromLTRB(16, 0, 16, 22);
+  static const EdgeInsets _bottomMargin = EdgeInsets.fromLTRB(16, 0, 16, 22);
   static const Duration _duration = Duration(seconds: 3);
+
+  static EdgeInsets _marginFor(
+    BuildContext context,
+    AppSnackBarPosition position,
+  ) {
+    if (position == AppSnackBarPosition.top) {
+      final top = MediaQuery.paddingOf(context).top;
+      return EdgeInsets.fromLTRB(16, top + 12, 16, 0);
+    }
+    return _bottomMargin;
+  }
 
   /// Affiche un message flottant au-dessus du contenu.
   static void show(
@@ -25,6 +42,7 @@ abstract final class AppSnackBar {
     required String message,
     AppSnackKind kind = AppSnackKind.info,
     Duration? duration,
+    AppSnackBarPosition position = AppSnackBarPosition.bottom,
   }) {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
@@ -35,7 +53,7 @@ abstract final class AppSnackBar {
           elevation: 0,
           backgroundColor: AppColors.transparent,
           padding: EdgeInsets.zero,
-          margin: _margin,
+          margin: _marginFor(context, position),
           behavior: SnackBarBehavior.floating,
           duration: duration ?? _duration,
           content: _SnackContent(message: message, kind: kind),
@@ -43,8 +61,17 @@ abstract final class AppSnackBar {
       );
   }
 
-  static void success(BuildContext context, String message) =>
-      show(context, message: message, kind: AppSnackKind.success);
+  static void success(
+    BuildContext context,
+    String message, {
+    AppSnackBarPosition position = AppSnackBarPosition.bottom,
+  }) =>
+      show(
+        context,
+        message: message,
+        kind: AppSnackKind.success,
+        position: position,
+      );
 
   static void error(BuildContext context, String message) =>
       show(context, message: message, kind: AppSnackKind.error);

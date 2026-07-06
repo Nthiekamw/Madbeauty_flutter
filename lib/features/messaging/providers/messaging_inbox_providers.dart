@@ -14,11 +14,9 @@ import 'messaging_refresh_signal_provider.dart';
 
 export '../models/messaging_inbox_role.dart';
 
-final conversationsInboxProvider = FutureProvider
+final conversationsInboxProvider = FutureProvider.autoDispose
     .family<List<ConversationInboxItem>, MessagingInboxRole>((ref, role) async {
   ref.watch(messagingRefreshSignalProvider);
-  final link = ref.keepAlive();
-  ref.onDispose(link.close);
 
   final service = ref.watch(messagingServiceProvider);
   final user = switch (ref.watch(authNotifierProvider)) {
@@ -29,22 +27,20 @@ final conversationsInboxProvider = FutureProvider
 
   switch (role) {
     case MessagingInboxRole.client:
+      ref.watch(currentClientProfileProvider);
       final client = await ref.watch(currentClientProfileProvider.future);
       if (client == null) return [];
-      final prestaForClient = await ref.watch(currentPrestataireProvider.future);
       return service.listInboxForClient(
         client.id,
         user.id,
-        ownPrestataireProfileId: prestaForClient?.id,
       );
     case MessagingInboxRole.prestataire:
+      ref.watch(currentPrestataireProvider);
       final presta = await ref.watch(currentPrestataireProvider.future);
       if (presta == null) return [];
-      final clientForPresta = await ref.watch(currentClientProfileProvider.future);
       return service.listInboxForPrestataire(
         presta.id,
         user.id,
-        ownClientProfileId: clientForPresta?.id,
       );
   }
 });

@@ -25,10 +25,11 @@ class PrestataireReservationActions {
   final BuildContext context;
 
   Future<bool> accept(String reservationId) async {
-    if (!ref.read(prestataireCanManageBookingsProvider)) {
+    if (!await resolvePrestataireCanManageBookings(ref)) {
       _snack(DiscPrestaSub.bookingActionLocked);
       return false;
     }
+    if (!context.mounted) return false;
     final booking = ref.read(bookingServiceProvider);
     if (booking == null) {
       _snack(DiscPrestaDash.actionErr);
@@ -61,10 +62,11 @@ class PrestataireReservationActions {
   }
 
   Future<bool> reject(String reservationId) async {
-    if (!ref.read(prestataireCanManageBookingsProvider)) {
+    if (!await resolvePrestataireCanManageBookings(ref)) {
       _snack(DiscPrestaSub.bookingActionLocked);
       return false;
     }
+    if (!context.mounted) return false;
     final reason = await showRejectReservationDialog(context);
     if (!context.mounted) return false;
     if (reason == null) return false;
@@ -103,10 +105,11 @@ class PrestataireReservationActions {
   }
 
   Future<bool> markDone(PrestataireReservationItem item) async {
-    if (!ref.read(prestataireCanManageBookingsProvider)) {
+    if (!await resolvePrestataireCanManageBookings(ref)) {
       _snack(DiscPrestaSub.bookingActionLocked);
       return false;
     }
+    if (!context.mounted) return false;
     if (!prestataireCanMarkReservationDone(item)) {
       _snack(DiscPrestaAgenda.markDoneTooEarly);
       return false;

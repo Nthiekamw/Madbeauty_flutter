@@ -37,7 +37,7 @@ Future<void> openChatForReservation(
     }
 
     final conv = await messageService.ensureThreadForBooking(reservationId);
-    refreshMessagingInbox(ref, role: viewerRole);
+    refreshMessagingInbox(ref);
 
     if (!context.mounted) return;
 
@@ -47,7 +47,7 @@ Future<void> openChatForReservation(
     );
 
     if (!context.mounted) return;
-    refreshMessagingInbox(ref, role: viewerRole);
+    refreshMessagingInbox(ref);
   } catch (_) {
     if (context.mounted) {
       AppSnackBar.show(context, message: DiscChat.loadError);

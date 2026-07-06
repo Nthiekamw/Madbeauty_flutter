@@ -40,13 +40,20 @@ final clientReservationsProvider =
       final service = ref.watch(bookingServiceProvider);
       if (service == null) return const [];
 
+      final user = switch (ref.watch(authNotifierProvider)) {
+        AsyncData(:final value) => value,
+        _ => null,
+      };
+      if (user == null) return const [];
+
       final loader = ref.read(offlineDataLoaderProvider);
       final cache = OfflineCacheService.instance;
+      final userId = user.id;
 
       final remote = await loader.load<List<ClientReservationSummary>>(
         fallback: const [],
-        readCache: cache.readClientReservations,
-        writeCache: cache.saveClientReservations,
+        readCache: () => cache.readClientReservations(userId),
+        writeCache: (data) => cache.saveClientReservations(userId, data),
         fetchRemote: () => service.listForCurrentClient(),
       );
 
@@ -69,7 +76,7 @@ final clientPendingReservationsCountProvider = FutureProvider<int>((ref) async {
   if (user == null) return 0;
 
   if (!ref.read(isOnlineProvider)) {
-    final cached = OfflineCacheService.instance.readClientReservations();
+    final cached = OfflineCacheService.instance.readClientReservations(user.id);
     final queuePending = ref
         .watch(offlineActionQueueProvider)
         .where((a) => a.type == OfflineActionType.bookingCreate)

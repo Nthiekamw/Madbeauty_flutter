@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../providers/admin_account_deletion_provider.dart';
 import '../widgets/admin_hub_action_tile.dart';
 import '../widgets/admin_screen_scaffold.dart';
 
@@ -13,6 +14,8 @@ class AdminManagementHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final responsive = DiscoveryResponsive.of(context);
+    final pendingDeletions =
+        ref.watch(adminPendingAccountDeletionsCountProvider);
 
     return AdminScreenScaffold(
       title: ShellStrings.navAdminManagement,
@@ -43,6 +46,16 @@ class AdminManagementHubScreen extends ConsumerWidget {
                         title: DiscProfile.actionAdminUsers,
                         subtitle: DiscProfile.actionAdminUsersHint,
                         onTap: () => context.pushAdminUsers(),
+                      ),
+                      AdminHubActionTile(
+                        icon: Icons.person_remove_outlined,
+                        title: DiscProfile.actionAdminAccountDeletions,
+                        subtitle: DiscProfile.actionAdminAccountDeletionsHint,
+                        badge: pendingDeletions.maybeWhen(
+                          data: (c) => c,
+                          orElse: () => 0,
+                        ),
+                        onTap: () => context.pushAdminAccountDeletions(),
                       ),
                       AdminHubActionTile(
                         icon: Icons.payments_outlined,

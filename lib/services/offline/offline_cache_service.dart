@@ -21,6 +21,8 @@ abstract final class OfflineCacheKeys {
   static const clientReservations = 'offline.client_reservations';
   static const prestataireDashboard = 'offline.prestataire_dashboard';
   static const prestataireAgenda = 'offline.prestataire_agenda';
+
+  static String forUser(String baseKey, String userId) => '$baseKey.$userId';
 }
 
 class OfflineCacheService {
@@ -78,39 +80,87 @@ class OfflineCacheService {
   readListingCatalog() =>
       OfflineCacheCodec.decodeCatalogSnapshot(_read(OfflineCacheKeys.listingCatalog));
 
-  Future<void> saveUserProfile(UserProfile profile) =>
-      _write(OfflineCacheKeys.userProfile, profile.toJson());
-
-  UserProfile? readUserProfile() =>
-      OfflineCacheCodec.decodeUserProfile(_read(OfflineCacheKeys.userProfile));
-
-  Future<void> saveClientReservations(List<ClientReservationSummary> list) =>
+  Future<void> saveUserProfile(String userId, UserProfile profile) =>
       _write(
-        OfflineCacheKeys.clientReservations,
+        OfflineCacheKeys.forUser(OfflineCacheKeys.userProfile, userId),
+        profile.toJson(),
+      );
+
+  UserProfile? readUserProfile(String userId) =>
+      OfflineCacheCodec.decodeUserProfile(
+        _read(OfflineCacheKeys.forUser(OfflineCacheKeys.userProfile, userId)),
+      );
+
+  Future<void> saveClientReservations(
+    String userId,
+    List<ClientReservationSummary> list,
+  ) =>
+      _write(
+        OfflineCacheKeys.forUser(OfflineCacheKeys.clientReservations, userId),
         OfflineCacheCodec.encodeClientReservations(list),
       );
 
-  List<ClientReservationSummary> readClientReservations() =>
+  List<ClientReservationSummary> readClientReservations(String userId) =>
       OfflineCacheCodec.decodeClientReservations(
-        _read(OfflineCacheKeys.clientReservations),
+        _read(
+          OfflineCacheKeys.forUser(OfflineCacheKeys.clientReservations, userId),
+        ),
       );
 
-  Future<void> savePrestataireDashboard(PrestataireDashboardData data) =>
+  Future<void> savePrestataireDashboard(
+    String userId,
+    PrestataireDashboardData data,
+  ) =>
       _write(
-        OfflineCacheKeys.prestataireDashboard,
+        OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireDashboard, userId),
         OfflineCacheCodec.encodeDashboard(data),
       );
 
-  PrestataireDashboardData readPrestataireDashboard() =>
-      OfflineCacheCodec.decodeDashboard(_read(OfflineCacheKeys.prestataireDashboard));
+  PrestataireDashboardData readPrestataireDashboard(String userId) =>
+      OfflineCacheCodec.decodeDashboard(
+        _read(
+          OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireDashboard, userId),
+        ),
+      );
 
-  Future<void> savePrestataireAgenda(List<PrestataireReservationItem> list) =>
+  Future<void> savePrestataireAgenda(
+    String userId,
+    List<PrestataireReservationItem> list,
+  ) =>
       _write(
-        OfflineCacheKeys.prestataireAgenda,
+        OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireAgenda, userId),
         OfflineCacheCodec.encodeAgendaItems(list),
       );
 
-  List<PrestataireReservationItem> readPrestataireAgenda() =>
-      OfflineCacheCodec.decodeAgendaItems(_read(OfflineCacheKeys.prestataireAgenda));
+  List<PrestataireReservationItem> readPrestataireAgenda(String userId) =>
+      OfflineCacheCodec.decodeAgendaItems(
+        _read(OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireAgenda, userId)),
+      );
+
+  /// Anciennes clés globales (pré-scope utilisateur) — à purger à la déconnexion.
+  Future<void> clearLegacyUserScopedKeys() async {
+    final legacy = [
+      OfflineCacheKeys.userProfile,
+      OfflineCacheKeys.clientReservations,
+      OfflineCacheKeys.prestataireDashboard,
+      OfflineCacheKeys.prestataireAgenda,
+    ];
+    for (final key in legacy) {
+      await LocalCacheService.instance.remove(key);
+    }
+  }
+
+  /// Données privées d'un compte (dashboard, agenda, réservations, profil).
+  Future<void> clearUserScopedCache(String userId) async {
+    final keys = [
+      OfflineCacheKeys.forUser(OfflineCacheKeys.userProfile, userId),
+      OfflineCacheKeys.forUser(OfflineCacheKeys.clientReservations, userId),
+      OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireDashboard, userId),
+      OfflineCacheKeys.forUser(OfflineCacheKeys.prestataireAgenda, userId),
+    ];
+    for (final key in keys) {
+      await LocalCacheService.instance.remove(key);
+    }
+  }
 }
 

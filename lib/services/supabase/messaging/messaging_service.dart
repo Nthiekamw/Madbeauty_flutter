@@ -121,28 +121,24 @@ class MessagingService {
 
   Future<List<ConversationInboxItem>> listInboxForClient(
     String clientProfileId,
-    String currentUserId, {
-    String? ownPrestataireProfileId,
-  }) =>
+    String currentUserId,
+  ) =>
       _listInbox(
         column: 'client_id',
         profileId: clientProfileId,
         currentUserId: currentUserId,
         peerIsPrestataire: true,
-        ownDualRoleCounterpartProfileId: ownPrestataireProfileId,
       );
 
   Future<List<ConversationInboxItem>> listInboxForPrestataire(
     String prestataireProfileId,
-    String currentUserId, {
-    String? ownClientProfileId,
-  }) =>
+    String currentUserId,
+  ) =>
       _listInbox(
         column: 'prestataire_id',
         profileId: prestataireProfileId,
         currentUserId: currentUserId,
         peerIsPrestataire: false,
-        ownDualRoleCounterpartProfileId: ownClientProfileId,
       );
 
   Future<List<ConversationInboxItem>> _listInbox({
@@ -150,23 +146,34 @@ class MessagingService {
     required String profileId,
     required String currentUserId,
     required bool peerIsPrestataire,
-    String? ownDualRoleCounterpartProfileId,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'messaging.listInbox',
         action: () async {
+          final byId = <String, Conversation>{};
+
+          void addConversation(Conversation conv) {
+            if (_conversationBelongsToInbox(
+              conv,
+              column: column,
+              profileId: profileId,
+            )) {
+              byId[conv.id] = conv;
+            }
+          }
+
           final convRows = await _client
               .from('conversations')
               .select()
               .eq(column, profileId)
               .order('last_message_at', ascending: false);
 
-          final byId = <String, Conversation>{};
           for (final raw in convRows as List<dynamic>) {
-            final conv = SupabaseDomainCodec.conversation(
-              Map<String, dynamic>.from(raw as Map),
+            addConversation(
+              SupabaseDomainCodec.conversation(
+                Map<String, dynamic>.from(raw as Map),
+              ),
             );
-            byId[conv.id] = conv;
           }
 
           final fromMessages = await _loadConversationsFromMessages(
@@ -174,7 +181,13 @@ class MessagingService {
             profileId: profileId,
           );
           for (final conv in fromMessages) {
-            byId.putIfAbsent(conv.id, () => conv);
+            addConversation(conv);
+          }
+
+          for (final conv in await _messageService.getConversations(
+            currentUserId,
+          )) {
+            addConversation(conv);
           }
 
           var conversations = byId.values.toList()
@@ -186,13 +199,6 @@ class MessagingService {
               if (tb == null) return -1;
               return tb.compareTo(ta);
             });
-
-          conversations = _filterDualRoleSelfConversations(
-            conversations,
-            column: column,
-            profileId: profileId,
-            ownDualRoleCounterpartProfileId: ownDualRoleCounterpartProfileId,
-          );
 
           if (conversations.isEmpty) return [];
 
@@ -253,16 +259,16 @@ class MessagingService {
         .select('id')
         .eq(column, profileId);
 
-    final bookingIds = <String>[
+    final bookingIds = <String>{
       for (final raw in resRows as List<dynamic>)
         if ((raw as Map)['id'] is String) (raw)['id'] as String,
-    ];
+    };
     if (bookingIds.isEmpty) return const [];
 
     final msgRows = await _client
         .from('messages')
         .select('conversation_id')
-        .inFilter('booking_id', bookingIds)
+        .inFilter('booking_id', bookingIds.toList())
         .isFilter('deleted_at', null);
 
     final convIds = <String>{
@@ -282,11 +288,35 @@ class MessagingService {
         SupabaseDomainCodec.conversation(
           Map<String, dynamic>.from(raw as Map),
         ),
-    ].where((conv) => _conversationMatchesInboxColumn(
+    ].where((conv) => _conversationBelongsToInbox(
           conv,
           column: column,
           profileId: profileId,
+          reservationIds: bookingIds,
         )).toList();
+  }
+
+  bool _conversationBelongsToInbox(
+    Conversation conv, {
+    required String column,
+    required String profileId,
+    Set<String>? reservationIds,
+  }) {
+    if (_conversationMatchesInboxColumn(
+      conv,
+      column: column,
+      profileId: profileId,
+    )) {
+      return true;
+    }
+    final resId = conv.reservationId;
+    if (resId != null &&
+        resId.isNotEmpty &&
+        reservationIds != null &&
+        reservationIds.contains(resId)) {
+      return true;
+    }
+    return false;
   }
 
   bool _conversationMatchesInboxColumn(
@@ -299,43 +329,6 @@ class MessagingService {
       'prestataire_id' => conv.prestataireId == profileId,
       _ => false,
     };
-  }
-
-  /// Exclut les fils où le même compte est client et prestataire (réservation avec soi-même).
-  ///
-  /// Conservés uniquement dans la boîte client pour éviter un doublon identique côté prestataire.
-  List<Conversation> _filterDualRoleSelfConversations(
-    List<Conversation> conversations, {
-    required String column,
-    required String profileId,
-    String? ownDualRoleCounterpartProfileId,
-  }) {
-    final counterpartId = ownDualRoleCounterpartProfileId?.trim();
-    if (counterpartId == null || counterpartId.isEmpty) {
-      return conversations;
-    }
-
-    return [
-      for (final conv in conversations)
-        if (!_isDualRoleSelfConversation(
-          conv,
-          column: column,
-          profileId: profileId,
-          counterpartProfileId: counterpartId,
-        ))
-          conv,
-    ];
-  }
-
-  bool _isDualRoleSelfConversation(
-    Conversation conv, {
-    required String column,
-    required String profileId,
-    required String counterpartProfileId,
-  }) {
-    return column == 'prestataire_id' &&
-        conv.prestataireId == profileId &&
-        conv.clientId == counterpartProfileId;
   }
 
   ConversationInboxItem _toInboxItem({

@@ -197,6 +197,30 @@ abstract final class DiscProfile {
   static const adminActionOk = 'Action enregistrée.';
   static const adminActionErr = 'Action impossible pour le moment.';
 
+  static const actionAdminAccountDeletions = 'Suppressions de compte';
+  static const actionAdminAccountDeletionsHint =
+      'Valider les demandes de suppression définitive';
+  static const adminAccountDeletionsIntroTitle = 'Demandes de suppression';
+  static const adminAccountDeletionsIntroBody =
+      'Les utilisateurs demandent la suppression depuis leur profil. '
+      'Tu confirmes ici la suppression définitive de leur compte uniquement.';
+  static const adminAccountDeletionsEmpty = 'Aucune demande en attente.';
+  static const adminAccountDeletionsLoadErr =
+      'Impossible de charger les demandes. Réessaie.';
+  static const adminAccountDeletionExecute = 'Supprimer définitivement';
+  static const adminAccountDeletionConfirm = 'Supprimer le compte';
+  static const adminAccountDeletionDialogBody =
+      'Cette action est irréversible : le compte et les données associées seront effacés.';
+  static String adminAccountDeletionDialogTitle(String name) =>
+      'Supprimer le compte de $name ?';
+  static String adminAccountDeletionRequestedAt(DateTime at) =>
+      'Demandé le ${at.day.toString().padLeft(2, '0')}/'
+      '${at.month.toString().padLeft(2, '0')}/${at.year} '
+      'à ${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+  static const adminAccountDeletionDone = 'Compte supprimé définitivement.';
+  static const adminAccountDeletionErr =
+      'Impossible de supprimer ce compte pour le moment.';
+
   static const actionAdminReservations = 'Réservations & paiements';
   static const actionAdminReservationsHint =
       'Suivi des réservations et paiements Stripe';
@@ -421,12 +445,14 @@ abstract final class DiscProfile {
 
   static const deleteAccountTitle = 'Supprimer le compte ?';
   static const deleteAccountBody =
-      'Cette action est définitive. Toutes tes données associées seront effacées.';
-  static const deleteAccountConfirm = 'Supprimer';
+      'Ta demande sera transmise à l’équipe MadBeauty. '
+      'Un administrateur validera la suppression définitive de ton compte et de tes données. '
+      'Tu seras déconnecté immédiatement.';
+  static const deleteAccountConfirm = 'Demander la suppression';
   static const deleteAccountDone =
-      'Demande de suppression enregistrée. Tu es déconnecté.';
+      'Demande envoyée. Tu es déconnecté — l’équipe traitera la suppression sous peu.';
   static const deleteAccountErr =
-      'Impossible de supprimer le compte pour l’instant. Réessaie plus tard.';
+      'Impossible d’envoyer la demande pour l’instant. Réessaie plus tard.';
 
   static const prefPushEnabled = 'Notifications activées.';
   static const prefPushWebEnabled = 'Alertes in-app activées.';

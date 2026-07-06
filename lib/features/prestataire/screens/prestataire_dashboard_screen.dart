@@ -15,6 +15,7 @@ import '../../booking/logic/client_reservation_ui_status.dart';
 import '../widgets/agenda/prestataire_agenda_reservation_card.dart';
 import '../widgets/dashboard/requests/prestataire_pending_request_card.dart';
 import '../providers/dashboard/prestataire_dashboard_overview_provider.dart';
+import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_overview_grid.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_reorderable_sections.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
@@ -41,11 +42,13 @@ class _PrestataireDashboardScreenState
     ref.invalidate(prestataireDashboardOverviewProvider);
     ref.invalidate(prestataireDashboardProvider);
     ref.invalidate(prestataireDashboardLayoutProvider);
+    ref.invalidate(prestataireSubscriptionStatusProvider);
     await Future.wait([
       ref.read(prestataireProfileFormProvider.future),
       ref.read(prestataireAnalyticsProvider.future),
       ref.read(prestataireDashboardProvider.future),
       ref.read(prestataireDashboardLayoutProvider.future),
+      ref.read(prestataireSubscriptionStatusProvider.future),
     ]);
   }
 
@@ -63,6 +66,7 @@ class _PrestataireDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(prestataireSubscriptionStatusProvider);
     final profileAsync = ref.watch(prestataireProfileFormProvider);
     final horairesAsync = ref.watch(prestataireHorairesProvider);
     final dashboardAsync = ref.watch(prestataireDashboardProvider);

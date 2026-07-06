@@ -166,18 +166,17 @@ class _HubStepChip extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    title,
-                    maxLines: 3,
-                    softWrap: true,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                      color: fg,
-                      height: 1.2,
-                    ),
+              Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: fg,
+                    height: 1.2,
                   ),
                 ),
               ),

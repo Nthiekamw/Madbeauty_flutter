@@ -102,7 +102,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (state != AppLifecycleState.resumed || !mounted) return;
     final conversationId = _activeConversationId;
     if (conversationId == null || conversationId.isEmpty) return;
-    ref.invalidate(messagesProvider(conversationId));
     refreshMessagingInbox(ref);
   }
 
@@ -124,6 +123,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     _controller.dispose();
 
     _scrollController.dispose();
+    refreshMessagingInbox(ref);
 
     super.dispose();
 

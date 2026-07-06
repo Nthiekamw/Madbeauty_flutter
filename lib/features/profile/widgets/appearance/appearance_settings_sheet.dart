@@ -47,21 +47,34 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           SegmentedButton<ThemeMode>(
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+              textStyle: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
             segments: [
               ButtonSegment(
                 value: ThemeMode.system,
-                label: Text(DiscAppearance.themeSystem(locale)),
-                icon: const Icon(Icons.brightness_auto_rounded, size: 18),
+                label: _AppearanceSegmentLabel(
+                  text: DiscAppearance.themeSystem(locale),
+                ),
               ),
               ButtonSegment(
                 value: ThemeMode.light,
-                label: Text(DiscAppearance.themeLight(locale)),
-                icon: const Icon(Icons.light_mode_rounded, size: 18),
+                label: _AppearanceSegmentLabel(
+                  text: DiscAppearance.themeLight(locale),
+                ),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
-                label: Text(DiscAppearance.themeDark(locale)),
-                icon: const Icon(Icons.dark_mode_rounded, size: 18),
+                label: _AppearanceSegmentLabel(
+                  text: DiscAppearance.themeDark(locale),
+                ),
               ),
             ],
             selected: {appearance.themeMode},
@@ -85,14 +98,28 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           SegmentedButton<AppLanguage>(
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              textStyle: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
             segments: [
               ButtonSegment(
                 value: AppLanguage.french,
-                label: Text(DiscAppearance.languageFrench(locale)),
+                label: _AppearanceSegmentLabel(
+                  text: DiscAppearance.languageFrench(locale),
+                ),
               ),
               ButtonSegment(
                 value: AppLanguage.english,
-                label: Text(DiscAppearance.languageEnglish(locale)),
+                label: _AppearanceSegmentLabel(
+                  text: DiscAppearance.languageEnglish(locale),
+                ),
               ),
             ],
             selected: {appearance.language},
@@ -117,6 +144,27 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Libellé segment : une seule ligne, réduit si l’espace est étroit.
+class _AppearanceSegmentLabel extends StatelessWidget {
+  const _AppearanceSegmentLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        textAlign: TextAlign.center,
       ),
     );
   }

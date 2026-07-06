@@ -42,6 +42,15 @@ class ConversationsInboxScreen extends ConsumerStatefulWidget {
 class _ConversationsInboxScreenState
     extends ConsumerState<ConversationsInboxScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      refreshMessagingInbox(ref, role: widget.role);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = switch (ref.watch(authNotifierProvider)) {

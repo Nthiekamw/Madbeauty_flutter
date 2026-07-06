@@ -45,6 +45,7 @@ class ClientHomeReorderableSections extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final listView = ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
         pad,
         useWebLayout ? 8 : 2,

@@ -9,6 +9,7 @@ import '../../../core/logic/messaging/chat_message_moderator.dart';
 import '../../../core/models/domain/messaging/conversation.dart';
 import '../../../core/models/domain/messaging/message.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
+import '../../../core/utils/safe_broadcast_stream.dart';
 
 /// Couche data messagerie (fil par paire client/prestataire + Supabase Realtime).
 class MessageService {
@@ -226,58 +227,74 @@ class MessageService {
       watchMessages(conversationId);
 
   Stream<List<Message>> watchMessages(String conversationId) {
-    final controller = StreamController<List<Message>>.broadcast();
+    final safe = SafeBroadcastStream<List<Message>>();
     RealtimeChannel? channel;
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;
 
     Future<void> emitLatest() async {
+      if (!safe.isActive) return;
       try {
         final list = await _fetchMessages(conversationId);
-        if (!controller.isClosed) controller.add(list);
+        safe.add(list);
       } catch (e, st) {
-        if (!controller.isClosed) controller.addError(e, st);
+        safe.addError(e, st);
       }
     }
 
-    controller.onListen = () async {
-      await emitLatest();
+    void startListening() {
+      unawaited(() async {
+        await emitLatest();
+        if (!safe.isActive) return;
 
-      streamSub = _client
-          .from('messages')
-          .stream(primaryKey: ['id'])
-          .eq('conversation_id', conversationId)
-          .order('created_at', ascending: true)
-          .listen(
-            (_) => unawaited(emitLatest()),
-            onError: controller.addError,
-          );
+        streamSub = _client
+            .from('messages')
+            .stream(primaryKey: ['id'])
+            .eq('conversation_id', conversationId)
+            .order('created_at', ascending: true)
+            .listen(
+              (_) => unawaited(emitLatest()),
+              onError: safe.addError,
+            );
 
-      channel = _client
-          .channel('messages-conversation-$conversationId')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'messages',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'conversation_id',
-              value: conversationId,
-            ),
-            callback: (_) => unawaited(emitLatest()),
-          )
-          .subscribe();
-    };
+        if (!safe.isActive) {
+          await streamSub?.cancel();
+          streamSub = null;
+          return;
+        }
 
-    controller.onCancel = () async {
-      await streamSub?.cancel();
-      final ch = channel;
-      if (ch != null) {
-        await _client.removeChannel(ch);
-      }
-      if (!controller.isClosed) await controller.close();
-    };
+        channel = _client
+            .channel('messages-conversation-$conversationId')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'messages',
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'conversation_id',
+                value: conversationId,
+              ),
+              callback: (_) {
+                if (safe.isActive) unawaited(emitLatest());
+              },
+            )
+            .subscribe();
+      }());
+    }
 
-    return controller.stream;
+    safe.bind(
+      onListen: startListening,
+      cleanup: () async {
+        await streamSub?.cancel();
+        streamSub = null;
+        final ch = channel;
+        channel = null;
+        if (ch != null) {
+          await _client.removeChannel(ch);
+        }
+      },
+    );
+
+    return safe.stream;
   }
 
   Future<void> markAsDelivered({

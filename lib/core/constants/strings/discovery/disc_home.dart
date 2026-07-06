@@ -49,7 +49,7 @@ abstract final class DiscHome {
   static const heroBannerLead = 'Trouvez le professionnel idéal pour';
   static const heroBannerAccent = 'toute la famille';
   static const heroBannerSub =
-      'Coiffure, Barbe, Maquillage, Manucure, Pédicure et plus encore.';
+      'Coiffure, maquillage, manucure, pédicure et bien plus.';
   static const heroBannerCta = 'Explorer';
 
   static const feedSearchSub =

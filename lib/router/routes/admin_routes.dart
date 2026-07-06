@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/screens/admin_account_deletion_screen.dart';
 import '../../features/admin/screens/admin_booking_platform_fee_screen.dart';
 import '../../features/admin/screens/admin_subscription_trial_screen.dart';
 import '../../features/admin/screens/admin_audit_screen.dart';
@@ -103,6 +104,11 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminUsers,
         path: AppRoutes.adminUsers,
         builder: (context, state) => const AdminUsersScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminAccountDeletions,
+        path: AppRoutes.adminAccountDeletions,
+        builder: (context, state) => const AdminAccountDeletionScreen(),
       ),
       GoRoute(
         name: AppRouteNames.adminReservations,

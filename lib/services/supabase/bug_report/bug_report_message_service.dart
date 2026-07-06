@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/bug_report_message.dart';
+import '../../../core/utils/safe_broadcast_stream.dart';
 
 class BugReportMessageService {
   BugReportMessageService(this._client);
@@ -77,60 +78,77 @@ class BugReportMessageService {
       );
 
   Stream<List<BugReportMessage>> watchMessages(String bugReportId) {
-    final controller = StreamController<List<BugReportMessage>>.broadcast();
+    final safe = SafeBroadcastStream<List<BugReportMessage>>();
     RealtimeChannel? channel;
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;
 
     Future<void> emitLatest() async {
+      if (!safe.isActive) return;
       try {
         final list = await _fetch(bugReportId);
-        if (!controller.isClosed) controller.add(list);
+        safe.add(list);
       } catch (e, st) {
-        if (!controller.isClosed) controller.addError(e, st);
+        safe.addError(e, st);
       }
     }
 
-    controller.onListen = () async {
-      await emitLatest();
-      streamSub = _client
-          .from('bug_report_messages')
-          .stream(primaryKey: ['id'])
-          .eq('bug_report_id', bugReportId)
-          .order('created_at', ascending: true)
-          .listen(
-            (rows) {
-              if (controller.isClosed) return;
-              controller.add(_decode(rows));
-            },
-            onError: controller.addError,
-          );
+    void startListening() {
+      unawaited(() async {
+        await emitLatest();
+        if (!safe.isActive) return;
 
-      channel = _client
-          .channel('bug-report-messages-$bugReportId')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'bug_report_messages',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'bug_report_id',
-              value: bugReportId,
-            ),
-            callback: (_) => unawaited(emitLatest()),
-          )
-          .subscribe();
-    };
+        streamSub = _client
+            .from('bug_report_messages')
+            .stream(primaryKey: ['id'])
+            .eq('bug_report_id', bugReportId)
+            .order('created_at', ascending: true)
+            .listen(
+              (rows) {
+                if (!safe.isActive) return;
+                safe.add(_decode(rows));
+              },
+              onError: safe.addError,
+            );
 
-    controller.onCancel = () async {
-      await streamSub?.cancel();
-      final ch = channel;
-      if (ch != null) {
-        await _client.removeChannel(ch);
-      }
-      if (!controller.isClosed) await controller.close();
-    };
+        if (!safe.isActive) {
+          await streamSub?.cancel();
+          streamSub = null;
+          return;
+        }
 
-    return controller.stream;
+        channel = _client
+            .channel('bug-report-messages-$bugReportId')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'bug_report_messages',
+              filter: PostgresChangeFilter(
+                type: PostgresChangeFilterType.eq,
+                column: 'bug_report_id',
+                value: bugReportId,
+              ),
+              callback: (_) {
+                if (safe.isActive) unawaited(emitLatest());
+              },
+            )
+            .subscribe();
+      }());
+    }
+
+    safe.bind(
+      onListen: startListening,
+      cleanup: () async {
+        await streamSub?.cancel();
+        streamSub = null;
+        final ch = channel;
+        channel = null;
+        if (ch != null) {
+          await _client.removeChannel(ch);
+        }
+      },
+    );
+
+    return safe.stream;
   }
 
   Future<List<BugReportMessage>> _fetch(String bugReportId) async {

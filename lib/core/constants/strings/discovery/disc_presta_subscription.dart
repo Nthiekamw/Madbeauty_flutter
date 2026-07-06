@@ -17,10 +17,10 @@ abstract final class DiscPrestaSub {
   static const serviceCount = '%s service(s) publié(s)';
   static const profileTileTitle = 'Accès catalogue';
   static const profileTileSubtitle =
-      'Essai gratuit et visibilité sur le catalogue';
+      'Visibilité de ton salon dans le catalogue client';
   static const accountPlansTitle = 'Accès catalogue';
   static const accountPlansHint =
-      'Consulte ton essai et ta visibilité sur le catalogue.';
+      'Vérifie si les clientes peuvent te trouver et réserver';
   static const accountPlansRecommended = 'Adapté à ton profil';
   static const profileTileSubtitleActive =
       'Visible sur le catalogue MadBeauty';
@@ -85,14 +85,17 @@ abstract final class DiscPrestaSub {
   static const returnSuccess = 'Statut catalogue mis à jour.';
   static const returnCancel = 'Retour sans modification.';
 
-  static const testimonialsTitle = 'Ce que disent nos coiffeurs';
-  static const testimonialSophieQuote =
-      'Depuis que ma fiche est complète sur MadBeauty, j’ai 3 à 4 nouvelles réservations par semaine. '
-      'La plateforme m’a vraiment aidé à développer ma clientèle.';
-  static const testimonialSophieAuthor =
-      'Sophie L., coiffeuse à Paris 11ème';
-  static const testimonialMarcQuote =
-      'Super pratique pour gérer mon planning. Les clients peuvent réserver directement '
-      'et je reçois tout de suite une notification. Ça me fait gagner beaucoup de temps.';
-  static const testimonialMarcAuthor = 'Marc D., barbier à Lyon 3ème';
+  static const catalogHelpTitle = 'À quoi sert l’accès catalogue ?';
+  static const catalogHelpVisibilityTitle = 'Être visible des clientes';
+  static const catalogHelpVisibilityBody =
+      'Ton profil, tes services et tes photos apparaissent dans le catalogue, '
+      'la recherche et les suggestions MadBeauty.';
+  static const catalogHelpBookingTitle = 'Recevoir des réservations';
+  static const catalogHelpBookingBody =
+      'Les clientes consultent tes créneaux et t’envoient une demande depuis l’app. '
+      'Tu confirmes ou refuses depuis ton espace pro.';
+  static const catalogHelpTrialTitle = 'Essai gratuit à l’inscription';
+  static const catalogHelpTrialBody =
+      'Tu testes la visibilité pendant l’essai catalogue. '
+      'Le règlement des prestations se fait chez toi, le jour du rendez-vous.';
 }

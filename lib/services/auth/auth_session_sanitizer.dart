@@ -58,10 +58,14 @@ abstract final class AuthSessionSanitizer {
           if (isTransientNetworkError(error)) return;
           if (isStaleSessionError(error)) {
             await signOutLocally(auth);
-            sink.add(const AuthState(AuthChangeEvent.signedOut, null));
+            try {
+              sink.add(const AuthState(AuthChangeEvent.signedOut, null));
+            } on StateError catch (_) {}
             return;
           }
-          sink.addError(error, stackTrace);
+          try {
+            sink.addError(error, stackTrace);
+          } on StateError catch (_) {}
         },
       ),
     );

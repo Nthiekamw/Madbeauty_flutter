@@ -73,49 +73,48 @@ class ClientHomePromoBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final layout = DiscoveryResponsive.of(context);
-    final pad = layout.horizontalPadding;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final outerMargin = layout.homePromoBannerOuterMargin;
+    final bannerWidth = screenWidth - outerMargin * 2;
+    final dims = layout.homePromoBannerDimensions(
+      bannerWidth,
+      horizontalPadding: 0,
+    );
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: pad),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final dims = layout.homePromoBannerDimensions(
-            constraints.maxWidth,
-            horizontalPadding: 0,
-          );
-
-          return Material(
-            color: AppColors.transparent,
-            clipBehavior: Clip.antiAlias,
+    return SizedBox(
+      height: dims.height,
+      child: Center(
+        child: Material(
+          color: AppColors.transparent,
+          clipBehavior: Clip.antiAlias,
+          borderRadius: BorderRadius.circular(_bannerRadius),
+          elevation: isDark ? 0 : 2,
+          shadowColor: AppColors.black.withValues(alpha: 0.08),
+          child: InkWell(
             borderRadius: BorderRadius.circular(_bannerRadius),
-            elevation: isDark ? 0 : 2,
-            shadowColor: AppColors.black.withValues(alpha: 0.08),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(_bannerRadius),
-              onTap: () => context.goClientSearch(),
-              child: Ink(
-                width: dims.width,
-                height: dims.height,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(_bannerRadius),
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : _bannerSurfaceLight,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_bannerRadius),
-                  child: _HomePromoBannerHorizontalLayout(
-                    width: dims.width,
-                    height: dims.height,
-                    layout: layout,
-                    isDark: isDark,
-                    gap: _mosaicGap,
-                  ),
+            onTap: () => context.goClientSearch(),
+            child: Ink(
+              width: dims.width,
+              height: dims.height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_bannerRadius),
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : _bannerSurfaceLight,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(_bannerRadius),
+                child: _HomePromoBannerHorizontalLayout(
+                  width: dims.width,
+                  height: dims.height,
+                  layout: layout,
+                  isDark: isDark,
+                  gap: _mosaicGap,
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -139,7 +138,7 @@ class _HomePromoBannerHorizontalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final copyFraction = layout.isCompact ? 0.48 : 0.46;
+    final copyFraction = layout.isCompact ? 0.52 : 0.46;
     final mosaicLeft = width * (copyFraction - 0.06);
     final copyWidth = width * copyFraction;
     final diagonalInset = height * 0.08;
@@ -403,7 +402,7 @@ class _PromoCopyTypography {
       ctaVPadding: screenWidth < 420 ? 6.0 : screenWidth < 600 ? 7.0 : 11.0,
       ctaRadius: screenWidth < 420 ? 18.0 : 24.0,
       plantSize: screenWidth < 420 ? 56.0 : screenWidth < 600 ? 72.0 : 110.0,
-      subMaxLines: screenWidth < 420 ? 2 : screenWidth < 600 ? 2 : 3,
+      subMaxLines: 3,
       gapAfterTitle: screenWidth < 420 ? 4.0 : screenWidth < 600 ? 6.0 : 12.0,
       gapBeforeCta: screenWidth < 420 ? 8.0 : screenWidth < 600 ? 10.0 : 16.0,
     );

@@ -74,7 +74,21 @@ beauté,afro,coiffure,réservation,coiffeuse,manucure,maquillage,salon,locks,tre
 ## URL politique de confidentialité
 
 ```
-https://madbeauty-app.netlify.app/privacy.html
+https://madbeauty-web.netlify.app/privacy.html
+```
+
+(Site vitrine dans `website/` — voir `website/README.md` pour le déploiement.)
+
+## URL marketing (site vitrine)
+
+```
+https://madbeauty-web.netlify.app/
+```
+
+## Application web (catalogue / réservation)
+
+```
+https://madbeauty-app.netlify.app
 ```
 
 ---
@@ -103,7 +117,7 @@ Première version de MadBeauty : découverte de prestataires beauté afro, rése
 ## Informations de contact
 
 - **URL d’assistance** : `mailto:williamnthiekam392@gmail.com`
-- **URL marketing** (optionnel) : `https://madbeauty-app.netlify.app`
+- **URL marketing** (optionnel) : `https://madbeauty-web.netlify.app`
 
 ---
 
@@ -119,4 +133,4 @@ Déclarer notamment :
 | Identifiants | Connexion, notifications push |
 | Achats | Paiements Stripe |
 
-Lier la politique : `https://madbeauty-app.netlify.app/privacy.html`
+Lier la politique : `https://madbeauty-web.netlify.app/privacy.html`

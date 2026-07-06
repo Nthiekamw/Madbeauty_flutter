@@ -125,6 +125,7 @@ class PrestataireHomeListCard extends StatelessWidget {
                       dense: dense,
                       titleSize: titleSize,
                       bodySize: bodySize,
+                      textZoneHeight: textZoneH,
                       showDistanceOnPhoto: showDistanceOnPhoto,
                       showRatingOnPhoto: showRatingOnPhoto,
                     ),
@@ -225,6 +226,7 @@ class _CardTextBody extends StatelessWidget {
     required this.km,
     required this.titleSize,
     required this.bodySize,
+    required this.textZoneHeight,
     this.dense = false,
     this.showDistanceOnPhoto = false,
     this.showRatingOnPhoto = false,
@@ -241,6 +243,7 @@ class _CardTextBody extends StatelessWidget {
   final double km;
   final double titleSize;
   final double bodySize;
+  final double textZoneHeight;
   final bool dense;
   final bool showDistanceOnPhoto;
   final bool showRatingOnPhoto;
@@ -259,6 +262,9 @@ class _CardTextBody extends StatelessWidget {
     final locationLine =
         showDistanceOnPhoto ? null : _locationLine();
     final showRating = !showRatingOnPhoto && rating != null;
+    final tightText = textZoneHeight < 52;
+    final showRatingLine = showRating && !(tightText && showSpecialty);
+    final specialtyMaxLines = tightText ? 2 : 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,16 +303,16 @@ class _CardTextBody extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             specialty!,
-            maxLines: 1,
+            maxLines: specialtyMaxLines,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: _bodyColor,
               fontSize: bodySize,
-              height: 1.15,
+              height: 1.2,
             ),
           ),
         ],
-        if (showRating) ...[
+        if (showRatingLine) ...[
           const SizedBox(height: 1),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +340,7 @@ class _CardTextBody extends StatelessWidget {
             ],
           ),
         ],
-        if (locationLine != null) ...[
+        if (locationLine != null && !tightText) ...[
           const SizedBox(height: 1),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

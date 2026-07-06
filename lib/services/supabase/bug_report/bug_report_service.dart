@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/bug_report.dart';
 import '../../../core/models/domain/bug_report_chat_summary.dart';
+import '../../../core/utils/safe_broadcast_stream.dart';
 
 enum BugReportCategory {
   auth('auth'),
@@ -84,40 +85,47 @@ class BugReportService {
       );
 
   Stream<BugReportChatSummary> watchChatSummary(String bugReportId) {
-    final controller = StreamController<BugReportChatSummary>.broadcast();
+    final safe = SafeBroadcastStream<BugReportChatSummary>();
     StreamSubscription<List<Map<String, dynamic>>>? streamSub;
 
     Future<void> emitLatest() async {
+      if (!safe.isActive) return;
       try {
         final summary = await getChatSummary(bugReportId);
-        if (summary != null && !controller.isClosed) {
-          controller.add(summary);
-        }
+        if (summary != null) safe.add(summary);
       } catch (e, st) {
-        if (!controller.isClosed) controller.addError(e, st);
+        safe.addError(e, st);
       }
     }
 
-    controller.onListen = () async {
-      await emitLatest();
-      streamSub = _client
-          .from('bug_reports')
-          .stream(primaryKey: ['id'])
-          .eq('id', bugReportId)
-          .listen(
-            (rows) {
-              if (controller.isClosed || rows.isEmpty) return;
-              controller.add(BugReportChatSummary.fromRow(rows.first));
-            },
-            onError: controller.addError,
-          );
-    };
+    void startListening() {
+      unawaited(() async {
+        await emitLatest();
+        if (!safe.isActive) return;
 
-    controller.onCancel = () async {
-      await streamSub?.cancel();
-    };
+        streamSub = _client
+            .from('bug_reports')
+            .stream(primaryKey: ['id'])
+            .eq('id', bugReportId)
+            .listen(
+              (rows) {
+                if (!safe.isActive || rows.isEmpty) return;
+                safe.add(BugReportChatSummary.fromRow(rows.first));
+              },
+              onError: safe.addError,
+            );
+      }());
+    }
 
-    return controller.stream;
+    safe.bind(
+      onListen: startListening,
+      cleanup: () async {
+        await streamSub?.cancel();
+        streamSub = null;
+      },
+    );
+
+    return safe.stream;
   }
 
   Future<BugReportChatSummary?> getChatSummary(String bugReportId) async {

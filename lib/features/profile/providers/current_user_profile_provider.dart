@@ -24,9 +24,9 @@ final currentUserProfileProvider =
 
       return loader.load<UserProfile?>(
         fallback: null,
-        readCache: cache.readUserProfile,
+        readCache: () => cache.readUserProfile(user.id),
         writeCache: (data) async {
-          if (data != null) await cache.saveUserProfile(data);
+          if (data != null) await cache.saveUserProfile(user.id, data);
         },
         fetchRemote: () => service.getByUserId(user.id),
       );

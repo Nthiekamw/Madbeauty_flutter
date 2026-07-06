@@ -61,22 +61,26 @@ class DiscoveryResponsive {
   }
 
   double get homeListCardHeight {
-    final ratio = useWebSiteLayout && isTablet ? 1.56 : 1.48;
+    final ratio = useWebSiteLayout && isTablet
+        ? 1.56
+        : isCompact
+            ? 1.56
+            : 1.48;
     return homeListCardWidth * ratio;
   }
 
   /// Part photo / texte : réserve une zone texte lisible sous l'image.
   double homeListPhotoHeightFor(double cardHeight) {
     final minText = homeListMinTextZoneHeight;
-    final maxPhoto = cardHeight - minText - 6;
-    final preferred = cardHeight * 0.68;
-    return preferred.clamp(cardHeight * 0.55, maxPhoto);
+    final maxPhoto = cardHeight - minText - 8;
+    final preferred = cardHeight * (isCompact ? 0.58 : 0.66);
+    return preferred.clamp(cardHeight * 0.52, maxPhoto);
   }
 
   double get homeListMinTextZoneHeight {
-    if (useWebSiteLayout && isWide) return 48;
-    if (isTablet) return 44;
-    return 40;
+    if (useWebSiteLayout && isWide) return 52;
+    if (isTablet) return 48;
+    return isCompact ? 50 : 44;
   }
 
   double homeListTitleFontSize(double cardWidth) =>
@@ -117,6 +121,14 @@ class DiscoveryResponsive {
   static const double homePromoBannerAspectWidth = 1024;
   static const double homePromoBannerAspectHeight = 682;
 
+  /// Marge souhaitée entre la bannière promo et le bord de l’écran.
+  double get homePromoBannerOuterMargin {
+    if (useSidebarNavigation) return 20;
+    if (isCompact) return 10;
+    if (isTablet) return 12;
+    return 12;
+  }
+
   /// Hero promo (texte + mosaïque, hauteur bornée).
   ({double width, double height}) homePromoBannerDimensions(
     double parentWidth, {
@@ -128,7 +140,7 @@ class DiscoveryResponsive {
         homePromoBannerAspectWidth;
 
     if (useNativeMobileExperience) {
-      height = height.clamp(210, 280);
+      height = height.clamp(220, 288);
     } else if (isDesktop) {
       height = height.clamp(280, 400);
     } else {
