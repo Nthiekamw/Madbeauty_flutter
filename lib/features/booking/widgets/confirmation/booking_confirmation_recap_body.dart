@@ -23,10 +23,15 @@ class BookingConfirmationRecapBody extends StatelessWidget {
     required this.durationMinutes,
     required this.price,
     required this.breakdown,
+    required this.effectiveMode,
+    required this.acceptsOnline,
+    required this.stripeAvailable,
     required this.isOwnProfile,
     required this.isSubmitting,
+    required this.acceptsOnlineLoading,
     required this.errorMessage,
     required this.ctaLabel,
+    required this.onPaymentModeChanged,
     required this.onConfirm,
   });
 
@@ -38,10 +43,15 @@ class BookingConfirmationRecapBody extends StatelessWidget {
   final int durationMinutes;
   final double price;
   final BookingPricingBreakdown? breakdown;
+  final BookingPaymentModeKind effectiveMode;
+  final bool acceptsOnline;
+  final bool stripeAvailable;
   final bool isOwnProfile;
   final bool isSubmitting;
+  final bool acceptsOnlineLoading;
   final String? errorMessage;
   final String ctaLabel;
+  final ValueChanged<BookingPaymentModeKind> onPaymentModeChanged;
   final VoidCallback onConfirm;
 
   static String formatTime(DateTime value) {
@@ -184,34 +194,56 @@ class BookingConfirmationRecapBody extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 14),
         if (breakdown != null) ...[
-          const SizedBox(height: 14),
-          BookingCheckoutPanel(breakdown: breakdown!),
+          BookingCheckoutPanel(
+            breakdown: breakdown!,
+            paymentMode: effectiveMode,
+            prestataireAcceptsDeposit: acceptsOnline,
+            stripeAvailable: stripeAvailable,
+            onPaymentModeChanged: onPaymentModeChanged,
+          ),
           const SizedBox(height: 14),
         ],
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: (breakdown?.requiresInAppPayment == true
+                    ? const Color(0xFF10B981)
+                    : theme.colorScheme.primary)
+                .withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+              color: (breakdown?.requiresInAppPayment == true
+                      ? const Color(0xFF10B981)
+                      : theme.colorScheme.primary)
+                  .withValues(alpha: 0.2),
             ),
           ),
           child: Row(
             children: [
               Icon(
-                Icons.payments_outlined,
+                breakdown?.requiresInAppPayment == true
+                    ? Icons.shield_outlined
+                    : Icons.payments_outlined,
                 size: 18,
-                color: theme.colorScheme.primary,
+                color: breakdown?.requiresInAppPayment == true
+                    ? const Color(0xFF10B981)
+                    : theme.colorScheme.primary,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  DiscPay.recapTrustOnSite,
+                  breakdown?.requiresInAppPayment == true
+                      ? DiscPay.recapTrust
+                      : stripeAvailable
+                          ? DiscPay.recapTrustOnSite
+                          : DiscBk.recapTrust,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontFamily: AppFonts.body,
-                    color: theme.colorScheme.primary,
+                    color: breakdown?.requiresInAppPayment == true
+                        ? const Color(0xFF10B981)
+                        : theme.colorScheme.primary,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
@@ -220,6 +252,14 @@ class BookingConfirmationRecapBody extends StatelessWidget {
             ],
           ),
         ),
+        if (!stripeAvailable && breakdown?.requiresInAppPayment == true) ...[
+          const SizedBox(height: 12),
+          const BookingMessage(
+            icon: Icons.payment_outlined,
+            title: 'Paiement indisponible',
+            message: DiscPay.errNotConfigured,
+          ),
+        ],
         if (errorMessage != null) ...[
           const SizedBox(height: 14),
           Container(
@@ -274,8 +314,8 @@ class BookingConfirmationRecapBody extends StatelessWidget {
                 : null,
           ),
           child: AppButton(
-            isLoading: isSubmitting,
-            enabled: !isSubmitting && !isOwnProfile,
+            isLoading: isSubmitting || acceptsOnlineLoading,
+            enabled: !isSubmitting && !isOwnProfile && !acceptsOnlineLoading,
             onPressed: isSubmitting || isOwnProfile ? null : onConfirm,
             child: Text(ctaLabel),
           ),

@@ -2,28 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../shared/layout/discovery_responsive.dart';
+import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 
-/// Infos « accès catalogue » en bas de l’écran Accès catalogue.
+/// Témoignages coiffeurs Pro en bas de l’écran « Mon abonnement ».
 class PrestataireSubscriptionTestimonialsSection extends StatelessWidget {
   const PrestataireSubscriptionTestimonialsSection({super.key});
 
   static final _items = [
     (
-      icon: Icons.visibility_rounded,
-      title: DiscPrestaSub.catalogHelpVisibilityTitle,
-      body: DiscPrestaSub.catalogHelpVisibilityBody,
+      quote: DiscPrestaSub.testimonialSophieQuote,
+      author: DiscPrestaSub.testimonialSophieAuthor,
     ),
     (
-      icon: Icons.event_available_rounded,
-      title: DiscPrestaSub.catalogHelpBookingTitle,
-      body: DiscPrestaSub.catalogHelpBookingBody,
-    ),
-    (
-      icon: Icons.card_giftcard_rounded,
-      title: DiscPrestaSub.catalogHelpTrialTitle,
-      body: DiscPrestaSub.catalogHelpTrialBody,
+      quote: DiscPrestaSub.testimonialMarcQuote,
+      author: DiscPrestaSub.testimonialMarcAuthor,
     ),
   ];
 
@@ -31,7 +25,6 @@ class PrestataireSubscriptionTestimonialsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
-    final primary = theme.colorScheme.primary;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 28, hPad, 0),
@@ -39,7 +32,7 @@ class PrestataireSubscriptionTestimonialsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            DiscPrestaSub.catalogHelpTitle,
+            DiscPrestaSub.testimonialsTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               fontFamily: AppFonts.display,
               fontWeight: FontWeight.w800,
@@ -49,11 +42,9 @@ class PrestataireSubscriptionTestimonialsSection extends StatelessWidget {
           const SizedBox(height: 14),
           for (var i = 0; i < _items.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            _CatalogHelpCard(
-              icon: _items[i].icon,
-              iconColor: primary,
-              title: _items[i].title,
-              body: _items[i].body,
+            _TestimonialCard(
+              quote: _items[i].quote,
+              author: _items[i].author,
             ),
           ],
         ],
@@ -62,18 +53,14 @@ class PrestataireSubscriptionTestimonialsSection extends StatelessWidget {
   }
 }
 
-class _CatalogHelpCard extends StatelessWidget {
-  const _CatalogHelpCard({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.body,
+class _TestimonialCard extends StatelessWidget {
+  const _TestimonialCard({
+    required this.quote,
+    required this.author,
   });
 
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String body;
+  final String quote;
+  final String author;
 
   @override
   Widget build(BuildContext context) {
@@ -82,43 +69,51 @@ class _CatalogHelpCard extends StatelessWidget {
     return DiscoverySurfaceCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       includeHorizontalMargin: false,
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+          const _FiveStarRating(),
+          const SizedBox(height: 10),
+          Text(
+            quote,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: AppFonts.body,
+              height: 1.45,
+              color: theme.colorScheme.onSurface,
             ),
-            child: Icon(icon, size: 22, color: iconColor),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  body,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontFamily: AppFonts.body,
-                    height: 1.45,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 10),
+          Text(
+            '— $author',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: AppFonts.body,
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.3,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FiveStarRating extends StatelessWidget {
+  const _FiveStarRating();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        5,
+        (_) => const Padding(
+          padding: EdgeInsets.only(right: 2),
+          child: Icon(
+            Icons.star_rounded,
+            size: 18,
+            color: AppColors.brandGold,
+          ),
+        ),
       ),
     );
   }

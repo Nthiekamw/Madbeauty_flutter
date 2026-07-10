@@ -49,6 +49,14 @@ class RegisterWizardDraft {
 
     required this.signedUpViaOAuth,
 
+    this.signedUpViaApple = false,
+
+    this.oauthProvidedPrenom = false,
+
+    this.oauthProvidedNom = false,
+
+    this.oauthProvidedEmail = false,
+
     required this.phoneRequiredOnExtras,
 
     this.pendingEmailVerification = false,
@@ -98,6 +106,14 @@ class RegisterWizardDraft {
   final String bio;
 
   final bool signedUpViaOAuth;
+
+  final bool signedUpViaApple;
+
+  final bool oauthProvidedPrenom;
+
+  final bool oauthProvidedNom;
+
+  final bool oauthProvidedEmail;
 
   final bool phoneRequiredOnExtras;
 
@@ -205,6 +221,14 @@ class RegisterWizardDraft {
 
         'signedUpViaOAuth': signedUpViaOAuth,
 
+        'signedUpViaApple': signedUpViaApple,
+
+        'oauthProvidedPrenom': oauthProvidedPrenom,
+
+        'oauthProvidedNom': oauthProvidedNom,
+
+        'oauthProvidedEmail': oauthProvidedEmail,
+
         'phoneRequiredOnExtras': phoneRequiredOnExtras,
 
         'pendingEmailVerification': pendingEmailVerification,
@@ -215,7 +239,7 @@ class RegisterWizardDraft {
 
         'clientDefaultAvatarUrl': clientDefaultAvatarUrl,
 
-        'v': 8,
+        'v': 9,
 
       };
 
@@ -239,7 +263,9 @@ class RegisterWizardDraft {
 
         version != 7 &&
 
-        version != 8) {
+        version != 8 &&
+
+        version != 9) {
 
       return null;
 
@@ -304,6 +330,14 @@ class RegisterWizardDraft {
       bio: json['bio'] as String? ?? '',
 
       signedUpViaOAuth: json['signedUpViaOAuth'] as bool? ?? false,
+
+      signedUpViaApple: json['signedUpViaApple'] as bool? ?? false,
+
+      oauthProvidedPrenom: json['oauthProvidedPrenom'] as bool? ?? false,
+
+      oauthProvidedNom: json['oauthProvidedNom'] as bool? ?? false,
+
+      oauthProvidedEmail: json['oauthProvidedEmail'] as bool? ?? false,
 
       phoneRequiredOnExtras: json['phoneRequiredOnExtras'] as bool? ?? false,
 

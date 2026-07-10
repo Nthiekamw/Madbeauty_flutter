@@ -912,6 +912,13 @@ class PrestataireHubFormController extends ChangeNotifier {
     } else if (step == 4) {
       _currentStep = 5;
     } else if (step == 5) {
+      if (PrestataireHubConstants.wizardStepCount > 6) {
+        _currentStep = 6;
+      } else {
+        notifyListeners();
+        return true;
+      }
+    } else if (step == 6) {
       notifyListeners();
       return true;
     }

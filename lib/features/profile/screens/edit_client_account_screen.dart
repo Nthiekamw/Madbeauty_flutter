@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/logic/address/postal_address.dart';
 import '../../../core/models/domain/user/client_profile.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../services/offline/offline_actions.dart';
@@ -46,9 +47,14 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
   final _prenom = TextEditingController();
   final _nom = TextEditingController();
   final _phone = TextEditingController();
+  final _voieNom = TextEditingController();
+  final _numeroRue = TextEditingController();
+  final _codePostal = TextEditingController();
   final _city = TextEditingController();
+  final _country = TextEditingController(text: PostalAddress.defaultCountry);
 
   String _phoneDialCode = '+33';
+  String _voieType = PostalVoieTypes.defaultType;
   bool _bound = false;
   bool _saving = false;
   bool _savingPhoto = false;
@@ -63,9 +69,22 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     _prenom.dispose();
     _nom.dispose();
     _phone.dispose();
+    _voieNom.dispose();
+    _numeroRue.dispose();
+    _codePostal.dispose();
     _city.dispose();
+    _country.dispose();
     super.dispose();
   }
+
+  PostalAddress get _postalAddress => PostalAddress(
+    voieType: _voieType,
+    voieNom: _voieNom.text,
+    numero: _numeroRue.text,
+    codePostal: _codePostal.text,
+    ville: _city.text,
+    pays: _country.text,
+  );
 
   void _bindFields(UserProfile? profile, ClientProfile? client) {
     if (_bound) return;
@@ -74,7 +93,29 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     final parsed = PhoneNumberUtils.parseStored(profile?.telephone);
     _phoneDialCode = parsed.dialCode;
     _phone.text = parsed.local;
-    _city.text = client?.adresse?.trim() ?? '';
+    final address = (client?.voieNom?.trim().isNotEmpty ?? false) ||
+            (client?.codePostal?.trim().isNotEmpty ?? false) ||
+            (client?.ville?.trim().isNotEmpty ?? false)
+        ? PostalAddress(
+            voieType: client?.voieType?.trim().isNotEmpty == true
+                ? client!.voieType!.trim()
+                : PostalVoieTypes.defaultType,
+            voieNom: client?.voieNom?.trim() ?? '',
+            numero: client?.numeroRue?.trim() ?? '',
+            codePostal: client?.codePostal?.trim() ?? '',
+            ville: client?.ville?.trim() ?? '',
+            pays: client?.pays?.trim().isNotEmpty == true
+                ? client!.pays!.trim()
+                : PostalAddress.defaultCountry,
+          )
+        : PostalAddress.tryParse(client?.adresse);
+    _voieType = address.voieType;
+    _voieNom.text = address.voieNom;
+    _numeroRue.text = address.numero;
+    _codePostal.text = address.codePostal;
+    _city.text = address.ville;
+    _country.text =
+        address.pays.isEmpty ? PostalAddress.defaultCountry : address.pays;
     _bound = true;
   }
 
@@ -135,9 +176,9 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
         nom: _nom.text.trim(),
         telephone: phoneStored.isEmpty ? null : phoneStored,
       );
-      await clientService.updateAdresse(
+      await clientService.updateAddress(
         userId: user.id,
-        adresse: _city.text.trim(),
+        address: _postalAddress,
       );
       _invalidateProfile();
       if (!mounted) return;
@@ -200,6 +241,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
       return;
     }
 
+    if (!mounted) return;
     if (!await ensureOnline(context, ref)) {
       if (mounted) {
         setState(() {
@@ -352,7 +394,16 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
                       setState(() => _phoneError = null);
                     }
                   },
+                  voieType: _voieType,
+                  onVoieTypeChanged: (value) {
+                    setState(() => _voieType = value);
+                  },
+                  voieNomController: _voieNom,
+                  numeroController: _numeroRue,
+                  codePostalController: _codePostal,
                   cityController: _city,
+                  countryController: _country,
+                  onAddressChanged: () => setState(() {}),
                   email: email,
                   prenomError: _prenomError,
                   nomError: _nomError,

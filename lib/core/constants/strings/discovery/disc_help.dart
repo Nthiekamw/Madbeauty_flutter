@@ -53,6 +53,11 @@ abstract final class DiscHelp {
   static const privacyPolicyTitle = 'Politique de confidentialité';
   static const privacyPolicyHint =
       'Données collectées, finalités, sous-traitants et tes droits (RGPD).';
+  static const childSafetyTitle = 'Sécurité des enfants';
+  static const childSafetyHint =
+      'Protection des mineurs, signalement et droits des parents (18+).';
   static const openPrivacyPolicyErr =
       'Impossible d’ouvrir la politique de confidentialité. Réessaie plus tard.';
+  static const openChildSafetyErr =
+      'Impossible d’ouvrir la page sécurité des enfants. Réessaie plus tard.';
 }

@@ -7,7 +7,9 @@ Hébergement statique Netlify, séparé de l’app Flutter (`madbeauty-app`).
 | URL | Contenu |
 |-----|---------|
 | `/` | Accueil — présentation de l’app |
+| `/contact.html` | Contact & support |
 | `/privacy.html` | Politique de confidentialité |
+| `/child-safety.html` | Sécurité des enfants & droits des parents |
 | `/cgu.html` | Conditions générales d’utilisation |
 | `/mentions-legales.html` | Mentions légales |
 
@@ -26,22 +28,26 @@ npx netlify-cli deploy --prod --dir=.
 
 ## Déploiements suivants
 
+Depuis la racine du dépôt (recommandé — aligné sur la CI) :
+
 ```powershell
-cd website
-npx netlify-cli deploy --prod --dir=.
+# .env : NETLIFY_WEBSITE_SITE_ID=<id site madbeauty-web>
+powershell -File scripts/deploy_website_netlify.ps1
 ```
 
-Ou lier le site une fois :
+La CI GitHub (`deploy-website-netlify.yml`) se déclenche sur push `main` / `master` / `features/v2` si `website/**` change.
+
+Manuel depuis `website/` :
 
 ```powershell
 cd website
-npx netlify-cli link
 npx netlify-cli deploy --prod --dir=.
 ```
 
 ## URLs à renseigner après déploiement
 
 - **App Store / Play Store — politique de confidentialité** : `https://TON-SITE.netlify.app/privacy.html`
+- **Play Store — sécurité des enfants** : `https://TON-SITE.netlify.app/child-safety.html`
 - **URL marketing** : `https://TON-SITE.netlify.app/`
 - **Stripe (site entreprise)** : `https://TON-SITE.netlify.app/` ou fiche prestataire sur l’app web
 

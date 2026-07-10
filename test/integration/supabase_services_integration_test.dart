@@ -8,6 +8,7 @@ import 'package:madbeauty/services/supabase/prestataire/catalog/prestataire_serv
 import 'package:madbeauty/services/supabase/prestataire/photos/photo_realisation_service.dart';
 import 'package:madbeauty/services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 import 'package:madbeauty/services/supabase/prestataire/services/service_beaute_service.dart';
+import 'package:madbeauty/services/location/geocoding_service.dart';
 import 'package:madbeauty/services/supabase/profile/profile_service.dart';
 import 'package:madbeauty/services/supabase/storage/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -51,6 +52,7 @@ void main() {
         serviceBeauteService: serviceBeauteService,
         profileService: profileService,
         storageService: storageService,
+        geocodingService: GeocodingService(),
       );
 
       final originalProfile = await profileService.getByUserId(user!.id);

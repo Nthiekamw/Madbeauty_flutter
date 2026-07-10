@@ -154,7 +154,8 @@ abstract final class DiscPrestaForm {
         2 => hubTipServices,
         3 => hubTipHoraires,
         4 => hubTipGallery,
-        _ => hubTipComfort,
+        5 => hubTipComfort,
+        _ => hubTipSubscription,
       };
   static const hubAvatarPickHint = 'Choisis une photo ou une illustration ci-dessous.';
   static const hubServicesProgressLabel = 'Prestations configurées';

@@ -40,6 +40,7 @@ class RegisterWizardIdentityStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AuthFormCard(
       compact: true,
       child: Column(
@@ -77,76 +78,109 @@ class RegisterWizardIdentityStep extends StatelessWidget {
             const AuthOrDivider(compact: true),
             const SizedBox(height: RegisterWizardConstants.sectionGap),
           ],
-          AuthStepSection(
-            compact: true,
-            title: AuthStrings.registerSectionIdentity,
-            icon: Icons.person_outline_rounded,
-            child: RegisterFieldRow(
-              left: AppTextField(
-                dense: true,
-                controller: form.prenom,
-                onChanged: (_) => form.clearPrenomError(),
-                enabled: formEnabled,
-                label: AuthStrings.registerFieldPrenom,
-                errorText: form.prenomError,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.givenName],
-              ),
-              right: AppTextField(
-                dense: true,
-                controller: form.nom,
-                onChanged: (_) => form.clearNomError(),
-                enabled: formEnabled,
-                label: AuthStrings.registerFieldNom,
-                errorText: form.nomError,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.familyName],
+          if (!form.oauthIdentitySectionHidden) ...[
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.registerSectionIdentity,
+              icon: Icons.person_outline_rounded,
+              child: RegisterFieldRow(
+                left: AppTextField(
+                  dense: true,
+                  controller: form.prenom,
+                  onChanged: (_) => form.clearPrenomError(),
+                  enabled: formEnabled && !form.oauthProvidedPrenom,
+                  label: AuthStrings.registerFieldPrenom,
+                  errorText: form.prenomError,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.givenName],
+                ),
+                right: AppTextField(
+                  dense: true,
+                  controller: form.nom,
+                  onChanged: (_) => form.clearNomError(),
+                  enabled: formEnabled && !form.oauthProvidedNom,
+                  label: AuthStrings.registerFieldNom,
+                  errorText: form.nomError,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.familyName],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: RegisterWizardConstants.sectionGap),
+            const SizedBox(height: RegisterWizardConstants.sectionGap),
+          ],
           AuthStepSection(
             compact: true,
             title: AuthStrings.registerSectionContact,
             icon: Icons.phone_outlined,
-            child: PhoneNumberField(
-              dense: true,
-              enabled: formEnabled,
-              localController: form.phone,
-              dialCode: form.phoneDialCode,
-              errorText: form.phoneError,
-              onDialCodeChanged: form.setPhoneDialCode,
-              onLocalChanged: form.clearPhoneError,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (form.showOAuthPhoneHint) ...[
+                  Text(
+                    AuthStrings.registerOAuthPhoneHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: AppFonts.body,
+                      color: onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                PhoneNumberField(
+                  dense: true,
+                  enabled: formEnabled,
+                  localController: form.phone,
+                  dialCode: form.phoneDialCode,
+                  errorText: form.phoneError,
+                  onDialCodeChanged: form.setPhoneDialCode,
+                  onLocalChanged: form.clearPhoneError,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: RegisterWizardConstants.sectionGap),
-          AuthStepSection(
-            compact: true,
-            title: AuthStrings.loginFieldEmail,
-            icon: Icons.mail_outline_rounded,
-            child: AppTextField(
-              dense: true,
-              controller: form.email,
-              onChanged: (_) => form.clearEmailError(),
-              enabled: formEnabled && !form.signedUpViaOAuth,
-              label: AuthStrings.loginFieldEmail,
-              errorText: form.emailError,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [
-                AutofillHints.email,
-                AutofillHints.username,
-              ],
-              prefixIcon: Icon(
-                Icons.mail_outline,
-                color: onSurfaceVariant,
+          if (!form.oauthEmailHidden) ...[
+            const SizedBox(height: RegisterWizardConstants.sectionGap),
+            AuthStepSection(
+              compact: true,
+              title: AuthStrings.loginFieldEmail,
+              icon: Icons.mail_outline_rounded,
+              child: AppTextField(
+                dense: true,
+                controller: form.email,
+                onChanged: (_) => form.clearEmailError(),
+                enabled: formEnabled && !form.signedUpViaOAuth,
+                label: AuthStrings.loginFieldEmail,
+                errorText: form.emailError,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [
+                  AutofillHints.email,
+                  AutofillHints.username,
+                ],
+                prefixIcon: Icon(
+                  Icons.mail_outline,
+                  color: onSurfaceVariant,
+                ),
               ),
             ),
-          ),
+          ],
           if (form.signedUpViaOAuth) ...[
             const SizedBox(height: RegisterWizardConstants.sectionGap),
-            const RegisterWizardGoogleConnectedBanner(),
+            RegisterWizardOAuthConnectedBanner(
+              label: form.signedUpViaApple
+                  ? AuthStrings.registerAppleConnectedBanner
+                  : AuthStrings.registerGoogleConnectedBanner,
+            ),
+            if (form.oauthIdentitySectionHidden && form.oauthEmailHidden) ...[
+              const SizedBox(height: 8),
+              Text(
+                AuthStrings.registerOAuthIdentityPrefilledHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  color: onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
           if (!form.signedUpViaOAuth) ...[
             const SizedBox(height: RegisterWizardConstants.sectionGap),
@@ -319,6 +353,10 @@ class RegisterWizardExtrasStep extends StatelessWidget {
               codePostalController: form.codePostal,
               villeController: form.ville,
               paysController: form.pays,
+              adresseError: form.adresseError,
+              onAddressChanged: form.onPostalAddressChanged,
+              onVilleChanged: form.onPostalAddressChanged,
+              onCodePostalChanged: form.onPostalAddressChanged,
             ),
           ] else ...[
             PrestataireSignupExtrasForm(
@@ -338,8 +376,12 @@ class RegisterWizardExtrasStep extends StatelessWidget {
               bioController: form.bio,
               salonError: form.salonError,
               villeError: form.villeError,
+              codePostalError: form.codePostalError,
+              adresseError: form.adresseError,
               onSalonChanged: form.clearSalonError,
-              onVilleChanged: form.clearVilleError,
+              onAddressChanged: form.onPostalAddressChanged,
+              onVilleChanged: form.onPostalAddressChanged,
+              onCodePostalChanged: form.onPostalAddressChanged,
             ),
             const SizedBox(height: RegisterWizardConstants.sectionGap),
             RegisterPrestaSubscriptionHint(onSurfaceVariant: onSurfaceVariant),
@@ -391,8 +433,10 @@ class RegisterPrestaSubscriptionHint extends StatelessWidget {
   }
 }
 
-class RegisterWizardGoogleConnectedBanner extends StatelessWidget {
-  const RegisterWizardGoogleConnectedBanner();
+class RegisterWizardOAuthConnectedBanner extends StatelessWidget {
+  const RegisterWizardOAuthConnectedBanner({super.key, required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +460,7 @@ class RegisterWizardGoogleConnectedBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              AuthStrings.registerGoogleConnectedBanner,
+              label,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontFamily: AppFonts.body,
                 fontWeight: FontWeight.w600,

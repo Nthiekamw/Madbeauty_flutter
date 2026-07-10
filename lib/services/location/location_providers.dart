@@ -1,5 +1,6 @@
 ﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'address_autocomplete_service.dart';
 import 'geocoding_service.dart';
 import 'geolocation_service.dart';
 
@@ -11,5 +12,11 @@ final geolocationServiceProvider = Provider<GeolocationService>((ref) {
 
 final geocodingServiceProvider = Provider<GeocodingService>((ref) {
   return GeocodingService();
+});
+
+final addressAutocompleteServiceProvider = Provider<AddressAutocompleteService>((
+  ref,
+) {
+  return AddressAutocompleteService();
 });
 

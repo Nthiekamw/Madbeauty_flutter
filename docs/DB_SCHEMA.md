@@ -64,7 +64,15 @@ Rôles applicatifs (multi-rôle par utilisateur).
 |---------|------|-------------|
 | `id` | `uuid` | PK |
 | `user_id` | `uuid` | NOT NULL, UNIQUE, FK → `auth.users(id)` ON DELETE CASCADE |
-| `adresse` | `text` | nullable |
+| `adresse` | `text` | nullable — adresse formatée complète |
+| `ville` | `text` | nullable |
+| `code_postal` | `text` | nullable |
+| `pays` | `char(2)` | nullable — code ISO 3166-1 alpha-2 |
+| `voie_type` | `text` | nullable |
+| `voie_nom` | `text` | nullable |
+| `numero_rue` | `text` | nullable |
+| `latitude` | `double precision` | nullable |
+| `longitude` | `double precision` | nullable |
 | `stripe_customer_id` | `text` | nullable — client Stripe (`cus_...`) pour PaymentSheet |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 

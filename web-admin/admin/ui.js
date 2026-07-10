@@ -41,6 +41,12 @@ function showSection(id, el) {
   if (id === 'clients' || id === 'presta') {
     applyUserFilters();
   }
+  if (id === 'forfaits') {
+    setTimeout(() => {
+      if (typeof renderPrestataireSubscriptions === 'function') renderPrestataireSubscriptions();
+      else if (window.MBLive?.searchSubscriptions) window.MBLive.searchSubscriptions();
+    }, 0);
+  }
 }
 
 function resetUsersListFilters() {
@@ -164,36 +170,167 @@ function openUnbanModal(userId) {
   });
 }
 
-function openUserModal(userId) {
-  const u = USERS.find((x) => x.id === userId);
-  if (!u) { showToast('Utilisateur introuvable'); return; }
-  const statusLabel = u.status === 'active' ? 'Actif' : 'Banni';
-  const rolesHtml = (u.roles || []).length
-    ? (u.roles || []).map((r) => `<span class="badge pro" style="margin-right:6px;">${r} <button type="button" class="btn btn-outline btn-sm" style="padding:0 4px;margin-left:4px;" onclick="MBLive.removeRole('${u.id}','${r}')">×</button></span>`).join('')
-    : '<span style="color:var(--text3);">Aucun rôle</span>';
+function fmtUserDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('fr-FR', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function fmtUserDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function userDetailRow(label, value, { mono = false, empty = '—' } = {}) {
+  const v = value == null || String(value).trim() === '' ? empty : String(value);
+  return `<div class="user-detail-row">
+    <div class="user-detail-label">${escapeHtml(label)}</div>
+    <div class="user-detail-value${mono ? ' user-detail-value--mono' : ''}">${escapeHtml(v)}</div>
+  </div>`;
+}
+
+function userDetailSection(title, icon, rowsHtml) {
+  if (!rowsHtml) return '';
+  return `<section class="user-detail-section">
+    <div class="user-detail-section-title"><i class="fa-solid ${icon}"></i> ${escapeHtml(title)}</div>
+    <div class="user-detail-grid">${rowsHtml}</div>
+  </section>`;
+}
+
+function renderUserDetailBody(u, details) {
+  const profile = details?.profile || {};
+  const roles = Array.isArray(details?.roles)
+    ? details.roles.map((r) => (typeof r === 'string' ? r : String(r))).filter(Boolean)
+    : (u.roles || []);
+  const client = details?.client_profile;
+  const presta = details?.prestataire_profile;
+  const providers = Array.isArray(details?.auth_providers) ? details.auth_providers : [];
   const isActive = u.status === 'active';
-  openModalShell({
-    title: u.name,
-    bodyHtml: `
-    <div style="display:grid;gap:10px;font-size:14px;">
-      <p><strong>Email :</strong> ${escapeHtml(u.email)}</p>
-      <p><strong>ID :</strong> <code style="font-size:11px;">${u.id}</code></p>
-      <p><strong>Type :</strong> ${escapeHtml(u.type)}</p>
-      <p><strong>Statut :</strong> ${statusLabel}</p>
-      ${u.banReason ? `<p><strong>Motif ban :</strong> ${escapeHtml(u.banReason)}</p>` : ''}
-      <p><strong>Rôles :</strong><br>${rolesHtml}</p>
+  const displayName = [profile.prenom, profile.nom].filter(Boolean).join(' ').trim() || u.name;
+  const avatarHtml = profile.avatar_url
+    ? `<img src="${escapeHtml(profile.avatar_url)}" alt="" class="user-detail-avatar-img">`
+    : `<div class="user-detail-avatar-fallback">${initials(displayName)}</div>`;
+
+  const rolesHtml = roles.length
+    ? roles.map((r) => `<span class="badge pro" style="margin-right:6px;">${escapeHtml(r)} <button type="button" class="btn btn-outline btn-sm" style="padding:0 4px;margin-left:4px;" onclick="MBLive.removeRole('${u.id}','${r}')">×</button></span>`).join('')
+    : '<span style="color:var(--text3);">Aucun rôle</span>';
+
+  const accountRows = [
+    userDetailRow('Prénom', profile.prenom || u.prenom),
+    userDetailRow('Nom', profile.nom || u.nom),
+    userDetailRow('E-mail', details?.email || u.email),
+    userDetailRow('Téléphone', profile.telephone || u.phone),
+    userDetailRow('Inscription', fmtUserDateTime(details?.created_at || u.createdAt)),
+    userDetailRow('Dernière connexion', fmtUserDateTime(details?.last_sign_in_at || u.lastSignInAt)),
+    userDetailRow('Dernière activité', fmtUserDateTime(profile.last_seen_at)),
+    userDetailRow('E-mail confirmé', details?.email_confirmed_at ? fmtUserDateTime(details.email_confirmed_at) : 'Non'),
+    userDetailRow('Notifications push', profile.has_fcm_token || u.hasFcmToken ? 'Token actif' : 'Aucun token'),
+    userDetailRow('ID utilisateur', details?.user_id || u.id, { mono: true }),
+  ].join('');
+
+  const statusRows = [
+    userDetailRow('Statut compte', isActive ? 'Actif' : 'Banni'),
+    userDetailRow('Type affiché', u.type),
+    ...(u.banReason || profile.ban_reason ? [userDetailRow('Motif ban', u.banReason || profile.ban_reason)] : []),
+    ...(u.bannedAt || profile.banned_at ? [userDetailRow('Banni le', fmtUserDateTime(u.bannedAt || profile.banned_at))] : []),
+    userDetailRow('Profil client', client ? 'Oui' : (u.hasClientProfile ? 'Oui' : 'Non')),
+    userDetailRow('Profil prestataire', presta ? 'Oui' : (u.hasPrestaProfile ? 'Oui' : 'Non')),
+  ].join('');
+
+  const clientRows = client ? [
+    userDetailRow('Adresse', client.adresse),
+    userDetailRow('Ville', client.ville || u.clientVille),
+    userDetailRow('Code postal', client.code_postal || u.clientCodePostal),
+    userDetailRow('Pays', client.pays || u.clientPays),
+    userDetailRow('Voie', [client.numero_rue, client.voie_type, client.voie_nom].filter(Boolean).join(' ').trim() || null),
+    userDetailRow('Réservations', client.reservations_count ?? '0'),
+    userDetailRow('Stripe client', client.stripe_customer_id, { mono: true }),
+    userDetailRow('Profil créé le', fmtUserDateTime(client.created_at)),
+  ].join('') : '';
+
+  const prestaRows = presta ? [
+    userDetailRow('Salon', presta.nom_salon || u.prestaNomSalon),
+    userDetailRow('Ville', presta.ville || u.prestaVille),
+    userDetailRow('Adresse', presta.adresse),
+    userDetailRow('Note moyenne', presta.note_moyenne != null ? `⭐ ${Number(presta.note_moyenne).toFixed(1)}` : '—'),
+    userDetailRow('Vérifié', presta.is_verified ? 'Oui' : 'Non'),
+    userDetailRow('Masqué catalogue', presta.is_hidden ? `Oui (${fmtUserDateTime(presta.hidden_at)})` : 'Non'),
+    userDetailRow('Réservations', presta.reservations_count ?? '0'),
+    userDetailRow('Services', presta.services_count ?? '0'),
+    userDetailRow('Abonnement', presta.subscription_status || 'none'),
+    userDetailRow('Palier', presta.subscription_tier ? `${presta.subscription_tier} / ${presta.subscription_interval || '—'}` : '—'),
+    userDetailRow('Fin période abo.', fmtUserDateTime(presta.subscription_current_period_end)),
+    userDetailRow('Essai catalogue', fmtUserDateTime(presta.catalog_trial_ends_at)),
+    userDetailRow('Stripe Connect', presta.stripe_connect_account_id, { mono: true }),
+    userDetailRow('Connect statut', presta.stripe_connect_onboarding_status),
+    userDetailRow('Paiements activés', presta.stripe_connect_charges_enabled ? 'Oui' : 'Non'),
+    userDetailRow('Profil créé le', fmtUserDateTime(presta.created_at)),
+  ].join('') : '';
+
+  const providersRows = providers.length
+    ? providers.map((p) => userDetailRow(
+      p.provider || '—',
+      `Depuis ${fmtUserDateTime(p.created_at)}${p.last_sign_in_at ? ` · dernière utilisation ${fmtUserDateTime(p.last_sign_in_at)}` : ''}`,
+    )).join('')
+    : userDetailRow('Fournisseurs', '—');
+
+  return `
+    <div class="user-detail-header">
+      <div class="user-detail-avatar">${avatarHtml}</div>
+      <div class="user-detail-header-text">
+        <div class="user-detail-name">${escapeHtml(displayName)}</div>
+        <div class="user-detail-email">${escapeHtml(details?.email || u.email)}</div>
+        <div class="user-detail-badges">
+          <span class="badge ${u.type === 'prestataire' ? 'pro' : u.type === 'client' ? 'active' : 'inactive'}">${escapeHtml(u.type)}</span>
+          <span class="badge ${isActive ? 'active' : 'inactive'}">${isActive ? 'Actif' : 'Banni'}</span>
+          ${presta?.is_verified ? '<span class="badge active">Vérifié</span>' : ''}
+        </div>
+      </div>
     </div>
-    <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;">
-      ${!u.roles?.includes('client') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','client')">+ Client</button>` : ''}
-      ${!u.roles?.includes('prestataire') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','prestataire')">+ Prestataire</button>` : ''}
-      ${!u.roles?.includes('admin') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','admin')">+ Admin</button>` : ''}
-    </div>
-    <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;">
+    ${userDetailSection('Compte', 'fa-user', accountRows)}
+    ${userDetailSection('Statut & rôles', 'fa-shield-halved', statusRows + `<div class="user-detail-row user-detail-row--full"><div class="user-detail-label">Rôles</div><div class="user-detail-value">${rolesHtml}</div></div>`)}
+    ${client ? userDetailSection('Profil client', 'fa-user-tag', clientRows) : ''}
+    ${presta ? userDetailSection('Profil prestataire', 'fa-store', prestaRows) : ''}
+    ${userDetailSection('Connexion', 'fa-key', providersRows)}
+    <div class="user-detail-actions">
+      ${!roles.includes('client') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','client')">+ Client</button>` : ''}
+      ${!roles.includes('prestataire') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','prestataire')">+ Prestataire</button>` : ''}
+      ${!roles.includes('admin') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','admin')">+ Admin</button>` : ''}
       <button type="button" class="btn btn-outline btn-sm" onclick="closeModal();openSupportForUser('${u.id}')"><i class="fa-solid fa-comment"></i> Support</button>
       <button type="button" class="btn btn-danger btn-sm" onclick="closeModal();${isActive ? `openBanModal('${u.id}')` : `openUnbanModal('${u.id}')`}"><i class="fa-solid fa-ban"></i> ${isActive ? 'Bannir' : 'Débannir'}</button>
-    </div>`,
+    </div>`;
+}
+
+async function openUserModal(userId) {
+  const u = USERS.find((x) => x.id === userId);
+  if (!u) { showToast('Utilisateur introuvable'); return; }
+  openModalShell({
+    title: u.name,
+    bodyHtml: '<div class="user-detail-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement des détails…</div>',
     footerHtml: '<button type="button" class="btn btn-outline" onclick="closeModal()">Fermer</button>',
+    variant: 'user-detail',
   });
+  try {
+    const details = await MBApi.getUserDetails(userId);
+    const body = document.getElementById('modal-body');
+    if (!body) return;
+    if (!details) {
+      body.innerHTML = '<p class="modal-hint">Utilisateur introuvable sur le serveur.</p>';
+      return;
+    }
+    body.innerHTML = renderUserDetailBody(u, details);
+  } catch (e) {
+    const body = document.getElementById('modal-body');
+    if (body) {
+      body.innerHTML = `<p class="modal-hint" style="color:var(--danger);">${escapeHtml(e.message || 'Impossible de charger les détails')}</p>`;
+    }
+  }
 }
 
 // ─── TABLES ─────────────────────────────────────────────────
@@ -229,6 +366,80 @@ function emptyRow(cols, msg) {
   return `<tr><td colspan="${cols}" style="color:var(--text3);padding:24px;text-align:center;">${msg}</td></tr>`;
 }
 
+function subscriptionStatusBadge(row) {
+  const status = row.subscription_status || 'none';
+  if (row.is_catalog_trial) {
+    return '<span class="badge pending">Essai catalogue</span>';
+  }
+  const map = {
+    active: ['active', 'Actif'],
+    trialing: ['active', 'Essai Stripe'],
+    past_due: ['danger', 'En retard'],
+    unpaid: ['danger', 'Impayé'],
+    incomplete: ['pending', 'Incomplet'],
+    canceled: ['inactive', 'Annulé'],
+    none: ['inactive', 'Aucun'],
+  };
+  const [cls, label] = map[status] || ['inactive', status];
+  return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
+}
+
+function subscriptionTierLabel(tier, interval) {
+  if (!tier) return '—';
+  const tierLabel = tier === 'multi' ? '2+ services' : tier === 'solo' ? '1 service' : tier;
+  const intLabel = interval === 'year' ? 'annuel' : interval === 'month' ? 'mensuel' : interval || '';
+  return intLabel ? `${tierLabel} · ${intLabel}` : tierLabel;
+}
+
+function renderPrestataireSubscriptions() {
+  const tbody = document.getElementById('subs-tbody');
+  const summary = document.getElementById('subs-summary');
+  if (!tbody) return;
+
+  const rows = (typeof store !== 'undefined' && store.prestataireSubscriptions) || [];
+  if (!rows.length) {
+    tbody.innerHTML = emptyRow(9, 'Aucun prestataire — lance une recherche ou vérifie la migration admin.');
+    if (summary) summary.textContent = '';
+    return;
+  }
+
+  if (summary) {
+    const active = rows.filter((r) => ['active', 'trialing'].includes(r.subscription_status)).length;
+    const trial = rows.filter((r) => r.is_catalog_trial).length;
+    summary.textContent = `${rows.length} résultat(s) · ${active} abonnement(s) Stripe · ${trial} en essai catalogue`;
+  }
+
+  tbody.innerHTML = rows.map((row, i) => {
+    const name = row.display_name || row.nom_salon || row.email || '—';
+    const salon = [row.nom_salon, row.ville].filter(Boolean).join(' · ') || '—';
+    const stripeRef = row.stripe_subscription_id
+      ? `<span style="font-family:monospace;font-size:11px;" title="${escapeHtml(row.stripe_subscription_id)}">${escapeHtml(row.stripe_subscription_id.slice(0, 14))}…</span>`
+      : '—';
+    return `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar" style="background:${getColor(i)};color:white;">${initials(name)}</div>
+            <div>
+              <div class="user-name">${escapeHtml(name)}</div>
+              <div class="user-email">${escapeHtml(row.email || '')}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:13px;">${escapeHtml(salon)}</td>
+        <td>${subscriptionStatusBadge(row)}</td>
+        <td style="font-size:13px;">${escapeHtml(subscriptionTierLabel(row.subscription_tier, row.subscription_interval))}</td>
+        <td style="font-size:12px;color:var(--text3);">${fmtUserDateTime(row.subscription_current_period_end)}</td>
+        <td style="font-size:12px;color:var(--text3);">${row.is_catalog_trial ? fmtUserDateTime(row.catalog_trial_ends_at) : '—'}</td>
+        <td>${row.services_count ?? 0}</td>
+        <td>${stripeRef}</td>
+        <td>
+          <button type="button" class="btn btn-outline btn-sm" title="Fiche utilisateur" onclick="openUserModal('${row.user_id}')"><i class="fa-solid fa-eye"></i></button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
 function renderTables() {
   ['recent-users-tbody','all-users-tbody','clients-tbody','presta-tbody','rdv-tbody','payments-tbody'].forEach(id => {
     const el = document.getElementById(id);
@@ -241,14 +452,15 @@ function renderTables() {
 
   const recentTbody = document.getElementById('recent-users-tbody');
   if (recentTbody) {
-    if (!USERS.length) recentTbody.innerHTML = emptyRow(6, 'Aucun utilisateur — vérifiez la connexion admin');
+    if (!USERS.length) recentTbody.innerHTML = emptyRow(7, 'Aucun utilisateur — vérifiez la connexion admin');
     else USERS.slice(0, 5).forEach((u, i) => {
       recentTbody.innerHTML += `
       <tr>
         <td><div class="user-cell"><div class="user-avatar" style="background:${getColor(i)};color:white;">${initials(u.name)}</div><div><div class="user-name">${u.name}</div><div class="user-email">${u.email}</div></div></div></td>
         <td><span class="badge ${u.type==='prestataire'?'pro':u.type==='client'?'active':'inactive'}">${u.type}</span></td>
         <td>${(u.roles || []).join(', ') || '—'}</td>
-        <td style="color:var(--text3);font-size:13px;">${u.email}</td>
+        <td>${u.phone}</td>
+        <td style="color:var(--text3);font-size:12px;">${u.city}</td>
         <td><span class="badge ${u.status==='active'?'active':'inactive'}">${u.status==='active'?'Actif':'Banni'}</span></td>
         ${userRowActions(u)}
       </tr>`;
@@ -257,7 +469,7 @@ function renderTables() {
 
   const allTbody = document.getElementById('all-users-tbody');
   if (allTbody) {
-    if (!filtered.length) allTbody.innerHTML = emptyRow(7, USERS.length ? 'Aucun résultat pour ces filtres' : 'Aucun utilisateur chargé');
+    if (!filtered.length) allTbody.innerHTML = emptyRow(8, USERS.length ? 'Aucun résultat pour ces filtres' : 'Aucun utilisateur chargé');
     else filtered.forEach((u, i) => {
       allTbody.innerHTML += `
       <tr>
@@ -265,6 +477,7 @@ function renderTables() {
         <td><span class="badge ${u.type==='prestataire'?'pro':u.type==='client'?'active':'inactive'}">${u.type}</span></td>
         <td style="font-size:12px;color:var(--text3);">${(u.roles || []).join(', ') || '—'}</td>
         <td>${u.phone}</td>
+        <td style="font-size:12px;color:var(--text3);">${u.city}</td>
         <td>${u.rdv}</td>
         <td><span class="badge ${u.status==='active'?'active':'inactive'}">${u.status==='active'?'Actif':'Banni'}</span></td>
         ${userRowActions(u)}

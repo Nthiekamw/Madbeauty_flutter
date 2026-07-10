@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/config/stripe_platform_policy.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/default_avatar_urls.dart';
 import '../widgets/profile/hub/prestataire_hub_layout.dart';
@@ -9,7 +10,10 @@ abstract final class PrestataireHubConstants {
 
   static const galleryMaxPhotos = 10;
   static const galleryMaxVideos = 3;
-  static const wizardStepCount = 6;
+
+  /// 7 étapes sur le web avec Stripe (abonnement) ; 6 sur mobile (stores).
+  static int get wizardStepCount => StripePlatformPolicy.isEnabled ? 7 : 6;
+
   static const optionalFromStep = 4;
 
   static const defaultAvatarUrls = DefaultAvatarUrls.urls;
@@ -39,5 +43,9 @@ const List<PrestataireHubStepMeta> kPrestataireHubSteps = [
   PrestataireHubStepMeta(
     title: DiscPrestaForm.stepComfort,
     icon: Icons.favorite_rounded,
+  ),
+  PrestataireHubStepMeta(
+    title: DiscPrestaForm.stepSubscription,
+    icon: Icons.card_membership_outlined,
   ),
 ];

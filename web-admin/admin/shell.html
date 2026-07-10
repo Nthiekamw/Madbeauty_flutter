@@ -591,6 +591,49 @@
         <button class="btn btn-outline btn-sm" type="button" onclick="showSection('trial', document.querySelector('.nav-item[onclick*=trial]'))"><i class="fa-solid fa-clock"></i> Essai catalogue</button>
       </div>
       <div class="plan-grid" id="forfaits-grid"></div>
+
+      <div class="card" style="margin-top:24px;">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px;">
+          <div class="card-title">Liste des prestataires</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-left:auto;">
+            <div class="search-bar" style="min-width:220px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="subs-search" placeholder="Salon, e-mail, ville, sub_…" onkeydown="if(event.key==='Enter')MBLive.searchSubscriptions()">
+            </div>
+            <select class="form-input" id="subs-filter-status" style="width:auto;min-width:180px;" onchange="MBLive.searchSubscriptions()">
+              <option value="all">Tous les statuts</option>
+              <option value="active_paid">Abonnement actif</option>
+              <option value="catalog_trial">Essai catalogue</option>
+              <option value="attention">Paiement en retard</option>
+              <option value="active">active</option>
+              <option value="trialing">trialing</option>
+              <option value="past_due">past_due</option>
+              <option value="canceled">canceled</option>
+              <option value="none">Sans abonnement</option>
+            </select>
+            <button class="btn btn-outline btn-sm" type="button" onclick="MBLive.searchSubscriptions()"><i class="fa-solid fa-magnifying-glass"></i> Rechercher</button>
+          </div>
+        </div>
+        <p id="subs-summary" style="font-size:13px;color:var(--text3);padding:0 20px 12px;margin:0;"></p>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Prestataire</th>
+                <th>Salon / ville</th>
+                <th>Statut</th>
+                <th>Palier</th>
+                <th>Fin période</th>
+                <th>Essai catalogue</th>
+                <th>Services</th>
+                <th>Stripe</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="subs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- ██ MESSAGES █████████████████████████████████████████ -->

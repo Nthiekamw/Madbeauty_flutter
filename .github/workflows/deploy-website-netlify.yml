@@ -1,0 +1,48 @@
+# Déploie le site vitrine (dossier website/) sur Netlify.
+# URL cible : https://madbeauty-web.netlify.app
+#
+# Secrets GitHub requis (Settings → Secrets and variables → Actions) :
+#   NETLIFY_AUTH_TOKEN       — https://app.netlify.com/user/applications#personal-access-tokens
+#   NETLIFY_WEBSITE_SITE_ID  — ID du site Netlify madbeauty-web
+
+name: Deploy website Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - features/v2
+    paths:
+      - 'website/**'
+      - '.github/workflows/deploy-website-netlify.yml'
+
+concurrency:
+  group: deploy-website-netlify
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_WEBSITE_SITE_ID }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vérifier les secrets
+        run: |
+          missing=0
+          for name in NETLIFY_AUTH_TOKEN NETLIFY_SITE_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret manquant : $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+
+      - name: Déployer sur Netlify
+        run: npx --yes netlify-cli@26.1.0 deploy --prod --config=website/netlify.toml

@@ -266,6 +266,19 @@ abstract final class AuthStrings {
   static const String registerFieldVoieName = 'Nom de la voie';
   static const String registerFieldStreetNumber = 'N°';
   static const String registerFieldCountry = 'Pays';
+  static const String registerAddressSearchLabel = 'Recherche rapide d’adresse';
+  static const String registerAddressSearchHint =
+      'Ex. 30 rue Descartes, Paris';
+  static const String registerAddressSearchHelp =
+      'Choisis une suggestion officielle pour préremplir une adresse existante.';
+  static const String registerAddressSearchFranceOnly =
+      'Autocomplétion BAN disponible pour les adresses en France.';
+  static const String registerAddressSearchNoResult =
+      'Aucune adresse trouvée. Vérifie la saisie ou complète les champs manuellement.';
+  static const String registerAddressSearchError =
+      'Impossible de rechercher une adresse pour le moment.';
+  static const String registerValidationAddressNotFound =
+      'Adresse introuvable. Choisis une adresse existante dans la liste ou corrige la saisie.';
   static const String registerFieldBioPresta = 'Présentation (optionnel)';
   static const String registerWizardSubmit = 'Créer mon compte';
   static const String registerWizardNext = 'Continuer';
@@ -280,6 +293,12 @@ abstract final class AuthStrings {
       'Compte Google connecté. Vérifie tes informations puis appuie sur Continuer.';
   static const String registerGoogleConnectedBanner =
       'Connecté avec Google';
+  static const String registerAppleConnectedBanner =
+      'Connecté avec Apple';
+  static const String registerOAuthPhoneHint =
+      'Ton fournisseur de connexion ne partage pas ton numéro : renseigne-le pour finaliser ton compte.';
+  static const String registerOAuthIdentityPrefilledHint =
+      'Ton prénom, ton nom et ton e-mail ont été enregistrés automatiquement via ta connexion.';
   static const String registerSuccessTitle = 'Inscription réussie';
   static const String registerSuccessBody =
       'Ton compte MadBeauty est prêt. Tu peux commencer à utiliser l’application.';

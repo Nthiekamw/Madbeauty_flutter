@@ -7,6 +7,7 @@ import '../../features/prestataire/models/prestataire_profile_edit_section.dart'
 import '../../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../../features/prestataire/screens/prestataire_horaires_screen.dart';
 import '../../features/prestataire/screens/prestataire_hub_screen.dart';
+import '../../features/prestataire/screens/prestataire_payment_methods_screen.dart';
 import '../../features/prestataire/screens/prestataire_received_reviews_screen.dart';
 import '../../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
 import '../../features/prestataire/screens/prestataire_subscription_screen.dart';
@@ -82,6 +83,11 @@ List<RouteBase> buildDetailRoutes() => [
         builder: (context, state) => const PrestataireSubscriptionScreen(),
       ),
       GoRoute(
+        name: AppRouteNames.prestatairePaymentMethods,
+        path: AppRoutes.prestatairePaymentMethods,
+        builder: (context, state) => const PrestatairePaymentMethodsScreen(),
+      ),
+      GoRoute(
         name: AppRouteNames.prestataireReceivedReviews,
         path: AppRoutes.prestataireReceivedReviews,
         builder: (context, state) => const PrestataireReceivedReviewsScreen(),
@@ -109,6 +115,7 @@ List<RouteBase> buildDetailRoutes() => [
           if (isPublicPrestataireId(id)) return null;
           return switch (id) {
             'subscription' => AppRoutes.prestataireSubscription,
+            'payment-methods' => AppRoutes.prestatairePaymentMethods,
             'horaires' => AppRoutes.prestataireHoraires,
             _ => AppRoutes.clientSearch,
           };

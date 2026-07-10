@@ -1,101 +1,135 @@
 import '../../../utils/trial_duration_format.dart';
 
-/// Accès catalogue prestataire (essai / visibilité — sans paiement in-app).
+/// Abonnement prestataire (Stripe Billing).
 abstract final class DiscPrestaSub {
   DiscPrestaSub._();
 
-  static const screenTitle = 'Accès catalogue';
-  static const heroTitle = 'Visibilité sur MadBeauty';
+  static const screenTitle = 'Mon abonnement';
+  static const heroTitle = 'Offre professionnelle';
   static const heroBody =
-      'Publie ton profil et tes services sur le catalogue MadBeauty. '
-      'Le règlement des prestations se fait sur place chez toi, le jour J.';
+      'Abonnement plateforme MadBeauty : publier ton profil et tes services sur le catalogue. '
+      'Ce n’est pas l’encaissement de tes prestations (voir « Recevoir mes paiements » dans le profil).';
   static const heroBodyShort =
-      'Profil et services visibles sur le catalogue MadBeauty.';
-  static const tierSolo = '1 service publié';
+      'Publie ton profil sur le catalogue — distinct de l’encaissement des prestations.';
+  static const tierSolo = '1 service';
   static const tierMulti = '2 services ou plus';
-  static const currentTier = 'Ton profil';
+  static const monthly = 'Mensuel';
+  static const yearly = 'Annuel';
+  static const yearlyBestValueBadge = 'PLUS ÉCONOMIQUE';
+  static String yearlyMonthlyEquivalent(int eurosPerMonth) =>
+      'Soit ${eurosPerMonth}€/mois';
+  static String yearlySavings(int euros) => '💰 Économisez ${euros}€';
+  static const perMonth = '/ mois';
+  static const perYear = '/ an';
+  static const currentTier = 'Ton palier actuel';
   static const serviceCount = '%s service(s) publié(s)';
-  static const profileTileTitle = 'Accès catalogue';
+  static const profileTileTitle = 'Mon abonnement';
   static const profileTileSubtitle =
-      'Visibilité de ton salon dans le catalogue client';
-  static const accountPlansTitle = 'Accès catalogue';
+      'Abonnement catalogue — distinct de « Recevoir mes paiements »';
+  static const accountPlansTitle = 'Abonnements professionnels';
   static const accountPlansHint =
-      'Vérifie si les clientes peuvent te trouver et réserver';
-  static const accountPlansRecommended = 'Adapté à ton profil';
+      'Publie ton profil et tes services sur le catalogue MadBeauty.';
+  static const accountPlansRecommended = 'Recommandé pour toi';
   static const profileTileSubtitleActive =
-      'Visible sur le catalogue MadBeauty';
-  static const dashboardBannerTitle = 'Accès catalogue';
+      'Actif pour le catalogue — configure l’encaissement dans ton profil';
+  static const dashboardBannerTitle = 'Abonnement professionnel';
   static const dashboardBannerBody =
-      'Consulte ton essai et ta visibilité sur le catalogue.';
-  static const onboardingTitle = 'Visibilité catalogue';
+      'Gère ton abonnement et consulte ton palier.';
+  static const onboardingTitle = 'Ton abonnement MadBeauty';
   static String onboardingBody(int days) => TrialDurationFormat.onboardingBody(days);
-  static const trialBannerTitle = 'Essai catalogue en cours';
+  static const trialBannerTitle = 'Essai gratuit en cours';
   static String trialBannerBody(int days) =>
-      'Il te reste $days jour${days > 1 ? 's' : ''} pour tester la visibilité sur le catalogue. '
-      'Complète ton profil pour inspirer confiance.';
-  static const trialBannerCta = 'Voir mon statut';
+      'Il te reste $days jour${days > 1 ? 's' : ''} pour tester le catalogue gratuitement. '
+      'Pense à t’abonner avant la fin pour rester visible.';
+  static const trialBannerCta = 'Voir les offres';
   static String trialBadge(int days) => TrialDurationFormat.trialBadge(days);
   static String checkoutTrialHint(int days) =>
       TrialDurationFormat.checkoutTrialHint(days);
-  static const statusTrialing = 'Essai catalogue actif';
+  static const statusTrialing = 'Période d’essai Stripe en cours';
   static const statusCatalogTrial = 'Essai catalogue actif';
   static const skipForNow = 'Passer pour l’instant';
   static String onboardingCompactHint(int days) =>
-      '${TrialDurationFormat.labelShort(days)} d’essai catalogue pour apparaître dans le catalogue. '
-      'Tu peux enregistrer ton profil maintenant et compléter les détails plus tard.';
+      '${TrialDurationFormat.labelShort(days)} d’essai gratuit pour apparaître dans le catalogue. '
+      'Tu peux t’abonner maintenant ou appuyer sur « Enregistrer mon profil » pour continuer.';
   static const subscriptionRequiredForCatalog =
-      'Complète ton profil pour être visible dans le catalogue.';
+      'Active ton abonnement pour terminer et être visible dans le catalogue.';
   static const notVisibleBannerTitle = 'Les clientes ne te voient pas';
   static const notVisibleBannerBody =
-      'Ton profil est prêt, mais il est masqué du catalogue. Consulte ton statut ou complète les informations manquantes.';
-  static const notVisibleBannerCta = 'Voir mon statut';
+      'Ton profil est prêt, mais il est masqué du catalogue. Active ton abonnement maintenant pour recevoir des réservations.';
+  static const notVisibleBannerCta = 'Activer maintenant';
   static const notVisibleBannerBadge = 'Action requise';
   static const notVisibleGateHint =
-      'Ton essai catalogue est terminé ou ton profil est incomplet. '
-      'Complète ta fiche pour retrouver ta visibilité.';
-  static const notVisibleReminderTitle = 'Visibilité catalogue';
+      'Active ton abonnement pour apparaître dans le catalogue et débloquer toutes les actions pro.';
+  static const notVisibleReminderTitle = 'MadBeauty Pro';
   static const notVisibleReminderBody =
-      'Ton profil n’est plus visible des clientes. Consulte ton accès catalogue depuis ton profil.';
-  static const featureLockedTitle = 'Accès catalogue requis';
+      'Urgent : ton profil est masqué du catalogue. Active ton abonnement pour être visible des clientes.';
+  static const featureLockedTitle = 'Abonnement requis pour agir';
   static const featureLockedBody =
-      'Sans visibilité catalogue, tu ne peux pas gérer tes réservations depuis l’app.';
+      'Sans abonnement actif, tu n’es pas visible et tu ne peux pas gérer tes réservations.';
   static const bookingActionLocked =
-      'Active ta visibilité catalogue pour confirmer ou refuser des réservations.';
-  static const viewFullDetails = 'Voir mon statut';
+      'Abonne-toi pour confirmer ou refuser des réservations.';
+  static const viewFullDetails = 'Voir le détail des offres';
   static const registerHint =
-      'Après la création du compte, tu pourras compléter ton profil prestataire '
-      'et bénéficier d’un essai catalogue gratuit.';
+      'Après la création du compte, tu pourras t’abonner depuis ton profil '
+      '(mensuel ou annuel selon tes services). Tu pourras aussi passer cette étape.';
 
+  static const subscribeMonthly = 'S’abonner (mensuel)';
+  static const subscribeYearly = 'S’abonner (annuel)';
+  static const manageBilling = 'Gérer la facturation';
   static const refreshStatus = 'Actualiser le statut';
-  static const statusActive = 'Visible sur le catalogue';
-  static const statusNone = 'Non visible sur le catalogue';
-  static const statusPastDue = 'Visibilité suspendue';
-  static const statusCanceled = 'Accès catalogue terminé';
-  static const statusIncomplete = 'Profil à finaliser';
+  static const statusActive = 'Abonnement actif';
+  static const statusNone = 'Aucun abonnement actif';
+  static const statusPastDue = 'Paiement en retard — mets à jour ton moyen de paiement';
+  static const statusCanceled = 'Abonnement résilié';
+  static const statusIncomplete = 'Paiement à finaliser';
+  static const renewsOn = 'Renouvellement le %s';
+  static const payUnavailable = 'Paiement indisponible (configuration Stripe)';
+  static const profileRequired =
+      'Impossible de préparer ton profil prestataire. Reconnecte-toi puis réessaie.';
+  static const checkoutErr = 'Impossible d’ouvrir le paiement';
+  static const testModeBannerTitle = 'Paiement en mode test';
+  static const testModeBannerBody =
+      'Sur la page Stripe, utilise cette carte de test :';
+  static const testCardExpiryLabel = 'Expiration';
+  static const testCardCvcLabel = 'CVC';
+  static const testCardCopyTooltip = 'Copier le numéro de carte';
+  static const testCardCopied = 'Numéro de carte copié';
+  static const testModeCheckoutReminder =
+      'Mode test : carte 4242 4242 4242 4242 · 12/34 · 123';
+  static const portalErr = 'Impossible d’ouvrir le portail de facturation';
+  static const browserErr =
+      'Impossible d’ouvrir le navigateur. Installe un navigateur puis réessaie.';
+  static const returnSuccess =
+      'Abonnement OK. Configure « Recevoir mes paiements » dans ton profil pour encaisser tes réservations.';
+  static const returnCancel = 'Paiement annulé.';
+  static const activeConnectHintTitle = 'Prochaine étape : encaissement';
+  static const activeConnectHintBody =
+      'Ton abonnement est actif pour le catalogue. Pour être payé après chaque prestation, '
+      'configure la section « Recevoir mes paiements » dans ton profil (compte bancaire Stripe Connect).';
+  static const activeConnectHintBodyShort =
+      'Pour être payé par tes clientes, configure « Recevoir mes paiements » dans ton profil.';
+  static const activeConnectHintCta = 'Configurer dans mon profil';
   static const activeHeroBadge = 'Actif';
-  static const activeHeroTitle = 'Tu es visible sur le catalogue';
+  static const activeHeroTitle = 'Ton abonnement est actif';
   static const activeHeroBody =
-      'Ton profil et tes services peuvent être consultés par les clientes sur MadBeauty.';
-  static String activeTierLabel(String tierLabel) => 'Profil : $tierLabel';
-  static const activeSyncing = 'Mise à jour de ton statut…';
-  static const plansSectionTitle = 'Ton profil';
+      'Ton profil et tes services peuvent être visibles sur le catalogue MadBeauty.';
+  static String activeTierLabel(String tierLabel) =>
+      'Palier : $tierLabel';
+  static const activeIntervalMonthly = 'Facturation mensuelle';
+  static const activeIntervalYearly = 'Facturation annuelle';
+  static const activeSyncing = 'Mise à jour de ton abonnement…';
+  static const plansSectionTitle = 'Comparer les offres';
   static const plansSectionSubtitle =
-      'Le nombre de services publiés détermine l’affichage de ta fiche.';
+      'Le palier dépend du nombre de services que tu publies.';
 
-  static const returnSuccess = 'Statut catalogue mis à jour.';
-  static const returnCancel = 'Retour sans modification.';
-
-  static const catalogHelpTitle = 'À quoi sert l’accès catalogue ?';
-  static const catalogHelpVisibilityTitle = 'Être visible des clientes';
-  static const catalogHelpVisibilityBody =
-      'Ton profil, tes services et tes photos apparaissent dans le catalogue, '
-      'la recherche et les suggestions MadBeauty.';
-  static const catalogHelpBookingTitle = 'Recevoir des réservations';
-  static const catalogHelpBookingBody =
-      'Les clientes consultent tes créneaux et t’envoient une demande depuis l’app. '
-      'Tu confirmes ou refuses depuis ton espace pro.';
-  static const catalogHelpTrialTitle = 'Essai gratuit à l’inscription';
-  static const catalogHelpTrialBody =
-      'Tu testes la visibilité pendant l’essai catalogue. '
-      'Le règlement des prestations se fait chez toi, le jour du rendez-vous.';
+  static const testimonialsTitle = 'Ce que disent nos coiffeurs Pro';
+  static const testimonialSophieQuote =
+      'Depuis que je suis passé Pro, j’ai 3 à 4 nouvelles réservations par semaine. '
+      'La plateforme m’a vraiment aidé à développer ma clientèle.';
+  static const testimonialSophieAuthor =
+      'Sophie L., coiffeuse à Paris 11ème';
+  static const testimonialMarcQuote =
+      'Super pratique pour gérer mon planning. Les clients peuvent réserver directement '
+      'et je reçois tout de suite une notification. Ça me fait gagner beaucoup de temps.';
+  static const testimonialMarcAuthor = 'Marc D., barbier à Lyon 3ème';
 }

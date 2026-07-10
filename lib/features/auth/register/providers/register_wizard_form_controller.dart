@@ -8,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/logic/address/postal_address.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
+import '../../../../services/auth/oauth_identity_sync.dart';
 import '../logic/register_wizard_constants.dart';
 import '../logic/register_wizard_draft.dart';
 import '../logic/register_wizard_role_intent.dart';
@@ -61,8 +62,14 @@ class RegisterWizardFormController extends ChangeNotifier {
   String? confirmError;
   String? salonError;
   String? villeError;
+  String? codePostalError;
+  String? adresseError;
   bool loading = false;
   bool signedUpViaOAuth = false;
+  bool signedUpViaApple = false;
+  bool oauthProvidedPrenom = false;
+  bool oauthProvidedNom = false;
+  bool oauthProvidedEmail = false;
   bool googleLaunched = false;
   bool googleSigningIn = false;
   bool pendingGoogleSignIn = false;
@@ -77,6 +84,14 @@ class RegisterWizardFormController extends ChangeNotifier {
   String? clientDefaultAvatarUrl;
 
   bool get isPresta => roleChoice == UserRole.prestataire;
+
+  bool get oauthIdentitySectionHidden =>
+      signedUpViaOAuth && oauthProvidedPrenom && oauthProvidedNom;
+
+  bool get oauthEmailHidden => signedUpViaOAuth && oauthProvidedEmail;
+
+  bool get showOAuthPhoneHint =>
+      signedUpViaOAuth && phone.text.trim().isEmpty;
 
   PostalAddress get postalAddress => PostalAddress(
         voieType: voieType,
@@ -155,6 +170,10 @@ class RegisterWizardFormController extends ChangeNotifier {
     phoneDialCode = draft.phoneDialCode;
     roleChoice = draft.role;
     signedUpViaOAuth = draft.signedUpViaOAuth;
+    signedUpViaApple = draft.signedUpViaApple;
+    oauthProvidedPrenom = draft.oauthProvidedPrenom;
+    oauthProvidedNom = draft.oauthProvidedNom;
+    oauthProvidedEmail = draft.oauthProvidedEmail;
     pendingGoogleSignIn = draft.pendingGoogleSignIn;
     phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     pendingEmailVerification = draft.pendingEmailVerification;
@@ -184,6 +203,10 @@ class RegisterWizardFormController extends ChangeNotifier {
         ville: ville.text,
         bio: bio.text,
         signedUpViaOAuth: signedUpViaOAuth,
+        signedUpViaApple: signedUpViaApple,
+        oauthProvidedPrenom: oauthProvidedPrenom,
+        oauthProvidedNom: oauthProvidedNom,
+        oauthProvidedEmail: oauthProvidedEmail,
         pendingGoogleSignIn: pendingGoogleSignIn || googleLaunched,
         phoneRequiredOnExtras: phoneRequiredOnExtras,
         pendingEmailVerification: pendingEmailVerification,
@@ -250,7 +273,10 @@ class RegisterWizardFormController extends ChangeNotifier {
     return AuthStrings.registerWizardNext;
   }
 
-  void hydrateFromOAuthUser(User user) {
+  void hydrateFromOAuthUser(User user, {bool viaApple = false}) {
+    signedUpViaApple =
+        viaApple || _isAppleOAuthUser(user);
+
     final meta = user.userMetadata;
     final metaPrenom = meta?['prenom'] as String? ?? '';
     final metaNom = meta?['nom'] as String? ?? '';
@@ -296,7 +322,41 @@ class RegisterWizardFormController extends ChangeNotifier {
       email.text = userEmail;
     }
 
+    _syncOAuthProvidedFlags(meta);
     signedUpViaOAuth = true;
+    notifyListeners();
+  }
+
+  static bool _isAppleOAuthUser(User user) {
+    if (user.identities?.any((id) => id.provider == 'apple') ?? false) {
+      return true;
+    }
+    final provider = user.appMetadata['provider'] as String?;
+    if (provider == 'apple') return true;
+    final providers = user.appMetadata['providers'];
+    return providers is List && providers.any((p) => p == 'apple');
+  }
+
+  void _syncOAuthProvidedFlags(Map<String, dynamic>? meta) {
+    final hints = OAuthIdentityHints.fromMetadata(
+      meta,
+      email: email.text.trim().isEmpty ? null : email.text.trim(),
+    );
+    oauthProvidedPrenom = hints.providedPrenom;
+    oauthProvidedNom = hints.providedNom;
+    oauthProvidedEmail = hints.providedEmail;
+  }
+
+  void applyOAuthIdentityHints({
+    required bool providedPrenom,
+    required bool providedNom,
+    required bool providedEmail,
+    bool viaApple = false,
+  }) {
+    if (providedPrenom) oauthProvidedPrenom = true;
+    if (providedNom) oauthProvidedNom = true;
+    if (providedEmail) oauthProvidedEmail = true;
+    if (viaApple) signedUpViaApple = true;
     notifyListeners();
   }
 
@@ -309,6 +369,8 @@ class RegisterWizardFormController extends ChangeNotifier {
     confirmError = null;
     salonError = null;
     villeError = null;
+    codePostalError = null;
+    adresseError = null;
     notifyListeners();
   }
 
@@ -321,6 +383,8 @@ class RegisterWizardFormController extends ChangeNotifier {
     confirmError = errors.confirmError ?? confirmError;
     salonError = errors.salonError ?? salonError;
     villeError = errors.villeError ?? villeError;
+    codePostalError = errors.codePostalError ?? codePostalError;
+    adresseError = errors.adresseError ?? adresseError;
     if (errors.roleError != null) {
       error = errors.roleError;
     }
@@ -337,6 +401,8 @@ class RegisterWizardFormController extends ChangeNotifier {
       password: password.text,
       confirmPassword: confirm.text,
       signedUpViaOAuth: signedUpViaOAuth,
+      oauthProvidedPrenom: oauthProvidedPrenom,
+      oauthProvidedNom: oauthProvidedNom,
     );
     prenomError = errors.prenomError;
     nomError = errors.nomError;
@@ -354,9 +420,13 @@ class RegisterWizardFormController extends ChangeNotifier {
       isPresta: isPresta,
       salon: salon.text.trim(),
       ville: ville.text.trim(),
+      codePostal: codePostal.text.trim(),
+      adresse: postalAddress.streetLine.trim(),
     );
     salonError = errors.salonError;
     villeError = errors.villeError;
+    codePostalError = errors.codePostalError;
+    adresseError = errors.adresseError;
     error = null;
     notifyListeners();
     return errors.extrasValid;
@@ -453,14 +523,25 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   void setVoieType(String type) {
     voieType = type;
+    adresseError = null;
     notifyListeners();
     unawaited(persistDraft());
   }
 
   void clearVilleError() {
     villeError = null;
+    codePostalError = null;
+    adresseError = null;
     error = null;
     notifyListeners();
+  }
+
+  void onPostalAddressChanged() {
+    villeError = null;
+    codePostalError = null;
+    adresseError = null;
+    notifyListeners();
+    unawaited(persistDraft());
   }
 
   void setClientAvatarFile({

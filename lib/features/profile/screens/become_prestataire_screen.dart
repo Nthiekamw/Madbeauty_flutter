@@ -59,6 +59,7 @@ class _BecomePrestataireScreenState
   String? _salonError;
   String? _villeError;
   String? _codePostalError;
+  String? _adresseError;
   bool _loading = false;
   bool _step1Submitted = false;
   bool _draftLoaded = false;
@@ -161,14 +162,28 @@ class _BecomePrestataireScreenState
     }
     try {
       final client = await ref.read(currentClientProfileProvider.future);
-      final savedAdresse = client?.adresse?.trim();
+      final structuredAddress = (client?.voieNom?.trim().isNotEmpty ?? false) ||
+              (client?.codePostal?.trim().isNotEmpty ?? false) ||
+              (client?.ville?.trim().isNotEmpty ?? false)
+          ? PostalAddress(
+              voieType: client?.voieType?.trim().isNotEmpty == true
+                  ? client!.voieType!.trim()
+                  : PostalVoieTypes.defaultType,
+              voieNom: client?.voieNom?.trim() ?? '',
+              numero: client?.numeroRue?.trim() ?? '',
+              codePostal: client?.codePostal?.trim() ?? '',
+              ville: client?.ville?.trim() ?? '',
+              pays: client?.pays?.trim().isNotEmpty == true
+                  ? client!.pays!.trim()
+                  : PostalAddress.defaultCountry,
+            )
+          : PostalAddress.tryParse(client?.adresse);
       if (!mounted ||
-          savedAdresse == null ||
-          savedAdresse.isEmpty ||
+          structuredAddress.isEmpty ||
           _voieNom.text.trim().isNotEmpty) {
         return;
       }
-      setState(() => _applyPostalAddress(PostalAddress.tryParse(savedAdresse)));
+      setState(() => _applyPostalAddress(structuredAddress));
       await _persistDraft();
     } catch (_) {
       // Profil client indisponible : pas bloquant.
@@ -208,6 +223,7 @@ class _BecomePrestataireScreenState
       salon: _salon.text,
       ville: _ville.text,
       codePostal: _codePostal.text,
+      adresse: _postalAddress.streetLine,
     );
   }
 
@@ -226,6 +242,7 @@ class _BecomePrestataireScreenState
       _salonError = fieldErrors.salonError;
       _villeError = fieldErrors.villeError;
       _codePostalError = fieldErrors.codePostalError;
+      _adresseError = fieldErrors.adresseError;
     });
     if (!fieldErrors.isValid) return;
 
@@ -475,7 +492,12 @@ class _BecomePrestataireScreenState
                   salonController: _salon,
                   voieType: _voieType,
                   onVoieTypeChanged: (type) {
-                    setState(() => _voieType = type);
+                    setState(() {
+                      _voieType = type;
+                      _villeError = null;
+                      _codePostalError = null;
+                      _adresseError = null;
+                    });
                     unawaited(_persistDraft());
                   },
                   voieNomController: _voieNom,
@@ -489,6 +511,15 @@ class _BecomePrestataireScreenState
                   salonError: _salonError,
                   villeError: _villeError,
                   codePostalError: _codePostalError,
+                  adresseError: _adresseError,
+                  onAddressChanged: () {
+                    setState(() {
+                      _villeError = null;
+                      _codePostalError = null;
+                      _adresseError = null;
+                    });
+                    unawaited(_persistDraft());
+                  },
                   errorText: _error,
                 );
                 if (!horizontal) return form;

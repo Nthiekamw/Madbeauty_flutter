@@ -29,5 +29,22 @@ void main() {
       expect(parsed.ville, 'Toulouse');
       expect(parsed.pays, 'France');
     });
+
+    test('streetLine évite les doublons de type de voie', () {
+      const address = PostalAddress(
+        voieType: 'Rue',
+        voieNom: 'rue de la Providence',
+        numero: '7',
+      );
+
+      expect(address.streetLine, '7 rue de la Providence');
+    });
+
+    test('tryParse ignore la valeur littérale NULL', () {
+      final parsed = PostalAddress.tryParse('NULL');
+
+      expect(parsed.isEmpty, isTrue);
+      expect(parsed.formattedLine, isEmpty);
+    });
   });
 }

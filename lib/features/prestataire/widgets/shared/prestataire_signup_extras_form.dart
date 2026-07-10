@@ -28,9 +28,11 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
     this.salonError,
     this.villeError,
     this.codePostalError,
+    this.adresseError,
     this.onSalonChanged,
     this.onVilleChanged,
     this.onCodePostalChanged,
+    this.onAddressChanged,
     this.formError,
     this.showOptionalPanel = true,
   });
@@ -52,9 +54,11 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
   final String? salonError;
   final String? villeError;
   final String? codePostalError;
+  final String? adresseError;
   final VoidCallback? onSalonChanged;
   final VoidCallback? onVilleChanged;
   final VoidCallback? onCodePostalChanged;
+  final VoidCallback? onAddressChanged;
   final String? formError;
   final bool showOptionalPanel;
 
@@ -127,6 +131,8 @@ class PrestataireSignupExtrasForm extends StatelessWidget {
           paysController: paysController,
           villeError: villeError,
           codePostalError: codePostalError,
+          adresseError: adresseError,
+          onAddressChanged: onAddressChanged,
           onVilleChanged: onVilleChanged,
           onCodePostalChanged: onCodePostalChanged,
           villeRequired: true,

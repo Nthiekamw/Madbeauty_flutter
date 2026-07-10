@@ -24,6 +24,7 @@ export 'discovery/disc_presta_workspace.dart';
 export 'discovery/disc_presta_comfort.dart';
 export 'discovery/disc_reservation_payment.dart';
 export 'discovery/disc_presta_subscription.dart';
+export 'discovery/disc_stripe_connect.dart';
 export 'discovery/disc_payment_methods.dart';
 export 'discovery/disc_help.dart';
 export 'discovery/disc_waitlist.dart';

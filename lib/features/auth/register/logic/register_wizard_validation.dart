@@ -12,6 +12,8 @@ class RegisterWizardFieldErrors {
     this.confirmError,
     this.salonError,
     this.villeError,
+    this.codePostalError,
+    this.adresseError,
     this.roleError,
   });
 
@@ -23,6 +25,8 @@ class RegisterWizardFieldErrors {
   final String? confirmError;
   final String? salonError;
   final String? villeError;
+  final String? codePostalError;
+  final String? adresseError;
   final String? roleError;
 
   bool get step0Valid =>
@@ -34,7 +38,11 @@ class RegisterWizardFieldErrors {
       confirmError == null;
 
   bool get extrasValid =>
-      phoneError == null && salonError == null && villeError == null;
+      phoneError == null &&
+      salonError == null &&
+      villeError == null &&
+      codePostalError == null &&
+      adresseError == null;
 }
 
 abstract final class RegisterWizardValidation {
@@ -49,12 +57,15 @@ abstract final class RegisterWizardValidation {
     required String password,
     required String confirmPassword,
     required bool signedUpViaOAuth,
+    bool oauthProvidedPrenom = false,
+    bool oauthProvidedNom = false,
   }) {
-    final pErr = prenom.isEmpty
+    final pErr = !oauthProvidedPrenom && prenom.isEmpty
         ? AuthStrings.registerValidationPrenomEmpty
         : null;
-    final nErr =
-        nom.isEmpty ? AuthStrings.registerValidationNomEmpty : null;
+    final nErr = !oauthProvidedNom && nom.isEmpty
+        ? AuthStrings.registerValidationNomEmpty
+        : null;
     final phErr = RegisterValidators.phoneLocal(phone, dialCode: dialCode);
 
     String? emailErr;
@@ -82,20 +93,29 @@ abstract final class RegisterWizardValidation {
     required bool isPresta,
     required String salon,
     required String ville,
+    required String codePostal,
+    required String adresse,
   }) {
     String? salonErr;
     String? villeErr;
+    String? codePostalErr;
+    String? adresseErr;
     if (isPresta) {
       salonErr = salon.isEmpty
           ? AuthStrings.registerValidationSalonEmpty
           : null;
       villeErr =
           ville.isEmpty ? AuthStrings.registerValidationVilleEmpty : null;
+      codePostalErr =
+          codePostal.isEmpty ? DiscPrestaForm.reqPostalCode : null;
+      adresseErr = adresse.isEmpty ? DiscPrestaForm.reqAddress : null;
     }
 
     return RegisterWizardFieldErrors(
       salonError: salonErr,
       villeError: villeErr,
+      codePostalError: codePostalErr,
+      adresseError: adresseErr,
     );
   }
 

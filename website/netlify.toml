@@ -18,6 +18,16 @@
   to = "/mentions-legales.html"
   status = 200
 
+[[redirects]]
+  from = "/child-safety"
+  to = "/child-safety.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

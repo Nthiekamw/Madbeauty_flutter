@@ -241,10 +241,9 @@ class RegisterWizardSubmitHandler {
       await _persistPrestaBecomeDraftFromForm(form);
     } else {
       await syncRoleBestEffort(UserRole.client, providerContainer);
-      final formatted = form.postalAddress.formattedLine;
       await post.updateClientExtras(
         userId: uid,
-        adresse: formatted.isEmpty ? null : formatted,
+        address: form.postalAddress,
       );
       await _saveClientAvatar(form, uid, providerContainer);
     }

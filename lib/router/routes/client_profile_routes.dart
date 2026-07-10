@@ -7,6 +7,7 @@ import '../../features/bug_report/screens/bug_reports_hub_screen.dart';
 import '../../features/bug_report/screens/report_bug_screen.dart';
 import '../../features/help/screens/help_center_screen.dart';
 import '../../features/listing/screens/all_prestataires_screen.dart';
+import '../../features/profile/screens/client_payment_methods_screen.dart';
 import '../../features/profile/screens/edit_client_account_screen.dart';
 import '../../features/referral/screens/referral_screen.dart';
 import '../../features/reviews/screens/client_reviews_screen.dart';
@@ -18,6 +19,11 @@ List<RouteBase> buildClientProfileRoutes() => [
         name: AppRouteNames.editClientAccount,
         path: AppRoutes.editClientAccount,
         builder: (context, state) => const EditClientAccountScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientPaymentMethods,
+        path: AppRoutes.clientPaymentMethods,
+        builder: (context, state) => const ClientPaymentMethodsScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientFavorites,

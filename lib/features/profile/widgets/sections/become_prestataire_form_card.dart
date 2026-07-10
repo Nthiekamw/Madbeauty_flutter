@@ -22,6 +22,8 @@ class BecomePrestataireFormCard extends StatelessWidget {
     this.salonError,
     this.villeError,
     this.codePostalError,
+    this.adresseError,
+    this.onAddressChanged,
     this.errorText,
   });
 
@@ -39,6 +41,8 @@ class BecomePrestataireFormCard extends StatelessWidget {
   final String? salonError;
   final String? villeError;
   final String? codePostalError;
+  final String? adresseError;
+  final VoidCallback? onAddressChanged;
   final String? errorText;
 
   @override
@@ -65,6 +69,10 @@ class BecomePrestataireFormCard extends StatelessWidget {
           salonError: salonError,
           villeError: villeError,
           codePostalError: codePostalError,
+          adresseError: adresseError,
+          onAddressChanged: onAddressChanged,
+          onVilleChanged: onAddressChanged,
+          onCodePostalChanged: onAddressChanged,
           formError: errorText,
         ),
       ),

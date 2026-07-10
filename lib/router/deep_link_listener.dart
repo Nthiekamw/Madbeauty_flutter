@@ -14,13 +14,23 @@ import '../features/auth/providers/auth_redirect_providers.dart';
 import '../features/auth/register/logic/register_wizard_submit_handler.dart';
 import '../features/auth/register/storage/register_wizard_draft_store.dart';
 import '../features/auth/providers/password_recovery_provider.dart';
+import '../features/booking/logic/booking_payment_flow.dart';
+import '../features/booking/logic/booking_web_payment_pending.dart';
+import '../features/booking/providers/booking_session_providers.dart';
+import '../features/booking/providers/client_prior_booking_count_provider.dart';
 import '../features/profile/storage/become_prestataire_draft_store.dart';
 import '../services/auth/auth_deep_link_handler.dart';
+import '../services/notifications/booking_reminders_sync.dart';
+import '../services/notifications/in_app_notifications_provider.dart';
+import '../services/stripe/stripe_payment_exception.dart';
+import '../services/stripe/stripe_payment_providers.dart';
 import '../services/storage/local_cache_service.dart';
+import '../services/supabase/referral/referral_providers.dart';
 import '../features/prestataire/logic/prestataire_subscription_refresh.dart';
 import '../shared/widgets/app/app_snack_bar.dart';
 import 'app_deep_links.dart';
 import 'app_router.dart';
+import 'navigation_extensions.dart';
 
 /// Ouvre les liens partagés (`/prestataire/:id`) dans [GoRouter].
 class DeepLinkListener extends ConsumerStatefulWidget {
@@ -62,6 +72,7 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
       if (AppConfig.hasSupabase) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           unawaited(_handleWebAuthCallbackIfNeeded());
+          unawaited(_handleWebBookingPaymentReturnIfNeeded());
         });
       }
       return;
@@ -77,6 +88,98 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
     await _handleAuthCallback(uri);
     if (!mounted) return;
     stripOAuthParamsFromBrowserUrl(uri);
+  }
+
+  Future<void> _handleWebBookingPaymentReturnIfNeeded() async {
+    final uri = Uri.base;
+    final redirectStatus = uri.queryParameters['redirect_status'];
+    final paymentIntentId = uri.queryParameters['payment_intent'];
+    if (redirectStatus == null || paymentIntentId == null) return;
+
+    final pending = BookingWebPaymentPending.read();
+    if (pending == null || pending.paymentIntentId != paymentIntentId) {
+      stripStripePaymentParamsFromBrowserUrl(uri);
+      return;
+    }
+
+    if (redirectStatus != 'succeeded') {
+      BookingWebPaymentPending.clear();
+      stripStripePaymentParamsFromBrowserUrl(uri);
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: BookingPaymentFlow.messageFor(
+          const StripePaymentGenericException(),
+        ),
+        kind: AppSnackKind.error,
+      );
+      return;
+    }
+
+    final payments = ref.read(stripeBookingPaymentServiceProvider);
+    if (payments == null) {
+      BookingWebPaymentPending.clear();
+      stripStripePaymentParamsFromBrowserUrl(uri);
+      return;
+    }
+
+    AppSnackBar.show(
+      context,
+      message: DiscPay.webPayReturnConfirming,
+      kind: AppSnackKind.info,
+      duration: const Duration(seconds: 4),
+    );
+
+    try {
+      final reservation = await payments.completeBookingAfterPayment(
+        paymentIntentId: pending.paymentIntentId,
+        prestataireId: pending.prestataireId,
+        serviceId: pending.serviceId,
+        dateHeure: DateTime.parse(pending.dateHeureIso).toLocal(),
+      );
+      BookingWebPaymentPending.clear();
+      stripStripePaymentParamsFromBrowserUrl(uri);
+      if (!mounted) return;
+
+      invalidateBookingDetail(ref, reservation.id);
+      invalidateClientReservations(ref);
+      ref.invalidate(clientPriorBookingCountProvider);
+      ref.invalidate(myReferralInfoProvider);
+      ref.invalidate(inAppNotificationsSyncProvider);
+      unawaited(
+        syncClientBookingRemindersForOne(
+          id: reservation.id,
+          dateHeure: reservation.dateHeure,
+          serviceName: '',
+          statut: reservation.statut,
+        ),
+      );
+
+      context.pushClientReservationDetail(reservation.id);
+      AppSnackBar.show(
+        context,
+        message: DiscPay.webPayReturnSuccess,
+        kind: AppSnackKind.success,
+        duration: const Duration(seconds: 6),
+      );
+    } on StripePaymentException catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: BookingPaymentFlow.messageFor(e),
+        kind: AppSnackKind.error,
+      );
+    } catch (e, st) {
+      debugPrint('Stripe booking return failed: $e\n$st');
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: BookingPaymentFlow.messageFor(
+          const StripePaymentGenericException(),
+        ),
+        kind: AppSnackKind.error,
+      );
+    }
   }
 
   Future<void> _handleInitialLink() async {

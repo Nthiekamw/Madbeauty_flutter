@@ -2,7 +2,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/prestataire_subscription_config.dart';
+import '../../../core/config/stripe_platform_policy.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../services/stripe/stripe_subscription_providers.dart'
+    show stripePrestaSubscriptionServiceProvider;
 import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/layout/discovery_responsive.dart';
@@ -13,7 +16,10 @@ import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../logic/prestataire_subscription_refresh.dart';
 import '../providers/subscription/prestataire_subscription_provider.dart';
 import '../widgets/profile/subscription/prestataire_subscription_active_panel.dart';
+import '../widgets/profile/subscription/prestataire_subscription_checkout_section.dart';
 import '../widgets/profile/subscription/prestataire_subscription_testimonials_section.dart';
+import '../widgets/profile/subscription/prestataire_subscription_tier_cards.dart';
+import '../widgets/subscription/prestataire_subscription_billing_cards_section.dart';
 import '../widgets/workspace/layout/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_flow_scaffold.dart';
 
@@ -53,6 +59,10 @@ class _PrestataireSubscriptionScreenState
 
   Future<void> _refresh() async {
     if (_refreshing) return;
+    if (StripePlatformPolicy.isEnabled &&
+        ref.read(stripePrestaSubscriptionServiceProvider) == null) {
+      return;
+    }
 
     setState(() => _refreshing = true);
     try {
@@ -139,7 +149,7 @@ class _PrestataireSubscriptionScreenState
                 ),
               ),
               data: (status) {
-                if (status.hasCatalogAccess) {
+                if (status.hasCatalogAccess && !status.needsAttention) {
                   return Padding(
                     padding: sectionPad,
                     child: PrestataireSubscriptionActivePanel(
@@ -149,6 +159,73 @@ class _PrestataireSubscriptionScreenState
                       ),
                       refreshing: _refreshing,
                       onRefresh: _refresh,
+                    ),
+                  );
+                }
+
+                if (status.needsAttention && StripePlatformPolicy.isEnabled) {
+                  return Padding(
+                    padding: sectionPad,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DiscoverySurfaceCard(
+                          includeHorizontalMargin: false,
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      DiscPaymentMethods.subscriptionStatusPastDue,
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        fontFamily: AppFonts.display,
+                                        fontWeight: FontWeight.w800,
+                                        color: theme.colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                DiscPrestaSub.statusPastDue,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const DiscoverySurfaceCard(
+                          includeHorizontalMargin: false,
+                          padding: EdgeInsets.all(18),
+                          child: PrestataireSubscriptionBillingCardsSection(),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: _refreshing ? null : _refresh,
+                          icon: _refreshing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text(DiscPrestaSub.refreshStatus),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -240,6 +317,30 @@ class _PrestataireSubscriptionScreenState
                               ],
                             ),
                           ),
+                          if (StripePlatformPolicy.isEnabled) ...[
+                            const SizedBox(height: 20),
+                            Text(
+                              DiscPrestaSub.plansSectionTitle,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontFamily: AppFonts.display,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              DiscPrestaSub.plansSectionSubtitle,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            PrestataireSubscriptionTierCards(
+                              currentTierId: currentTier.id,
+                            ),
+                            const SizedBox(height: 20),
+                            const PrestataireSubscriptionCheckoutSection(),
+                          ],
                         ],
                       ),
                     );

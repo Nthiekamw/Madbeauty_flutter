@@ -10,6 +10,7 @@ import '../../../services/auth/auth_service.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../services/auth/google_auth_service.dart';
 import '../../../services/auth/apple_auth_service.dart';
+import '../../../services/auth/oauth_identity_sync.dart';
 import '../../../services/auth/biometric_auth_providers.dart';
 import '../../../services/auth/auth_session_sanitizer.dart';
 import '../../../services/auth/role_service.dart';
@@ -75,6 +76,15 @@ final authNotifierProvider =
 
 class AuthNotifier extends AsyncNotifier<User?> {
   static const _initialSessionTimeout = Duration(seconds: 2);
+
+  OAuthIdentityHints? _pendingOAuthIdentityHints;
+
+  /// Consomme les indices d'identité OAuth de la dernière connexion (inscription).
+  OAuthIdentityHints? consumeOAuthIdentityHints() {
+    final hints = _pendingOAuthIdentityHints;
+    _pendingOAuthIdentityHints = null;
+    return hints;
+  }
 
   AuthService get _auth => ref.read(authServiceProvider);
 
@@ -320,11 +330,22 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     final googleAuth = ref.read(googleAuthServiceProvider);
     if (googleAuth.canUseNativeGoogle) {
-      final response = await googleAuth.signInWithGoogleNative();
-      final user = await _resolveUserAfterAuth(response);
+      final result = await googleAuth.signInWithGoogleNative();
+      var user = await _resolveUserAfterAuth(result.response);
       if (user == null) {
         throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
       }
+
+      final syncedUser = await GoogleIdentitySync(_auth)
+          .applyAccountIfNeeded(result.account, user);
+      if (syncedUser != null) {
+        user = syncedUser;
+      }
+      _pendingOAuthIdentityHints = OAuthIdentityHints.fromGoogleAccount(
+        result.account,
+        user,
+      );
+
       await _prepareOfflineCacheForSession(user);
       await _cacheCurrentEmail(user);
       _markBiometricSessionUnlocked();
@@ -366,11 +387,22 @@ class AuthNotifier extends AsyncNotifier<User?> {
       throw AppFailure(AuthStrings.authAppleUnavailable);
     }
 
-    final response = await appleAuth.signInWithAppleNative();
-    final user = await _resolveUserAfterAuth(response);
+    final result = await appleAuth.signInWithAppleNative();
+    var user = await _resolveUserAfterAuth(result.response);
     if (user == null) {
       throw AppFailure(AuthStrings.authAppleSupabaseLinkFailed);
     }
+
+    final syncedUser =
+        await AppleIdentitySync(_auth).applyCredentialIfNeeded(result.credential);
+    if (syncedUser != null) {
+      user = syncedUser;
+    }
+    _pendingOAuthIdentityHints = OAuthIdentityHints.fromAppleCredential(
+      result.credential,
+      user,
+    );
+
     await _prepareOfflineCacheForSession(user);
     await _cacheCurrentEmail(user);
     _markBiometricSessionUnlocked();

@@ -86,7 +86,24 @@ class HelpCenterScreen extends StatelessWidget {
                   icon: Icons.privacy_tip_outlined,
                   title: DiscHelp.privacyPolicyTitle,
                   subtitle: DiscHelp.privacyPolicyHint,
-                  onTap: () => _openPrivacyPolicy(context),
+                  onTap: () => _openLegalUrl(
+                    context,
+                    LegalUrlsConfig.privacyPolicyUrl,
+                    DiscHelp.openPrivacyPolicyErr,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              DiscoverySurfaceCard(
+                child: DiscoveryMenuTile(
+                  icon: Icons.child_care_outlined,
+                  title: DiscHelp.childSafetyTitle,
+                  subtitle: DiscHelp.childSafetyHint,
+                  onTap: () => _openLegalUrl(
+                    context,
+                    LegalUrlsConfig.childSafetyUrl,
+                    DiscHelp.openChildSafetyErr,
+                  ),
                 ),
               ),
             ],
@@ -104,15 +121,16 @@ class HelpCenterScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openPrivacyPolicy(BuildContext context) async {
-    final opened = await AppUrlLauncher.openInApp(
-      context,
-      LegalUrlsConfig.privacyPolicyUrl,
-    );
+  Future<void> _openLegalUrl(
+    BuildContext context,
+    String url,
+    String errorMessage,
+  ) async {
+    final opened = await AppUrlLauncher.openInApp(context, url);
     if (!opened && context.mounted) {
       AppSnackBar.show(
         context,
-        message: DiscHelp.openPrivacyPolicyErr,
+        message: errorMessage,
         kind: AppSnackKind.error,
       );
     }

@@ -64,6 +64,7 @@ window.MBApi = (() => {
     getCountries: () => rpc('admin_get_reservations_by_country'),
     getSubscriptionPlans: () => rpc('admin_get_subscription_plans_summary'),
     searchUsers: (q, limit = 200) => rpc('admin_search_users', { p_query: q, p_limit: limit }),
+    getUserDetails: (userId) => rpc('admin_get_user_details', { p_user_id: userId }),
     listReservations: (limit = 100, filters = {}) =>
       rpc('admin_list_reservations', {
         p_limit: limit,
@@ -145,5 +146,12 @@ window.MBApi = (() => {
     },
     searchPrestataireTrials: (q, limit = 200) =>
       rpc('admin_search_prestataire_trials', { p_query: q || '', p_limit: limit }),
+    searchPrestataireSubscriptions: (q, status = 'all', limit = 200, offset = 0) =>
+      rpc('admin_search_prestataire_subscriptions', {
+        p_query: q || '',
+        p_status: status || 'all',
+        p_limit: limit,
+        p_offset: offset,
+      }),
   };
 })();

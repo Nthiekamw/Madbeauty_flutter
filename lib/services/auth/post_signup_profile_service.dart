@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/app_strings.dart';
+import '../../core/errors/app_failure.dart';
+import '../../core/logic/address/postal_address.dart';
 import '../../core/errors/supabase_error_handler.dart';
 import '../../core/models/domain/user/lieu_travail.dart';
 import '../location/geocoding_service.dart';
@@ -42,14 +45,42 @@ class PostSignupProfileService {
 
   Future<void> updateClientExtras({
     required String userId,
-    String? adresse,
+    required PostalAddress address,
   }) {
     return SupabaseErrorHandler.run(
       operation: 'postSignup.updateClientExtras',
       action: () async {
+        final formatted = address.formattedLine.trim();
+        final city = address.ville.trim();
+        final postalCode = address.codePostal.trim();
+        final country = address.pays.trim();
+        final query = [
+          if (address.streetLine.trim().isNotEmpty) address.streetLine.trim(),
+          if (postalCode.isNotEmpty) postalCode,
+          if (city.isNotEmpty) city,
+        ].join(', ');
+        final coords = query.isEmpty
+            ? null
+            : await _geocoding.geocodeAddress(
+                query,
+                countryIsoCode: country,
+              );
         await _client.from('client_profiles').update({
-          if (adresse != null && adresse.trim().isNotEmpty)
-            'adresse': adresse.trim(),
+          'adresse': formatted.isEmpty ? null : formatted,
+          'ville': city.isEmpty ? null : city,
+          'code_postal': postalCode.isEmpty ? null : postalCode,
+          'pays': country.isEmpty ? null : _normalizeCountryIso2(country),
+          'voie_type': address.voieType.trim().isEmpty
+              ? null
+              : address.voieType.trim(),
+          'voie_nom': address.voieNom.trim().isEmpty
+              ? null
+              : address.voieNom.trim(),
+          'numero_rue': address.numero.trim().isEmpty
+              ? null
+              : address.numero.trim(),
+          'latitude': coords?.latitude,
+          'longitude': coords?.longitude,
         }).eq('user_id', userId);
       },
     );
@@ -78,7 +109,13 @@ class PostSignupProfileService {
           codePostal: codePostal,
           ville: ville,
         );
-        final coords = await _geocoding.geocodeAddress(geoQuery);
+        final coords = await _geocoding.geocodeAddress(
+          geoQuery,
+          countryIsoCode: countryIso2,
+        );
+        if (geoQuery.trim().isNotEmpty && coords == null) {
+          throw const AppFailure(AuthStrings.registerValidationAddressNotFound);
+        }
         await _client.from('prestataire_profiles').upsert({
           'user_id': userId,
           'nom_salon': nomSalon.trim(),

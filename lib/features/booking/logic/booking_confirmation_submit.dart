@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FunctionException;
 
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
@@ -9,6 +10,9 @@ import '../../../services/notifications/booking_reminders_sync.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
+import '../../../services/stripe/stripe_booking_payment_service.dart';
+import '../../../services/stripe/stripe_payment_exception.dart';
+import '../../../services/stripe/stripe_payment_providers.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart'
     show
         bookingServiceProvider,
@@ -17,22 +21,26 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_create_failure.dart';
+import '../logic/booking_payment_flow.dart';
 import '../logic/booking_pricing.dart';
 import '../providers/booking_platform_fee_settings_provider.dart';
 import '../providers/client_prior_booking_count_provider.dart';
+import '../providers/prestataire_online_payment_provider.dart';
 
 /// Résultat d'une confirmation de réservation réussie.
 class BookingConfirmSuccess {
   const BookingConfirmSuccess({
     required this.queuedOffline,
+    required this.paidWithStripe,
     required this.paidOnSite,
   });
 
   final bool queuedOffline;
+  final bool paidWithStripe;
   final bool paidOnSite;
 }
 
-/// Logique de confirmation (paiement sur place, file offline).
+/// Logique de confirmation (paiement Stripe ou sur place, file offline).
 abstract final class BookingConfirmationSubmit {
   BookingConfirmationSubmit._();
 
@@ -44,14 +52,22 @@ abstract final class BookingConfirmationSubmit {
     required String serviceName,
     required double price,
     required DateTime dateTime,
+    required BookingPaymentModeKind paymentMode,
+    required void Function(BookingPaymentPhase phase) onPhase,
     required void Function(String message) onError,
   }) async {
     final bookingService = ref.read(bookingServiceProvider);
+    final payments = ref.read(stripeBookingPaymentServiceProvider);
 
+    final depositAvailable = await ref.read(
+      prestataireDepositAvailableProvider(prestataireId).future,
+    );
     final priorCount = await ref.read(clientPriorBookingCountProvider.future);
     final referralDiscountPercent =
         ref.read(clientReferralDiscountPercentProvider);
-    const effectiveMode = BookingPaymentModeKind.onSite;
+    final effectiveMode = depositAvailable && BookingPaymentFlow.isPaymentAvailable
+        ? paymentMode
+        : BookingPaymentModeKind.onSite;
 
     final platformFeeSettings = await ref.read(
       bookingPlatformFeeSettingsProvider.future,
@@ -63,12 +79,12 @@ abstract final class BookingConfirmationSubmit {
         servicePriceEur: price,
         paymentMode: effectiveMode,
         priorBookingCount: priorCount,
-        prestataireAcceptsConnect: false,
+        prestataireAcceptsConnect: depositAvailable,
         platformFeeSettings: platformFeeSettings,
         referralDiscountPercent: referralDiscountPercent,
       );
     } on BookingPricingException {
-      onError(DiscBk.errGenericSave);
+      onError(DiscPay.errDepositRequiresConnect);
       return null;
     }
 
@@ -77,6 +93,10 @@ abstract final class BookingConfirmationSubmit {
         'Configuration Supabase absente. Relance avec '
         'flutter run --dart-define-from-file=.env',
       );
+      return null;
+    }
+    if (breakdown.requiresInAppPayment && payments == null) {
+      onError(DiscPay.errNotConfigured);
       return null;
     }
     if (bookingService == null) {
@@ -111,11 +131,42 @@ abstract final class BookingConfirmationSubmit {
     if (queued) {
       return const BookingConfirmSuccess(
         queuedOffline: true,
+        paidWithStripe: false,
         paidOnSite: false,
       );
     }
 
+    onPhase(BookingPaymentPhase.idle);
+
     try {
+      if (breakdown.requiresInAppPayment) {
+        final paymentService = ref.read(stripeBookingPaymentServiceProvider);
+        if (paymentService == null) {
+          throw const StripePaymentNotConfiguredException();
+        }
+        final flow = BookingPaymentFlow(paymentService);
+        final reservation = await flow.payAndCreateReservation(
+          context: context,
+          prestataireId: prestataireId,
+          serviceId: serviceId,
+          dateHeure: dateTime,
+          paymentMode: effectiveMode,
+          onPhase: onPhase,
+        );
+        _afterBookingCreated(
+          ref: ref,
+          reservationId: reservation.id,
+          dateHeure: reservation.dateHeure,
+          serviceName: serviceName,
+          statut: reservation.statut,
+        );
+        return BookingConfirmSuccess(
+          queuedOffline: false,
+          paidWithStripe: true,
+          paidOnSite: effectiveMode == BookingPaymentModeKind.onSite,
+        );
+      }
+
       final reservation = await bookingService.create(
         prestataireId: prestataireId,
         serviceId: serviceId,
@@ -137,13 +188,16 @@ abstract final class BookingConfirmationSubmit {
       );
       return const BookingConfirmSuccess(
         queuedOffline: false,
+        paidWithStripe: false,
         paidOnSite: true,
       );
+    } on StripePaymentException catch (e) {
+      onError(BookingPaymentFlow.messageFor(e));
     } on FormatException catch (e) {
       onError(e.message.isNotEmpty ? e.message : DiscBk.errGenericSave);
     } catch (error, stackTrace) {
       debugPrint('Booking confirm failed: $error\n$stackTrace');
-      onError(bookingCreateFailureMessage(error));
+      onError(_resolveConfirmError(error));
     }
     return null;
   }
@@ -168,5 +222,17 @@ abstract final class BookingConfirmationSubmit {
         statut: statut,
       ),
     );
+  }
+
+  static String _resolveConfirmError(Object error) {
+    if (error is StripePaymentException) {
+      return BookingPaymentFlow.messageFor(error);
+    }
+    if (error is FunctionException) {
+      return BookingPaymentFlow.messageFor(
+        StripeBookingPaymentService.fromInvokeError(error),
+      );
+    }
+    return bookingCreateFailureMessage(error);
   }
 }

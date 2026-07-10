@@ -8,6 +8,7 @@ import '../../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../services/supabase/prestataire/profile_form/prestataire_profile_form_service.dart';
 import '../../../logic/prestataire_hub_constants.dart';
+import '../../../logic/prestataire_subscription_service_count.dart';
 import '../../../logic/professional_experience_entries.dart';
 import '../../../logic/realisation_gallery_grouping.dart';
 import '../../../models/pending_realisation_upload.dart';
@@ -20,6 +21,7 @@ import '../prestataire_hub_step_frame.dart';
 import '../schedule/prestataire_indisponibilites_editor.dart';
 import '../schedule/prestataire_weekly_horaires_editor.dart';
 import '../steps/hub/prestataire_hub_steps.dart';
+import '../subscription/prestataire_subscription_onboarding_panel.dart';
 import 'prestataire_hub_layout.dart';
 
 /// Corps du formulaire hub (wizard + sections ciblées).
@@ -104,7 +106,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
     required this.onboardingWizard,
   });
 
-  static const wizardStepCount = PrestataireHubConstants.wizardStepCount;
+  static int get wizardStepCount => PrestataireHubConstants.wizardStepCount;
   static const optionalFromStep = PrestataireHubConstants.optionalFromStep;
 
   final PrestataireProfileFormData data;
@@ -191,13 +193,13 @@ class PrestataireHubScreenBody extends StatelessWidget {
         3 => DiscPrestaForm.hubGoalHoraires,
         4 => DiscPrestaForm.hubGoalGallery,
         5 => DiscPrestaForm.hubGoalComfort,
-        _ => DiscPrestaForm.hubGoalComfort,
+        _ => DiscPrestaForm.hubGoalSubscription,
       };
 
   HubStepRequirement? _hubStepRequirement(int step) => switch (step) {
         0 || 1 || 2 || 3 => HubStepRequirement.required,
         4 || 5 => HubStepRequirement.recommended,
-        _ => null,
+        _ => HubStepRequirement.optional,
       };
 
   Widget _stepContent(
@@ -377,6 +379,8 @@ class PrestataireHubScreenBody extends StatelessWidget {
       );
     }
 
+    final isSubscriptionStep = currentStep == wizardStepCount - 1 &&
+        wizardStepCount > 6;
     final currentSection = switch (currentStep) {
       0 => PrestataireProfileEditSection.vitrine,
       1 => PrestataireProfileEditSection.location,
@@ -384,7 +388,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
       3 => PrestataireProfileEditSection.horaires,
       4 => PrestataireProfileEditSection.gallery,
       5 => PrestataireProfileEditSection.clientExperience,
-      _ => PrestataireProfileEditSection.horaires,
+      _ => PrestataireProfileEditSection.clientExperience,
     };
     final currentTitle = switch (currentStep) {
       0 => DiscPrestaForm.stepBasics,
@@ -393,7 +397,7 @@ class PrestataireHubScreenBody extends StatelessWidget {
       3 => DiscPrestaForm.stepHoraires,
       4 => DiscPrestaForm.stepGallery,
       5 => DiscPrestaForm.stepComfort,
-      _ => DiscPrestaForm.stepComfort,
+      _ => DiscPrestaForm.stepSubscription,
     };
     final stepGoal = _hubStepGoal(currentStep);
     final stepRequirement = _hubStepRequirement(currentStep);
@@ -406,9 +410,9 @@ class PrestataireHubScreenBody extends StatelessWidget {
             ? DiscPrestaForm.saveProfile
             : DiscPrestaForm.onward;
 
-    final steps = kPrestataireHubSteps;
+    final steps = kPrestataireHubSteps.take(wizardStepCount).toList();
     final stepMeta = steps[currentStep.clamp(0, steps.length - 1)];
-    final wrapStepInSurfaceCard =
+    final wrapStepInSurfaceCard = !isSubscriptionStep &&
         currentSection == PrestataireProfileEditSection.gallery;
 
     Widget stepInner = _stepContent(
@@ -451,7 +455,17 @@ class PrestataireHubScreenBody extends StatelessWidget {
           goal: stepGoal,
           requirement: stepRequirement,
           stepTip: DiscPrestaForm.hubStepTip(currentStep),
-          child: stepInner,
+          child: isSubscriptionStep
+              ? PrestataireSubscriptionOnboardingPanel(
+                  compact: true,
+                  embeddedInHub: true,
+                  plannedServiceCount:
+                      PrestataireSubscriptionServiceCount.fromHubForm(
+                    catalogSelection: catalogSelection,
+                    serviceFields: services,
+                  ),
+                )
+              : stepInner,
         ),
         const SizedBox(height: PrestataireHubLayout.blockGap),
         PrestataireHubStepActions(

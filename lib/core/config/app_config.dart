@@ -25,6 +25,11 @@ class AppConfig {
     defaultValue: '',
   );
 
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: '',
+  );
+
   /// URL de redirection pour les e-mails Supabase (confirmation, recovery).
   /// Exemple mobile (deep link): com.madbeauty.madbeauty://login-callback
   static const String supabaseEmailRedirectUrl = String.fromEnvironment(

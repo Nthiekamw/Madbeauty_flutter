@@ -62,12 +62,39 @@
     else if (isPresta) type = 'prestataire';
     else if (isClient) type = 'client';
     const name = [r.prenom, r.nom].filter(Boolean).join(' ').trim() || r.email || '—';
+    const city = r.client_ville || r.presta_ville || '—';
+    const rdvCount = r.reservations_count ?? r.reservationsCount;
     return {
-      id: r.user_id, name, email: r.email || '—', phone: '—', city: '—',
-      rdv: '—', status: r.is_banned ? 'inactive' : 'active', sub: '—', roles,
-      banReason: r.ban_reason || '', bannedAt: r.banned_at,
-      type, isClient, isPresta, isAdmin,
-      hasClientProfile, hasPrestaProfile,
+      id: r.user_id,
+      name,
+      prenom: r.prenom || '',
+      nom: r.nom || '',
+      email: r.email || '—',
+      phone: r.telephone?.trim() || '—',
+      city,
+      rdv: rdvCount != null ? String(rdvCount) : '—',
+      createdAt: r.created_at || r.createdAt || null,
+      lastSignInAt: r.last_sign_in_at || r.lastSignInAt || null,
+      hasFcmToken: Boolean(r.has_fcm_token ?? r.hasFcmToken),
+      avatarUrl: r.avatar_url || r.avatarUrl || '',
+      status: r.is_banned ? 'inactive' : 'active',
+      sub: '—',
+      roles,
+      banReason: r.ban_reason || '',
+      bannedAt: r.banned_at,
+      type,
+      isClient,
+      isPresta,
+      isAdmin,
+      hasClientProfile,
+      hasPrestaProfile,
+      clientVille: r.client_ville || '',
+      clientCodePostal: r.client_code_postal || '',
+      clientPays: r.client_pays || '',
+      prestaNomSalon: r.presta_nom_salon || '',
+      prestaVille: r.presta_ville || '',
+      prestaIsVerified: Boolean(r.presta_is_verified),
+      specialty: r.presta_nom_salon || '—',
     };
   }
 
@@ -673,6 +700,7 @@
     store.trial = trial;
     store.fee = fee;
     store.prestataireTrials = prestataireTrials || [];
+    store.prestataireSubscriptions = store.prestataireSubscriptions || [];
     store.subscriptionPlans = subscriptionPlans || {};
     store.photosBusy = store.photosBusy || new Set();
     const photosSearchInput = document.getElementById('photos-search');
@@ -731,6 +759,9 @@
     }
     renderFeedback();
     renderForfaits();
+    if (document.getElementById('sec-forfaits')?.classList.contains('active')) {
+      renderPrestataireSubscriptions();
+    }
     renderZones();
     if (typeof zonesChartObj !== 'undefined' && zonesChartObj) {
       if (ZONES.length) {
@@ -937,6 +968,25 @@
         showToast('Bug marqué comme résolu');
       } catch (e) { showToast(e.message); }
     },
+    searchSubscriptions: async () => {
+      const q = document.getElementById('subs-search')?.value?.trim() || '';
+      const status = document.getElementById('subs-filter-status')?.value || 'all';
+      const tbody = document.getElementById('subs-tbody');
+      if (tbody) {
+        tbody.innerHTML = emptyRow(9, '<i class="fa-solid fa-spinner fa-spin"></i> Chargement…');
+      }
+      try {
+        const rows = await MBApi.searchPrestataireSubscriptions(q, status, 500, 0);
+        store.prestataireSubscriptions = rows || [];
+        renderPrestataireSubscriptions();
+      } catch (e) {
+        store.prestataireSubscriptions = [];
+        if (tbody) {
+          tbody.innerHTML = emptyRow(9, escapeHtml(e.message || 'Erreur chargement abonnements'));
+        }
+        showToast(e.message || 'Erreur recherche abonnements');
+      }
+    },
   };
 
   const titles = {
@@ -949,6 +999,7 @@
     if (titles[id]) document.getElementById('topbar-title').textContent = titles[id];
     if (id === 'pays-users') setTimeout(renderPaysUsers, 0);
     if (id === 'pays-revenue') setTimeout(renderPaysRevenue, 0);
+    if (id === 'forfaits') setTimeout(() => MBLive.searchSubscriptions(), 0);
     if (id === 'photos') setTimeout(renderPhotosGallery, 0);
     if (id === 'audit') setTimeout(renderAuditTable, 0);
     if (id === 'push') setTimeout(() => { onPushAudienceChange(); }, 0);

@@ -376,6 +376,11 @@ class PrestataireProfileBasicsStep extends StatelessWidget {
           paysController: paysController,
           villeError: villeError,
           codePostalError: codePostalError,
+          adresseError: adresseError,
+          onAddressChanged: () {
+            onPostalAddressChanged();
+            onChanged();
+          },
           onVilleChanged: () {
             onPostalAddressChanged();
             onChanged();

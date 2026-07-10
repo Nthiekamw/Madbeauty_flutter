@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'core/config/stripe_platform_policy.dart';
 import 'firebase_runtime_helpers.dart';
 import 'core/providers/offline_sync_hooks.dart';
 import 'features/offline/providers/offline_booking_sync_invalidation.dart';
@@ -15,6 +16,7 @@ import 'services/notifications/booking_local_reminders.dart';
 import 'services/notifications/prestataire_catalog_visibility_reminders.dart';
 import 'services/notifications/fcm_background_handler.dart';
 import 'services/storage/local_cache_service.dart';
+import 'services/stripe/stripe_web_bootstrap.dart';
 import 'services/supabase/supabase_service.dart';
 
 Future<void> main() async {
@@ -48,8 +50,15 @@ Future<void> main() async {
     await ensureFirebaseInitialized();
   }
 
+  if (kIsWeb && StripePlatformPolicy.isEnabled) {
+    await StripeWebBootstrap.ensureInitialized();
+  }
+
   if (kDebugMode) {
-    debugPrint('MadBeauty config: supabase=${AppConfig.hasSupabase}');
+    debugPrint(
+      'MadBeauty config: supabase=${AppConfig.hasSupabase} '
+      'stripe=${StripePlatformPolicy.isEnabled}',
+    );
   }
 
   runApp(

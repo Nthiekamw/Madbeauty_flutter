@@ -13,6 +13,7 @@ abstract final class CoreStrings {
 
   static const String actionCancel = 'Annuler';
   static const String actionConfirm = 'Confirmer';
+  static const String actionClear = 'Effacer';
 
   static const String errorUnexpected =
       'Une erreur inattendue s’est produite. Réessaie dans un instant.';

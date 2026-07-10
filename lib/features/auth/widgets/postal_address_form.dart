@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/logic/address/postal_address.dart';
+import '../../../../core/logic/address/postal_address_suggestion.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
+import 'ban_address_search_field.dart';
 import '../register/logic/register_wizard_constants.dart';
 import '../register/widgets/form/register_field_row.dart';
 import 'auth_step_section.dart';
@@ -24,11 +26,15 @@ class PostalAddressForm extends StatelessWidget {
     this.onSurfaceVariant,
     this.villeError,
     this.codePostalError,
+    this.adresseError,
     this.onVilleChanged,
     this.onCodePostalChanged,
+    this.onAddressChanged,
+    this.onSuggestionSelected,
     this.villeRequired = false,
     this.showSectionHeader = true,
     this.compactSection = true,
+    this.enableBanSearch = true,
   });
 
   final String voieType;
@@ -43,11 +49,15 @@ class PostalAddressForm extends StatelessWidget {
   final Color? onSurfaceVariant;
   final String? villeError;
   final String? codePostalError;
+  final String? adresseError;
   final VoidCallback? onVilleChanged;
   final VoidCallback? onCodePostalChanged;
+  final VoidCallback? onAddressChanged;
+  final ValueChanged<PostalAddressSuggestion>? onSuggestionSelected;
   final bool villeRequired;
   final bool showSectionHeader;
   final bool compactSection;
+  final bool enableBanSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +70,25 @@ class PostalAddressForm extends StatelessWidget {
     final fields = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (enableBanSearch) ...[
+          BanAddressSearchField(
+            countryLabel: paysController.text,
+            enabled: enabled,
+            dense: dense,
+            onSelected: (suggestion) {
+              final address = suggestion.address;
+              onVoieTypeChanged(address.voieType);
+              numeroController.text = address.numero;
+              voieNomController.text = address.voieNom;
+              codePostalController.text = address.codePostal;
+              villeController.text = address.ville;
+              paysController.text = address.pays;
+              onSuggestionSelected?.call(suggestion);
+              onAddressChanged?.call();
+            },
+          ),
+          SizedBox(height: fieldGap),
+        ],
         DropdownButtonFormField<String>(
           value: PostalVoieTypes.all.contains(voieType)
               ? voieType
@@ -76,7 +105,10 @@ class PostalAddressForm extends StatelessWidget {
           ],
           onChanged: enabled
               ? (value) {
-                  if (value != null) onVoieTypeChanged(value);
+                  if (value != null) {
+                    onVoieTypeChanged(value);
+                    onAddressChanged?.call();
+                  }
                 }
               : null,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -88,6 +120,7 @@ class PostalAddressForm extends StatelessWidget {
           left: AppTextField(
             dense: dense,
             controller: numeroController,
+            onChanged: onAddressChanged == null ? null : (_) => onAddressChanged!(),
             enabled: enabled,
             label: AuthStrings.registerFieldStreetNumber,
             keyboardType: TextInputType.text,
@@ -97,8 +130,10 @@ class PostalAddressForm extends StatelessWidget {
           right: AppTextField(
             dense: dense,
             controller: voieNomController,
+            onChanged: onAddressChanged == null ? null : (_) => onAddressChanged!(),
             enabled: enabled,
             label: AuthStrings.registerFieldVoieName,
+            errorText: adresseError,
             textInputAction: TextInputAction.next,
             prefixIcon: Icon(Icons.signpost_outlined, color: iconColor),
           ),
@@ -139,6 +174,7 @@ class PostalAddressForm extends StatelessWidget {
         AppTextField(
           dense: dense,
           controller: paysController,
+          onChanged: onAddressChanged == null ? null : (_) => onAddressChanged!(),
           enabled: enabled,
           label: AuthStrings.registerFieldCountry,
           textInputAction: TextInputAction.done,

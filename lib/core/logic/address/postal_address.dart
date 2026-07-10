@@ -28,12 +28,12 @@ class PostalAddress {
   String get streetLine {
     final parts = <String>[];
     final n = numero.trim();
-    final name = voieNom.trim();
+    final type = voieType.trim().isEmpty
+        ? PostalVoieTypes.defaultType
+        : voieType.trim();
+    final name = _normalizeStreetName(voieNom, currentType: type);
     if (n.isNotEmpty) parts.add(n);
     if (name.isNotEmpty) {
-      final type = voieType.trim().isEmpty
-          ? PostalVoieTypes.defaultType
-          : voieType.trim();
       parts.add('${type.toLowerCase()} $name');
     }
     return parts.join(' ');
@@ -56,13 +56,13 @@ class PostalAddress {
     }
 
     final country = pays.trim();
-    if (country.isNotEmpty) segments.add(country);
+    if (country.isNotEmpty && segments.isNotEmpty) segments.add(country);
     return segments.join(', ');
   }
 
   /// Reprend une adresse enregistrée (texte libre ou format structuré).
   static PostalAddress tryParse(String? raw) {
-    final value = raw?.trim() ?? '';
+    final value = _normalizeStoredAddress(raw);
     if (value.isEmpty) return const PostalAddress();
 
     final segments = value.split(',').map((s) => s.trim()).toList();
@@ -94,7 +94,7 @@ class PostalAddress {
     }
 
     if (ville.isEmpty && segments.length == 1) {
-      voieNom = value;
+      voieNom = _normalizeStreetName(value, currentType: voieType);
       voieType = PostalVoieTypes.defaultType;
       numero = '';
     }
@@ -127,11 +127,46 @@ class PostalAddress {
       final pattern = RegExp('^${RegExp.escape(type)}\\s+(.+)', caseSensitive: false);
       final match = pattern.firstMatch(rest);
       if (match != null) {
-        return (type, match.group(1)!.trim(), numero);
+        return (
+          type,
+          _normalizeStreetName(match.group(1)!, currentType: type),
+          numero,
+        );
       }
     }
 
-    return (PostalVoieTypes.defaultType, rest, numero);
+    return (
+      PostalVoieTypes.defaultType,
+      _normalizeStreetName(rest, currentType: PostalVoieTypes.defaultType),
+      numero,
+    );
+  }
+
+  static String _normalizeStoredAddress(String? raw) {
+    final value = raw?.trim() ?? '';
+    if (value.isEmpty) return '';
+    if (value.toUpperCase() == 'NULL') return '';
+    return value.replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  static String _normalizeStreetName(
+    String raw, {
+    required String currentType,
+  }) {
+    var normalized = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.isEmpty) return '';
+    for (final type in PostalVoieTypes.all) {
+      final pattern = RegExp(
+        '^${RegExp.escape(type)}\\s+',
+        caseSensitive: false,
+      );
+      if (pattern.hasMatch(normalized)) {
+        normalized = normalized.replaceFirst(pattern, '').trim();
+        break;
+      }
+    }
+    if (normalized.toUpperCase() == 'NULL') return '';
+    return normalized;
   }
 }
 

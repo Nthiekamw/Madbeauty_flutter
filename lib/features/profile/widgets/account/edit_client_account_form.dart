@@ -3,6 +3,7 @@
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
 import '../../../../shared/widgets/phone/phone_number_field.dart';
+import '../../../auth/widgets/postal_address_form.dart';
 import '../../../auth/widgets/auth_step_section.dart';
 
 class EditClientAccountForm extends StatelessWidget {
@@ -14,7 +15,14 @@ class EditClientAccountForm extends StatelessWidget {
     required this.phoneDialCode,
     required this.onPhoneDialCodeChanged,
     this.onPhoneChanged,
+    required this.voieType,
+    required this.onVoieTypeChanged,
+    required this.voieNomController,
+    required this.numeroController,
+    required this.codePostalController,
     required this.cityController,
+    required this.countryController,
+    this.onAddressChanged,
     required this.email,
     this.prenomError,
     this.nomError,
@@ -28,7 +36,14 @@ class EditClientAccountForm extends StatelessWidget {
   final String phoneDialCode;
   final ValueChanged<String> onPhoneDialCodeChanged;
   final VoidCallback? onPhoneChanged;
+  final String voieType;
+  final ValueChanged<String> onVoieTypeChanged;
+  final TextEditingController voieNomController;
+  final TextEditingController numeroController;
+  final TextEditingController codePostalController;
   final TextEditingController cityController;
+  final TextEditingController countryController;
+  final VoidCallback? onAddressChanged;
   final String email;
   final String? prenomError;
   final String? nomError;
@@ -124,17 +139,20 @@ class EditClientAccountForm extends StatelessWidget {
           compact: true,
           title: DiscProfile.editAccountSectionLocation,
           icon: Icons.location_city_outlined,
-          child: AppTextField(
+          child: PostalAddressForm(
             dense: true,
-            controller: cityController,
-            label: DiscProfile.labelCity,
-            hint: AuthStrings.registerFieldAdresse,
-            maxLines: 2,
-            textInputAction: TextInputAction.done,
-            prefixIcon: Icon(
-              Icons.location_on_outlined,
-              color: onSurfaceVariant,
-            ),
+            showSectionHeader: false,
+            compactSection: true,
+            voieType: voieType,
+            onVoieTypeChanged: onVoieTypeChanged,
+            voieNomController: voieNomController,
+            numeroController: numeroController,
+            codePostalController: codePostalController,
+            villeController: cityController,
+            paysController: countryController,
+            onAddressChanged: onAddressChanged,
+            onVilleChanged: onAddressChanged,
+            onCodePostalChanged: onAddressChanged,
           ),
         ),
         if (errorText != null) ...[

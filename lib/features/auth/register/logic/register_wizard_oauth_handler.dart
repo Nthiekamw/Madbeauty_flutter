@@ -142,6 +142,7 @@ class RegisterWizardOAuthHandler {
   }
 
   Future<void> onOAuthConnected({
+    required WidgetRef ref,
     required BuildContext context,
     required bool Function() mounted,
     required RegisterWizardFormController form,
@@ -154,7 +155,20 @@ class RegisterWizardOAuthHandler {
       _stopGoogleSessionWatch();
       return;
     }
-    form.hydrateFromOAuthUser(user);
+    form.hydrateFromOAuthUser(
+      user,
+      viaApple: RegisterWizardOAuthHandler.isAppleOAuthUser(user),
+    );
+    final hints =
+        ref.read(authNotifierProvider.notifier).consumeOAuthIdentityHints();
+    if (hints != null) {
+      form.applyOAuthIdentityHints(
+        providedPrenom: hints.providedPrenom,
+        providedNom: hints.providedNom,
+        providedEmail: hints.providedEmail,
+        viaApple: RegisterWizardOAuthHandler.isAppleOAuthUser(user),
+      );
+    }
     if (!mounted()) return;
     form.onOAuthConnected();
     _stopGoogleSessionWatch();

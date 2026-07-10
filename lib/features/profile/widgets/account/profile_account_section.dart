@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/stripe_platform_policy.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
@@ -52,6 +53,15 @@ class ProfileAccountSection extends ConsumerWidget {
                 title: DiscProfile.actionEditAccount,
                 onTap: () => context.pushEditClientAccount(),
               ),
+              if (StripePlatformPolicy.isEnabled) ...[
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.credit_card_rounded,
+                  title: DiscPaymentMethods.sectionTitle,
+                  subtitle: DiscPaymentMethods.clientSectionSubtitle,
+                  onTap: () => context.pushClientPaymentMethods(),
+                ),
+              ],
               if (showClientReviews) ...[
                 _divider(context),
                 DiscoveryMenuTile(

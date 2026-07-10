@@ -96,6 +96,7 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
   }
 
   Future<void> _onOAuthConnected(User user) => _oauth.onOAuthConnected(
+        ref: ref,
         context: context,
         mounted: () => mounted,
         form: _form,

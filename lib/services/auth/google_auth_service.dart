@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/failure_mapper.dart';
+import 'google_sign_in_result.dart';
 import 'auth_service.dart';
 
 /// Connexion Google native → jeton Google → session Supabase.
@@ -70,7 +70,7 @@ class GoogleAuthService {
     }
   }
 
-  Future<AuthResponse> signInWithGoogleNative() async {
+  Future<GoogleSignInResult> signInWithGoogleNative() async {
     await warmUp();
 
     try {
@@ -95,9 +95,10 @@ class GoogleAuthService {
         debugPrint('[GoogleAuth] id_token OK → Supabase signInWithIdToken');
       }
 
-      return await _auth
+      final response = await _auth
           .signInWithGoogleIdToken(idToken: googleIdToken)
           .timeout(supabaseExchangeTimeout);
+      return GoogleSignInResult(response: response, account: googleUser);
     } on TimeoutException {
       throw AppFailure(AuthStrings.authGoogleSignInTimeout);
     } on AppFailure {

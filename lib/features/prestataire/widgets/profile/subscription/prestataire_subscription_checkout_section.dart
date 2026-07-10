@@ -1,0 +1,392 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../../core/config/prestataire_subscription_config.dart';
+import '../../../../../core/config/stripe_platform_policy.dart';
+import '../../../../../core/constants/app_strings.dart';
+import '../../../../../services/stripe/stripe_prestataire_subscription_service.dart';
+import '../../../../../services/stripe/stripe_service.dart';
+import '../../../../../services/stripe/stripe_subscription_providers.dart'
+    show stripePrestaSubscriptionServiceProvider;
+import '../../../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
+import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/utils/app_url_launcher.dart';
+import '../../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
+import '../../../../../shared/widgets/stripe/stripe_test_card_hint.dart';
+import '../../../models/prestataire_subscription_status.dart';
+import '../../../logic/prestataire_subscription_refresh.dart';
+import '../../../providers/profile/prestataire_profile_form_provider.dart';
+import '../../../providers/subscription/platform_catalog_trial_provider.dart';
+import '../../../logic/prestataire_subscription_service_count.dart';
+import '../../../providers/subscription/prestataire_subscription_provider.dart';
+import 'prestataire_subscription_interval_cards.dart';
+import 'prestataire_payout_setup_hint.dart';
+
+/// Boutons d'abonnement / portail Stripe pour le palier courant.
+class PrestataireSubscriptionCheckoutSection extends ConsumerStatefulWidget {
+  const PrestataireSubscriptionCheckoutSection({
+    super.key,
+    this.compact = false,
+    this.plannedServiceCount,
+  });
+
+  final bool compact;
+  final int? plannedServiceCount;
+
+  @override
+  ConsumerState<PrestataireSubscriptionCheckoutSection> createState() =>
+      _PrestataireSubscriptionCheckoutSectionState();
+}
+
+class _PrestataireSubscriptionCheckoutSectionState
+    extends ConsumerState<PrestataireSubscriptionCheckoutSection> {
+  bool _busy = false;
+  String _selectedInterval = 'month';
+
+  void _snack(String message, {bool error = false}) {
+    AppSnackBar.show(
+      context,
+      message: message,
+      kind: error ? AppSnackKind.error : AppSnackKind.info,
+    );
+  }
+
+  Future<void> _refreshStatus() async {
+    await refreshPrestataireSubscription(ref);
+  }
+
+  Future<bool> _ensureProfileForBilling() async {
+    final formService = ref.read(prestataireProfileFormServiceProvider);
+    if (formService == null) {
+      _snack(DiscPrestaSub.payUnavailable, error: true);
+      return false;
+    }
+    try {
+      await formService.ensureProfileForBilling();
+      ref.invalidate(prestataireProfileFormProvider);
+      ref.invalidate(prestatairePublishedServiceCountProvider);
+      ref.invalidate(prestataireSubscriptionStatusProvider);
+      return true;
+    } catch (e) {
+      debugPrint('ensureProfileForBilling: $e');
+      _snack(DiscPrestaSub.profileRequired, error: true);
+      return false;
+    }
+  }
+
+  Future<void> _subscribe(String tier) async {
+    final stripeService = ref.read(stripePrestaSubscriptionServiceProvider);
+    if (stripeService == null) {
+      _snack(DiscPrestaSub.payUnavailable, error: true);
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      if (!await _ensureProfileForBilling()) return;
+
+      final result = await stripeService.createCheckout(
+        tier: tier,
+        interval: _selectedInterval,
+      );
+      if (!context.mounted) return;
+      if (StripeService.isTestMode) {
+        _snack(DiscPrestaSub.testModeCheckoutReminder);
+      }
+      final opened = await AppUrlLauncher.openInApp(context, result.url);
+      if (!context.mounted) return;
+      if (!opened) _snack(DiscPrestaSub.browserErr, error: true);
+    } on StripePrestaSubscriptionException catch (e) {
+      if (e.code == 'subscription_already_active') {
+        await _openPortal();
+      } else {
+        _snack(e.message, error: true);
+      }
+    } catch (e) {
+      debugPrint('subscription checkout: $e');
+      _snack(DiscPrestaSub.checkoutErr, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openPortal() async {
+    final stripeService = ref.read(stripePrestaSubscriptionServiceProvider);
+    if (stripeService == null) {
+      _snack(DiscPrestaSub.payUnavailable, error: true);
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      if (!await _ensureProfileForBilling()) return;
+
+      final url = await stripeService.createBillingPortalUrl();
+      if (!context.mounted) return;
+      final opened = await AppUrlLauncher.openInApp(context, url);
+      if (!context.mounted) return;
+      if (!opened) _snack(DiscPrestaSub.browserErr, error: true);
+    } on StripePrestaSubscriptionException catch (e) {
+      _snack(e.message, error: true);
+    } catch (e) {
+      debugPrint('billing portal: $e');
+      _snack(DiscPrestaSub.portalErr, error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String _statusLabel(PrestataireSubscriptionStatus status) {
+    if (status.isActive) return DiscPrestaSub.statusActive;
+    return switch (status.status) {
+      'past_due' => DiscPrestaSub.statusPastDue,
+      'trialing' => DiscPrestaSub.statusTrialing,
+      'canceled' => DiscPrestaSub.statusCanceled,
+      'incomplete' => DiscPrestaSub.statusIncomplete,
+      _ => DiscPrestaSub.statusNone,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!StripePlatformPolicy.isEnabled) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final statusAsync = ref.watch(prestataireSubscriptionStatusProvider);
+    final serviceCountAsync = ref.watch(
+      prestatairePublishedServiceCountProvider,
+    );
+    final trialDays = ref.watch(platformCatalogTrialDaysProvider).maybeWhen(
+          data: (days) => days,
+          orElse: () => PrestataireSubscriptionConfig.catalogTrialDays,
+        );
+
+    return serviceCountAsync.when(
+      loading: () => const DiscoveryInlineSkeleton(height: 40),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (publishedCount) {
+        final serviceCount = PrestataireSubscriptionServiceCount.resolve(
+          publishedCount: publishedCount,
+          plannedCount: widget.plannedServiceCount,
+        );
+        final tier = PrestataireSubscriptionConfig.tierForServiceCount(
+          serviceCount,
+        );
+        final tierPricing = tier.id == PrestataireSubscriptionConfig.multi.id
+            ? PrestataireSubscriptionConfig.multi
+            : PrestataireSubscriptionConfig.solo;
+
+        return statusAsync.when(
+          loading: () => const DiscoveryInlineSkeleton(height: 40),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (status) {
+            if (status.isActive) {
+              return _ActiveBanner(
+                theme: theme,
+                status: status,
+                busy: _busy,
+                onManage: _openPortal,
+                onRefresh: _refreshStatus,
+                statusLabel: _statusLabel(status),
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (status.isInCatalogTrial) ...[
+                  _CatalogTrialHint(theme: theme, status: status),
+                  const SizedBox(height: 10),
+                ],
+                if (status.needsAttention) ...[
+                  _AttentionBanner(theme: theme, status: status),
+                  const SizedBox(height: 10),
+                ],
+                Text(
+                  DiscPrestaSub.checkoutTrialHint(trialDays),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                PrestataireSubscriptionIntervalCards(
+                  monthlyEur: tierPricing.monthlyEur,
+                  yearlyEur: tierPricing.yearlyEur,
+                  selectedInterval: _selectedInterval,
+                  enabled: !_busy,
+                  compact: widget.compact,
+                  onChanged: (interval) =>
+                      setState(() => _selectedInterval = interval),
+                ),
+                const SizedBox(height: 10),
+                StripeTestCardHint(compact: widget.compact),
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  onPressed: _busy ? null : () => _subscribe(tier.id),
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.payment_rounded),
+                  label: Text(
+                    _selectedInterval == 'year'
+                        ? DiscPrestaSub.subscribeYearly
+                        : DiscPrestaSub.subscribeMonthly,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _busy ? null : _refreshStatus,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text(DiscPrestaSub.refreshStatus),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ActiveBanner extends StatelessWidget {
+  const _ActiveBanner({
+    required this.theme,
+    required this.status,
+    required this.busy,
+    required this.onManage,
+    required this.onRefresh,
+    required this.statusLabel,
+  });
+
+  final ThemeData theme;
+  final PrestataireSubscriptionStatus status;
+  final bool busy;
+  final VoidCallback onManage;
+  final VoidCallback onRefresh;
+  final String statusLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final period = status.periodEnd;
+    final periodText = period != null
+        ? DiscPrestaSub.renewsOn.replaceFirst(
+            '%s',
+            MaterialLocalizations.of(context).formatShortDate(period.toLocal()),
+          )
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  statusLabel,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (periodText != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              periodText,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: busy ? null : onManage,
+            icon: const Icon(Icons.manage_accounts_outlined, size: 18),
+            label: const Text(DiscPrestaSub.manageBilling),
+          ),
+          TextButton(
+            onPressed: busy ? null : onRefresh,
+            child: const Text(DiscPrestaSub.refreshStatus),
+          ),
+          const PrestatairePayoutSetupHint(compact: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _CatalogTrialHint extends StatelessWidget {
+  const _CatalogTrialHint({required this.theme, required this.status});
+
+  final ThemeData theme;
+  final PrestataireSubscriptionStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final days = status.catalogTrialDaysRemaining;
+    if (days == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.timer_outlined, color: AppColors.success, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              DiscPrestaSub.trialBannerBody(days),
+              style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttentionBanner extends StatelessWidget {
+  const _AttentionBanner({required this.theme, required this.status});
+
+  final ThemeData theme;
+  final PrestataireSubscriptionStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.status == 'past_due'
+            ? DiscPrestaSub.statusPastDue
+            : DiscPrestaSub.statusIncomplete,
+        style: theme.textTheme.bodySmall,
+      ),
+    );
+  }
+}
