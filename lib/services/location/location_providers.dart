@@ -3,6 +3,7 @@
 import 'address_autocomplete_service.dart';
 import 'geocoding_service.dart';
 import 'geolocation_service.dart';
+import 'market_detection_service.dart';
 
 export 'geolocation_service.dart' show ClientLocation, GeolocationService;
 
@@ -12,6 +13,13 @@ final geolocationServiceProvider = Provider<GeolocationService>((ref) {
 
 final geocodingServiceProvider = Provider<GeocodingService>((ref) {
   return GeocodingService();
+});
+
+final marketDetectionServiceProvider = Provider<MarketDetectionService>((ref) {
+  return MarketDetectionService(
+    geolocation: ref.watch(geolocationServiceProvider),
+    geocoding: ref.watch(geocodingServiceProvider),
+  );
 });
 
 final addressAutocompleteServiceProvider = Provider<AddressAutocompleteService>((

@@ -23,6 +23,7 @@ abstract final class PhoneNumberUtils {
   static const dialOptions = <PhoneDialOption>[
     PhoneDialOption(isoCode: 'FR', dialCode: '+33', label: 'France'),
     PhoneDialOption(isoCode: 'BE', dialCode: '+32', label: 'Belgique'),
+    PhoneDialOption(isoCode: 'CA', dialCode: '+1', label: 'Canada'),
     PhoneDialOption(isoCode: 'CH', dialCode: '+41', label: 'Suisse'),
     PhoneDialOption(isoCode: 'DE', dialCode: '+49', label: 'Allemagne'),
     PhoneDialOption(isoCode: 'GB', dialCode: '+44', label: 'Royaume-Uni'),

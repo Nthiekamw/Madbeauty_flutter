@@ -23,6 +23,9 @@ abstract final class OfflineCacheKeys {
   static const prestataireAgenda = 'offline.prestataire_agenda';
 
   static String forUser(String baseKey, String userId) => '$baseKey.$userId';
+
+  static String forMarket(String baseKey, String countryCode) =>
+      '$baseKey.${countryCode.trim().toUpperCase()}';
 }
 
 class OfflineCacheService {
@@ -44,32 +47,59 @@ class OfflineCacheService {
     }
   }
 
-  Future<void> saveNearbyPrestataires(List<PrestataireProfile> list) =>
+  Future<void> saveNearbyPrestataires(
+    List<PrestataireProfile> list, {
+    required String marketCountry,
+  }) =>
       _write(
-        OfflineCacheKeys.nearbyPrestataires,
+        OfflineCacheKeys.forMarket(
+          OfflineCacheKeys.nearbyPrestataires,
+          marketCountry,
+        ),
         OfflineCacheCodec.encodePrestataireList(list),
       );
 
-  List<PrestataireProfile> readNearbyPrestataires() =>
-      OfflineCacheCodec.decodePrestataireList(_read(OfflineCacheKeys.nearbyPrestataires));
-
-  Future<void> saveTopRatedPrestataires(List<PrestataireProfile> list) =>
-      _write(
-        OfflineCacheKeys.topRatedPrestataires,
-        OfflineCacheCodec.encodePrestataireList(list),
-      );
-
-  List<PrestataireProfile> readTopRatedPrestataires() =>
+  List<PrestataireProfile> readNearbyPrestataires({required String marketCountry}) =>
       OfflineCacheCodec.decodePrestataireList(
-        _read(OfflineCacheKeys.topRatedPrestataires),
+        _read(
+          OfflineCacheKeys.forMarket(
+            OfflineCacheKeys.nearbyPrestataires,
+            marketCountry,
+          ),
+        ),
+      );
+
+  Future<void> saveTopRatedPrestataires(
+    List<PrestataireProfile> list, {
+    required String marketCountry,
+  }) =>
+      _write(
+        OfflineCacheKeys.forMarket(
+          OfflineCacheKeys.topRatedPrestataires,
+          marketCountry,
+        ),
+        OfflineCacheCodec.encodePrestataireList(list),
+      );
+
+  List<PrestataireProfile> readTopRatedPrestataires({
+    required String marketCountry,
+  }) =>
+      OfflineCacheCodec.decodePrestataireList(
+        _read(
+          OfflineCacheKeys.forMarket(
+            OfflineCacheKeys.topRatedPrestataires,
+            marketCountry,
+          ),
+        ),
       );
 
   Future<void> saveListingCatalog({
     required List<ServiceCategory> categories,
     required List<PrestataireCatalogEntry> entries,
+    required String marketCountry,
   }) =>
       _write(
-        OfflineCacheKeys.listingCatalog,
+        OfflineCacheKeys.forMarket(OfflineCacheKeys.listingCatalog, marketCountry),
         OfflineCacheCodec.encodeCatalogSnapshot(
           categories: categories,
           entries: entries,
@@ -77,8 +107,12 @@ class OfflineCacheService {
       );
 
   ({List<ServiceCategory> categories, List<PrestataireCatalogEntry> entries})
-  readListingCatalog() =>
-      OfflineCacheCodec.decodeCatalogSnapshot(_read(OfflineCacheKeys.listingCatalog));
+  readListingCatalog({required String marketCountry}) =>
+      OfflineCacheCodec.decodeCatalogSnapshot(
+        _read(
+          OfflineCacheKeys.forMarket(OfflineCacheKeys.listingCatalog, marketCountry),
+        ),
+      );
 
   Future<void> saveUserProfile(String userId, UserProfile profile) =>
       _write(

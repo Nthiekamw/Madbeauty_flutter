@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/logic/address/postal_address_suggestion.dart';
+import '../../../core/logic/address/postal_country_format.dart';
 import '../../../services/location/location_providers.dart';
 import '../../../shared/widgets/app/app_text_field.dart';
 
@@ -35,9 +36,24 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
   String? _error;
   List<PostalAddressSuggestion> _suggestions = const [];
 
-  bool get _supportsBan {
-    final country = widget.countryLabel.trim().toLowerCase();
-    return country.isEmpty || country == 'fr' || country == 'france';
+  String get _countryIso => postalCountryIso2(widget.countryLabel);
+
+  bool get _supportsAutocomplete =>
+      AuthStrings.supportsAddressAutocomplete(_countryIso);
+
+  @override
+  void didUpdateWidget(covariant BanAddressSearchField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.countryLabel != widget.countryLabel) {
+      _debounce?.cancel();
+      _controller.clear();
+      setState(() {
+        _loading = false;
+        _error = null;
+        _suggestions = const [];
+        _touched = false;
+      });
+    }
   }
 
   @override
@@ -56,16 +72,19 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
         _suggestions = const [];
         _loading = false;
       } else {
-        _loading = _supportsBan;
+        _loading = _supportsAutocomplete;
       }
     });
 
-    if (!_supportsBan || value.trim().length < 4) return;
+    if (!_supportsAutocomplete || value.trim().length < 4) return;
 
     _debounce = Timer(const Duration(milliseconds: 280), () async {
       final service = ref.read(addressAutocompleteServiceProvider);
       try {
-        final suggestions = await service.searchFrenchAddresses(value);
+        final suggestions = await service.searchAddresses(
+          value,
+          countryIsoCode: _countryIso,
+        );
         if (!mounted || _controller.text.trim() != value.trim()) return;
         setState(() {
           _loading = false;
@@ -85,14 +104,17 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_supportsAutocomplete) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     final showEmptyState =
         _touched &&
         !_loading &&
         _error == null &&
         _controller.text.trim().length >= 4 &&
-        _suggestions.isEmpty &&
-        _supportsBan;
+        _suggestions.isEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,7 +124,7 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
           controller: _controller,
           enabled: widget.enabled,
           label: AuthStrings.registerAddressSearchLabel,
-          hint: AuthStrings.registerAddressSearchHint,
+          hint: AuthStrings.registerAddressSearchHintFor(_countryIso),
           textInputAction: TextInputAction.next,
           prefixIcon: const Icon(Icons.search_rounded),
           suffixIcon: _loading
@@ -135,9 +157,7 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
         ),
         const SizedBox(height: 6),
         Text(
-          _supportsBan
-              ? AuthStrings.registerAddressSearchHelp
-              : AuthStrings.registerAddressSearchFranceOnly,
+          AuthStrings.registerAddressSearchHelpFor(_countryIso),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             height: 1.35,

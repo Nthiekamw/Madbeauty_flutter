@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/market_country_provider.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/offline_providers.dart';
@@ -103,6 +104,11 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
 
   @override
   ListingCatalogViewState build() {
+    ref.listen(marketCountryProvider, (previous, next) {
+      if (previous != null && previous != next && _started) {
+        unawaited(refresh());
+      }
+    });
     return ListingCatalogViewState.initial;
   }
 
@@ -174,8 +180,11 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
     required bool replaceEntries,
   }) async {
     final online = ref.read(isOnlineProvider);
+    final marketCountry = ref.read(marketCountryProvider);
     if (!online) {
-      final cached = OfflineCacheService.instance.readListingCatalog();
+      final cached = OfflineCacheService.instance.readListingCatalog(
+        marketCountry: marketCountry,
+      );
       if (!ref.mounted) return;
       if (cached.entries.isEmpty) {
         state = state.copyWith(
@@ -207,7 +216,11 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
         final results = await Future.wait([
           service.getServiceCategories(),
           service.getAll(
-            filters: PrestataireFilters(limit: pageSize, offset: offset),
+            filters: PrestataireFilters(
+              limit: pageSize,
+              offset: offset,
+              pays: marketCountry,
+            ),
           ),
         ]);
         categories = results[0] as List<ServiceCategory>;
@@ -215,7 +228,11 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
       } else {
         categories = state.categories;
         batch = await service.getAll(
-          filters: PrestataireFilters(limit: pageSize, offset: offset),
+          filters: PrestataireFilters(
+            limit: pageSize,
+            offset: offset,
+            pays: marketCountry,
+          ),
         );
       }
 
@@ -238,6 +255,7 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
         await OfflineCacheService.instance.saveListingCatalog(
           categories: categories,
           entries: merged,
+          marketCountry: marketCountry,
         );
       }
     } catch (e, st) {
@@ -250,7 +268,9 @@ class ListingCatalogNotifier extends Notifier<ListingCatalogViewState> {
 
       if (!ref.mounted) return;
 
-      final cached = OfflineCacheService.instance.readListingCatalog();
+      final cached = OfflineCacheService.instance.readListingCatalog(
+        marketCountry: marketCountry,
+      );
       if (replaceEntries && cached.entries.isNotEmpty) {
         state = state.copyWith(
           loadingInitial: false,

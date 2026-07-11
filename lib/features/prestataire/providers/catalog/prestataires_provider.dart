@@ -2,9 +2,11 @@
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/geo/geo_point.dart';
+import '../../../../core/logic/market/prestataire_market_filter.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../favorites/providers/client_favorite_prestataire_ids_provider.dart';
 import '../../../likes/providers/client_prestataire_likes_provider.dart';
+import '../../../../core/providers/market_country_provider.dart';
 import '../../../listing/providers/catalog_availability_index_provider.dart';
 import '../../../listing/providers/discovery_origin_provider.dart';
 import '../../../listing/providers/listing_catalog_provider.dart';
@@ -33,6 +35,7 @@ final prestatairesFilteredProvider =
     Provider<AsyncValue<List<PrestataireCatalogEntry>>>((ref) {
       final asyncList = ref.watch(prestatairesListProvider);
       final filters = ref.watch(prestatairesFilterProvider);
+      final marketCountry = ref.watch(marketCountryProvider);
       final origin = ref.watch(discoveryOriginProvider);
       final availability = ref.watch(catalogAvailabilityIndexProvider);
       final favoriteIds = ref.watch(clientFavoritePrestataireIdsProvider).maybeWhen(
@@ -44,7 +47,8 @@ final prestatairesFilteredProvider =
             orElse: () => const <String>{},
           );
       return asyncList.whenData((entries) {
-        var list = filterPrestataireEntries(entries, filters, origin: origin);
+        var list = filterCatalogEntriesByMarket(entries, marketCountry);
+        list = filterPrestataireEntries(list, filters, origin: origin);
         if (filters.availableOnly) {
           final map = availability.value;
           if (map != null) {

@@ -10,16 +10,17 @@ abstract final class DiscAppearance {
       isEnglish(locale) ? 'Appearance' : 'Apparence';
 
   static String tileTitle(Locale locale) =>
-      isEnglish(locale) ? 'Theme & language' : 'Thème et langue';
+      isEnglish(locale) ? 'Theme, language & country' : 'Thème, langue et pays';
 
   static String tileSubtitle(
     Locale locale, {
     required String themeLabel,
     required String languageLabel,
+    required String marketLabel,
   }) =>
       isEnglish(locale)
-          ? '$themeLabel · $languageLabel'
-          : '$themeLabel · $languageLabel';
+          ? '$themeLabel · $languageLabel · $marketLabel'
+          : '$themeLabel · $languageLabel · $marketLabel';
 
   static String sheetTitle(Locale locale) =>
       isEnglish(locale) ? 'Customize the app' : 'Personnaliser l’app';
@@ -52,4 +53,14 @@ abstract final class DiscAppearance {
 
   static String languageSaved(Locale locale) =>
       isEnglish(locale) ? 'Language updated.' : 'Langue mise à jour.';
+
+  static String marketSection(Locale locale) =>
+      isEnglish(locale) ? 'Country / region' : 'Pays / région';
+
+  static String marketNote(Locale locale) => isEnglish(locale)
+      ? 'Market order: auto-detect (device language or location), then your choice here, then your profile country.'
+      : 'Ordre du marché : détection auto (langue de l’appareil ou position), puis ton choix ici, puis le pays de ton profil client.';
+
+  static String marketSaved(Locale locale) =>
+      isEnglish(locale) ? 'Country updated.' : 'Pays mis à jour.';
 }

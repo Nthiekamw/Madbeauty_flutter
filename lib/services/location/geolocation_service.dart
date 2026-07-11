@@ -37,5 +37,33 @@ class GeolocationService {
       return null;
     }
   }
+
+  /// Position actuelle uniquement si la permission est déjà accordée (pas de popup).
+  Future<ClientLocation?> getCurrentLocationIfPermitted() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+
+      final permission = await Geolocator.checkPermission();
+      if (permission != LocationPermission.always &&
+          permission != LocationPermission.whileInUse) {
+        return null;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      return ClientLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+    } on Exception {
+      return null;
+    }
+  }
 }
 

@@ -25,6 +25,13 @@ class LocalCacheService {
   static const String clientHomeLayoutKey = 'client.home_layout_v1';
   static const String appThemeModeKey = 'app.theme_mode_v1';
   static const String appLanguageCodeKey = 'app.language_code_v1';
+  static const String marketCountryCodeKey = 'app.market_country_v1';
+  static const String marketCountryAutoCodeKey = 'app.market_country_auto_v1';
+  static const String marketCountryManualCodeKey =
+      'app.market_country_manual_code_v1';
+  static const String marketCountryManualKey = 'app.market_country_manual_v1';
+  static const String marketCountryAutoDetectedKey =
+      'app.market_country_auto_detected_v1';
   static const String passwordRecoveryPendingKey =
       'auth.password_recovery_pending_v1';
   static const String pwaInstallBannerDismissedAtKey =
@@ -137,6 +144,33 @@ class LocalCacheService {
 
   Future<bool> setAppLanguageCode(String value) =>
       setString(appLanguageCodeKey, value);
+
+  String? get marketCountryCode => getString(marketCountryCodeKey);
+
+  Future<bool> setMarketCountryCode(String value) =>
+      setString(marketCountryCodeKey, value.trim().toUpperCase());
+
+  String? get marketCountryAutoCode => getString(marketCountryAutoCodeKey);
+
+  Future<bool> setMarketCountryAutoCode(String value) =>
+      setString(marketCountryAutoCodeKey, value.trim().toUpperCase());
+
+  String? get marketCountryManualCode => getString(marketCountryManualCodeKey);
+
+  Future<bool> setMarketCountryManualCode(String value) =>
+      setString(marketCountryManualCodeKey, value.trim().toUpperCase());
+
+  bool get marketCountryManual =>
+      _prefs.getBool(marketCountryManualKey) ?? false;
+
+  Future<bool> setMarketCountryManual(bool value) =>
+      _prefs.setBool(marketCountryManualKey, value);
+
+  bool get marketCountryAutoDetected =>
+      _prefs.getBool(marketCountryAutoDetectedKey) ?? false;
+
+  Future<bool> setMarketCountryAutoDetected(bool value) =>
+      _prefs.setBool(marketCountryAutoDetectedKey, value);
 
   bool get passwordRecoveryPending =>
       _prefs.getBool(passwordRecoveryPendingKey) ?? false;

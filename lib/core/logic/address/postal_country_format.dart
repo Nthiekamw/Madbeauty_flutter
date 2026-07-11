@@ -26,6 +26,7 @@ String postalCountryIso2(String? raw) {
     'FRANCE' => 'FR',
     'BELGIQUE' => 'BE',
     'BELGIUM' => 'BE',
+    'CANADA' => 'CA',
     'LUXEMBOURG' => 'LU',
     'SUISSE' => 'CH',
     'SWITZERLAND' => 'CH',

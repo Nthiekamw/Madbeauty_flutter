@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/market_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/logic/market/invalidate_market_catalog.dart';
 import '../../../../core/providers/app_appearance_provider.dart';
+import '../../../../core/providers/market_country_provider.dart';
+import '../../../../shared/utils/phone_number_utils.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 
@@ -21,6 +25,7 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appearance = ref.watch(appAppearanceProvider);
+    final marketCountry = ref.watch(marketCountryProvider);
     final locale = appearance.locale;
     final theme = Theme.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
@@ -138,6 +143,61 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(
             DiscAppearance.languageNote(locale),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            DiscAppearance.marketSection(locale),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...MarketConfig.supportedMarkets.map((market) {
+            final selected = market.isoCode == marketCountry;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                leading: Text(
+                  PhoneNumberUtils.countryFlag(market.isoCode),
+                  style: const TextStyle(fontSize: 22),
+                ),
+                title: Text(
+                  market.labelFor(locale),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                trailing: selected
+                    ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                    : Icon(
+                        Icons.circle_outlined,
+                        color: theme.colorScheme.outline,
+                      ),
+                onTap: selected
+                    ? null
+                    : () async {
+                        await ref
+                            .read(marketCountryProvider.notifier)
+                            .setMarketCountry(market.isoCode);
+                        invalidateMarketCatalog(ref);
+                        if (!context.mounted) return;
+                        AppSnackBar.show(
+                          context,
+                          message: DiscAppearance.marketSaved(locale),
+                        );
+                      },
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          Text(
+            DiscAppearance.marketNote(locale),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.35,

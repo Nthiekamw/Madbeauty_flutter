@@ -269,10 +269,47 @@ abstract final class AuthStrings {
   static const String registerAddressSearchLabel = 'Recherche rapide d’adresse';
   static const String registerAddressSearchHint =
       'Ex. 30 rue Descartes, Paris';
+  static const String registerAddressSearchHintBe =
+      'Ex. 150 rue de Montigny, 6000 Charleroi';
+  static const String registerAddressSearchHintCa =
+      'Ex. 100 Queen Street West, Toronto';
   static const String registerAddressSearchHelp =
       'Choisis une suggestion officielle pour préremplir une adresse existante.';
+  static const String registerAddressSearchHelpFr =
+      'Suggestions officielles via la Base Adresse Nationale (France).';
+  static const String registerAddressSearchHelpBe =
+      'Suggestions officielles via le registre BeSt (Belgique).';
+  static const String registerAddressSearchHelpCa =
+      'Suggestions via Géolocalisation Canada et OpenStreetMap.';
+  static const String registerAddressSearchHelpIntl =
+      'Suggestions OpenStreetMap pour compléter l’adresse.';
   static const String registerAddressSearchFranceOnly =
       'Autocomplétion BAN disponible pour les adresses en France.';
+
+  static String registerAddressSearchHintFor(String countryIso) {
+    return switch (countryIso.toUpperCase()) {
+      'BE' => registerAddressSearchHintBe,
+      'CA' => registerAddressSearchHintCa,
+      _ => registerAddressSearchHint,
+    };
+  }
+
+  static String registerAddressSearchHelpFor(String countryIso) {
+    return switch (countryIso.toUpperCase()) {
+      'FR' => registerAddressSearchHelpFr,
+      'BE' => registerAddressSearchHelpBe,
+      'CA' => registerAddressSearchHelpCa,
+      'CH' || 'DE' || 'GB' => registerAddressSearchHelpIntl,
+      _ => registerAddressSearchHelp,
+    };
+  }
+
+  static bool supportsAddressAutocomplete(String countryIso) {
+    return switch (countryIso.toUpperCase()) {
+      'FR' || 'BE' || 'CA' || 'CH' || 'DE' || 'GB' => true,
+      _ => false,
+    };
+  }
   static const String registerAddressSearchNoResult =
       'Aucune adresse trouvée. Vérifie la saisie ou complète les champs manuellement.';
   static const String registerAddressSearchError =

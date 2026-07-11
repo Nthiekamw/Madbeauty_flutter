@@ -1,7 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/constants/app_strings.dart';
-import '../../core/errors/app_failure.dart';
 import '../../core/logic/address/postal_address.dart';
 import '../../core/errors/supabase_error_handler.dart';
 import '../../core/models/domain/user/lieu_travail.dart';
@@ -113,9 +111,6 @@ class PostSignupProfileService {
           geoQuery,
           countryIsoCode: countryIso2,
         );
-        if (geoQuery.trim().isNotEmpty && coords == null) {
-          throw const AppFailure(AuthStrings.registerValidationAddressNotFound);
-        }
         await _client.from('prestataire_profiles').upsert({
           'user_id': userId,
           'nom_salon': nomSalon.trim(),

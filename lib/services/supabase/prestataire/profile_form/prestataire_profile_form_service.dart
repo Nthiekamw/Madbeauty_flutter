@@ -2,8 +2,6 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/constants/app_strings.dart';
-import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../../core/models/user_role.dart';
@@ -346,9 +344,6 @@ class PrestataireProfileFormService {
         geoQuery,
         countryIsoCode: payload.pays,
       );
-      if (geoQuery.trim().isNotEmpty && coords == null) {
-        throw const AppFailure(AuthStrings.registerValidationAddressNotFound);
-      }
 
       final prestataireId = await _prestataireService.upsert(
         PrestataireUpsertData(

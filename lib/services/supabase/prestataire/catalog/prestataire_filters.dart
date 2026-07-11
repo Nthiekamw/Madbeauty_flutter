@@ -4,12 +4,16 @@ class PrestataireFilters {
   const PrestataireFilters({
     this.query,
     this.categoryId,
+    this.pays,
     this.limit = 10,
     this.offset = 0,
   });
 
   final String? query;
   final String? categoryId;
+
+  /// Code pays ISO 3166-1 alpha-2 (ex. FR, BE, CA).
+  final String? pays;
   final int limit;
   final int offset;
 }

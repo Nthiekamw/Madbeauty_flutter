@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/logic/market/prestataire_market_filter.dart';
+import '../../../../core/config/market_config.dart';
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/geo/discovery_reference.dart';
 import '../../../../core/geo/geo_utils.dart';
@@ -18,6 +20,31 @@ class PrestataireService {
 
   String get _catalogTrialCutoffIso =>
       DateTime.now().toUtc().toIso8601String();
+
+  /// Filtre catalogue par marché (pays ISO). Les profils sans pays sont rattachés au marché FR.
+  PostgrestFilterBuilder<PostgrestList> _applyCountryQuery(
+    PostgrestFilterBuilder<PostgrestList> query,
+    String? pays,
+  ) {
+    final code = pays?.trim().toUpperCase();
+    if (code == null || code.isEmpty) return query;
+    if (code == MarketConfig.defaultCountryCode) {
+      return query.or('pays.eq.$code,pays.is.null');
+    }
+    return query.eq('pays', code);
+  }
+
+  bool _matchesCountry(PrestataireProfile profile, String? pays) {
+    final code = _normalizedCountryFilter(pays);
+    if (code == null) return true;
+    return prestataireProfileMatchesMarket(profile, code);
+  }
+
+  String? _normalizedCountryFilter(String? pays) {
+    final code = pays?.trim().toUpperCase();
+    if (code == null || code.isEmpty) return null;
+    return MarketConfig.normalizeCountryCode(code);
+  }
 
   /// Filtres SQL alignés sur [prestataire_is_catalog_visible] (abonnement / essai).
   PostgrestFilterBuilder<PostgrestList> _applyCatalogVisibilityQuery(
@@ -61,10 +88,15 @@ class PrestataireService {
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getAll',
     action: () async {
+      final country = _normalizedCountryFilter(filters.pays);
       final to = filters.offset + filters.limit - 1;
-      final profilesRes = await _applyCatalogVisibilityQuery(
+      var query = _applyCatalogVisibilityQuery(
         _client.from('prestataire_profiles').select(),
-      ).order('created_at', ascending: false).range(filters.offset, to);
+      );
+      query = _applyCountryQuery(query, country);
+      final profilesRes = await query
+          .order('created_at', ascending: false)
+          .range(filters.offset, to);
 
       var profiles = (profilesRes as List<dynamic>)
           .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
@@ -107,13 +139,18 @@ class PrestataireService {
   /// Prestataires éligibles carte : catalogue visible + coordonnées (profil complet côté SQL).
   static const int mapCatalogFetchCap = 300;
 
-  Future<List<PrestataireCatalogEntry>> getMapCatalogEntries() =>
+  Future<List<PrestataireCatalogEntry>> getMapCatalogEntries({
+    String? pays,
+  }) =>
       SupabaseErrorHandler.run(
         operation: 'prestataire.getMapCatalogEntries',
         action: () async {
-          final profilesRes = await _applyCatalogVisibilityQuery(
+          final country = _normalizedCountryFilter(pays);
+          var query = _applyCatalogVisibilityQuery(
             _client.from('prestataire_profiles').select(),
-          )
+          );
+          query = _applyCountryQuery(query, country);
+          final profilesRes = await query
               .not('latitude', 'is', null)
               .not('longitude', 'is', null)
               .order('created_at', ascending: false)
@@ -152,8 +189,9 @@ class PrestataireService {
 
   /// Entrées catalogue pour une liste d'ids (ex. favoris), en conservant [prestataireIds].
   Future<List<PrestataireCatalogEntry>> getCatalogEntriesByIds(
-    List<String> prestataireIds,
-  ) =>
+    List<String> prestataireIds, {
+    String? pays,
+  }) =>
       SupabaseErrorHandler.run(
         operation: 'prestataire.getCatalogEntriesByIds',
         action: () async {
@@ -178,17 +216,23 @@ class PrestataireService {
           final visibleOrdered = await _keepCatalogVisibleProfiles(ordered);
           if (visibleOrdered.isEmpty) return [];
 
+          final country = _normalizedCountryFilter(pays);
+          final marketVisible = country == null
+              ? visibleOrdered
+              : filterPrestataireProfilesByMarket(visibleOrdered, country);
+          if (marketVisible.isEmpty) return [];
+
           final specialtyData = await getSpecialtyDataForPrestataires(
-            visibleOrdered.map((p) => p.id).toList(),
+            marketVisible.map((p) => p.id).toList(),
           );
           final reviewCounts = await _reviewCountsForPrestataires(
-            visibleOrdered.map((p) => p.id).toList(),
+            marketVisible.map((p) => p.id).toList(),
           );
           final userProfiles = await _profileService.getByUserIds(
-            visibleOrdered.map((p) => p.userId).toList(),
+            marketVisible.map((p) => p.userId).toList(),
           );
 
-          return visibleOrdered.map((p) {
+          return marketVisible.map((p) {
             final userProfile = userProfiles[p.userId];
             return PrestataireCatalogEntry(
               profile: p,
@@ -312,12 +356,18 @@ class PrestataireService {
     double rayonKm, {
     int limit = 16,
     int fetchCap = 48,
+    String? pays,
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getNearby',
     action: () async {
-      final response = await _applyCatalogVisibilityQuery(
+      final country = _normalizedCountryFilter(pays);
+      var query = _applyCatalogVisibilityQuery(
         _client.from('prestataire_profiles').select(),
-      ).order('created_at', ascending: false).limit(fetchCap);
+      );
+      query = _applyCountryQuery(query, country);
+      final response = await query
+          .order('created_at', ascending: false)
+          .limit(fetchCap);
 
       final rows = response as List<dynamic>;
       final allProfiles = rows
@@ -358,12 +408,16 @@ class PrestataireService {
 
   Future<List<PrestataireProfile>> getBestRated({
     int limit = 16,
+    String? pays,
   }) => SupabaseErrorHandler.run(
     operation: 'prestataire.getBestRated',
     action: () async {
-      final response = await _applyCatalogVisibilityQuery(
+      final country = _normalizedCountryFilter(pays);
+      var query = _applyCatalogVisibilityQuery(
         _client.from('prestataire_profiles').select(),
-      )
+      );
+      query = _applyCountryQuery(query, country);
+      final response = await query
           .not('note_moyenne', 'is', null)
           .order('note_moyenne', ascending: false)
           .limit(limit);
@@ -473,6 +527,7 @@ class PrestataireService {
     double rayonKm = double.infinity,
     int limit = 16,
     int fetchCap = 48,
+    String? pays,
   }) {
     return getNearby(
       kDiscoveryReferenceLatitude,
@@ -480,6 +535,7 @@ class PrestataireService {
       rayonKm,
       limit: limit,
       fetchCap: fetchCap,
+      pays: pays,
     );
   }
 
@@ -491,7 +547,9 @@ class PrestataireService {
   }) {
     final q = filters.query?.trim().toLowerCase();
     final categoryId = filters.categoryId?.trim();
+    final country = _normalizedCountryFilter(filters.pays);
     return profiles.where((p) {
+      if (!_matchesCountry(p, country)) return false;
       if (categoryId != null &&
           categoryId.isNotEmpty &&
           !(categoryIdsByPrestataire[p.id]?.contains(categoryId) ?? false)) {

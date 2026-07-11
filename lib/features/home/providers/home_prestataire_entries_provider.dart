@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/logic/market/prestataire_market_filter.dart';
 import '../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../core/providers/market_country_provider.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
 import '../logic/home_feed_filter.dart';
 import 'home_feed_provider.dart';
@@ -15,7 +17,12 @@ Future<List<PrestataireCatalogEntry>> _entriesForProfiles(
   if (profiles.isEmpty) return const [];
   final service = ref.read(prestataireServiceProvider);
   if (service == null) return const [];
-  return service.getCatalogEntriesByIds(profiles.map((p) => p.id).toList());
+  final marketCountry = ref.read(marketCountryProvider);
+  final entries = await service.getCatalogEntriesByIds(
+    profiles.map((p) => p.id).toList(),
+    pays: marketCountry,
+  );
+  return filterCatalogEntriesByMarket(entries, marketCountry);
 }
 
 final nearbyPrestataireEntriesProvider =

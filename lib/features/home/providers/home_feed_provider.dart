@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../core/providers/market_country_provider.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_catalog_providers.dart';
 import '../../../services/supabase/prestataire/catalog/prestataire_filters.dart';
 import '../models/home_feed_selection.dart';
@@ -50,8 +51,9 @@ final homeTrendingPrestatairesProvider =
       final service = ref.watch(prestataireServiceProvider);
       if (service == null) return const [];
 
+      final marketCountry = ref.watch(marketCountryProvider);
       final entries = await service.getAll(
-        filters: const PrestataireFilters(limit: 16),
+        filters: PrestataireFilters(limit: 16, pays: marketCountry),
       );
       return entries.map((e) => e.profile).toList();
     });

@@ -1,0 +1,92 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../config/market_config.dart';
+import '../logic/market/market_country_resolver.dart';
+import '../../services/location/market_detection_service.dart';
+import '../../services/storage/local_cache_service.dart';
+import '../../services/supabase/profile/client_profile_providers.dart';
+
+/// Code pays ISO du marché actif (catalogue, découverte).
+final marketCountryProvider =
+    NotifierProvider<MarketCountryNotifier, String>(MarketCountryNotifier.new);
+
+class MarketCountryNotifier extends Notifier<String> {
+  @override
+  String build() {
+    final cache = LocalCacheService.instance;
+    final profileAsync = ref.watch(currentClientProfileProvider);
+    final profileCountry = profileAsync.maybeWhen(
+      data: (profile) => profile?.pays,
+      orElse: () => null,
+    );
+    return MarketCountryResolver.resolve(
+      cache: cache,
+      profileCountryCode: profileCountry,
+    );
+  }
+
+  /// Rafraîchit le marché auto (locale / GPS) à chaque démarrage.
+  Future<bool> autoDetectIfNeeded(MarketDetectionService detection) async {
+    final detected = await detection.tryDetect();
+    final cache = LocalCacheService.instance;
+    final previousAuto = cache.marketCountryAutoCode?.trim();
+
+    if (detected == null) {
+      if (previousAuto == null || previousAuto.isEmpty) {
+        final resolved = _resolveCurrent();
+        if (resolved == state) return false;
+        state = resolved;
+        return true;
+      }
+      await cache.remove(LocalCacheService.marketCountryAutoCodeKey);
+      await cache.setMarketCountryAutoDetected(false);
+      final resolved = _resolveCurrent();
+      if (resolved == state) return false;
+      state = resolved;
+      return true;
+    }
+
+    final normalized = MarketConfig.normalizeCountryCode(detected);
+    await cache.setMarketCountryAutoCode(normalized);
+    await cache.setMarketCountryAutoDetected(true);
+
+    final resolved = _resolveCurrent();
+    if (resolved == state && previousAuto == normalized) return false;
+    state = resolved;
+    return true;
+  }
+
+  /// Choix manuel (priorité 2 — après la détection auto).
+  Future<void> setMarketCountry(String isoCode) async {
+    final normalized = MarketConfig.normalizeCountryCode(isoCode);
+    if (!MarketConfig.isSupported(normalized)) return;
+
+    final cache = LocalCacheService.instance;
+    await cache.setMarketCountryManualCode(normalized);
+    await cache.setMarketCountryManual(true);
+
+    final resolved = _resolveCurrent();
+    if (resolved == state) return;
+    state = resolved;
+  }
+
+  /// Efface le choix manuel et relance la résolution auto → profil.
+  Future<void> resetToProfileCountry() async {
+    final cache = LocalCacheService.instance;
+    await cache.setMarketCountryManual(false);
+    await cache.remove(LocalCacheService.marketCountryManualCodeKey);
+    state = _resolveCurrent();
+  }
+
+  String _resolveCurrent() {
+    final cache = LocalCacheService.instance;
+    final profile = ref.read(currentClientProfileProvider).maybeWhen(
+          data: (value) => value?.pays,
+          orElse: () => null,
+        );
+    return MarketCountryResolver.resolve(
+      cache: cache,
+      profileCountryCode: profile,
+    );
+  }
+}
