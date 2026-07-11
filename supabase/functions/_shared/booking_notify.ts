@@ -134,6 +134,10 @@ export async function sendFcmNotification(opts: {
   const sa = loadServiceAccount();
   const accessToken = await fetchAccessToken(sa);
   const projectId = sa.project_id!;
+  const appOrigin = (Deno.env.get("APP_WEB_ORIGIN") ??
+    "https://madbeauty-app.netlify.app").replace(/\/$/, "");
+  const iconUrl = `${appOrigin}/icons/Icon-notification-192.png`;
+  const badgeUrl = `${appOrigin}/icons/Icon-badge-72.png`;
   const url =
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
   const res = await fetch(url, {
@@ -152,6 +156,14 @@ export async function sendFcmNotification(opts: {
         ...(opts.data ? { data: opts.data } : {}),
         android: { priority: "HIGH" },
         apns: { headers: { "apns-priority": "10" } },
+        webpush: {
+          fcm_options: { link: appOrigin },
+          notification: {
+            icon: iconUrl,
+            badge: badgeUrl,
+            tag: opts.data?.type ?? "madbeauty",
+          },
+        },
       },
     }),
   });

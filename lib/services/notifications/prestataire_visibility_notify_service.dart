@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../supabase/supabase_service.dart';
 
-/// Push FCM : rappel d’abonnement pour visibilité catalogue.
+/// Push FCM : rappels visibilité prestataire (profil, carte, abonnement).
 class PrestataireVisibilityNotifyService {
   PrestataireVisibilityNotifyService(this._client);
 
@@ -13,11 +13,12 @@ class PrestataireVisibilityNotifyService {
     return PrestataireVisibilityNotifyService(SupabaseService.client);
   }
 
-  Future<bool> requestPushNudge() async {
+  Future<bool> requestPushNudge({String? reason}) async {
     if (!AppConfig.hasSupabase) return false;
     try {
       final res = await _client.functions.invoke(
         'notify_prestataire_catalog_visibility',
+        body: reason == null || reason.isEmpty ? null : {'reason': reason},
       );
       final data = res.data;
       if (data is Map && data['sent'] == true) return true;

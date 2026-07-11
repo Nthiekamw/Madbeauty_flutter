@@ -6,6 +6,15 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.madbeauty.madbeauty"
     // API 31+ requise pour les attributs splash (values-v31). Évite l’erreur
@@ -39,11 +48,32 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                val storePassword = keystoreProperties.getProperty("storePassword")?.trim()
+                val keyPassword = keystoreProperties.getProperty("keyPassword")?.trim()
+                val keyAlias = keystoreProperties.getProperty("keyAlias")?.trim()
+                val storeFileName = keystoreProperties.getProperty("storeFile")?.trim()
+                require(!storePassword.isNullOrEmpty()) { "storePassword manquant dans key.properties" }
+                require(!keyPassword.isNullOrEmpty()) { "keyPassword manquant dans key.properties" }
+                require(!keyAlias.isNullOrEmpty()) { "keyAlias manquant dans key.properties" }
+                require(!storeFileName.isNullOrEmpty()) { "storeFile manquant dans key.properties" }
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+                storeFile = file(storeFileName)
+                this.storePassword = storePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

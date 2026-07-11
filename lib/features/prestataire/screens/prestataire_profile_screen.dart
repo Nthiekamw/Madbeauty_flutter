@@ -15,6 +15,7 @@ import '../../profile/widgets/account/profile_account_section.dart';
 import '../../profile/widgets/layout/profile_footer_actions.dart';
 import '../../profile/widgets/sections/profile_appearance_section.dart';
 import '../../profile/widgets/sections/profile_preferences_section.dart';
+import '../../profile/widgets/sections/profile_pwa_install_section.dart';
 import '../../profile/widgets/sections/profile_role_space_section.dart';
 import '../logic/prestataire_profile_completeness.dart';
 import '../navigation/prestataire_hub_wizard_navigation.dart';
@@ -180,6 +181,12 @@ class PrestataireProfileScreen extends ConsumerWidget {
                       top: PrestataireProfileInsets.sectionTop,
                     ),
                     child: const ProfilePreferencesSection(),
+                  ),
+                  Padding(
+                    padding: PrestataireProfileInsets.page(context).copyWith(
+                      top: PrestataireProfileInsets.sectionTop,
+                    ),
+                    child: const ProfilePwaInstallSection(),
                   ),
                   Padding(
                     padding: PrestataireProfileInsets.page(context).copyWith(

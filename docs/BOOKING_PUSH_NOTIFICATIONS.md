@@ -54,6 +54,18 @@ npx supabase db push
 
 Tant que `isFirebaseConfiguredForPush()` est faux (plateforme hors Android/iOS/Web ou options encore « placeholder »), le SDK push est ignoré ; logique dans `lib/firebase_runtime_helpers.dart` (volontairement à l’écart du fichier généré `lib/firebase_options.dart`).
 
+### Flutter Web (PWA + Web Push)
+
+1. **PWA** : `web/manifest.json` (`display: standalone`) + bandeau « Installer » (`PwaInstallBanner`).
+2. **Web Push** :
+   - Firebase Console → **Cloud Messaging** → **Certificats Web Push** → générer une paire de clés.
+   - Copier la **clé publique VAPID** dans `.env` : `FIREBASE_WEB_VAPID_KEY=...`
+   - Même variable dans les secrets Netlify / CI (`build_flutter_web_ci.ps1` utilise `--dart-define-from-file`).
+   - Service worker : `web/firebase-messaging-sw.js` (notifications en arrière-plan).
+3. **Test** : `flutter run -d chrome --web-port=7357 --dart-define-from-file=.env` → accepter les notifications → vérifier `user_profiles.fcm_token` en base.
+
+Sans `FIREBASE_WEB_VAPID_KEY`, le web retombe sur les notifications in-app (session ouverte uniquement).
+
 ## 3. Edge Functions (dossier dans ce repo)
 
 | Fonction               | Déclenchée par      | Effet résumé                                               |

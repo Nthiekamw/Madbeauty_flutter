@@ -388,6 +388,8 @@ String? _audienceWireFromPushType(String? type, String? role) {
     'prestataire_like' ||
     'prestataire_review' ||
     'prestataire_catalog_visibility' ||
+    'prestataire_profile_incomplete' ||
+    'prestataire_map_missing' ||
     'prestataire_verification_approved' ||
     'prestataire_verification_revoked' =>
       InAppNotificationAudience.prestataire.wire,

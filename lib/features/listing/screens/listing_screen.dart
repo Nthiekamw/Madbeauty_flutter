@@ -17,6 +17,7 @@ import '../../prestataire/providers/catalog/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
 import '../providers/listing_catalog_provider.dart';
 import '../../../router/navigation_extensions.dart';
+import '../providers/listing_map_catalog_provider.dart';
 import '../providers/listing_view_preferences_provider.dart';
 import '../widgets/filters/listing_active_filters_bar.dart';
 import '../widgets/filters/listing_filters_panel.dart';
@@ -95,6 +96,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Future<void> _onRefresh() async {
+    ref.invalidate(listingMapCatalogProvider);
     await ref.read(listingCatalogNotifierProvider.notifier).refresh();
   }
 
@@ -500,79 +502,90 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     ListingCatalogViewState state,
     List<PrestataireCatalogEntry> filtered,
   ) {
+    final mapEntriesAsync = ref.watch(listingMapCatalogProvider);
     final locationAsync = ref.watch(clientLocationProvider);
     final clientLocation = switch (locationAsync) {
       AsyncData(:final value) => value,
       _ => null,
     };
-    final showFooter =
-        state.hasMore ||
-        state.loadMoreError != null ||
-        state.refreshError != null;
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: DiscoveryStyles.cardBorderRadius,
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.14),
-                ),
-                boxShadow: theme.brightness == Brightness.light
-                    ? [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.06,
+    return mapEntriesAsync.when(
+      loading: () => Padding(
+        padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
+        child: const ListingVerticalSkeleton(),
+      ),
+      error: (_, __) => Padding(
+        padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
+        child: DiscoveryInlineErrorBanner(
+          message: state.errorMessage ?? DiscList.catalogLoadErr,
+          onRetry: () {
+            ref.invalidate(listingMapCatalogProvider);
+            ref.read(listingCatalogNotifierProvider.notifier).refresh();
+          },
+        ),
+      ),
+      data: (mapEntries) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 8),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: DiscoveryStyles.cardBorderRadius,
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.14),
+                    ),
+                    boxShadow: theme.brightness == Brightness.light
+                        ? [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.06,
+                              ),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: DiscoveryStyles.cardBorderRadius,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ListingMapView(
+                          entries: mapEntries,
+                          clientLocation: clientLocation,
+                          locationLoading: locationAsync.isLoading,
+                          borderRadius: BorderRadius.zero,
+                          overlayPadding:
+                              const EdgeInsets.fromLTRB(12, 128, 12, 12),
+                        ),
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          right: 8,
+                          child: Material(
+                            elevation: 2,
+                            shadowColor: Colors.black26,
+                            color: theme.colorScheme.surface.withValues(
+                              alpha: 0.94,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            child: _catalogMapHeader(state),
                           ),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
                         ),
-                      ]
-                    : null,
-              ),
-              child: ClipRRect(
-                borderRadius: DiscoveryStyles.cardBorderRadius,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ListingMapView(
-                      entries: filtered,
-                      clientLocation: clientLocation,
-                      locationLoading: locationAsync.isLoading,
-                      borderRadius: BorderRadius.zero,
-                      overlayPadding: const EdgeInsets.fromLTRB(12, 128, 12, 12),
+                      ],
                     ),
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      right: 8,
-                      child: Material(
-                        elevation: 2,
-                        shadowColor: Colors.black26,
-                        color: theme.colorScheme.surface.withValues(
-                          alpha: 0.94,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        child: _catalogMapHeader(state),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        if (showFooter)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPad),
-            child: _loadMoreFooter(theme, state),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

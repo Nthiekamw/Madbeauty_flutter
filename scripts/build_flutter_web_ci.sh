@@ -24,6 +24,9 @@ ENV_BUILD="$ROOT/.env.build"
   if [ -n "${SHARE_BASE_URL:-}" ]; then
     printf 'SHARE_BASE_URL=%s\n' "$SHARE_BASE_URL"
   fi
+  if [ -n "${FIREBASE_WEB_VAPID_KEY:-}" ]; then
+    printf 'FIREBASE_WEB_VAPID_KEY=%s\n' "$FIREBASE_WEB_VAPID_KEY"
+  fi
 } >"$ENV_BUILD"
 
 cleanup() {

@@ -27,6 +27,10 @@ class LocalCacheService {
   static const String appLanguageCodeKey = 'app.language_code_v1';
   static const String passwordRecoveryPendingKey =
       'auth.password_recovery_pending_v1';
+  static const String pwaInstallBannerDismissedAtKey =
+      'pwa.install_banner_dismissed_at_ms_v1';
+  static const String pwaInstallBannerDismissCountKey =
+      'pwa.install_banner_dismiss_count_v1';
 
   static LocalCacheService? _instance;
 
@@ -142,6 +146,20 @@ class LocalCacheService {
 
   Future<bool> clearPasswordRecoveryPending() =>
       remove(passwordRecoveryPendingKey);
+
+  int? get pwaInstallBannerDismissedAtMs {
+    final raw = _prefs.getInt(pwaInstallBannerDismissedAtKey);
+    return raw;
+  }
+
+  Future<bool> setPwaInstallBannerDismissedAtMs(int value) =>
+      _prefs.setInt(pwaInstallBannerDismissedAtKey, value);
+
+  int get pwaInstallBannerDismissCount =>
+      _prefs.getInt(pwaInstallBannerDismissCountKey) ?? 0;
+
+  Future<bool> setPwaInstallBannerDismissCount(int value) =>
+      _prefs.setInt(pwaInstallBannerDismissCountKey, value);
 }
 
 

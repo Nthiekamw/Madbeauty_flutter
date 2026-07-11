@@ -30,6 +30,12 @@ class AppConfig {
     defaultValue: '',
   );
 
+  /// Clé publique VAPID Web Push (Firebase → Cloud Messaging → certificats Web).
+  static const String firebaseWebVapidKey = String.fromEnvironment(
+    'FIREBASE_WEB_VAPID_KEY',
+    defaultValue: '',
+  );
+
   /// URL de redirection pour les e-mails Supabase (confirmation, recovery).
   /// Exemple mobile (deep link): com.madbeauty.madbeauty://login-callback
   static const String supabaseEmailRedirectUrl = String.fromEnvironment(

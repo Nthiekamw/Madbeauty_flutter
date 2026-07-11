@@ -47,8 +47,8 @@ Future<void> main() async {
         debugPrint('GoogleAuthService.warmUp ignoré au démarrage: $e\n$st');
       }
     }
-    await ensureFirebaseInitialized();
   }
+  await ensureFirebaseInitialized();
 
   if (kIsWeb && StripePlatformPolicy.isEnabled) {
     await StripeWebBootstrap.ensureInitialized();

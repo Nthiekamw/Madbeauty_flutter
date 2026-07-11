@@ -1,17 +1,14 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'notification_permission_platform.dart';
+
 /// Demandes d'autorisations système (notifications, localisation).
 class AppPermissionsService {
-  Future<bool> areNotificationsGranted() async {
-    final status = await Permission.notification.status;
-    return status.isGranted;
-  }
+  Future<bool> areNotificationsGranted() =>
+      arePlatformNotificationsGranted();
 
-  Future<bool> requestNotifications() async {
-    final status = await Permission.notification.request();
-    return status.isGranted;
-  }
+  Future<bool> requestNotifications() => requestPlatformNotifications();
 
   Future<bool> isLocationGranted() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;

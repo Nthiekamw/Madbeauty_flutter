@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../firebase_runtime_helpers.dart';
 import '../../../services/auth/biometric_auth_providers.dart';
+import '../../../services/notifications/booking_push_notifications.dart';
 import '../../../services/notifications/in_app_notifications_provider.dart';
 import '../../../services/permissions/permissions_providers.dart';
 import '../../../services/storage/local_cache_service.dart';
+import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../auth/providers/auth_notifier.dart';
 
 class ProfilePreferencesState {
   const ProfilePreferencesState({
@@ -97,6 +100,22 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
       enabled,
     );
     state = state.copyWith(pushNotificationsEnabled: enabled);
+
+    if (enabled && isFirebaseConfiguredForPush()) {
+      final user = switch (ref.read(authNotifierProvider)) {
+        AsyncData(:final value) => value,
+        _ => null,
+      };
+      if (user != null) {
+        unawaited(
+          BookingPushNotifications.instance.syncForUser(
+            userId: user.id,
+            profileService: ref.read(profileServiceProvider),
+          ),
+        );
+      }
+    }
+
     return true;
   }
 

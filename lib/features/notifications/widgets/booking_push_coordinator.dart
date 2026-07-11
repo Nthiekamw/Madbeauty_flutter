@@ -134,6 +134,8 @@ class _BookingPushCoordinatorState
       case 'prestataire_verification_approved':
       case 'prestataire_verification_revoked':
       case 'prestataire_catalog_visibility':
+      case 'prestataire_profile_incomplete':
+      case 'prestataire_map_missing':
       case 'bug_report':
       case 'bug_report_status':
       case 'slot_waitlist':

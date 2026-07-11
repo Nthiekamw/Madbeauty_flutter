@@ -43,6 +43,8 @@ InAppNotificationAudience resolveInAppNotificationAudience(
     'prestataire_verification_approved' ||
     'prestataire_verification_revoked' ||
     'prestataire_catalog_visibility' ||
+    'prestataire_profile_incomplete' ||
+    'prestataire_map_missing' ||
     'moderation_photo_removed' ||
     'moderation_photo_flagged' ||
     'moderation_account_warned' =>

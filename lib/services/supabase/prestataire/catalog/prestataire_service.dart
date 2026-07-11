@@ -104,6 +104,52 @@ class PrestataireService {
     },
   );
 
+  /// Prestataires éligibles carte : catalogue visible + coordonnées (profil complet côté SQL).
+  static const int mapCatalogFetchCap = 300;
+
+  Future<List<PrestataireCatalogEntry>> getMapCatalogEntries() =>
+      SupabaseErrorHandler.run(
+        operation: 'prestataire.getMapCatalogEntries',
+        action: () async {
+          final profilesRes = await _applyCatalogVisibilityQuery(
+            _client.from('prestataire_profiles').select(),
+          )
+              .not('latitude', 'is', null)
+              .not('longitude', 'is', null)
+              .order('created_at', ascending: false)
+              .limit(mapCatalogFetchCap);
+
+          var profiles = (profilesRes as List<dynamic>)
+              .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+              .toList();
+          profiles = await _keepCatalogVisibleProfiles(profiles);
+          if (profiles.isEmpty) return [];
+
+          final specialtyData = await getSpecialtyDataForPrestataires(
+            profiles.map((p) => p.id).toList(),
+          );
+          final userProfiles = await _profileService.getByUserIds(
+            profiles.map((p) => p.userId).toList(),
+          );
+
+          return profiles.map((p) {
+            final userProfile = userProfiles[p.userId];
+            return PrestataireCatalogEntry(
+              profile: p,
+              avatarUrl: userProfile?.avatarUrl,
+              userNom: userProfile?.nom,
+              userPrenom: userProfile?.prenom,
+              specialtyNames: List<String>.from(
+                specialtyData.namesByPrestataire[p.id] ?? const [],
+              ),
+              specialtyCategoryIds: List<String>.from(
+                specialtyData.categoryIdsByPrestataire[p.id] ?? const <String>{},
+              ),
+            );
+          }).toList();
+        },
+      );
+
   /// Entrées catalogue pour une liste d'ids (ex. favoris), en conservant [prestataireIds].
   Future<List<PrestataireCatalogEntry>> getCatalogEntriesByIds(
     List<String> prestataireIds,

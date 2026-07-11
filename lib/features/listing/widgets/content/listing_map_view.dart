@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/geo/discovery_reference.dart';
+import '../../../../core/logic/prestataire/prestataire_map_visibility.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -62,9 +63,7 @@ class _ListingMapViewState extends State<ListingMapView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final geoEntries = widget.entries.where((entry) {
-      return entry.profile.latitude != null && entry.profile.longitude != null;
-    }).toList();
+    final geoEntries = filterMapCatalogEntries(widget.entries);
 
     if (geoEntries.isEmpty) {
       return _MapEmptyState(theme: theme);

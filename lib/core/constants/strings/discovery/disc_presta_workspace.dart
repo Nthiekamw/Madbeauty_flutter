@@ -27,6 +27,13 @@ abstract final class DiscPrestaWorkspace {
       'Une fiche complète inspire confiance et améliore ta visibilité sur MadBeauty.';
   static const completionProgress = 'Progression';
 
+  static const visibilityIncompleteTitle = 'MadBeauty Pro';
+  static const visibilityIncompleteBody =
+      'Complète ton profil pro pour apparaître dans le catalogue et recevoir des clientes.';
+  static const visibilityMissingMapTitle = 'MadBeauty Pro';
+  static const visibilityMissingMapBody =
+      'Vérifie ton adresse professionnelle pour apparaître sur la carte MadBeauty.';
+
   static const agendaTabUpcoming = 'À venir';
   static const agendaTabPast = 'Passés';
   static const agendaTabCancelled = 'Annulés';

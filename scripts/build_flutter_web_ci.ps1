@@ -33,6 +33,7 @@ $lines = @(
 )
 foreach ($name in @(
     'STRIPE_PUBLISHABLE_KEY',
+    'FIREBASE_WEB_VAPID_KEY',
     'SUPABASE_WEB_REDIRECT_URL',
     'SUPABASE_EMAIL_REDIRECT_URL',
     'SHARE_BASE_URL'

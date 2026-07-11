@@ -51,6 +51,10 @@ void navigateFromPushDataWithRouter(
     case 'prestataire_catalog_visibility':
       router.pushNamed(AppRouteNames.prestataireSubscription);
       return;
+    case 'prestataire_profile_incomplete':
+    case 'prestataire_map_missing':
+      router.pushNamed(AppRouteNames.prestataireProfileEdit);
+      return;
     case 'booking_created':
     case 'booking_status':
       if (reservationId != null) {

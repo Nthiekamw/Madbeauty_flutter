@@ -40,6 +40,7 @@ import '../widgets/layout/profile_page_insets.dart';
 import '../widgets/sections/profile_appearance_section.dart';
 import '../widgets/sections/profile_favorites_section.dart';
 import '../widgets/sections/profile_preferences_section.dart';
+import '../widgets/sections/profile_pwa_install_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -342,6 +343,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const ProfileAppearanceSection(),
         const SizedBox(height: ProfilePageInsets.sectionGap),
         const ProfilePreferencesSection(),
+        const SizedBox(height: ProfilePageInsets.sectionGap),
+        const ProfilePwaInstallSection(),
         const SizedBox(height: ProfilePageInsets.sectionGap),
         const ProfileAdminSection(),
         const ProfileAccountSection(),

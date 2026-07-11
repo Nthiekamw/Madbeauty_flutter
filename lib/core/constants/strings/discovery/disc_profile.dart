@@ -21,11 +21,11 @@ abstract final class DiscProfile {
   static const prefPushInactiveHint =
       'Non activées — autorise-les pour ne rien manquer';
   static const prefPushWebHint =
-      'Alertes in-app pendant ta session sur le navigateur';
+      'Alertes réservations et messages sur le navigateur';
   static const prefPushWebInactiveHint =
-      'Active les alertes in-app (réservations, messages)';
+      'Active les notifications pour ne rien manquer';
   static const prefPushWebFootnote =
-      'Pour les notifications quand l’app est fermée, installe l’application mobile.';
+      'Ajoute FIREBASE_WEB_VAPID_KEY pour les alertes hors session navigateur.';
   static const prefPushPromptTitle = 'Active les notifications';
   static const prefPushPromptBody =
       'Reçois les confirmations de réservation, les messages et les rappels '
@@ -455,7 +455,7 @@ abstract final class DiscProfile {
       'Impossible d’envoyer la demande pour l’instant. Réessaie plus tard.';
 
   static const prefPushEnabled = 'Notifications activées.';
-  static const prefPushWebEnabled = 'Alertes in-app activées.';
+  static const prefPushWebEnabled = 'Notifications activées.';
   static const prefPushDisabled = 'Notifications désactivées.';
   static const prefPushDenied =
       'Autorise les notifications dans les réglages du téléphone.';

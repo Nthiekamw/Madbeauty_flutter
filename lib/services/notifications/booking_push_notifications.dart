@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:permission_handler/permission_handler.dart';
 
+import '../../core/config/app_config.dart';
 import '../../firebase_options.dart';
 import '../../firebase_runtime_helpers.dart';
+import '../permissions/notification_permission_platform.dart';
 import '../supabase/profile/profile_service.dart';
 import '../storage/local_cache_service.dart';
+import 'web_browser_notification.dart';
 
 /// Canal Android pour les notifications locales (premier plan).
 const String madBeautyBookingAndroidChannelId = 'madbeauty_booking_channel';
 const String madBeautyMessagingAndroidChannelId = 'madbeauty_messaging_channel';
+
+bool _isAndroidNative() =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+bool _isIosNative() => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
 /// Firebase + FCM + notifications locales (demandes de réservation, statuts).
 class BookingPushNotifications {
@@ -82,8 +88,8 @@ class BookingPushNotifications {
       if (kDebugMode && !_loggedPushUnavailable) {
         _loggedPushUnavailable = true;
         final hint = kIsWeb
-            ? 'notifications push désactivées sur le web '
-                '(notifications in-app Supabase uniquement).'
+            ? 'Web Push désactivé — définir FIREBASE_WEB_VAPID_KEY dans .env '
+                '(Firebase → Cloud Messaging → certificats Web).'
             : 'Firebase non configuré – exécuter '
                 '`dart run flutterfire_cli:flutterfire configure`.';
         debugPrint('BookingPushNotifications: $hint');
@@ -118,13 +124,17 @@ class BookingPushNotifications {
 
     _activeUserId = userId;
 
-    await _initializeLocalNotifications();
+    if (!kIsWeb) {
+      await _initializeLocalNotifications();
+    }
     unawaited(_requestPermissionsFirstLaunch());
-    FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (_isIosNative()) {
+      FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     _onTokenRefresh = FirebaseMessaging.instance.onTokenRefresh.listen(
       (token) => _persistToken(profileService: profileService, token: token),
@@ -138,9 +148,25 @@ class BookingPushNotifications {
 
     await _attachOpenedAppInboxDelivery();
 
-    final token = await FirebaseMessaging.instance.getToken();
+    final token = await _fetchFcmToken();
     if (token != null && token.isNotEmpty) {
       await _persistToken(profileService: profileService, token: token);
+    }
+  }
+
+  Future<String?> _fetchFcmToken() async {
+    try {
+      if (kIsWeb) {
+        return FirebaseMessaging.instance.getToken(
+          vapidKey: AppConfig.firebaseWebVapidKey.trim(),
+        );
+      }
+      return FirebaseMessaging.instance.getToken();
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('BookingPushNotifications: getToken – $e\n$st');
+      }
+      return null;
     }
   }
 
@@ -175,7 +201,7 @@ class BookingPushNotifications {
   }
 
   Future<void> _initializeLocalNotifications() async {
-    if (_localNotificationsReady) return;
+    if (_localNotificationsReady || kIsWeb) return;
 
     const androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -193,7 +219,7 @@ class BookingPushNotifications {
       onDidReceiveNotificationResponse: _onLocalNotificationTapped,
     );
 
-    if (Platform.isAndroid) {
+    if (_isAndroidNative()) {
       const bookingChannel = AndroidNotificationChannel(
         madBeautyBookingAndroidChannelId,
         'MadBeauty – réservations',
@@ -240,14 +266,16 @@ class BookingPushNotifications {
 
     if (cache.pushPermissionPrompted) return;
 
-    if (Platform.isAndroid) {
-      await Permission.notification.request();
-    } else if (Platform.isIOS) {
+    if (_isAndroidNative()) {
+      await requestPlatformNotifications();
+    } else if (_isIosNative()) {
       await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
+    } else if (kIsWeb) {
+      await requestPlatformNotifications();
     }
 
     await cache.setPushPermissionPrompted();
@@ -259,6 +287,11 @@ class BookingPushNotifications {
   }) async {
     final trimmedBody = body.trim();
     if (trimmedBody.isEmpty) return;
+
+    if (kIsWeb) {
+      await showWebBrowserNotification(title: title, body: trimmedBody);
+      return;
+    }
 
     await _initializeLocalNotifications();
 
@@ -284,6 +317,24 @@ class BookingPushNotifications {
     final data = message.data;
     final type = data['type']?.toString() ?? '';
     final isMessaging = type == 'message' || type == 'bug_report_message';
+
+    final title = notification?.title ??
+        (isMessaging ? 'Nouveau message' : 'MadBeauty');
+    final body = notification?.body ??
+        (data['body'] as String?) ??
+        (isMessaging ? 'Tu as reçu un message.' : '');
+
+    if (body.trim().isEmpty && notification == null) return;
+
+    if (kIsWeb) {
+      await showWebBrowserNotification(
+        title: title,
+        body: body.trim().isEmpty ? 'MadBeauty' : body,
+        payload: _payloadFromData(data),
+      );
+      return;
+    }
+
     final channelId = isMessaging
         ? madBeautyMessagingAndroidChannelId
         : madBeautyBookingAndroidChannelId;
@@ -293,14 +344,6 @@ class BookingPushNotifications {
     final channelDescription = isMessaging
         ? 'Nouveaux messages et discussions.'
         : 'Demandes et statuts de réservation.';
-
-    final title = notification?.title ??
-        (isMessaging ? 'Nouveau message' : 'MadBeauty');
-    final body = notification?.body ??
-        (data['body'] as String?) ??
-        (isMessaging ? 'Tu as reçu un message.' : '');
-
-    if (body.trim().isEmpty && notification == null) return;
 
     final androidDetails = AndroidNotificationDetails(
       channelId,
@@ -340,11 +383,10 @@ class BookingPushNotifications {
   }) async {
     if (!isConfigured || Firebase.apps.isEmpty) return;
     try {
-      final token = await FirebaseMessaging.instance.getToken();
+      final token = await _fetchFcmToken();
       if (token != null && token.isNotEmpty) {
         await profileService?.upsertFcmToken(userId: userId, token: token);
       }
     } catch (_) {}
   }
 }
-
