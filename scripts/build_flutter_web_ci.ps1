@@ -48,7 +48,7 @@ try {
   flutter pub get
   if ($LASTEXITCODE -ne 0) { throw 'flutter pub get a échoué.' }
 
-  flutter build web --release --dart-define-from-file=$buildFile
+  flutter build web --release --no-web-resources-cdn --dart-define-from-file=$buildFile
   if ($LASTEXITCODE -ne 0) { throw 'flutter build web a échoué.' }
 
   Write-Host 'OK: build/web prêt pour Netlify.'

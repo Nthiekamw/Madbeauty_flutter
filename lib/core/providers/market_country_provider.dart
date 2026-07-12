@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/market_config.dart';
 import '../logic/market/market_country_resolver.dart';
+import '../logic/address/postal_country_format.dart';
 import '../../services/location/market_detection_service.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../../services/supabase/profile/client_profile_providers.dart';
@@ -56,8 +57,14 @@ class MarketCountryNotifier extends Notifier<String> {
     return true;
   }
 
-  /// Choix manuel (priorité 2 — après la détection auto).
+  /// Choix manuel (sans adresse enregistrée — voir [MarketCountryResolver]).
   Future<void> setMarketCountry(String isoCode) async {
+    final profileCountry = ref.read(currentClientProfileProvider).maybeWhen(
+          data: (profile) => profile?.pays?.trim(),
+          orElse: () => null,
+        );
+    if (profileCountry != null && profileCountry.isNotEmpty) return;
+
     final normalized = MarketConfig.normalizeCountryCode(isoCode);
     if (!MarketConfig.isSupported(normalized)) return;
 
@@ -76,6 +83,21 @@ class MarketCountryNotifier extends Notifier<String> {
     await cache.setMarketCountryManual(false);
     await cache.remove(LocalCacheService.marketCountryManualCodeKey);
     state = _resolveCurrent();
+  }
+
+  /// Applique le pays enregistré dans l’adresse client comme marché catalogue.
+  Future<void> applySavedClientAddressCountry(String? countryRaw) async {
+    final iso = postalCountryIso2(countryRaw);
+    if (!MarketConfig.isSupported(iso)) return;
+
+    final normalized = MarketConfig.normalizeCountryCode(iso);
+    final cache = LocalCacheService.instance;
+    await cache.setMarketCountryAutoCode(normalized);
+    await cache.setMarketCountryAutoDetected(true);
+    await cache.setMarketCountryManualCode(normalized);
+    await cache.setMarketCountryManual(true);
+
+    if (state != normalized) state = normalized;
   }
 
   String _resolveCurrent() {

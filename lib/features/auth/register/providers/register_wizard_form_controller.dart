@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/logic/address/postal_address.dart';
+import '../../../../core/logic/address/postal_country_format.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../../../../services/auth/oauth_identity_sync.dart';
@@ -104,12 +105,24 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   void applyPostalAddress(PostalAddress address) {
     voieType = address.voieType;
-    voieNom.text = address.voieNom;
+    voieNom.text = PostalAddress.normalizeVoieNom(address.voieNom, address.voieType);
     numeroRue.text = address.numero;
     codePostal.text = address.codePostal;
     ville.text = address.ville;
-    pays.text = address.pays;
+    pays.text = address.pays.isEmpty
+        ? PostalAddress.defaultCountry
+        : postalCountryLabelForIso(address.pays);
     adresse.text = address.formattedLine;
+    notifyListeners();
+  }
+
+  /// Pays par défaut selon le marché détecté si l’utilisateur n’a pas encore choisi.
+  void ensureDefaultCountry(String label) {
+    final current = pays.text.trim();
+    if (current.isEmpty || current == PostalAddress.defaultCountry) {
+      pays.text = label;
+      notifyListeners();
+    }
   }
 
   String get phoneE164 => PhoneNumberUtils.toE164(

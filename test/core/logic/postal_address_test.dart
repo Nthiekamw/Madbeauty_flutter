@@ -40,6 +40,13 @@ void main() {
       expect(address.streetLine, '7 rue de la Providence');
     });
 
+    test('normalizeVoieNom retire un second « Rue » dans le nom', () {
+      expect(
+        PostalAddress.normalizeVoieNom('Rue de la Paix', 'Rue'),
+        'de la Paix',
+      );
+    });
+
     test('tryParse ignore la valeur littérale NULL', () {
       final parsed = PostalAddress.tryParse('NULL');
 

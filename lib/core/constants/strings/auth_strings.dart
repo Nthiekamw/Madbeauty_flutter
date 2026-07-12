@@ -306,7 +306,7 @@ abstract final class AuthStrings {
 
   static bool supportsAddressAutocomplete(String countryIso) {
     return switch (countryIso.toUpperCase()) {
-      'FR' || 'BE' || 'CA' || 'CH' || 'DE' || 'GB' => true,
+      'FR' || 'BE' || 'CA' => true,
       _ => false,
     };
   }

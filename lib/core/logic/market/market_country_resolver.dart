@@ -4,7 +4,7 @@ import '../../config/market_config.dart';
 import '../../../services/location/market_detection_service.dart';
 import '../../../services/storage/local_cache_service.dart';
 
-/// Priorité marché : auto (locale/GPS) → choix manuel → profil client → défaut.
+/// Priorité marché : adresse profil client → auto (locale/GPS) → choix manuel → défaut.
 abstract final class MarketCountryResolver {
   MarketCountryResolver._();
 
@@ -14,6 +14,11 @@ abstract final class MarketCountryResolver {
     Locale? localeForAuto,
   }) {
     _migrateLegacyMarketCountry(cache);
+
+    final profile = profileCountryCode?.trim();
+    if (profile != null && profile.isNotEmpty) {
+      return MarketConfig.normalizeCountryCode(profile);
+    }
 
     final autoCached = cache.marketCountryAutoCode?.trim();
     if (autoCached != null && autoCached.isNotEmpty) {
@@ -32,11 +37,6 @@ abstract final class MarketCountryResolver {
       if (manual != null && manual.isNotEmpty) {
         return MarketConfig.normalizeCountryCode(manual);
       }
-    }
-
-    final profile = profileCountryCode?.trim();
-    if (profile != null && profile.isNotEmpty) {
-      return MarketConfig.normalizeCountryCode(profile);
     }
 
     return MarketConfig.defaultCountryCode;

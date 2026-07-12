@@ -1,4 +1,6 @@
-﻿import 'package:firebase_messaging/firebase_messaging.dart';
+﻿import 'dart:async';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,43 +23,66 @@ import 'services/supabase/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _bootstrapMadBeauty();
+}
+
+Future<void> _bootstrapMadBeauty() async {
   if (kIsWeb) {
-    usePathUrlStrategy();
+    try {
+      usePathUrlStrategy();
+    } on Object catch (e, st) {
+      _logBootWarning('usePathUrlStrategy ignoré', e, st);
+    }
   }
+
   if (!kIsWeb) {
     FirebaseMessaging.onBackgroundMessage(fcmBackgroundMessagingHandler);
   }
-  await LocalCacheService.initialize();
-  await initializeDateFormatting('fr_FR');
-  await initializeDateFormatting('en_US');
+
+  try {
+    await LocalCacheService.initialize();
+  } on Object catch (e, st) {
+    _logBootError('LocalCacheService', e, st);
+    if (!kIsWeb) rethrow;
+  }
+
+  await _safeInit('dateFormatting.fr', () => initializeDateFormatting('fr_FR'));
+  await _safeInit('dateFormatting.en', () => initializeDateFormatting('en_US'));
+
   if (!kIsWeb) {
     await BookingLocalReminders.instance.initialize();
     await PrestataireCatalogVisibilityReminders.instance.initialize();
   }
 
   if (AppConfig.hasSupabase) {
-    await SupabaseService.initialize();
+    await _safeInit(
+      'SupabaseService',
+      () => SupabaseService.initialize().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () {
+          throw TimeoutException('Supabase.initialize > 20s');
+        },
+      ),
+    );
   }
 
   if (!kIsWeb) {
-    try {
-      await GoogleAuthService.warmUp();
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('GoogleAuthService.warmUp ignoré au démarrage: $e\n$st');
+    await _safeInit('GoogleAuthService.warmUp', () async {
+      try {
+        await GoogleAuthService.warmUp();
+      } on Object catch (e, st) {
+        _logBootWarning('GoogleAuthService.warmUp ignoré', e, st);
       }
-    }
+    });
   }
-  await ensureFirebaseInitialized();
 
-  if (kIsWeb && StripePlatformPolicy.isEnabled) {
-    await StripeWebBootstrap.ensureInitialized();
-  }
+  await _safeInit('Firebase', () => ensureFirebaseInitialized());
 
   if (kDebugMode) {
     debugPrint(
       'MadBeauty config: supabase=${AppConfig.hasSupabase} '
-      'stripe=${StripePlatformPolicy.isEnabled}',
+      'stripe=${StripePlatformPolicy.isEnabled} '
+      'volatileCache=${LocalCacheService.volatileMemoryFallback}',
     );
   }
 
@@ -71,4 +96,40 @@ Future<void> main() async {
       child: const MadBeautyApp(),
     ),
   );
+
+  if (kIsWeb && StripePlatformPolicy.isEnabled) {
+    unawaited(
+      StripeWebBootstrap.ensureInitialized().timeout(
+        const Duration(seconds: 12),
+        onTimeout: () {
+          _logBootWarning('StripeWebBootstrap timeout', null, null);
+          return false;
+        },
+      ),
+    );
+  }
+}
+
+Future<void> _safeInit(
+  String label,
+  Future<void> Function() action,
+) async {
+  try {
+    await action();
+  } on Object catch (e, st) {
+    _logBootError(label, e, st);
+    if (!kIsWeb) rethrow;
+  }
+}
+
+void _logBootWarning(String label, Object? error, StackTrace? stack) {
+  if (!kDebugMode) return;
+  debugPrint('MadBeauty boot warning [$label]: $error');
+  if (stack != null) debugPrint('$stack');
+}
+
+void _logBootError(String label, Object error, StackTrace stack) {
+  if (kDebugMode) {
+    debugPrint('MadBeauty boot error [$label]: $error\n$stack');
+  }
 }

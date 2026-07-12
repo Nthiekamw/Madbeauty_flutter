@@ -8,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/logic/address/postal_address.dart';
+import '../../../core/logic/address/postal_country_format.dart';
+import '../../../core/logic/market/invalidate_market_catalog.dart';
+import '../../../core/providers/market_country_provider.dart';
 import '../../../core/models/domain/user/client_profile.dart';
 import '../../../core/models/domain/user/user_profile.dart';
 import '../../../services/offline/offline_actions.dart';
@@ -51,7 +54,7 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
   final _numeroRue = TextEditingController();
   final _codePostal = TextEditingController();
   final _city = TextEditingController();
-  final _country = TextEditingController(text: PostalAddress.defaultCountry);
+  final _country = TextEditingController();
 
   String _phoneDialCode = '+33';
   String _voieType = PostalVoieTypes.defaultType;
@@ -105,8 +108,8 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
             codePostal: client?.codePostal?.trim() ?? '',
             ville: client?.ville?.trim() ?? '',
             pays: client?.pays?.trim().isNotEmpty == true
-                ? client!.pays!.trim()
-                : PostalAddress.defaultCountry,
+                ? postalCountryLabelForIso(client!.pays)
+                : '',
           )
         : PostalAddress.tryParse(client?.adresse);
     _voieType = address.voieType;
@@ -114,8 +117,11 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
     _numeroRue.text = address.numero;
     _codePostal.text = address.codePostal;
     _city.text = address.ville;
-    _country.text =
-        address.pays.isEmpty ? PostalAddress.defaultCountry : address.pays;
+    _country.text = client?.pays?.trim().isNotEmpty == true
+        ? postalCountryLabelForIso(client!.pays)
+        : (address.pays.isNotEmpty
+            ? postalCountryLabelForIso(address.pays)
+            : postalCountryLabelForIso(ref.read(marketCountryProvider)));
     _bound = true;
   }
 
@@ -180,6 +186,10 @@ class _EditClientAccountScreenState extends ConsumerState<EditClientAccountScree
         userId: user.id,
         address: _postalAddress,
       );
+      await ref
+          .read(marketCountryProvider.notifier)
+          .applySavedClientAddressCountry(_country.text);
+      invalidateMarketCatalog(ref);
       _invalidateProfile();
       if (!mounted) return;
       AppSnackBar.show(

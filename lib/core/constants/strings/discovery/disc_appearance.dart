@@ -58,8 +58,12 @@ abstract final class DiscAppearance {
       isEnglish(locale) ? 'Country / region' : 'Pays / région';
 
   static String marketNote(Locale locale) => isEnglish(locale)
-      ? 'Market order: auto-detect (device language or location), then your choice here, then your profile country.'
-      : 'Ordre du marché : détection auto (langue de l’appareil ou position), puis ton choix ici, puis le pays de ton profil client.';
+      ? 'Without a saved address, market order is: auto-detect (device language or location), then your choice here.'
+      : 'Sans adresse enregistrée, ordre du marché : détection auto (langue ou position), puis ton choix ici.';
+
+  static String marketLockedByAddress(Locale locale) => isEnglish(locale)
+      ? 'Catalogue and providers follow the country on your saved address. Update it in your account to change.'
+      : 'Le catalogue et les prestataires suivent le pays de ton adresse enregistrée. Modifie-la dans Mon compte pour changer.';
 
   static String marketSaved(Locale locale) =>
       isEnglish(locale) ? 'Country updated.' : 'Pays mis à jour.';

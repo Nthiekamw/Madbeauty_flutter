@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
+import '../../../../core/logic/address/postal_country_format.dart';
+import '../../../../core/providers/market_country_provider.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../providers/auth_notifier.dart';
@@ -51,6 +53,9 @@ class _RegisterWizardScreenState extends ConsumerState<RegisterWizardScreen>
     _form.addListener(_onFormChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _form.ensureDefaultCountry(
+        postalCountryLabelForIso(ref.read(marketCountryProvider)),
+      );
       exitGuestMode(ref);
       final hasSession =
           ref.read(authServiceProvider).currentSession?.user != null;

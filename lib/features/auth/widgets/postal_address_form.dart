@@ -6,6 +6,7 @@ import '../../../../core/logic/address/postal_address_suggestion.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_text_field.dart';
 import 'ban_address_search_field.dart';
+import 'postal_country_field.dart';
 import '../register/logic/register_wizard_constants.dart';
 import '../register/widgets/form/register_field_row.dart';
 import 'auth_step_section.dart';
@@ -70,6 +71,17 @@ class PostalAddressForm extends StatelessWidget {
     final fields = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        PostalCountryField(
+          value: paysController.text,
+          dense: dense,
+          enabled: enabled,
+          iconColor: iconColor,
+          onChanged: (label) {
+            paysController.text = label;
+            onAddressChanged?.call();
+          },
+        ),
+        SizedBox(height: fieldGap),
         if (enableBanSearch) ...[
           BanAddressSearchField(
             countryLabel: paysController.text,
@@ -107,6 +119,13 @@ class PostalAddressForm extends StatelessWidget {
               ? (value) {
                   if (value != null) {
                     onVoieTypeChanged(value);
+                    final normalized = PostalAddress.normalizeVoieNom(
+                      voieNomController.text,
+                      value,
+                    );
+                    if (normalized != voieNomController.text) {
+                      voieNomController.text = normalized;
+                    }
                     onAddressChanged?.call();
                   }
                 }
@@ -131,6 +150,18 @@ class PostalAddressForm extends StatelessWidget {
             dense: dense,
             controller: voieNomController,
             onChanged: onAddressChanged == null ? null : (_) => onAddressChanged!(),
+            onSubmitted: enabled
+                ? (_) {
+                    final normalized = PostalAddress.normalizeVoieNom(
+                      voieNomController.text,
+                      voieType,
+                    );
+                    if (normalized != voieNomController.text) {
+                      voieNomController.text = normalized;
+                      onAddressChanged?.call();
+                    }
+                  }
+                : null,
             enabled: enabled,
             label: AuthStrings.registerFieldVoieName,
             errorText: adresseError,
@@ -169,16 +200,6 @@ class PostalAddressForm extends StatelessWidget {
             textInputAction: TextInputAction.next,
             prefixIcon: Icon(Icons.location_city_outlined, color: iconColor),
           ),
-        ),
-        SizedBox(height: fieldGap),
-        AppTextField(
-          dense: dense,
-          controller: paysController,
-          onChanged: onAddressChanged == null ? null : (_) => onAddressChanged!(),
-          enabled: enabled,
-          label: AuthStrings.registerFieldCountry,
-          textInputAction: TextInputAction.done,
-          prefixIcon: Icon(Icons.public_outlined, color: iconColor),
         ),
       ],
     );

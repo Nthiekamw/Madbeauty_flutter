@@ -13,7 +13,23 @@ void main() {
   const unsupportedLocale = Locale('en', 'US');
 
   group('MarketCountryResolver', () {
-    test('prefers auto code over manual and profile', () async {
+    test('prefers profile address over auto and manual', () async {
+      final cache = LocalCacheService.instance;
+      await cache.setMarketCountryAutoCode('FR');
+      await cache.setMarketCountryManual(true);
+      await cache.setMarketCountryManualCode('FR');
+
+      expect(
+        MarketCountryResolver.resolve(
+          cache: cache,
+          profileCountryCode: 'BE',
+          localeForAuto: unsupportedLocale,
+        ),
+        'BE',
+      );
+    });
+
+    test('prefers auto code over manual without profile', () async {
       final cache = LocalCacheService.instance;
       await cache.setMarketCountryAutoCode('BE');
       await cache.setMarketCountryManual(true);
@@ -22,20 +38,20 @@ void main() {
       expect(
         MarketCountryResolver.resolve(
           cache: cache,
-          profileCountryCode: 'CA',
+          profileCountryCode: null,
           localeForAuto: unsupportedLocale,
         ),
         'BE',
       );
     });
 
-    test('uses locale auto before manual choice', () {
+    test('uses locale auto before manual choice without profile', () {
       final cache = LocalCacheService.instance;
 
       expect(
         MarketCountryResolver.resolve(
           cache: cache,
-          profileCountryCode: 'CA',
+          profileCountryCode: null,
           localeForAuto: const Locale('fr', 'BE'),
         ),
         'BE',
@@ -50,23 +66,23 @@ void main() {
       expect(
         MarketCountryResolver.resolve(
           cache: cache,
-          profileCountryCode: 'FR',
+          profileCountryCode: null,
           localeForAuto: unsupportedLocale,
         ),
         'CA',
       );
     });
 
-    test('falls back to profile when auto and manual absent', () {
+    test('falls back to default when profile auto and manual absent', () {
       final cache = LocalCacheService.instance;
 
       expect(
         MarketCountryResolver.resolve(
           cache: cache,
-          profileCountryCode: 'BE',
+          profileCountryCode: null,
           localeForAuto: unsupportedLocale,
         ),
-        'BE',
+        'FR',
       );
     });
   });

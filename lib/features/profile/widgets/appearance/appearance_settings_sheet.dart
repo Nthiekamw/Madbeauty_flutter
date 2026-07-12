@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/logic/market/invalidate_market_catalog.dart';
 import '../../../../core/providers/app_appearance_provider.dart';
 import '../../../../core/providers/market_country_provider.dart';
+import '../../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
@@ -26,6 +27,12 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appearance = ref.watch(appAppearanceProvider);
     final marketCountry = ref.watch(marketCountryProvider);
+    final profileCountry = ref.watch(currentClientProfileProvider).maybeWhen(
+          data: (profile) => profile?.pays?.trim(),
+          orElse: () => null,
+        );
+    final marketLockedByProfile =
+        profileCountry != null && profileCountry.isNotEmpty;
     final locale = appearance.locale;
     final theme = Theme.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
@@ -163,14 +170,23 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
+                enabled: !marketLockedByProfile,
                 leading: Text(
                   PhoneNumberUtils.countryFlag(market.isoCode),
-                  style: const TextStyle(fontSize: 22),
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: marketLockedByProfile && !selected
+                        ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
+                        : null,
+                  ),
                 ),
                 title: Text(
                   market.labelFor(locale),
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: marketLockedByProfile && !selected
+                        ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
+                        : null,
                   ),
                 ),
                 trailing: selected
@@ -179,7 +195,7 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
                         Icons.circle_outlined,
                         color: theme.colorScheme.outline,
                       ),
-                onTap: selected
+                onTap: selected || marketLockedByProfile
                     ? null
                     : () async {
                         await ref
@@ -197,7 +213,9 @@ class _AppearanceSettingsSheet extends ConsumerWidget {
           }),
           const SizedBox(height: 8),
           Text(
-            DiscAppearance.marketNote(locale),
+            marketLockedByProfile
+                ? DiscAppearance.marketLockedByAddress(locale)
+                : DiscAppearance.marketNote(locale),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.35,

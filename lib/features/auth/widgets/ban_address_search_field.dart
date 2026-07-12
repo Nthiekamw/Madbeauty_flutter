@@ -155,14 +155,6 @@ class _BanAddressSearchFieldState extends ConsumerState<BanAddressSearchField> {
                       )),
           onChanged: widget.enabled ? _onChanged : null,
         ),
-        const SizedBox(height: 6),
-        Text(
-          AuthStrings.registerAddressSearchHelpFor(_countryIso),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.35,
-          ),
-        ),
         if (_error != null) ...[
           const SizedBox(height: 6),
           Text(

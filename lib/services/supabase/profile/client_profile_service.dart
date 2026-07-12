@@ -1,7 +1,9 @@
 ﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/market_config.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/logic/address/postal_address.dart';
+import '../../../core/logic/address/postal_country_format.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../core/models/domain/user/client_profile.dart';
 import '../../location/geocoding_service.dart';
@@ -65,7 +67,7 @@ class ClientProfileService {
               ? null
               : await _geocoding.geocodeAddress(
                   query,
-                  countryIsoCode: country,
+                  countryIsoCode: postalCountryIso2(country),
                 );
           await _client.from('client_profiles').update({
             'adresse': formatted.isEmpty ? null : formatted,
@@ -90,17 +92,8 @@ class ClientProfileService {
   static String? _normalizeCountryIso2(String? raw) {
     final value = raw?.trim();
     if (value == null || value.isEmpty) return null;
-    final upper = value.toUpperCase();
-    if (upper.length == 2) return upper;
-    return switch (upper) {
-      'FRANCE' => 'FR',
-      'BELGIQUE' => 'BE',
-      'BELGIUM' => 'BE',
-      'LUXEMBOURG' => 'LU',
-      'SUISSE' => 'CH',
-      'SWITZERLAND' => 'CH',
-      _ => null,
-    };
+    final code = MarketConfig.normalizeCountryCode(value);
+    return MarketConfig.isSupported(code) ? code : null;
   }
 }
 

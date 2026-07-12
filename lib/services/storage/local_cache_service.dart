@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'key_value_store.dart';
+
 class LocalCacheService {
-  LocalCacheService._(this._prefs);
+  LocalCacheService._(this._store);
+
+  /// True si le cache local est volatile (Safari iOS / stockage indisponible).
+  static bool volatileMemoryFallback = false;
 
   static const String lastSignedInEmailKey = 'auth.last_signed_in_email';
   static const String profileSnapshotKey = 'profile.snapshot';
@@ -41,11 +47,24 @@ class LocalCacheService {
 
   static LocalCacheService? _instance;
 
-  final SharedPreferences _prefs;
+  final KeyValueStore _store;
 
   static Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
-    _instance = LocalCacheService._(prefs);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      volatileMemoryFallback = false;
+      _instance = LocalCacheService._(SharedPreferencesKeyValueStore(prefs));
+      return;
+    } on Object catch (e, st) {
+      if (!kIsWeb) rethrow;
+      if (kDebugMode) {
+        debugPrint(
+          'LocalCacheService: SharedPreferences indisponible, fallback mémoire — $e\n$st',
+        );
+      }
+    }
+    volatileMemoryFallback = true;
+    _instance = LocalCacheService._(InMemoryKeyValueStore());
   }
 
   static LocalCacheService get instance {
@@ -58,11 +77,12 @@ class LocalCacheService {
     return value;
   }
 
-  String? getString(String key) => _prefs.getString(key);
+  String? getString(String key) => _store.getString(key);
 
-  Future<bool> setString(String key, String value) => _prefs.setString(key, value);
+  Future<bool> setString(String key, String value) =>
+      _store.setString(key, value);
 
-  Future<bool> remove(String key) => _prefs.remove(key);
+  Future<bool> remove(String key) => _store.remove(key);
 
   String? get selectedRole => getString(selectedRoleKey);
 
@@ -96,39 +116,39 @@ class LocalCacheService {
   Future<bool> clearPendingReferralCode() => remove(pendingReferralCodeKey);
 
   bool get onboardingCompleted =>
-      _prefs.getBool(onboardingCompletedKey) ?? false;
+      _store.getBool(onboardingCompletedKey) ?? false;
 
   Future<bool> setOnboardingCompleted({bool value = true}) =>
-      _prefs.setBool(onboardingCompletedKey, value);
+      _store.setBool(onboardingCompletedKey, value);
 
-  bool get guestModeActive => _prefs.getBool(guestModeActiveKey) ?? false;
+  bool get guestModeActive => _store.getBool(guestModeActiveKey) ?? false;
 
   Future<bool> setGuestModeActive(bool value) =>
-      _prefs.setBool(guestModeActiveKey, value);
+      _store.setBool(guestModeActiveKey, value);
 
   bool get profilePushNotificationsEnabled =>
-      _prefs.getBool(profilePushNotificationsKey) ?? true;
+      _store.getBool(profilePushNotificationsKey) ?? true;
 
   Future<bool> setProfilePushNotificationsEnabled(bool value) =>
-      _prefs.setBool(profilePushNotificationsKey, value);
+      _store.setBool(profilePushNotificationsKey, value);
 
   bool get pushPermissionPrompted =>
-      _prefs.getBool(pushPermissionPromptedKey) ?? false;
+      _store.getBool(pushPermissionPromptedKey) ?? false;
 
   Future<bool> setPushPermissionPrompted({bool value = true}) =>
-      _prefs.setBool(pushPermissionPromptedKey, value);
+      _store.setBool(pushPermissionPromptedKey, value);
 
   bool get profileGeolocationEnabled =>
-      _prefs.getBool(profileGeolocationKey) ?? true;
+      _store.getBool(profileGeolocationKey) ?? true;
 
   Future<bool> setProfileGeolocationEnabled(bool value) =>
-      _prefs.setBool(profileGeolocationKey, value);
+      _store.setBool(profileGeolocationKey, value);
 
   bool get profileBiometricUnlockEnabled =>
-      _prefs.getBool(profileBiometricUnlockKey) ?? false;
+      _store.getBool(profileBiometricUnlockKey) ?? false;
 
   Future<bool> setProfileBiometricUnlockEnabled(bool value) =>
-      _prefs.setBool(profileBiometricUnlockKey, value);
+      _store.setBool(profileBiometricUnlockKey, value);
 
   String? get clientHomeLayoutJson => getString(clientHomeLayoutKey);
 
@@ -161,39 +181,38 @@ class LocalCacheService {
       setString(marketCountryManualCodeKey, value.trim().toUpperCase());
 
   bool get marketCountryManual =>
-      _prefs.getBool(marketCountryManualKey) ?? false;
+      _store.getBool(marketCountryManualKey) ?? false;
 
   Future<bool> setMarketCountryManual(bool value) =>
-      _prefs.setBool(marketCountryManualKey, value);
+      _store.setBool(marketCountryManualKey, value);
 
   bool get marketCountryAutoDetected =>
-      _prefs.getBool(marketCountryAutoDetectedKey) ?? false;
+      _store.getBool(marketCountryAutoDetectedKey) ?? false;
 
   Future<bool> setMarketCountryAutoDetected(bool value) =>
-      _prefs.setBool(marketCountryAutoDetectedKey, value);
+      _store.setBool(marketCountryAutoDetectedKey, value);
 
   bool get passwordRecoveryPending =>
-      _prefs.getBool(passwordRecoveryPendingKey) ?? false;
+      _store.getBool(passwordRecoveryPendingKey) ?? false;
 
   Future<bool> setPasswordRecoveryPending(bool value) =>
-      _prefs.setBool(passwordRecoveryPendingKey, value);
+      _store.setBool(passwordRecoveryPendingKey, value);
 
   Future<bool> clearPasswordRecoveryPending() =>
       remove(passwordRecoveryPendingKey);
 
   int? get pwaInstallBannerDismissedAtMs {
-    final raw = _prefs.getInt(pwaInstallBannerDismissedAtKey);
-    return raw;
+    return _store.getInt(pwaInstallBannerDismissedAtKey);
   }
 
   Future<bool> setPwaInstallBannerDismissedAtMs(int value) =>
-      _prefs.setInt(pwaInstallBannerDismissedAtKey, value);
+      _store.setInt(pwaInstallBannerDismissedAtKey, value);
 
   int get pwaInstallBannerDismissCount =>
-      _prefs.getInt(pwaInstallBannerDismissCountKey) ?? 0;
+      _store.getInt(pwaInstallBannerDismissCountKey) ?? 0;
 
   Future<bool> setPwaInstallBannerDismissCount(int value) =>
-      _prefs.setInt(pwaInstallBannerDismissCountKey, value);
+      _store.setInt(pwaInstallBannerDismissCountKey, value);
 }
 
 

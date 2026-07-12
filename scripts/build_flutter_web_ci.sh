@@ -35,6 +35,6 @@ cleanup() {
 trap cleanup EXIT
 
 flutter pub get
-flutter build web --release --dart-define-from-file="$ENV_BUILD"
+flutter build web --release --no-web-resources-cdn --dart-define-from-file="$ENV_BUILD"
 
 echo "OK: build/web prêt pour Netlify."

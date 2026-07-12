@@ -152,10 +152,26 @@ export async function sendFcmNotification(opts: {
         notification: {
           title: opts.title,
           body: opts.body,
+          image: iconUrl,
         },
         ...(opts.data ? { data: opts.data } : {}),
-        android: { priority: "HIGH" },
-        apns: { headers: { "apns-priority": "10" } },
+        android: {
+          priority: "HIGH",
+          notification: {
+            image: iconUrl,
+          },
+        },
+        apns: {
+          headers: { "apns-priority": "10" },
+          payload: {
+            aps: {
+              "mutable-content": 1,
+            },
+          },
+          fcm_options: {
+            image: iconUrl,
+          },
+        },
         webpush: {
           fcm_options: { link: appOrigin },
           notification: {

@@ -149,6 +149,9 @@ class PostalAddress {
     return value.replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  static String normalizeVoieNom(String raw, String voieType) =>
+      _normalizeStreetName(raw, currentType: voieType);
+
   static String _normalizeStreetName(
     String raw, {
     required String currentType,
