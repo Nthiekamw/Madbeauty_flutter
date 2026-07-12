@@ -56,5 +56,8 @@ jobs:
           done
           if [ "$missing" -ne 0 ]; then exit 1; fi
 
+      - name: Générer config admin
+        run: node scripts/generate_web_admin_config.js
+
       - name: Déployer sur Netlify
-        run: npx --yes netlify-cli@26.1.0 deploy --prod --config=netlify.toml
+        run: npx --yes netlify-cli@26.1.0 deploy --prod --dir=web-admin --no-build

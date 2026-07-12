@@ -1,5 +1,8 @@
 # Back-office admin MadBeauty — site statique dans web-admin/
 # Variables Netlify (dashboard ou CLI) : SUPABASE_URL, SUPABASE_ANON_KEY
+# Deploy CI / local (CLI v26 — pas de flag --config) :
+#   node scripts/generate_web_admin_config.js
+#   npx netlify-cli deploy --prod --dir=web-admin --site=8a6bc2a3-80df-46de-a1be-0c15efcc8551 --no-build
 
 [build]
   command = "node scripts/generate_web_admin_config.js"

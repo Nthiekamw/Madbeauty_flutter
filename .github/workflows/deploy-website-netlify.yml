@@ -1,9 +1,8 @@
 # Déploie le site vitrine (dossier website/) sur Netlify.
 # URL cible : https://madbeauty-web.netlify.app
 #
-# Secrets GitHub requis (Settings → Secrets and variables → Actions) :
-#   NETLIFY_AUTH_TOKEN       — https://app.netlify.com/user/applications#personal-access-tokens
-#   NETLIFY_WEBSITE_SITE_ID  — ID du site Netlify madbeauty-web
+# Secret GitHub requis (Settings → Secrets and variables → Actions) :
+#   NETLIFY_AUTH_TOKEN — https://app.netlify.com/user/applications#personal-access-tokens
 
 name: Deploy website Netlify
 
@@ -27,7 +26,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_WEBSITE_SITE_ID }}
+      NETLIFY_SITE_ID: madbeauty-web
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
 
     steps:
@@ -36,14 +35,11 @@ jobs:
 
       - name: Vérifier les secrets
         run: |
-          missing=0
-          for name in NETLIFY_AUTH_TOKEN NETLIFY_SITE_ID; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Secret manquant : $name"
-              missing=1
-            fi
-          done
-          if [ "$missing" -ne 0 ]; then exit 1; fi
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::Secret manquant : NETLIFY_AUTH_TOKEN"
+            exit 1
+          fi
 
       - name: Déployer sur Netlify
-        run: npx --yes netlify-cli@26.1.0 deploy --prod --config=website/netlify.toml
+        working-directory: website
+        run: npx --yes netlify-cli@26.1.0 deploy --prod --no-build

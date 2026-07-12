@@ -16,8 +16,9 @@ if (-not $siteId) {
   }
 }
 if (-not $siteId) {
-  throw 'NETLIFY_WEBSITE_SITE_ID manquant (variable d''environnement ou .env).'
+  $siteId = 'madbeauty-web'
 }
 
 $env:NETLIFY_SITE_ID = $siteId
-npx --yes netlify-cli@26.1.0 deploy --prod --config=website/netlify.toml
+Set-Location (Join-Path $root 'website')
+npx --yes netlify-cli@26.1.0 deploy --prod --no-build
