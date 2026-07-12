@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
@@ -73,6 +74,14 @@ class _PrestataireDetailScreenState
     );
   }
 
+  Widget _publicProfileBackLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back_rounded),
+      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+      onPressed: () => context.popOrGoHome(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(prestataireDetailProvider(widget.prestataireId));
@@ -82,14 +91,22 @@ class _PrestataireDetailScreenState
     final isOwnProfile = isOwnAsync.maybeWhen(data: (v) => v, orElse: () => false);
     final theme = Theme.of(context);
 
-    return PrestataireBrandScaffold(
-      body: async.when(
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        context.goHome();
+      },
+      child: PrestataireBrandScaffold(
+        body: async.when(
         data: (data) {
           if (data == null) {
             return PrestataireBrandScaffold(
               appBar: prestataireBrandAppBar(
                 context: context,
                 title: const Text(DiscPrestaDetail.screenTitle),
+                leading: _publicProfileBackLeading(context),
+                automaticallyImplyLeading: false,
               ),
               body: const Center(
                 child: Padding(
@@ -216,6 +233,8 @@ class _PrestataireDetailScreenState
           appBar: prestataireBrandAppBar(
             context: context,
             title: const Text(DiscPrestaDetail.screenTitle),
+            leading: _publicProfileBackLeading(context),
+            automaticallyImplyLeading: false,
           ),
           body: Center(
             child: Text(
@@ -230,9 +249,12 @@ class _PrestataireDetailScreenState
           appBar: prestataireBrandAppBar(
             context: context,
             title: const Text(DiscPrestaDetail.screenTitle),
+            leading: _publicProfileBackLeading(context),
+            automaticallyImplyLeading: false,
           ),
           body: const DiscoveryDetailSkeleton(),
         ),
+      ),
       ),
     );
   }

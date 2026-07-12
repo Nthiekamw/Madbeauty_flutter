@@ -1,3 +1,5 @@
+import '../text/city_name_format.dart';
+
 /// Adresse postale structurée (inscription client / prestataire).
 class PostalAddress {
   const PostalAddress({
@@ -46,7 +48,7 @@ class PostalAddress {
     if (street.isNotEmpty) segments.add(street);
 
     final cp = codePostal.trim();
-    final city = ville.trim();
+    final city = formatCityName(ville);
     if (cp.isNotEmpty && city.isNotEmpty) {
       segments.add('$cp $city');
     } else if (city.isNotEmpty) {
@@ -79,7 +81,7 @@ class PostalAddress {
       if (segments.length >= 2) {
         final cpVille = _parseCpVille(segments[1]);
         codePostal = cpVille.$1;
-        ville = cpVille.$2;
+        ville = formatCityName(cpVille.$2);
       }
       if (segments.length >= 3) {
         pays = segments.sublist(2).join(', ').trim();

@@ -67,6 +67,16 @@
                     android:host="madbeauty.app"
                     android:pathPrefix="/prestataire"/>
             </intent-filter>
+            <!-- App Links prod web : https://madbeauty-app.netlify.app/prestataire/{id} -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="madbeauty-app.netlify.app"
+                    android:pathPrefix="/prestataire"/>
+            </intent-filter>
             <meta-data
                 android:name="flutter_deeplinking_enabled"
                 android:value="true" />

@@ -8,6 +8,15 @@ import '../features/prestataire/models/prestataire_profile_edit_section.dart';
 import 'app_router.dart';
 
 extension AppNavigationX on BuildContext {
+  /// Retourne à l'écran précédent ou à l'accueil client (lien partagé sans historique).
+  void popOrGoHome() {
+    if (canPop()) {
+      pop();
+      return;
+    }
+    goHome();
+  }
+
   void goSplash() => goNamed(AppRouteNames.splash);
   void goOnboarding() => goNamed(AppRouteNames.onboarding);
   void goWelcome() => goNamed(AppRouteNames.welcome);
@@ -161,15 +170,17 @@ extension AppNavigationX on BuildContext {
         pathParameters: {'id': reservationId},
       );
 
-  void goBooking({String? prestataireId, String? serviceId}) {
+  void goBooking({String? prestataireId, String? serviceId, String? initialDay}) {
     final id = prestataireId?.trim();
     final service = serviceId?.trim();
+    final day = initialDay?.trim();
     if (id != null && id.isNotEmpty) {
       goNamed(
         AppRouteNames.booking,
         queryParameters: {
           'prestataireId': id,
           if (service != null && service.isNotEmpty) 'serviceId': service,
+          if (day != null && day.isNotEmpty) 'date': day,
         },
       );
     } else {

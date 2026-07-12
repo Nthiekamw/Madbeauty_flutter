@@ -183,6 +183,8 @@ abstract final class AuthStrings {
   static const String guestBookingTitle = 'Réservation';
   static const String guestBookingBody =
       'Un compte est nécessaire pour confirmer une réservation.';
+  static const String registerPendingBookingRoleHint =
+      'Profil client présélectionné pour finaliser ta réservation.';
   static const String guestCtaLogin = 'Connexion';
   static const String guestCtaRegister = 'Créer un compte';
   static const String welcomeFeatureDualRole = 'Client ou prestataire';

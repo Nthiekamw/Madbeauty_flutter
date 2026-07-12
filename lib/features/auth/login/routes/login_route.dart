@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../router/app_router.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../features/booking/logic/pending_booking_intent.dart';
 import '../../guest/guest_mode_provider.dart';
 import '../../logic/account_ban_handler.dart';
 import '../../navigation/auth_session_cache.dart';
@@ -124,6 +125,18 @@ class _LoginRouteState extends ConsumerState<LoginRoute> {
     );
 
     if (container.read(authNotifierProvider).value == null) return;
+
+    final pendingBookingPath = PendingBookingIntent.read()?.bookingPath;
+    if (pendingBookingPath != null) {
+      loginRedirectNotifier.disarm();
+      await PendingBookingIntent.clear();
+      if (mounted && context.canPop()) {
+        context.pop();
+        return;
+      }
+      await router.goDeferred(pendingBookingPath);
+      return;
+    }
 
     final prepared =
         await AuthSessionCache.prepareForAuthenticatedRedirect(container);

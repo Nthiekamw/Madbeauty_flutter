@@ -1,5 +1,6 @@
 ﻿import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/logic/text/city_name_format.dart';
 import '../../../core/config/market_config.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/logic/address/postal_address.dart';
@@ -55,7 +56,7 @@ class ClientProfileService {
         operation: 'clientProfile.updateAddress',
         action: () async {
           final formatted = address.formattedLine.trim();
-          final city = address.ville.trim();
+          final city = formatCityName(address.ville);
           final postalCode = address.codePostal.trim();
           final country = address.pays.trim();
           final query = [

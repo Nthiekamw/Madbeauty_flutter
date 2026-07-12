@@ -28,6 +28,8 @@ class LocalCacheService {
 
   /// Code parrain reçu via lien d'invitation (à appliquer après connexion).
   static const String pendingReferralCodeKey = 'referral.pending_code_v1';
+  /// Réservation en attente après partage / mode invité.
+  static const String pendingBookingIntentKey = 'booking.pending_intent_v1';
   static const String clientHomeLayoutKey = 'client.home_layout_v1';
   static const String appThemeModeKey = 'app.theme_mode_v1';
   static const String appLanguageCodeKey = 'app.language_code_v1';
@@ -114,6 +116,13 @@ class LocalCacheService {
       setString(pendingReferralCodeKey, code.trim().toUpperCase());
 
   Future<bool> clearPendingReferralCode() => remove(pendingReferralCodeKey);
+
+  String? get pendingBookingIntentJson => getString(pendingBookingIntentKey);
+
+  Future<bool> setPendingBookingIntentJson(String json) =>
+      setString(pendingBookingIntentKey, json);
+
+  Future<bool> clearPendingBookingIntent() => remove(pendingBookingIntentKey);
 
   bool get onboardingCompleted =>
       _store.getBool(onboardingCompletedKey) ?? false;

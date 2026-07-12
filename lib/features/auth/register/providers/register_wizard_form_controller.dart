@@ -10,6 +10,7 @@ import '../../../../core/logic/address/postal_country_format.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../../../../services/auth/oauth_identity_sync.dart';
+import '../../../booking/logic/pending_booking_intent.dart';
 import '../logic/register_wizard_constants.dart';
 import '../logic/register_wizard_draft.dart';
 import '../logic/register_wizard_role_intent.dart';
@@ -25,8 +26,15 @@ class RegisterWizardFormController extends ChangeNotifier {
       if (draft.pendingGoogleSignIn) {
         googleLaunched = true;
       }
+    } else {
+      _applyPendingBookingDefaults();
     }
     attachAutosave();
+  }
+
+  void _applyPendingBookingDefaults() {
+    if (PendingBookingIntent.read() == null) return;
+    roleChoice = UserRole.client;
   }
 
   int step = 0;
@@ -487,6 +495,7 @@ class RegisterWizardFormController extends ChangeNotifier {
   void selectRole(UserRole role) {
     roleChoice = role;
     if (role == UserRole.prestataire) {
+      unawaited(PendingBookingIntent.clear());
       clientAvatarBytes = null;
       clientAvatarFileName = null;
       clientAvatarMimeType = null;

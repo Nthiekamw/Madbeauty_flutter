@@ -661,6 +661,10 @@ body {
   display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; padding-top: 16px;
   border-top: 1px solid var(--border);
 }
+.completeness-missing {
+  margin: 0; padding-left: 18px; color: var(--text2);
+}
+.completeness-missing li { margin: 4px 0; line-height: 1.4; }
 @media (max-width: 640px) {
   .user-detail-grid { grid-template-columns: 1fr; }
 }

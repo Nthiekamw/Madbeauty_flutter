@@ -1,3 +1,4 @@
+import 'package:madbeauty/core/logic/text/city_name_format.dart';
 import 'package:madbeauty/core/models/domain/booking/favori.dart';
 import 'package:madbeauty/core/models/domain/booking/reservation.dart';
 import 'package:madbeauty/core/models/domain/catalog/categorie_service.dart';
@@ -42,11 +43,24 @@ abstract final class SupabaseDomainCodec {
   static UserProfile userProfile(Map<String, dynamic> r) =>
       UserProfile.fromJson(row(r));
 
-  static ClientProfile clientProfile(Map<String, dynamic> r) =>
-      ClientProfile.fromJson(row(r));
+  static ClientProfile clientProfile(Map<String, dynamic> r) {
+    final m = row(r);
+    _normalizeVilleField(m);
+    return ClientProfile.fromJson(m);
+  }
 
-  static PrestataireProfile prestataireProfile(Map<String, dynamic> r) =>
-      PrestataireProfile.fromJson(row(r));
+  static PrestataireProfile prestataireProfile(Map<String, dynamic> r) {
+    final m = row(r);
+    _normalizeVilleField(m);
+    return PrestataireProfile.fromJson(m);
+  }
+
+  static void _normalizeVilleField(Map<String, dynamic> m) {
+    final raw = m['ville'];
+    if (raw is String && raw.trim().isNotEmpty) {
+      m['ville'] = formatCityName(raw);
+    }
+  }
 
   static CategorieService categorieService(Map<String, dynamic> r) =>
       CategorieService.fromJson(row(r));

@@ -380,6 +380,10 @@ allow_dynamic_registration = false
 [functions.stripe_connect_redirect]
 verify_jwt = false
 
+# Liens partagés (WhatsApp, SMS) — pas de JWT côté visiteur.
+[functions.prestataire_share]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

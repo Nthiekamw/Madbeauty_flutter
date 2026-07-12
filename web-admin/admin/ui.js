@@ -187,6 +187,81 @@ function fmtUserDate(iso) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatCityName(value) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return '';
+
+  const capitalizeToken = (token) => {
+    if (!token) return token;
+    const lower = token.toLowerCase();
+    let out = '';
+    let upperNext = true;
+    for (const c of lower) {
+      if (upperNext && /[a-zàâäéèêëïîôùûüç]/i.test(c)) {
+        out += c.toUpperCase();
+        upperNext = false;
+      } else {
+        out += c;
+        if (c === "'") upperNext = true;
+      }
+    }
+    return out;
+  };
+
+  return trimmed
+    .split(/\s+/)
+    .map((word) => word.split('-').map(capitalizeToken).join('-'))
+    .join(' ');
+}
+
+function formatAddressLine({
+  adresse,
+  numero,
+  voieType,
+  voieNom,
+  codePostal,
+  ville,
+  pays,
+} = {}) {
+  const street = adresse?.trim()
+    || [numero, voieType, voieNom].filter(Boolean).join(' ').trim();
+  const locality = [codePostal, formatCityName(ville)].filter(Boolean).join(' ').trim();
+  const parts = [street, locality, pays].filter((p) => p && String(p).trim());
+  return parts.length ? parts.join(' · ') : '—';
+}
+
+function profileCompletenessBadge(isComplete, isVisible) {
+  if (isComplete === null || isComplete === undefined) {
+    return '<span style="color:var(--text3);">—</span>';
+  }
+  if (isComplete && isVisible) {
+    return '<span class="badge active">Visible catalogue</span>';
+  }
+  if (isComplete) {
+    return '<span class="badge pending">Complet · non visible</span>';
+  }
+  return '<span class="badge inactive">Incomplet</span>';
+}
+
+function renderMissingLabelsList(labels, { compact = false } = {}) {
+  const items = (labels || []).filter(Boolean);
+  if (!items.length) {
+    return compact
+      ? '<span style="color:var(--text3);font-size:12px;">Rien à signaler</span>'
+      : userDetailRow('Éléments manquants', 'Aucun');
+  }
+  if (compact) {
+    const preview = items.slice(0, 2).join(', ');
+    const extra = items.length > 2 ? ` (+${items.length - 2})` : '';
+    return `<span style="font-size:12px;color:var(--text2);" title="${escapeHtml(items.join(' · '))}">${escapeHtml(preview + extra)}</span>`;
+  }
+  const list = items.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  return `<div class="user-detail-row user-detail-row--full">
+    <div class="user-detail-label">Éléments manquants</div>
+    <div class="user-detail-value"><ul class="completeness-missing">${list}</ul></div>
+  </div>`;
+}
+
 function userDetailRow(label, value, { mono = false, empty = '—' } = {}) {
   const v = value == null || String(value).trim() === '' ? empty : String(value);
   return `<div class="user-detail-row">
@@ -245,19 +320,49 @@ function renderUserDetailBody(u, details) {
 
   const clientRows = client ? [
     userDetailRow('Adresse', client.adresse),
-    userDetailRow('Ville', client.ville || u.clientVille),
+    userDetailRow('Voie', [client.numero_rue, client.voie_type, client.voie_nom].filter(Boolean).join(' ').trim() || null),
+    userDetailRow('Ville', formatCityName(client.ville || u.clientVille)),
     userDetailRow('Code postal', client.code_postal || u.clientCodePostal),
     userDetailRow('Pays', client.pays || u.clientPays),
-    userDetailRow('Voie', [client.numero_rue, client.voie_type, client.voie_nom].filter(Boolean).join(' ').trim() || null),
+    userDetailRow('Adresse complète', formatAddressLine({
+      adresse: client.adresse,
+      numero: client.numero_rue,
+      voieType: client.voie_type,
+      voieNom: client.voie_nom,
+      codePostal: client.code_postal || u.clientCodePostal,
+      ville: formatCityName(client.ville || u.clientVille),
+      pays: client.pays || u.clientPays,
+    })),
     userDetailRow('Réservations', client.reservations_count ?? '0'),
     userDetailRow('Stripe client', client.stripe_customer_id, { mono: true }),
     userDetailRow('Profil créé le', fmtUserDateTime(client.created_at)),
   ].join('') : '';
 
+  const completeness = presta?.completeness || {};
+  const missingLabels = Array.isArray(completeness.missing)
+    ? completeness.missing
+    : (u.prestaMissingLabels || []);
+
   const prestaRows = presta ? [
     userDetailRow('Salon', presta.nom_salon || u.prestaNomSalon),
-    userDetailRow('Ville', presta.ville || u.prestaVille),
-    userDetailRow('Adresse', presta.adresse),
+    userDetailRow('Nom affiché', presta.nom_affiche),
+    userDetailRow('Adresse', presta.adresse || u.prestaAdresse),
+    userDetailRow('Ville', formatCityName(presta.ville || u.prestaVille)),
+    userDetailRow('Code postal', presta.code_postal || u.prestaCodePostal),
+    userDetailRow('Pays', presta.pays || u.prestaPays),
+    userDetailRow('Lieu de travail', presta.lieu_travail),
+    userDetailRow('Adresse complète', formatAddressLine({
+      adresse: presta.adresse || u.prestaAdresse,
+      codePostal: presta.code_postal || u.prestaCodePostal,
+      ville: formatCityName(presta.ville || u.prestaVille),
+      pays: presta.pays || u.prestaPays,
+    })),
+    userDetailRow('Description', presta.description),
+    userDetailRow('Profil professionnel', completeness.is_professionally_complete ? 'Complet' : 'Incomplet'),
+    userDetailRow('Visible catalogue', completeness.is_catalog_visible ? 'Oui' : 'Non'),
+    userDetailRow('Accès catalogue', completeness.has_catalog_access ? 'Actif (abo ou essai)' : 'Expiré / absent'),
+    userDetailRow('Spécialités', completeness.specialties_count ?? presta.specialties_count ?? '0'),
+    userDetailRow('Services valides', completeness.valid_services_count ?? '—'),
     userDetailRow('Note moyenne', presta.note_moyenne != null ? `⭐ ${Number(presta.note_moyenne).toFixed(1)}` : '—'),
     userDetailRow('Vérifié', presta.is_verified ? 'Oui' : 'Non'),
     userDetailRow('Masqué catalogue', presta.is_hidden ? `Oui (${fmtUserDateTime(presta.hidden_at)})` : 'Non'),
@@ -296,7 +401,7 @@ function renderUserDetailBody(u, details) {
     ${userDetailSection('Compte', 'fa-user', accountRows)}
     ${userDetailSection('Statut & rôles', 'fa-shield-halved', statusRows + `<div class="user-detail-row user-detail-row--full"><div class="user-detail-label">Rôles</div><div class="user-detail-value">${rolesHtml}</div></div>`)}
     ${client ? userDetailSection('Profil client', 'fa-user-tag', clientRows) : ''}
-    ${presta ? userDetailSection('Profil prestataire', 'fa-store', prestaRows) : ''}
+    ${presta ? userDetailSection('Profil prestataire', 'fa-store', prestaRows + renderMissingLabelsList(missingLabels)) : ''}
     ${userDetailSection('Connexion', 'fa-key', providersRows)}
     <div class="user-detail-actions">
       ${!roles.includes('client') ? `<button type="button" class="btn btn-outline btn-sm" onclick="MBLive.setRole('${u.id}','client')">+ Client</button>` : ''}
@@ -398,7 +503,7 @@ function renderPrestataireSubscriptions() {
 
   const rows = (typeof store !== 'undefined' && store.prestataireSubscriptions) || [];
   if (!rows.length) {
-    tbody.innerHTML = emptyRow(9, 'Aucun prestataire — lance une recherche ou vérifie la migration admin.');
+    tbody.innerHTML = emptyRow(12, 'Aucun prestataire — lance une recherche ou vérifie la migration admin.');
     if (summary) summary.textContent = '';
     return;
   }
@@ -411,7 +516,14 @@ function renderPrestataireSubscriptions() {
 
   tbody.innerHTML = rows.map((row, i) => {
     const name = row.display_name || row.nom_salon || row.email || '—';
-    const salon = [row.nom_salon, row.ville].filter(Boolean).join(' · ') || '—';
+    const salon = [row.nom_salon, formatCityName(row.ville)].filter(Boolean).join(' · ') || '—';
+    const address = formatAddressLine({
+      adresse: row.adresse,
+      codePostal: row.code_postal,
+      ville: formatCityName(row.ville),
+      pays: row.pays,
+    });
+    const missing = row.missing_labels || row.missingLabels || [];
     const stripeRef = row.stripe_subscription_id
       ? `<span style="font-family:monospace;font-size:11px;" title="${escapeHtml(row.stripe_subscription_id)}">${escapeHtml(row.stripe_subscription_id.slice(0, 14))}…</span>`
       : '—';
@@ -427,7 +539,10 @@ function renderPrestataireSubscriptions() {
           </div>
         </td>
         <td style="font-size:13px;">${escapeHtml(salon)}</td>
+        <td style="font-size:12px;color:var(--text2);max-width:220px;">${escapeHtml(address)}</td>
         <td>${subscriptionStatusBadge(row)}</td>
+        <td>${profileCompletenessBadge(row.is_profile_complete, row.is_catalog_visible)}</td>
+        <td>${renderMissingLabelsList(missing, { compact: true })}</td>
         <td style="font-size:13px;">${escapeHtml(subscriptionTierLabel(row.subscription_tier, row.subscription_interval))}</td>
         <td style="font-size:12px;color:var(--text3);">${fmtUserDateTime(row.subscription_current_period_end)}</td>
         <td style="font-size:12px;color:var(--text3);">${row.is_catalog_trial ? fmtUserDateTime(row.catalog_trial_ends_at) : '—'}</td>
@@ -487,11 +602,18 @@ function renderTables() {
 
   const clientsTbody = document.getElementById('clients-tbody');
   if (clientsTbody) {
-    if (!clients.length) clientsTbody.innerHTML = emptyRow(7, 'Aucun client');
+    if (!clients.length) clientsTbody.innerHTML = emptyRow(8, 'Aucun client');
     else clients.forEach((u, i) => {
+      const address = formatAddressLine({
+        adresse: u.clientAdresse,
+        codePostal: u.clientCodePostal,
+        ville: u.clientVille,
+        pays: u.clientPays,
+      });
       clientsTbody.innerHTML += `
       <tr>
         <td><div class="user-cell"><div class="user-avatar" style="background:${getColor(i)};color:white;">${initials(u.name)}</div><div><div class="user-name">${u.name}</div><div class="user-email">${u.email}</div></div></div></td>
+        <td style="font-size:12px;color:var(--text2);max-width:240px;">${escapeHtml(address)}</td>
         <td>${u.city}</td>
         <td><span class="badge inactive">${u.sub}</span></td>
         <td>${u.rdv}</td>
@@ -504,13 +626,22 @@ function renderTables() {
 
   const prestaTbody = document.getElementById('presta-tbody');
   if (prestaTbody) {
-    if (!prestas.length) prestaTbody.innerHTML = emptyRow(8, 'Aucun prestataire');
+    if (!prestas.length) prestaTbody.innerHTML = emptyRow(10, 'Aucun prestataire');
     else prestas.forEach((u, i) => {
+      const address = formatAddressLine({
+        adresse: u.prestaAdresse,
+        codePostal: u.prestaCodePostal,
+        ville: u.prestaVille,
+        pays: u.prestaPays,
+      });
       prestaTbody.innerHTML += `
       <tr>
         <td><div class="user-cell"><div class="user-avatar" style="background:${getColor(i)};color:white;">${initials(u.name)}</div><div><div class="user-name">${u.name}</div><div class="user-email">${u.email}</div></div></div></td>
         <td>${u.specialty || '—'}</td>
+        <td style="font-size:12px;color:var(--text2);max-width:240px;">${escapeHtml(address)}</td>
         <td>${u.city}</td>
+        <td>${profileCompletenessBadge(u.prestaIsProfileComplete, u.prestaIsCatalogVisible)}</td>
+        <td>${renderMissingLabelsList(u.prestaMissingLabels, { compact: true })}</td>
         <td>${u.rdv}</td>
         <td>${u.note != null ? '⭐ ' + u.note : '—'}</td>
         <td><span class="badge pro">${u.sub}</span></td>

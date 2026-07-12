@@ -12,6 +12,7 @@ import '../../../../core/errors/supabase_service_exception.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../profile/logic/become_prestataire_draft.dart';
 import '../../../profile/storage/become_prestataire_draft_store.dart';
+import '../../../booking/logic/pending_booking_intent.dart';
 import '../../../prestataire/navigation/prestataire_navigation.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../logic/auth_role_cache.dart';
@@ -272,7 +273,18 @@ class RegisterWizardSubmitHandler {
         providerContainer,
       );
     } else {
-      context.goHome();
+      final intent = PendingBookingIntent.read();
+      await PendingBookingIntent.clear();
+      if (!mounted()) return;
+      if (intent != null) {
+        context.goBooking(
+          prestataireId: intent.prestataireId,
+          serviceId: intent.serviceId,
+          initialDay: intent.initialDay,
+        );
+      } else {
+        context.goHome();
+      }
     }
   }
 

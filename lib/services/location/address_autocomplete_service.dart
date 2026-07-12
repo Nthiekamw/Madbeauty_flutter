@@ -6,6 +6,7 @@ import '../../core/config/app_config.dart';
 import '../../core/config/market_config.dart';
 import '../../core/geo/geo_point.dart';
 import '../../core/logic/address/address_search_query_parser.dart';
+import '../../core/logic/text/city_name_format.dart';
 import '../../core/logic/address/postal_address.dart';
 import '../../core/logic/address/postal_country_format.dart';
 import '../../core/logic/address/postal_address_suggestion.dart';
@@ -252,7 +253,7 @@ class AddressAutocompleteService {
         voieNom: parsedStreet.voieNom,
         numero: houseNumber.isNotEmpty ? houseNumber : parsedStreet.numero,
         codePostal: postcode,
-        ville: city,
+        ville: formatCityName(city),
         pays: PostalAddress.defaultCountry,
       ),
     );
@@ -318,7 +319,7 @@ class AddressAutocompleteService {
         voieNom: parsedStreet.voieNom,
         numero: houseNumber.isNotEmpty ? houseNumber : parsedStreet.numero,
         codePostal: postCode,
-        ville: municipality,
+        ville: formatCityName(municipality),
         pays: postalCountryLabelForIso('BE'),
       ),
     );
@@ -358,7 +359,7 @@ class AddressAutocompleteService {
         voieNom: parsedStreet.voieNom,
         numero: parsedStreet.numero,
         codePostal: AddressSearchQueryParser.parseCanadianPostalCode(title) ?? '',
-        ville: city,
+        ville: formatCityName(city),
         pays: postalCountryLabelForIso('CA'),
       ),
     );
@@ -409,7 +410,7 @@ class AddressAutocompleteService {
         voieNom: parsedStreet.voieNom,
         numero: houseNumber.isNotEmpty ? houseNumber : parsedStreet.numero,
         codePostal: postCode,
-        ville: city,
+        ville: formatCityName(city),
         pays: postalCountryLabelForIso(countryIso),
       ),
     );

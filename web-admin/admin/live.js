@@ -62,8 +62,12 @@
     else if (isPresta) type = 'prestataire';
     else if (isClient) type = 'client';
     const name = [r.prenom, r.nom].filter(Boolean).join(' ').trim() || r.email || '—';
-    const city = r.client_ville || r.presta_ville || '—';
+    const cityRaw = r.client_ville || r.presta_ville || '';
+    const city = cityRaw ? formatCityName(cityRaw) : '—';
     const rdvCount = r.reservations_count ?? r.reservationsCount;
+    const prestaMissing = Array.isArray(r.presta_missing_labels)
+      ? r.presta_missing_labels
+      : (Array.isArray(r.prestaMissingLabels) ? r.prestaMissingLabels : []);
     return {
       id: r.user_id,
       name,
@@ -88,12 +92,20 @@
       isAdmin,
       hasClientProfile,
       hasPrestaProfile,
-      clientVille: r.client_ville || '',
+      clientAdresse: r.client_adresse || '',
+      clientVille: formatCityName(r.client_ville || ''),
       clientCodePostal: r.client_code_postal || '',
       clientPays: r.client_pays || '',
+      prestaId: r.presta_id || '',
       prestaNomSalon: r.presta_nom_salon || '',
-      prestaVille: r.presta_ville || '',
+      prestaAdresse: r.presta_adresse || '',
+      prestaVille: formatCityName(r.presta_ville || ''),
+      prestaCodePostal: r.presta_code_postal || '',
+      prestaPays: r.presta_pays || '',
       prestaIsVerified: Boolean(r.presta_is_verified),
+      prestaIsProfileComplete: r.presta_is_profile_complete,
+      prestaIsCatalogVisible: r.presta_is_catalog_visible,
+      prestaMissingLabels: prestaMissing,
       specialty: r.presta_nom_salon || '—',
     };
   }
@@ -512,7 +524,7 @@
     const tb = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html || '<tr><td colspan="6" style="color:var(--text3);padding:20px;text-align:center;">Aucune donnée</td></tr>'; };
 
     tb('verifications-tbody', (store.verifications || []).map((v) => `
-      <tr><td>${v.display_name || '—'}</td><td>${v.nom_salon || '—'}</td><td>${v.ville || '—'}</td>
+      <tr><td>${v.display_name || '—'}</td><td>${v.nom_salon || '—'}</td><td>${formatCityName(v.ville) || '—'}</td>
       <td><span class="badge ${v.is_verified ? 'active' : 'pending'}">${v.is_verified ? 'Vérifié' : 'En attente'}</span></td>
       <td style="display:flex;gap:6px;">
         ${!v.is_verified ? `<button class="btn btn-gold btn-sm" onclick="MBLive.approveVer('${v.id}')"><i class="fa-solid fa-check"></i></button>` : ''}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/models/domain/user/prestataire_profile.dart';
+import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/layout/discovery_responsive.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
@@ -84,7 +85,7 @@ class PrestataireDetailHero extends ConsumerWidget {
         child: _HeroIconButton(
           icon: Icons.arrow_back_rounded,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: () => Navigator.maybePop(context),
+          onPressed: () => context.popOrGoHome(),
           onCover: true,
         ),
       ),

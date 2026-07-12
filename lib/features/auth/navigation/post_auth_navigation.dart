@@ -11,6 +11,7 @@ import '../../prestataire/navigation/prestataire_navigation.dart';
 import '../../profile/logic/become_prestataire_flow_resume.dart';
 import '../../prestataire/providers/profile/current_prestataire_provider.dart';
 import '../../../core/models/user_role.dart';
+import '../../booking/logic/pending_booking_intent.dart';
 import '../logic/account_ban_handler.dart';
 import '../logic/auth_role_cache.dart';
 import '../register/storage/register_wizard_draft_store.dart';
@@ -92,6 +93,12 @@ abstract final class PostAuthNavigation {
     final router = _router(container);
 
     if (await _redirectIfBannedWithContainer(router, container)) return null;
+
+    final pendingBookingPath = await PendingBookingIntent.consumeBookingPath();
+    if (pendingBookingPath != null) {
+      await LocalCacheService.instance.setSelectedRole('client');
+      return pendingBookingPath;
+    }
 
     final roles = await container.read(myRolesProvider.future);
     await AuthRoleCache.persistServerRoles(roles);

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/logic/text/city_name_format.dart';
 import '../../core/logic/address/postal_address.dart';
 import '../../core/errors/supabase_error_handler.dart';
 import '../../core/models/domain/user/lieu_travail.dart';
@@ -49,7 +50,7 @@ class PostSignupProfileService {
       operation: 'postSignup.updateClientExtras',
       action: () async {
         final formatted = address.formattedLine.trim();
-        final city = address.ville.trim();
+        final city = formatCityName(address.ville);
         final postalCode = address.codePostal.trim();
         final country = address.pays.trim();
         final query = [
@@ -114,7 +115,7 @@ class PostSignupProfileService {
         await _client.from('prestataire_profiles').upsert({
           'user_id': userId,
           'nom_salon': nomSalon.trim(),
-          'ville': ville.trim(),
+          'ville': formatCityName(ville),
           if (adresse != null && adresse.trim().isNotEmpty)
             'adresse': adresse.trim(),
           if (codePostal != null && codePostal.trim().isNotEmpty)

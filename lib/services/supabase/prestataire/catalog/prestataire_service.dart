@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/logic/text/city_name_format.dart';
+import '../../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../../core/logic/market/prestataire_market_filter.dart';
 import '../../../../core/config/market_config.dart';
 import '../../../../core/errors/supabase_error_handler.dart';
@@ -99,7 +101,7 @@ class PrestataireService {
           .range(filters.offset, to);
 
       var profiles = (profilesRes as List<dynamic>)
-          .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+          .map((e) => SupabaseDomainCodec.prestataireProfile(e as Map<String, dynamic>))
           .toList();
       profiles = await _keepCatalogVisibleProfiles(profiles);
       if (profiles.isEmpty) return [];
@@ -157,7 +159,7 @@ class PrestataireService {
               .limit(mapCatalogFetchCap);
 
           var profiles = (profilesRes as List<dynamic>)
-              .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+              .map((e) => SupabaseDomainCodec.prestataireProfile(e as Map<String, dynamic>))
               .toList();
           profiles = await _keepCatalogVisibleProfiles(profiles);
           if (profiles.isEmpty) return [];
@@ -203,7 +205,7 @@ class PrestataireService {
 
           final profilesById = <String, PrestataireProfile>{};
           for (final raw in profilesRes as List<dynamic>) {
-            final p = PrestataireProfile.fromJson(
+            final p = SupabaseDomainCodec.prestataireProfile(
               Map<String, dynamic>.from(raw as Map),
             );
             profilesById[p.id] = p;
@@ -260,7 +262,9 @@ class PrestataireService {
           .eq('id', id)
           .maybeSingle();
       if (response == null) return null;
-      final profile = PrestataireProfile.fromJson(Map<String, dynamic>.from(response));
+      final profile = SupabaseDomainCodec.prestataireProfile(
+        Map<String, dynamic>.from(response),
+      );
       final visible = await _keepCatalogVisibleProfiles([profile]);
       return visible.isEmpty ? null : visible.first;
     },
@@ -295,7 +299,7 @@ class PrestataireService {
               .eq('user_id', userId)
               .maybeSingle();
           if (response == null) return null;
-          return PrestataireProfile.fromJson(
+          return SupabaseDomainCodec.prestataireProfile(
             Map<String, dynamic>.from(response),
           );
         },
@@ -311,7 +315,7 @@ class PrestataireService {
                 'user_id': prestataire.userId,
                 'nom_salon': prestataire.nomSalon.trim(),
                 'bio': prestataire.bio.trim(),
-                'ville': prestataire.ville.trim(),
+                'ville': formatCityName(prestataire.ville),
                 if (prestataire.adresse != null &&
                     prestataire.adresse!.trim().isNotEmpty)
                   'adresse': prestataire.adresse!.trim(),
@@ -371,7 +375,7 @@ class PrestataireService {
 
       final rows = response as List<dynamic>;
       final allProfiles = rows
-          .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+          .map((e) => SupabaseDomainCodec.prestataireProfile(e as Map<String, dynamic>))
           .toList();
       final all = await _keepCatalogVisibleProfiles(allProfiles);
 
@@ -423,7 +427,7 @@ class PrestataireService {
           .limit(limit);
 
       final profiles = (response as List<dynamic>)
-          .map((e) => PrestataireProfile.fromJson(e as Map<String, dynamic>))
+          .map((e) => SupabaseDomainCodec.prestataireProfile(e as Map<String, dynamic>))
           .where((p) => p.noteMoyenne != null)
           .toList();
       return _keepCatalogVisibleProfiles(profiles);

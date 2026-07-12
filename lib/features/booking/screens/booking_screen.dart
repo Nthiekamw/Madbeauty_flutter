@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -7,6 +9,7 @@ import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../router/navigation_extensions.dart';
+import '../logic/pending_booking_intent.dart';
 import '../models/booked_slots_query.dart';
 import '../models/booking_slot.dart';
 import '../../prestataire/providers/agenda/disponibilite_provider.dart';
@@ -43,6 +46,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _syncPendingBookingIntent();
       final notifier = ref.read(bookingSelectionProvider.notifier);
       notifier.initialize(serviceId: widget.serviceId);
       final day = _parseInitialDay(widget.initialDay);
@@ -50,6 +54,25 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         notifier.selectDay(day, day);
       }
     });
+  }
+
+  void _syncPendingBookingIntent() {
+    final prestataireId = widget.prestataireId?.trim();
+    if (prestataireId == null || prestataireId.isEmpty) {
+      unawaited(PendingBookingIntent.clear());
+      return;
+    }
+    if (ref.read(isGuestBrowsingProvider)) {
+      unawaited(
+        PendingBookingIntent.remember(
+          prestataireId: prestataireId,
+          serviceId: widget.serviceId,
+          initialDay: widget.initialDay,
+        ),
+      );
+      return;
+    }
+    unawaited(PendingBookingIntent.clear());
   }
 
   DateTime? _parseInitialDay(String? raw) {

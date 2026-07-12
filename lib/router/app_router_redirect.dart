@@ -116,6 +116,7 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
   }
 
   if (auth.isLoading) {
+    if (isPublicPrestataireProfilePath(location)) return null;
     if (location == AppRoutes.register ||
         location == AppRoutes.registerVerifyEmail ||
         location == AppRoutes.login ||
@@ -132,6 +133,13 @@ String? appRouterRedirect(Ref ref, GoRouterState state) {
   }
 
   if (!isAuthenticated) {
+    // Fiche partagée : accessible sans compte ; mode invité pour poursuivre (réservation).
+    if (isPublicPrestataireProfilePath(location)) {
+      if (!guestMode) {
+        scheduleMicrotask(() => ref.read(guestModeProvider.notifier).enable());
+      }
+      return null;
+    }
     if (guestMode) {
       if (GuestRoutePolicy.requiresAccount(location)) {
         return location == AppRoutes.bookingConfirmation

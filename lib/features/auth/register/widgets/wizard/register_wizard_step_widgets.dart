@@ -15,6 +15,7 @@ import '../../../../../services/auth/apple_auth_service.dart';
 import '../../../widgets/auth_or_divider.dart';
 import '../../../widgets/auth_role_card.dart';
 import '../../../widgets/auth_step_section.dart';
+import '../../../../../features/booking/logic/pending_booking_intent.dart';
 import '../../logic/register_wizard_constants.dart';
 import '../../providers/register_wizard_form_controller.dart';
 import '../register_client_avatar_picker.dart';
@@ -273,6 +274,7 @@ class RegisterWizardRoleStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pendingBooking = PendingBookingIntent.read() != null;
     return AuthFormCard(
       compact: true,
       child: Column(
@@ -286,6 +288,18 @@ class RegisterWizardRoleStep extends StatelessWidget {
               height: 1.35,
             ),
           ),
+          if (pendingBooking) ...[
+            const SizedBox(height: RegisterWizardConstants.fieldGap),
+            Text(
+              AuthStrings.registerPendingBookingRoleHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: AppFonts.body,
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ],
           const SizedBox(height: RegisterWizardConstants.sectionGap),
           AuthRoleCard(
             compact: true,
