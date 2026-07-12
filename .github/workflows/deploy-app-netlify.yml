@@ -17,6 +17,7 @@ on:
       - main
       - master
       - features/v2
+      - deploy
     paths:
       - 'lib/**'
       - 'web/**'
