@@ -214,6 +214,17 @@ function formatCityName(value) {
     .join(' ');
 }
 
+function formatStreetLine({ adresse, numero, voieType, voieNom } = {}) {
+  const raw = String(adresse ?? '').trim();
+  if (raw.includes(',')) {
+    const street = raw.split(',')[0].trim();
+    if (street) return street;
+  }
+  if (raw) return raw;
+  const built = [numero, voieType, voieNom].filter(Boolean).join(' ').trim();
+  return built || '—';
+}
+
 function formatAddressLine({
   adresse,
   numero,
@@ -223,10 +234,19 @@ function formatAddressLine({
   ville,
   pays,
 } = {}) {
-  const street = adresse?.trim()
-    || [numero, voieType, voieNom].filter(Boolean).join(' ').trim();
+  const raw = String(adresse ?? '').trim();
+  if (raw.includes(',')) {
+    const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (pays && pays.length === 2) {
+      const paysUpper = pays.toUpperCase();
+      const hasPays = parts.some((p) => p.toUpperCase() === paysUpper);
+      if (!hasPays) parts.push(paysUpper);
+    }
+    return parts.join(' · ');
+  }
+  const street = formatStreetLine({ adresse: raw, numero, voieType, voieNom });
   const locality = [codePostal, formatCityName(ville)].filter(Boolean).join(' ').trim();
-  const parts = [street, locality, pays].filter((p) => p && String(p).trim());
+  const parts = [street === '—' ? '' : street, locality, pays].filter((p) => p && String(p).trim());
   return parts.length ? parts.join(' · ') : '—';
 }
 
@@ -517,11 +537,8 @@ function renderPrestataireSubscriptions() {
   tbody.innerHTML = rows.map((row, i) => {
     const name = row.display_name || row.nom_salon || row.email || '—';
     const salon = [row.nom_salon, formatCityName(row.ville)].filter(Boolean).join(' · ') || '—';
-    const address = formatAddressLine({
+    const address = formatStreetLine({
       adresse: row.adresse,
-      codePostal: row.code_postal,
-      ville: formatCityName(row.ville),
-      pays: row.pays,
     });
     const missing = row.missing_labels || row.missingLabels || [];
     const stripeRef = row.stripe_subscription_id
@@ -604,11 +621,8 @@ function renderTables() {
   if (clientsTbody) {
     if (!clients.length) clientsTbody.innerHTML = emptyRow(8, 'Aucun client');
     else clients.forEach((u, i) => {
-      const address = formatAddressLine({
+      const address = formatStreetLine({
         adresse: u.clientAdresse,
-        codePostal: u.clientCodePostal,
-        ville: u.clientVille,
-        pays: u.clientPays,
       });
       clientsTbody.innerHTML += `
       <tr>
@@ -626,13 +640,10 @@ function renderTables() {
 
   const prestaTbody = document.getElementById('presta-tbody');
   if (prestaTbody) {
-    if (!prestas.length) prestaTbody.innerHTML = emptyRow(10, 'Aucun prestataire');
+    if (!prestas.length) prestaTbody.innerHTML = emptyRow(11, 'Aucun prestataire');
     else prestas.forEach((u, i) => {
-      const address = formatAddressLine({
+      const address = formatStreetLine({
         adresse: u.prestaAdresse,
-        codePostal: u.prestaCodePostal,
-        ville: u.prestaVille,
-        pays: u.prestaPays,
       });
       prestaTbody.innerHTML += `
       <tr>

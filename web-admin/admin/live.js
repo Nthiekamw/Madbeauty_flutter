@@ -985,7 +985,7 @@
       const status = document.getElementById('subs-filter-status')?.value || 'all';
       const tbody = document.getElementById('subs-tbody');
       if (tbody) {
-        tbody.innerHTML = emptyRow(9, '<i class="fa-solid fa-spinner fa-spin"></i> Chargement…');
+        tbody.innerHTML = emptyRow(12, '<i class="fa-solid fa-spinner fa-spin"></i> Chargement…');
       }
       try {
         const rows = await MBApi.searchPrestataireSubscriptions(q, status, 500, 0);
@@ -994,7 +994,7 @@
       } catch (e) {
         store.prestataireSubscriptions = [];
         if (tbody) {
-          tbody.innerHTML = emptyRow(9, escapeHtml(e.message || 'Erreur chargement abonnements'));
+          tbody.innerHTML = emptyRow(12, escapeHtml(e.message || 'Erreur chargement abonnements'));
         }
         showToast(e.message || 'Erreur recherche abonnements');
       }
