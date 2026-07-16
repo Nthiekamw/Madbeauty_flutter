@@ -26,9 +26,24 @@ class MarketCountryNotifier extends Notifier<String> {
     );
   }
 
-  /// Rafraîchit le marché auto (locale / GPS) à chaque démarrage.
+  /// Rafraîchit le marché auto (locale / GPS) au démarrage.
+  ///
+  /// Sur mobile, demande la localisation si la locale n’indique pas un pays
+  /// supporté (ex. `fr` sans région → ambigu FR/BE/CA).
   Future<bool> autoDetectIfNeeded(MarketDetectionService detection) async {
-    final detected = await detection.tryDetect();
+    final profileCountry = ref.read(currentClientProfileProvider).maybeWhen(
+          data: (profile) => profile?.pays?.trim(),
+          orElse: () => null,
+        );
+    // Adresse profil = source de vérité : pas d’override GPS.
+    if (profileCountry != null && profileCountry.isNotEmpty) {
+      final resolved = _resolveCurrent();
+      if (resolved == state) return false;
+      state = resolved;
+      return true;
+    }
+
+    final detected = await detection.tryDetect(requestPermission: true);
     final cache = LocalCacheService.instance;
     final previousAuto = cache.marketCountryAutoCode?.trim();
 
@@ -39,8 +54,8 @@ class MarketCountryNotifier extends Notifier<String> {
         state = resolved;
         return true;
       }
-      await cache.remove(LocalCacheService.marketCountryAutoCodeKey);
-      await cache.setMarketCountryAutoDetected(false);
+      // Ne pas effacer un auto code valide si la détection échoue ponctuellement
+      // (GPS timeout) — on conserve le cache.
       final resolved = _resolveCurrent();
       if (resolved == state) return false;
       state = resolved;
@@ -53,6 +68,39 @@ class MarketCountryNotifier extends Notifier<String> {
 
     final resolved = _resolveCurrent();
     if (resolved == state && previousAuto == normalized) return false;
+    state = resolved;
+    return true;
+  }
+
+  /// Met à jour le marché auto depuis une position GPS (ex. après autorisation).
+  /// Ignoré si le client a déjà un pays d’adresse en profil.
+  Future<bool> applyDetectedCoordinates({
+    required double latitude,
+    required double longitude,
+    required MarketDetectionService detection,
+  }) async {
+    final profileCountry = ref.read(currentClientProfileProvider).maybeWhen(
+          data: (profile) => profile?.pays?.trim(),
+          orElse: () => null,
+        );
+    if (profileCountry != null && profileCountry.isNotEmpty) return false;
+
+    final iso = await detection.countryFromCoordinates(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    if (iso == null) return false;
+
+    final normalized = MarketConfig.normalizeCountryCode(iso);
+    final cache = LocalCacheService.instance;
+    final previous = cache.marketCountryAutoCode?.trim();
+    if (previous == normalized && state == normalized) return false;
+
+    await cache.setMarketCountryAutoCode(normalized);
+    await cache.setMarketCountryAutoDetected(true);
+
+    final resolved = _resolveCurrent();
+    if (resolved == state) return false;
     state = resolved;
     return true;
   }

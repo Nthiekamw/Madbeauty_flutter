@@ -19,12 +19,19 @@ void main() {
       );
     });
 
-    test('falls back to FR for French language without country', () {
+    test('does not force FR for French language without country', () {
+      // Ambigu (FR/BE/CA/CH) — le GPS doit trancher sur mobile.
+      expect(
+        MarketDetectionService.tryCountryFromLocale(
+          locale: const Locale('fr'),
+        ),
+        isNull,
+      );
       expect(
         MarketDetectionService.countryFromLocale(
           locale: const Locale('fr'),
         ),
-        'FR',
+        'FR', // fallback explicite uniquement
       );
     });
 

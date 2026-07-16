@@ -533,9 +533,10 @@ class PrestataireService {
     int fetchCap = 48,
     String? pays,
   }) {
+    final ref = discoveryReferenceForMarket(pays);
     return getNearby(
-      kDiscoveryReferenceLatitude,
-      kDiscoveryReferenceLongitude,
+      ref.latitude,
+      ref.longitude,
       rayonKm,
       limit: limit,
       fetchCap: fetchCap,

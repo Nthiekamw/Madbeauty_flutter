@@ -8,10 +8,11 @@ bool prestataireProfileMatchesMarket(
   String marketCountry,
 ) {
   final code = MarketConfig.normalizeCountryCode(marketCountry);
-  final profileCountry = profile.pays?.trim().toUpperCase();
-  if (profileCountry == null || profileCountry.isEmpty) {
+  final rawPays = profile.pays?.trim();
+  if (rawPays == null || rawPays.isEmpty) {
     return code == MarketConfig.defaultCountryCode;
   }
+  final profileCountry = MarketConfig.normalizeCountryCode(rawPays);
   return profileCountry == code;
 }
 

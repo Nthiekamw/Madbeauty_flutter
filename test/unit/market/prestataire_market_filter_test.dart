@@ -25,14 +25,18 @@ void main() {
       );
     });
 
-    test('null pays counts as France market only', () {
+    test('normalizes full country labels', () {
       expect(
-        prestataireProfileMatchesMarket(_profile(), MarketConfig.defaultCountryCode),
+        prestataireProfileMatchesMarket(_profile(pays: 'Belgique'), 'BE'),
         isTrue,
       );
       expect(
-        prestataireProfileMatchesMarket(_profile(), 'BE'),
-        isFalse,
+        prestataireProfileMatchesMarket(_profile(pays: 'France'), 'FR'),
+        isTrue,
+      );
+      expect(
+        prestataireProfileMatchesMarket(_profile(pays: 'Canada'), 'CA'),
+        isTrue,
       );
     });
   });

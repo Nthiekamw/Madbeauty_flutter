@@ -15,6 +15,7 @@ import '../models/listing_quick_filter.dart';
 import '../../prestataire/providers/catalog/prestataire_filters_provider.dart';
 import '../../prestataire/providers/catalog/prestataires_provider.dart';
 import '../providers/client_location_provider.dart';
+import '../providers/discovery_origin_provider.dart';
 import '../providers/listing_catalog_provider.dart';
 import '../../../router/navigation_extensions.dart';
 import '../providers/listing_map_catalog_provider.dart';
@@ -460,6 +461,13 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         ),
       ),
       data: (filtered) {
+        // Mode carte : afficher la carte même si la liste filtrée est vide
+        // (catalogue carte distinct, coords lat/lng). Évite un faux « aucun
+        // résultat » qui masque les pins sur web.
+        if (prefs.viewMode == ListingViewMode.map) {
+          return _buildMapBody(theme, state, filtered);
+        }
+
         if (filtered.isEmpty) {
           return _refreshableScrollable(
             state: state,
@@ -474,10 +482,6 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
               },
             ),
           );
-        }
-
-        if (prefs.viewMode == ListingViewMode.map) {
-          return _buildMapBody(theme, state, filtered);
         }
 
         final showFooter =
@@ -509,6 +513,8 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       _ => null,
     };
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+    final filters = ref.watch(prestatairesFilterProvider);
+    final origin = ref.watch(discoveryOriginProvider);
 
     return mapEntriesAsync.when(
       loading: () => Padding(
@@ -526,6 +532,21 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
         ),
       ),
       data: (mapEntries) {
+        // Appliquer les mêmes filtres que la liste (recherche, ville, catégorie).
+        final visibleEntries = filterPrestataireEntries(
+          mapEntries,
+          filters,
+          origin: origin,
+        );
+        // Si la liste filtrée a des résultats avec coords, prioriser leur
+        // intersection pour rester cohérent avec l’écran liste.
+        final filteredIds = {for (final e in filtered) e.profile.id};
+        final entries = filteredIds.isEmpty
+            ? visibleEntries
+            : visibleEntries
+                .where((e) => filteredIds.contains(e.profile.id))
+                .toList(growable: false);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -556,7 +577,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
                       fit: StackFit.expand,
                       children: [
                         ListingMapView(
-                          entries: mapEntries,
+                          entries: entries,
                           clientLocation: clientLocation,
                           locationLoading: locationAsync.isLoading,
                           borderRadius: BorderRadius.zero,

@@ -91,7 +91,7 @@ class _ListingMapViewState extends State<ListingMapView> {
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.madbeauty.app',
+                userAgentPackageName: 'com.madbeauty.madbeauty',
               ),
               MarkerLayer(
                 markers: [

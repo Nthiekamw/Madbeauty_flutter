@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/logic/text/city_name_format.dart';
 import '../../core/logic/address/postal_address.dart';
+import '../../core/logic/address/postal_country_format.dart';
 import '../../core/errors/supabase_error_handler.dart';
 import '../../core/models/domain/user/lieu_travail.dart';
 import '../location/geocoding_service.dart';
@@ -62,7 +63,7 @@ class PostSignupProfileService {
             ? null
             : await _geocoding.geocodeAddress(
                 query,
-                countryIsoCode: country,
+                countryIsoCode: postalCountryIso2(country),
               );
         await _client.from('client_profiles').update({
           'adresse': formatted.isEmpty ? null : formatted,

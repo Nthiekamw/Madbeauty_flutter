@@ -19,6 +19,7 @@ import '../../logic/auth_role_cache.dart';
 import '../../../../services/auth/post_signup_profile_service.dart';
 import '../../../../services/auth/role_service.dart';
 import '../../../../services/offline/offline_actions.dart';
+import '../../../../core/providers/market_country_provider.dart';
 import '../../../../services/storage/local_cache_service.dart';
 import '../../../../services/supabase/profile/profile_providers.dart';
 import '../../../../services/supabase/storage/storage_providers.dart';
@@ -246,6 +247,9 @@ class RegisterWizardSubmitHandler {
         userId: uid,
         address: form.postalAddress,
       );
+      await providerContainer
+          .read(marketCountryProvider.notifier)
+          .applySavedClientAddressCountry(form.postalAddress.pays);
       await _saveClientAvatar(form, uid, providerContainer);
     }
 

@@ -15,9 +15,9 @@ abstract final class MarketCountryResolver {
   }) {
     _migrateLegacyMarketCountry(cache);
 
-    final profile = profileCountryCode?.trim();
-    if (profile != null && profile.isNotEmpty) {
-      return MarketConfig.normalizeCountryCode(profile);
+    final profileRaw = profileCountryCode?.trim();
+    if (profileRaw != null && profileRaw.isNotEmpty) {
+      return MarketConfig.normalizeCountryCode(profileRaw);
     }
 
     final autoCached = cache.marketCountryAutoCode?.trim();
