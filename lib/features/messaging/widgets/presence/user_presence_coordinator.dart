@@ -51,7 +51,11 @@ class _UserPresenceCoordinatorState extends ConsumerState<UserPresenceCoordinato
     if (user == null) return;
     final service = ref.read(profileServiceProvider);
     if (service == null) return;
-    await service.touchLastSeen(userId: user.id);
+    try {
+      await service.touchLastSeen(userId: user.id);
+    } on Object {
+      // Best-effort : timeout / session expirée ne doivent pas planter l’UI.
+    }
   }
 
   @override
