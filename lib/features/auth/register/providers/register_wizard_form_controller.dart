@@ -94,10 +94,14 @@ class RegisterWizardFormController extends ChangeNotifier {
 
   bool get isPresta => roleChoice == UserRole.prestataire;
 
+  /// Après Sign in with Apple : jamais redemander prénom/nom (App Store 4).
   bool get oauthIdentitySectionHidden =>
-      signedUpViaOAuth && oauthProvidedPrenom && oauthProvidedNom;
+      signedUpViaApple ||
+      (signedUpViaOAuth && oauthProvidedPrenom && oauthProvidedNom);
 
-  bool get oauthEmailHidden => signedUpViaOAuth && oauthProvidedEmail;
+  /// Après Sign in with Apple : e-mail toujours fourni (ou private relay).
+  bool get oauthEmailHidden =>
+      signedUpViaApple || (signedUpViaOAuth && oauthProvidedEmail);
 
   bool get showOAuthPhoneHint =>
       signedUpViaOAuth && phone.text.trim().isEmpty;
@@ -195,6 +199,9 @@ class RegisterWizardFormController extends ChangeNotifier {
     oauthProvidedPrenom = draft.oauthProvidedPrenom;
     oauthProvidedNom = draft.oauthProvidedNom;
     oauthProvidedEmail = draft.oauthProvidedEmail;
+    if (signedUpViaApple) {
+      _markAppleIdentitySatisfied();
+    }
     pendingGoogleSignIn = draft.pendingGoogleSignIn;
     phoneRequiredOnExtras = draft.phoneRequiredOnExtras;
     pendingEmailVerification = draft.pendingEmailVerification;
@@ -345,7 +352,21 @@ class RegisterWizardFormController extends ChangeNotifier {
 
     _syncOAuthProvidedFlags(meta);
     signedUpViaOAuth = true;
+    if (signedUpViaApple) {
+      _markAppleIdentitySatisfied();
+    }
     notifyListeners();
+  }
+
+  /// Marque identité Apple comme satisfaite + fallback silencieux si besoin.
+  void _markAppleIdentitySatisfied() {
+    oauthProvidedPrenom = true;
+    oauthProvidedNom = true;
+    oauthProvidedEmail = true;
+    if (prenom.text.trim().isEmpty) {
+      final local = email.text.trim().split('@').first.trim();
+      prenom.text = local.isNotEmpty ? local : 'Utilisateur';
+    }
   }
 
   static bool _isAppleOAuthUser(User user) {
@@ -377,7 +398,10 @@ class RegisterWizardFormController extends ChangeNotifier {
     if (providedPrenom) oauthProvidedPrenom = true;
     if (providedNom) oauthProvidedNom = true;
     if (providedEmail) oauthProvidedEmail = true;
-    if (viaApple) signedUpViaApple = true;
+    if (viaApple) {
+      signedUpViaApple = true;
+      _markAppleIdentitySatisfied();
+    }
     notifyListeners();
   }
 
@@ -413,6 +437,9 @@ class RegisterWizardFormController extends ChangeNotifier {
   }
 
   bool validateStep0() {
+    if (signedUpViaApple) {
+      _markAppleIdentitySatisfied();
+    }
     final errors = RegisterWizardValidation.validateStep0(
       prenom: prenom.text.trim(),
       nom: nom.text.trim(),
@@ -422,6 +449,7 @@ class RegisterWizardFormController extends ChangeNotifier {
       password: password.text,
       confirmPassword: confirm.text,
       signedUpViaOAuth: signedUpViaOAuth,
+      signedUpViaApple: signedUpViaApple,
       oauthProvidedPrenom: oauthProvidedPrenom,
       oauthProvidedNom: oauthProvidedNom,
     );

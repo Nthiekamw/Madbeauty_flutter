@@ -57,13 +57,17 @@ abstract final class RegisterWizardValidation {
     required String password,
     required String confirmPassword,
     required bool signedUpViaOAuth,
+    bool signedUpViaApple = false,
     bool oauthProvidedPrenom = false,
     bool oauthProvidedNom = false,
   }) {
-    final pErr = !oauthProvidedPrenom && prenom.isEmpty
+    // Guideline App Store 4 — Sign in with Apple : ne jamais exiger
+    // nom / e-mail après Authentication Services (déjà fournis par Apple).
+    final skipIdentity = signedUpViaApple;
+    final pErr = !skipIdentity && !oauthProvidedPrenom && prenom.isEmpty
         ? AuthStrings.registerValidationPrenomEmpty
         : null;
-    final nErr = !oauthProvidedNom && nom.isEmpty
+    final nErr = !skipIdentity && !oauthProvidedNom && nom.isEmpty
         ? AuthStrings.registerValidationNomEmpty
         : null;
     final phErr = RegisterValidators.phoneLocal(phone, dialCode: dialCode);

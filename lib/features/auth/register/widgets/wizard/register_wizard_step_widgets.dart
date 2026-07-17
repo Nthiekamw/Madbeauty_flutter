@@ -175,7 +175,9 @@ class RegisterWizardIdentityStep extends StatelessWidget {
             if (form.oauthIdentitySectionHidden && form.oauthEmailHidden) ...[
               const SizedBox(height: 8),
               Text(
-                AuthStrings.registerOAuthIdentityPrefilledHint,
+                form.signedUpViaApple
+                    ? AuthStrings.registerAppleIdentitySatisfiedHint
+                    : AuthStrings.registerOAuthIdentityPrefilledHint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontFamily: AppFonts.body,
                   color: onSurfaceVariant,

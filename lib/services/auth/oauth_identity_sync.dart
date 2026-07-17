@@ -22,14 +22,18 @@ class OAuthIdentityHints {
   ) {
     final given = credential.givenName?.trim();
     final family = credential.familyName?.trim();
-    final credentialEmail = credential.email?.trim();
     final sessionEmail = user.email?.trim();
+    final metaHints = fromMetadata(user.userMetadata, email: sessionEmail);
 
+    // Apple fournit toujours un e-mail de session (réel ou private relay).
+    // Les noms ne sont renvoyés qu'à la 1ʳᵉ autorisation : on accepte aussi
+    // les métadonnées déjà synchronisées.
     return OAuthIdentityHints(
-      providedPrenom: given != null && given.isNotEmpty,
-      providedNom: family != null && family.isNotEmpty,
-      providedEmail: (credentialEmail != null && credentialEmail.isNotEmpty) ||
-          (sessionEmail != null && sessionEmail.isNotEmpty),
+      providedPrenom: (given != null && given.isNotEmpty) ||
+          metaHints.providedPrenom,
+      providedNom: (family != null && family.isNotEmpty) ||
+          metaHints.providedNom,
+      providedEmail: true,
     );
   }
 

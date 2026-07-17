@@ -49,6 +49,28 @@ void main() {
       expect(errors.step0Valid, isTrue);
     });
 
+    test('Sign in with Apple : jamais exiger prénom/nom/e-mail', () {
+      final errors = RegisterWizardValidation.validateStep0(
+        prenom: '',
+        nom: '',
+        phone: base.phone,
+        dialCode: base.dialCode,
+        email: '',
+        password: '',
+        confirmPassword: '',
+        signedUpViaOAuth: true,
+        signedUpViaApple: true,
+        oauthProvidedPrenom: false,
+        oauthProvidedNom: false,
+      );
+
+      expect(errors.prenomError, isNull);
+      expect(errors.nomError, isNull);
+      expect(errors.emailError, isNull);
+      expect(errors.passwordError, isNull);
+      expect(errors.step0Valid, isTrue);
+    });
+
     test('exige encore le nom si seul le prénom vient d OAuth', () {
       final errors = RegisterWizardValidation.validateStep0(
         prenom: 'Ada',

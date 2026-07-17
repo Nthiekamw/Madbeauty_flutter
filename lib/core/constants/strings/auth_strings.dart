@@ -26,7 +26,6 @@ abstract final class AuthStrings {
   static const String authAppleSupabaseLinkFailed =
       'Compte Apple reconnu mais la session n’a pas pu s’ouvrir. '
       'Vérifie que le fournisseur Apple est activé dans Supabase (Auth → Providers).';
-  static const String registerAppleConnected = 'Connecté avec Apple';
   static const String authGoogleWebRedirectMissing =
       'Connexion Google web : configure SUPABASE_WEB_REDIRECT_URL dans .env '
       '(ex. http://localhost:7357) et ajoute cette URL dans Supabase → Auth → Redirect URLs.';
@@ -328,6 +327,7 @@ abstract final class AuthStrings {
   static const String registerActionGoogle = 'Continuer avec Google';
   static const String registerGooglePhoneHint =
       'Google ne fournit pas ton numéro : renseigne-le pour finaliser ton compte.';
+  static const String registerAppleConnected = 'Connecté avec Apple';
   static const String registerGoogleConnected =
       'Compte Google connecté. Vérifie tes informations puis appuie sur Continuer.';
   static const String registerGoogleConnectedBanner =
@@ -338,6 +338,8 @@ abstract final class AuthStrings {
       'Ton fournisseur de connexion ne partage pas ton numéro : renseigne-le pour finaliser ton compte.';
   static const String registerOAuthIdentityPrefilledHint =
       'Ton prénom, ton nom et ton e-mail ont été enregistrés automatiquement via ta connexion.';
+  static const String registerAppleIdentitySatisfiedHint =
+      'Prénom, nom et e-mail fournis par Apple — tu n’as pas à les ressaisir.';
   static const String registerSuccessTitle = 'Inscription réussie';
   static const String registerSuccessBody =
       'Ton compte MadBeauty est prêt. Tu peux commencer à utiliser l’application.';
