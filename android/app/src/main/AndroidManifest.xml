@@ -67,7 +67,17 @@
                     android:host="madbeauty.app"
                     android:pathPrefix="/prestataire"/>
             </intent-filter>
-            <!-- App Links prod web : https://madbeauty-app.netlify.app/prestataire/{id} -->
+            <!-- App Links prod web : https://madbeauty.pro/prestataire/{id} -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="madbeauty.pro"
+                    android:pathPrefix="/prestataire"/>
+            </intent-filter>
+            <!-- Ancienne URL Netlify (liens partagés existants) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

@@ -86,7 +86,7 @@ void main() {
     test('HTTPS Netlify /prestataire/:uuid', () {
       final path = AppDeepLinks.routePathFromUri(
         Uri.parse(
-          'https://madbeauty-app.netlify.app/prestataire/'
+          'https://madbeauty.pro/prestataire/'
           '55555555-5555-5555-5555-555555555555',
         ),
       );

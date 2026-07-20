@@ -4,7 +4,7 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 # Build prod : URL OAuth web = site Netlify (pas localhost du .env dev).
-$prodWebRedirect = 'https://madbeauty-app.netlify.app'
+$prodWebRedirect = 'https://madbeauty.pro'
 if (-not $env:SUPABASE_WEB_REDIRECT_URL -or $env:SUPABASE_WEB_REDIRECT_URL -match 'localhost|127\.0\.0\.1') {
   $env:SUPABASE_WEB_REDIRECT_URL = $prodWebRedirect
   Write-Host "SUPABASE_WEB_REDIRECT_URL -> $prodWebRedirect (deploy prod)"

@@ -96,7 +96,7 @@ https://madbeauty-web.netlify.app/
 ## Application web (catalogue / réservation)
 
 ```
-https://madbeauty-app.netlify.app
+https://madbeauty.pro
 ```
 
 ---
@@ -125,7 +125,7 @@ Première version de MadBeauty : découverte de prestataires beauté afro, rése
 ## Informations de contact
 
 - **URL d’assistance** : `https://madbeauty-web.netlify.app/contact.html`
-- **E-mail** : `mailto:williamnthiekam392@gmail.com`
+- **E-mail** : `mailto:contact@madbeauty.pro`
 - **URL marketing** (optionnel) : `https://madbeauty-web.netlify.app`
 
 ---

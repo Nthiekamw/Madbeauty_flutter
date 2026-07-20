@@ -3,16 +3,16 @@
 ## Configuration prod (`.env`)
 
 ```env
-SHARE_BASE_URL=https://madbeauty-app.netlify.app
+SHARE_BASE_URL=https://madbeauty.pro
 ```
 
 L’app partage alors des liens du type :
 
-`https://madbeauty-app.netlify.app/prestataire/{uuid}`
+`https://madbeauty.pro/prestataire/{uuid}`
 
 | `SHARE_BASE_URL` | Lien partagé |
 |------------------|--------------|
-| `https://madbeauty-app.netlify.app` | `{base}/prestataire/UUID` (recommandé prod) |
+| `https://madbeauty.pro` | `{base}/prestataire/UUID` (recommandé prod) |
 | *(vide, Supabase OK)* | Edge Function Supabase (fallback / anciens liens) |
 | `custom` | `com.madbeauty.madbeauty://prestataire/UUID` |
 
@@ -43,7 +43,7 @@ powershell -File scripts/deploy_app_netlify.ps1
 
 1. Fiche prestataire → **Partager**.
 2. Envoie-toi le lien (SMS / WhatsApp).
-3. Le lien doit être `https://madbeauty-app.netlify.app/prestataire/...`
+3. Le lien doit être `https://madbeauty.pro/prestataire/...`
 4. Sans compte : la fiche s’affiche.
 
 ### 2. Deep link app (émulateur / USB)

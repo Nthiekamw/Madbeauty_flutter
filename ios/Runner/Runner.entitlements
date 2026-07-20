@@ -11,6 +11,7 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:madbeauty.app</string>
+		<string>applinks:madbeauty.pro</string>
 		<string>applinks:madbeauty-app.netlify.app</string>
 	</array>
 </dict>

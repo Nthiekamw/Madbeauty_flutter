@@ -1,7 +1,7 @@
 import { corsHeaders } from "../_shared/cors.ts";
 
 const APP_SCHEME = "com.madbeauty.madbeauty";
-const DEFAULT_WEB_SHARE_BASE = "https://madbeauty-app.netlify.app";
+const DEFAULT_WEB_SHARE_BASE = "https://madbeauty.pro";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

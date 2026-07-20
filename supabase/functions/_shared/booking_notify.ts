@@ -135,7 +135,7 @@ export async function sendFcmNotification(opts: {
   const accessToken = await fetchAccessToken(sa);
   const projectId = sa.project_id!;
   const appOrigin = (Deno.env.get("APP_WEB_ORIGIN") ??
-    "https://madbeauty-app.netlify.app").replace(/\/$/, "");
+    "https://madbeauty.pro").replace(/\/$/, "");
   const iconUrl = `${appOrigin}/icons/Icon-notification-192.png`;
   const badgeUrl = `${appOrigin}/icons/Icon-badge-72.png`;
   const url =

@@ -5,7 +5,7 @@
 #   NETLIFY_APP_SITE_ID    — ID du site Netlify dédié à l'app web
 #   SUPABASE_URL
 #   SUPABASE_ANON_KEY
-#   SUPABASE_WEB_REDIRECT_URL — URL publique de l'app (ex. https://madbeauty-app.netlify.app)
+#   SUPABASE_WEB_REDIRECT_URL — URL publique de l'app (ex. https://madbeauty.pro)
 # Optionnels : STRIPE_PUBLISHABLE_KEY, FIREBASE_WEB_VAPID_KEY, SUPABASE_EMAIL_REDIRECT_URL, SHARE_BASE_URL
 
 name: Deploy app web Netlify

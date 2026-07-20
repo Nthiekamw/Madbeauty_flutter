@@ -32,6 +32,11 @@ abstract final class LegalUrlsConfig {
     defaultValue: 'https://madbeauty-web.netlify.app/child-safety.html',
   );
 
-  /// Contact support / RGPD (en attendant support@madbeauty.app).
-  static const String supportEmail = 'williamnthiekam392@gmail.com';
+  /// Contact support / RGPD.
+  ///
+  /// Surcharge : `--dart-define=SUPPORT_EMAIL=contact@madbeauty.pro`
+  static const String supportEmail = String.fromEnvironment(
+    'SUPPORT_EMAIL',
+    defaultValue: 'contact@madbeauty.pro',
+  );
 }
