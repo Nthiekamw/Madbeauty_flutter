@@ -102,6 +102,8 @@ class AppTextField extends StatelessWidget {
         labelText: label,
         hintText: hint,
         errorText: errorText,
+        // Sans ça, Material tronque l’erreur sur 1 ligne avec « … » (écrans étroits).
+        errorMaxLines: 3,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: filled,

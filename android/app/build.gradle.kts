@@ -43,7 +43,9 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // stripe_android 12.x exige minSdk 23.
         minSdk = maxOf(23, flutter.minSdkVersion)
-        targetSdk = flutter.targetSdkVersion
+        // Google Play (31 août 2026) : mises à jour → API 36 (Android 16) minimum.
+        // Flutter 3.32 fournit encore targetSdk 35 par défaut.
+        targetSdk = maxOf(36, flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

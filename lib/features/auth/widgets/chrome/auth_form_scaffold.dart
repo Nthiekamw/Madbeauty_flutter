@@ -101,7 +101,11 @@ class AuthFormScaffold extends StatelessWidget {
                       24,
                       0,
                       24,
-                      headerCompact ? 12 : 24,
+                      // Marge sous le dernier champ / erreur pour ne pas
+                      // coller à la barre « Continuer ».
+                      bottomBar != null
+                          ? (headerCompact ? 20 : 28)
+                          : (headerCompact ? 12 : 24),
                     ),
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,

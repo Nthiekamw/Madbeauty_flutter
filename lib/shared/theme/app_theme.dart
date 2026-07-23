@@ -235,6 +235,8 @@ class AppTheme {
         hintStyle: TextStyle(color: onField.withValues(alpha: 0.85)),
         prefixIconColor: focus,
         suffixIconColor: onField,
+        // Évite la troncature « … » des messages d’erreur longs (ex. règles mdp).
+        errorMaxLines: 3,
         border: AuthFormStyles.outlineBorder(
           border.withValues(alpha: isDark ? 0.45 : 0.5),
         ),
