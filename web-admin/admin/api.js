@@ -73,6 +73,20 @@ window.MBApi = (() => {
         p_from_date: filters.from || null,
         p_to_date: filters.to || null,
       }),
+    listBoutiqueOrders: (limit = 200, filters = {}) =>
+      rpc('admin_list_boutique_orders', {
+        p_limit: limit,
+        p_statut: filters.statut || null,
+        p_payment_status: filters.paymentStatus || null,
+        p_from_date: filters.from || null,
+        p_to_date: filters.to || null,
+        p_search: filters.search || null,
+      }),
+    listBoutiqueCatalog: (limit = 200, search = '') =>
+      rpc('admin_list_boutique_catalog', {
+        p_limit: limit,
+        p_search: search || null,
+      }),
     listBugReports: (onlyPending = false, limit = 50) =>
       rpc('admin_list_bug_reports', { p_only_pending: onlyPending, p_limit: limit }),
     listSupportThreads: (limit = 50) => rpc('admin_list_user_support_threads', { p_limit: limit }),

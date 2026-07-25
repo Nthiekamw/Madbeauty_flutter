@@ -1,5 +1,5 @@
 ﻿// Données partagées (var = global entre ui.js et live.js)
-var USERS = [], RDV_DATA = [], PAYMENTS = [], FEEDBACKS = [], CHATS = [];
+var USERS = [], RDV_DATA = [], BOUTIQUE_ORDERS = [], BOUTIQUE_CATALOG = [], PAYMENTS = [], FEEDBACKS = [], CHATS = [];
 var PAYS_DATA = [], ZONES = [];
 var userListFilter = { type: 'all', status: 'all', query: '' };
 
@@ -18,7 +18,7 @@ function toggleBlur() {
 // ─── NAVIGATION ─────────────────────────────────────────────
 const sectionTitles = {
   dashboard:'Tableau de bord', users:'Utilisateurs', clients:'Clients',
-  presta:'Prestataires', rdv:'Rendez-vous', zones:'Zones géographiques',
+  presta:'Prestataires',   rdv:'Rendez-vous', boutique:'Boutique', zones:'Zones géographiques',
   finance:'Finances', forfaits:'Forfaits', messages:'Messagerie', feedback:'Retours',
   'pays-users':'Utilisateurs par pays', 'pays-revenue':'Revenus par pays',
   verifications:'Vérifications', 'content-reports':'Signalements contenu',
@@ -577,7 +577,7 @@ function renderPrestataireSubscriptions() {
 }
 
 function renderTables() {
-  ['recent-users-tbody','all-users-tbody','clients-tbody','presta-tbody','rdv-tbody','payments-tbody'].forEach(id => {
+  ['recent-users-tbody','all-users-tbody','clients-tbody','presta-tbody','rdv-tbody','payments-tbody','boutique-orders-tbody','boutique-catalog-tbody'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
@@ -681,6 +681,45 @@ function renderTables() {
       <td><span class="badge ${r.status==='confirme'?'active':'danger'}">${r.status==='confirme'?'Confirmé':'Annulé'}</span></td>
     </tr>`;
     });
+  }
+
+  const boutiqueOrdersTbody = document.getElementById('boutique-orders-tbody');
+  if (boutiqueOrdersTbody) {
+    if (!BOUTIQUE_ORDERS.length) {
+      boutiqueOrdersTbody.innerHTML = emptyRow(7, 'Aucune commande boutique');
+    } else {
+      BOUTIQUE_ORDERS.forEach((o) => {
+        boutiqueOrdersTbody.innerHTML += `
+    <tr>
+      <td>${o.date}</td>
+      <td>${o.client}</td>
+      <td>${o.presta}</td>
+      <td>${o.items}</td>
+      <td style="font-weight:600;" class="blur-val">${o.amount}</td>
+      <td><span class="badge ${o.statusBadge}">${o.statut}</span></td>
+      <td>${o.payment}</td>
+    </tr>`;
+      });
+    }
+  }
+
+  const boutiqueCatalogTbody = document.getElementById('boutique-catalog-tbody');
+  if (boutiqueCatalogTbody) {
+    if (!BOUTIQUE_CATALOG.length) {
+      boutiqueCatalogTbody.innerHTML = emptyRow(6, 'Aucun catalogue boutique');
+    } else {
+      BOUTIQUE_CATALOG.forEach((c) => {
+        boutiqueCatalogTbody.innerHTML += `
+    <tr>
+      <td>${c.salon}</td>
+      <td>${c.ville}</td>
+      <td>${c.produits}</td>
+      <td>${c.packs}</td>
+      <td>${c.open}</td>
+      <td>${c.total}</td>
+    </tr>`;
+      });
+    }
   }
 
   const payTbody = document.getElementById('payments-tbody');
@@ -1858,8 +1897,12 @@ async function confirmSendPush() {
     } else if (recipients === 0) {
       setPushResult('Échec : aucun destinataire avec token FCM pour cette audience.', 'error');
     } else if (sent === 0 && failed > 0) {
+      const stale = r?.staleTokensCleared ?? 0;
+      const hint = stale > 0
+        ? 'Token FCM périmé (app désinstallée ou notifications révoquées). Demande à l’utilisateur de rouvrir MadBeauty avec les notifs autorisées, puis réessaie.'
+        : (r.firstError || 'Vérifie la configuration Firebase.');
       setPushResult(
-        `Échec d’envoi : 0 / ${recipients} destinataire(s). ${r.firstError || 'Vérifie la configuration Firebase.'}`,
+        `Échec d’envoi : 0 / ${recipients} destinataire(s). ${hint}`,
         'error',
       );
     } else if (failed > 0) {

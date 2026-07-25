@@ -215,9 +215,12 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
       if (result.credentialError != null) {
         AppSnackBar.error(context, result.credentialError!);
       } else if (result.failed > 0 && result.sent == 0) {
+        final detail = result.staleTokensCleared > 0
+            ? DiscProfile.adminPushTokenUnregisteredHint
+            : result.firstError;
         AppSnackBar.warning(
           context,
-          result.firstError != null ? '$summary\n${result.firstError}' : summary,
+          detail != null ? '$summary\n$detail' : summary,
         );
       } else {
         AppSnackBar.show(

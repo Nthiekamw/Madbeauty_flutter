@@ -655,6 +655,64 @@
     } catch (e) { showToast(e.message || 'Erreur réservations'); }
   };
 
+  function boutiqueStatusBadge(statut) {
+    if (/cancel|annul/i.test(statut || '')) return 'danger';
+    if (/ready|preparing|paid|pay_on_site/i.test(statut || '')) return 'active';
+    if (/pending/i.test(statut || '')) return 'pending';
+    return 'pro';
+  }
+
+  window.reloadBoutiqueOrders = async () => {
+    const statut = document.getElementById('boutique-filter-statut')?.value || '';
+    const paymentStatus = document.getElementById('boutique-filter-payment')?.value || '';
+    const fromVal = document.getElementById('boutique-filter-from')?.value;
+    const toVal = document.getElementById('boutique-filter-to')?.value;
+    const search = document.getElementById('boutique-filter-search')?.value?.trim() || '';
+    const filters = {
+      statut: statut || null,
+      paymentStatus: paymentStatus || null,
+      from: fromVal ? new Date(`${fromVal}T00:00:00`).toISOString() : null,
+      to: toVal ? new Date(`${toVal}T23:59:59`).toISOString() : null,
+      search: search || null,
+    };
+    try {
+      const orders = await MBApi.listBoutiqueOrders(200, filters);
+      store.boutiqueOrders = orders || [];
+      BOUTIQUE_ORDERS = (orders || []).map((o) => ({
+        date: fmtDate(o.created_at),
+        client: o.client_name || '—',
+        presta: o.prestataire_salon || '—',
+        items: o.items_count ?? 0,
+        amount: o.amount_cents != null ? eur(o.amount_cents) : '—',
+        statut: o.statut || '—',
+        payment: o.payment_status || '—',
+        statusBadge: boutiqueStatusBadge(o.statut),
+      }));
+      const open = (orders || []).filter((o) =>
+        ['pay_on_site', 'paid', 'preparing', 'ready', 'pending_payment'].includes(o.statut)
+      ).length;
+      set('sec-boutique-sub', `${(orders || []).length} commande(s) · ${open} ouverte(s)`);
+      renderTables();
+    } catch (e) { showToast(e.message || 'Erreur commandes boutique'); }
+  };
+
+  window.reloadBoutiqueCatalog = async () => {
+    const search = document.getElementById('boutique-catalog-search')?.value?.trim() || '';
+    try {
+      const rows = await MBApi.listBoutiqueCatalog(200, search);
+      store.boutiqueCatalog = rows || [];
+      BOUTIQUE_CATALOG = (rows || []).map((r) => ({
+        salon: r.prestataire_salon || '—',
+        ville: r.ville || '—',
+        produits: `${r.produits_actifs ?? 0}/${r.produits_total ?? 0}`,
+        packs: `${r.packs_actifs ?? 0}/${r.packs_total ?? 0}`,
+        open: r.commandes_ouvertes ?? 0,
+        total: r.commandes_total ?? 0,
+      }));
+      renderTables();
+    } catch (e) { showToast(e.message || 'Erreur catalogues boutique'); }
+  };
+
   async function loadSupportThread(threadId) {
     const chat = CHATS.find((c) => c.id === threadId);
     if (!chat) return;
@@ -678,7 +736,7 @@
     const [
       analytics, users, reservations, countries, bugs, threads,
       verifications, contentReports, photos, audit, verificationEvents, trial, fee, prestataireTrials,
-      subscriptionPlans,
+      subscriptionPlans, boutiqueOrders, boutiqueCatalog,
     ] = await Promise.all([
       safeLoad('analytics', () => MBApi.getAnalytics(), {}),
       safeLoad('users', () => MBApi.searchUsers('', 200), []),
@@ -695,6 +753,8 @@
       safeLoad('fee', () => MBApi.getPlatformFee(), {}),
       safeLoad('prestataireTrials', () => MBApi.searchPrestataireTrials('', 200), []),
       safeLoad('subscriptionPlans', () => MBApi.getSubscriptionPlans(), {}),
+      safeLoad('boutiqueOrders', () => MBApi.listBoutiqueOrders(200), []),
+      safeLoad('boutiqueCatalog', () => MBApi.listBoutiqueCatalog(200), []),
     ]);
 
     store.analytics = analytics;
@@ -725,6 +785,30 @@
       commission: r.amount_cents != null ? eur(r.amount_cents) : '—',
       status: /annul|cancel/i.test(r.statut || '') ? 'annule' : 'confirme',
     }));
+    store.boutiqueOrders = boutiqueOrders || [];
+    store.boutiqueCatalog = boutiqueCatalog || [];
+    BOUTIQUE_ORDERS = (boutiqueOrders || []).map((o) => ({
+      date: fmtDate(o.created_at),
+      client: o.client_name || '—',
+      presta: o.prestataire_salon || '—',
+      items: o.items_count ?? 0,
+      amount: o.amount_cents != null ? eur(o.amount_cents) : '—',
+      statut: o.statut || '—',
+      payment: o.payment_status || '—',
+      statusBadge: boutiqueStatusBadge(o.statut),
+    }));
+    BOUTIQUE_CATALOG = (boutiqueCatalog || []).map((r) => ({
+      salon: r.prestataire_salon || '—',
+      ville: r.ville || '—',
+      produits: `${r.produits_actifs ?? 0}/${r.produits_total ?? 0}`,
+      packs: `${r.packs_actifs ?? 0}/${r.packs_total ?? 0}`,
+      open: r.commandes_ouvertes ?? 0,
+      total: r.commandes_total ?? 0,
+    }));
+    const boutiqueOpen = (boutiqueOrders || []).filter((o) =>
+      ['pay_on_site', 'paid', 'preparing', 'ready', 'pending_payment'].includes(o.statut)
+    ).length;
+    set('sec-boutique-sub', `${(boutiqueOrders || []).length} commande(s) · ${boutiqueOpen} ouverte(s)`);
     PAYMENTS = (reservations || [])
       .filter((r) => r.payment_status === 'captured')
       .slice(0, 50)

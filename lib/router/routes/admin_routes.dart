@@ -4,6 +4,7 @@ import '../../features/admin/screens/admin_account_deletion_screen.dart';
 import '../../features/admin/screens/admin_booking_platform_fee_screen.dart';
 import '../../features/admin/screens/admin_subscription_trial_screen.dart';
 import '../../features/admin/screens/admin_audit_screen.dart';
+import '../../features/admin/screens/admin_boutique_orders_screen.dart';
 import '../../features/admin/screens/admin_push_screen.dart';
 import '../../features/admin/screens/admin_bug_reports_screen.dart';
 import '../../features/admin/screens/admin_content_reports_screen.dart';
@@ -114,6 +115,11 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminReservations,
         path: AppRoutes.adminReservations,
         builder: (context, state) => const AdminReservationsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminBoutiqueOrders,
+        path: AppRoutes.adminBoutiqueOrders,
+        builder: (context, state) => const AdminBoutiqueOrdersScreen(),
       ),
       GoRoute(
         name: AppRouteNames.adminAudit,

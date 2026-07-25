@@ -202,6 +202,37 @@ export function isFirebaseCredentialError(message: string): boolean {
     lower.includes("403");
 }
 
+/** Token FCM expiré / app désinstallée / token refresh non synchronisé. */
+export function isFcmTokenUnregisteredError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("unregistered") ||
+    lower.includes("notregistered") ||
+    lower.includes('"errorcode":"unregistered"') ||
+    (lower.includes("404") && lower.includes("not_found"));
+}
+
+/** Efface un token FCM mort pour éviter les re-échecs admin / webhooks. */
+export async function clearStaleFcmTokenForUser(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  opts: { userId: string; token?: string },
+): Promise<void> {
+  let q = supabase
+    .from("user_profiles")
+    .update({
+      fcm_token: null,
+      fcm_token_updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", opts.userId);
+  if (opts.token) {
+    q = q.eq("fcm_token", opts.token);
+  }
+  const { error } = await q;
+  if (error) {
+    console.error("clearStaleFcmTokenForUser:", error);
+  }
+}
+
 export function normalizeStatut(raw: unknown): string {
   if (raw == null) return "";
   return String(raw).trim().toLowerCase().replaceAll("é", "e").replaceAll(

@@ -45,6 +45,9 @@
     <a class="nav-item" onclick="showSection('rdv',this)">
       <svg class="nav-svg" viewBox="0 0 22 22" fill="none"><rect x="3" y="6" width="16" height="13" rx="2.5" fill="white" opacity=".15"/><rect x="3" y="6" width="16" height="13" rx="2.5" stroke="#FDBA74" stroke-width="1.5"/><rect x="3" y="6" width="16" height="5" rx="2.5" fill="#FDBA74"/><rect x="8" y="3" width="2" height="5" rx="1" fill="#FDBA74"/><rect x="12" y="3" width="2" height="5" rx="1" fill="#FDBA74"/><circle cx="8" cy="14" r="1.5" fill="#FDBA74"/><path d="M8 14l2 2 5-4" stroke="#6EE7B7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Rendez-vous
     </a>
+    <a class="nav-item" onclick="showSection('boutique',this)">
+      <svg class="nav-svg" viewBox="0 0 22 22" fill="none"><path d="M4 8h14l-1.2 10.2A2 2 0 0 1 14.8 20H7.2a2 2 0 0 1-2-1.8L4 8Z" stroke="#FDBA74" stroke-width="1.5"/><path d="M8 8V6a3 3 0 0 1 6 0v2" stroke="#FDBA74" stroke-width="1.5" stroke-linecap="round"/></svg> Boutique
+    </a>
     <a class="nav-item" onclick="showSection('zones',this)">
       <svg class="nav-svg" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="9" r="4" fill="#A78BFA" opacity=".3"/><circle cx="11" cy="9" r="2" fill="#A78BFA"/><path d="M11 5C8.791 5 7 6.791 7 9c0 3 4 8 4 8s4-5 4-8c0-2.209-1.791-4-4-4z" stroke="#A78BFA" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="11" cy="19" rx="6" ry="1.5" fill="#A78BFA" opacity=".2"/></svg> Zones géo.
     </a>
@@ -495,6 +498,53 @@
         <table class="data-table">
           <thead><tr><th>Client</th><th>Prestataire</th><th>Service</th><th>Date</th><th>Ville</th><th>Commission</th><th>Statut</th></tr></thead>
           <tbody id="rdv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ██ BOUTIQUE █████████████████████████████████████████ -->
+    <div class="section" id="sec-boutique">
+      <div class="page-header">
+        <div><h2>Boutique</h2><p id="sec-boutique-sub">Commandes produits & catalogues</p></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <select class="form-input" id="boutique-filter-statut" style="width:auto;" onchange="reloadBoutiqueOrders()">
+            <option value="">Tous statuts</option>
+            <option value="pending_payment">Paiement en cours</option>
+            <option value="pay_on_site">Sur place</option>
+            <option value="paid">Payée</option>
+            <option value="preparing">Préparation</option>
+            <option value="ready">Prête</option>
+            <option value="completed">Terminée</option>
+            <option value="canceled">Annulée</option>
+          </select>
+          <select class="form-input" id="boutique-filter-payment" style="width:auto;" onchange="reloadBoutiqueOrders()">
+            <option value="">Tous paiements</option>
+            <option value="unpaid">Non payé</option>
+            <option value="pending">En attente</option>
+            <option value="paid">Payé</option>
+            <option value="failed">Échoué</option>
+          </select>
+          <input class="form-input" type="date" id="boutique-filter-from" style="width:auto;" onchange="reloadBoutiqueOrders()">
+          <input class="form-input" type="date" id="boutique-filter-to" style="width:auto;" onchange="reloadBoutiqueOrders()">
+          <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="boutique-filter-search" placeholder="Salon ou cliente…" onkeydown="if(event.key==='Enter')reloadBoutiqueOrders()"></div>
+          <button class="btn btn-outline btn-sm" type="button" onclick="reloadBoutiqueOrders()"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><div class="card-title">Commandes récentes</div></div>
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Cliente</th><th>Salon</th><th>Articles</th><th>Montant</th><th>Statut</th><th>Paiement</th></tr></thead>
+          <tbody id="boutique-orders-tbody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Catalogues prestataires</div>
+          <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="boutique-catalog-search" placeholder="Filtrer salon…" onkeydown="if(event.key==='Enter')reloadBoutiqueCatalog()"></div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Salon</th><th>Ville</th><th>Produits</th><th>Packs</th><th>Cmd ouvertes</th><th>Cmd total</th></tr></thead>
+          <tbody id="boutique-catalog-tbody"></tbody>
         </table>
       </div>
     </div>

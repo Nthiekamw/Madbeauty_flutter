@@ -15,6 +15,13 @@ abstract final class DiscPrestaDetail {
   static const experienceTitle = 'Expérience';
   static const experienceYearsLabel = 'Durée d’activité';
   static const workLocationTitle = 'Lieu de prestation';
+  static const actionDirections = 'Itinéraire';
+  static const actionDirectionsHint =
+      'Ouvre Maps pour te guider jusqu’au lieu de prestation.';
+  static const directionsUnavailable =
+      'Adresse non géolocalisée : impossible d’ouvrir l’itinéraire.';
+  static const directionsOpenFailed =
+      'Impossible d’ouvrir Maps. Réessaie dans un instant.';
   static const horairesTitle = 'Horaires d’ouverture';
   static const horairesEmptyTitle = 'Horaires non renseignés';
   static const horairesEmptyBody =

@@ -43,6 +43,39 @@ abstract final class DiscList {
   static const mapNoGeoHint =
       'Les prestataires doivent renseigner latitude et longitude pour apparaître sur la carte.';
   static const mapOpenDetail = 'Voir la fiche';
+  static const mapDirections = 'Itinéraire';
+  static const mapDirectionsOpenExternal = 'Ouvrir dans Maps';
+  static const mapDirectionsLoading = 'Calcul de l’itinéraire…';
+  static const mapDirectionsNeedLocation =
+      'Active ta localisation pour voir le trajet sur la carte.';
+  static const mapDirectionsOpenFailed =
+      'Impossible d’ouvrir Maps. Réessaie dans un instant.';
+  static String mapRouteDistanceKm(double km) {
+    if (km < 1) return '${(km * 1000).round()} m';
+    if (km < 10) return '${km.toStringAsFixed(1)} km';
+    return '${km.round()} km';
+  }
+
+  static String mapRouteDuration(Duration d) {
+    final totalMin = d.inMinutes;
+    if (totalMin < 1) return '< 1 min';
+    if (totalMin < 60) return '$totalMin min';
+    final h = totalMin ~/ 60;
+    final m = totalMin % 60;
+    if (m == 0) return '${h} h';
+    return '${h} h ${m} min';
+  }
+
+  static String mapRouteSummary({
+    required double distanceKm,
+    required Duration duration,
+    required bool approximate,
+  }) {
+    final base =
+        '${mapRouteDistanceKm(distanceKm)} · ${mapRouteDuration(duration)}';
+    return approximate ? '$base (approx.)' : base;
+  }
+
   static const mapExpandHint = 'Agrandir la carte';
   static const mapCollapseHint = 'Réduire la carte';
   static const emptyFilterTitle =

@@ -6,7 +6,7 @@ void main() {
     test('HTTPS /prestataire/:uuid', () {
       final path = AppDeepLinks.routePathFromUri(
         Uri.parse(
-          'https://madbeauty.app/prestataire/11111111-1111-1111-1111-111111111111',
+          'https://madbeauty.pro/prestataire/11111111-1111-1111-1111-111111111111',
         ),
       );
       expect(

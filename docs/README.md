@@ -28,6 +28,7 @@ Point d’entrée de la doc technique et produit. Commencer par **[ARCHITECTURE.
 | [notifications/PUSH.md](./notifications/PUSH.md) | FCM, webhooks réservation / messages |
 | [store/APP_STORE_CONNECT.md](./store/APP_STORE_CONNECT.md) | Textes & confidentialité App Store |
 | [store/IOS_SETUP.md](./store/IOS_SETUP.md) | Sign in with Apple, capabilities, APNs |
+| [store/ANDROID_APP_LINKS.md](./store/ANDROID_APP_LINKS.md) | App Links Play / `assetlinks.json` |
 | [engineering/REFACTOR_PLAN.md](./engineering/REFACTOR_PLAN.md) | Dette architecture, phases restantes |
 
 Hors `docs/` : checklist auth prod → [`supabase/AUTH_PRODUCTION_CHECKLIST.md`](../supabase/AUTH_PRODUCTION_CHECKLIST.md).

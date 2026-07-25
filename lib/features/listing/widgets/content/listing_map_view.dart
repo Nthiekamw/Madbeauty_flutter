@@ -6,11 +6,12 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/geo/discovery_reference.dart';
 import '../../../../core/logic/prestataire/prestataire_map_visibility.dart';
 import '../../../../core/models/domain/catalog/prestataire_catalog_entry.dart';
-import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../services/location/geolocation_service.dart';
+import '../../../../services/location/route_directions_service.dart';
 import '../../screens/listing_map_fullscreen_screen.dart';
+import 'listing_map_prestataire_card.dart';
 
 class ListingMapView extends StatefulWidget {
   const ListingMapView({
@@ -38,8 +39,19 @@ class ListingMapView extends StatefulWidget {
 
 class _ListingMapViewState extends State<ListingMapView> {
   final _mapController = MapController();
+  final _routeService = RouteDirectionsService();
   bool _mapReady = false;
   PrestataireCatalogEntry? _selectedEntry;
+  RouteDirections? _route;
+  bool _routeLoading = false;
+  int _routeRequestId = 0;
+
+  @override
+  void dispose() {
+    _routeRequestId++;
+    _routeService.close();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant ListingMapView oldWidget) {
@@ -47,7 +59,7 @@ class _ListingMapViewState extends State<ListingMapView> {
     final selectedId = _selectedEntry?.profile.id;
     if (selectedId != null &&
         !widget.entries.any((entry) => entry.profile.id == selectedId)) {
-      _selectedEntry = null;
+      _clearSelection();
     }
 
     final oldLocation = oldWidget.clientLocation;
@@ -56,7 +68,79 @@ class _ListingMapViewState extends State<ListingMapView> {
         newLocation != null &&
         (oldLocation?.latitude != newLocation.latitude ||
             oldLocation?.longitude != newLocation.longitude)) {
-      _moveToClientLocation(newLocation);
+      if (_selectedEntry != null) {
+        _loadRouteForSelection(_selectedEntry!);
+      } else {
+        _moveToClientLocation(newLocation);
+      }
+    }
+  }
+
+  void _clearSelection() {
+    _routeRequestId++;
+    setState(() {
+      _selectedEntry = null;
+      _route = null;
+      _routeLoading = false;
+    });
+  }
+
+  void _selectEntry(PrestataireCatalogEntry entry) {
+    setState(() {
+      _selectedEntry = entry;
+      _route = null;
+    });
+    _loadRouteForSelection(entry);
+  }
+
+  Future<void> _loadRouteForSelection(PrestataireCatalogEntry entry) async {
+    final client = widget.clientLocation;
+    final destLat = entry.profile.latitude;
+    final destLng = entry.profile.longitude;
+    if (client == null || destLat == null || destLng == null) {
+      setState(() {
+        _route = null;
+        _routeLoading = false;
+      });
+      return;
+    }
+
+    final requestId = ++_routeRequestId;
+    setState(() => _routeLoading = true);
+
+    final route = await _routeService.drivingRoute(
+      originLat: client.latitude,
+      originLng: client.longitude,
+      destLat: destLat,
+      destLng: destLng,
+    );
+
+    if (!mounted || requestId != _routeRequestId) return;
+
+    setState(() {
+      _route = route;
+      _routeLoading = false;
+    });
+    _fitRoute(route);
+  }
+
+  void _fitRoute(RouteDirections route) {
+    if (!_mapReady || route.points.length < 2) return;
+    try {
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: LatLngBounds.fromPoints(route.points),
+          padding: EdgeInsets.fromLTRB(
+            widget.overlayPadding.left + 36,
+            widget.overlayPadding.top + 48,
+            widget.overlayPadding.right + 36,
+            widget.overlayPadding.bottom + 140,
+          ),
+          maxZoom: 15,
+        ),
+      );
+    } catch (_) {
+      // Bounds invalides : on laisse la caméra en place.
     }
   }
 
@@ -70,90 +154,116 @@ class _ListingMapViewState extends State<ListingMapView> {
     }
 
     final center = _centerFor(geoEntries, widget.clientLocation);
+    final routePoints = _route?.points ?? const <LatLng>[];
 
     final mapStack = Stack(
-        fit: StackFit.expand,
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: geoEntries.length == 1 ? 13 : 11,
-              onTap: (_, __) => setState(() => _selectedEntry = null),
-              onMapReady: () {
-                _mapReady = true;
-                final clientLocation = widget.clientLocation;
-                if (clientLocation != null) {
-                  _moveToClientLocation(clientLocation);
-                }
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.madbeauty.madbeauty',
-              ),
-              MarkerLayer(
-                markers: [
-                  if (widget.clientLocation != null)
-                    Marker(
-                      point: LatLng(
-                        widget.clientLocation!.latitude,
-                        widget.clientLocation!.longitude,
-                      ),
-                      width: 46,
-                      height: 46,
-                      child: const _ClientMarker(),
-                    ),
-                  for (final entry in geoEntries)
-                    Marker(
-                      point: LatLng(
-                        entry.profile.latitude!,
-                        entry.profile.longitude!,
-                      ),
-                      width: 52,
-                      height: 52,
-                      child: _PrestataireMarker(
-                        entry: entry,
-                        selected:
-                            _selectedEntry?.profile.id == entry.profile.id,
-                        onTap: () => setState(() => _selectedEntry = entry),
-                      ),
-                    ),
-                ],
-              ),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('OpenStreetMap contributors'),
-                ],
-              ),
-            ],
+      fit: StackFit.expand,
+      children: [
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: geoEntries.length == 1 ? 13 : 11,
+            onTap: (_, __) => _clearSelection(),
+            onMapReady: () {
+              _mapReady = true;
+              final route = _route;
+              if (route != null) {
+                _fitRoute(route);
+                return;
+              }
+              final clientLocation = widget.clientLocation;
+              if (clientLocation != null) {
+                _moveToClientLocation(clientLocation);
+              }
+            },
           ),
-          if (widget.showFullscreenButton)
-            Positioned(
-              bottom: widget.overlayPadding.bottom,
-              right: widget.overlayPadding.right,
-              child: ListingMapOverlayButton(
-                icon: Icons.open_in_full_rounded,
-                tooltip: DiscList.mapExpandHint,
-                onTap: () => _openFullscreen(context),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.madbeauty.madbeauty',
+            ),
+            if (routePoints.length >= 2)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: routePoints,
+                    strokeWidth: 4.5,
+                    color: theme.colorScheme.tertiary.withValues(alpha: 0.92),
+                    borderStrokeWidth: 2,
+                    borderColor: theme.colorScheme.surface.withValues(
+                      alpha: 0.85,
+                    ),
+                  ),
+                ],
               ),
+            MarkerLayer(
+              markers: [
+                if (widget.clientLocation != null)
+                  Marker(
+                    point: LatLng(
+                      widget.clientLocation!.latitude,
+                      widget.clientLocation!.longitude,
+                    ),
+                    width: 46,
+                    height: 46,
+                    child: const _ClientMarker(),
+                  ),
+                for (final entry in geoEntries)
+                  Marker(
+                    point: LatLng(
+                      entry.profile.latitude!,
+                      entry.profile.longitude!,
+                    ),
+                    width: 52,
+                    height: 52,
+                    child: _PrestataireMarker(
+                      entry: entry,
+                      selected:
+                          _selectedEntry?.profile.id == entry.profile.id,
+                      onTap: () => _selectEntry(entry),
+                    ),
+                  ),
+              ],
             ),
-          if (widget.locationLoading)
-            Positioned(
-              top: widget.overlayPadding.top,
-              right: widget.overlayPadding.right,
-              child: _LocationLoadingBadge(theme: theme),
+            const RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution('OpenStreetMap contributors'),
+              ],
             ),
-          if (_selectedEntry != null)
-            Positioned(
-              left: widget.overlayPadding.left,
-              right: widget.overlayPadding.right,
-              bottom: widget.overlayPadding.bottom,
-              child: _PrestataireMapCard(entry: _selectedEntry!),
+          ],
+        ),
+        if (widget.showFullscreenButton)
+          Positioned(
+            bottom: widget.overlayPadding.bottom +
+                (_selectedEntry != null ? 132 : 0),
+            right: widget.overlayPadding.right,
+            child: ListingMapOverlayButton(
+              icon: Icons.open_in_full_rounded,
+              tooltip: DiscList.mapExpandHint,
+              onTap: () => _openFullscreen(context),
             ),
-        ],
-      );
+          ),
+        if (widget.locationLoading)
+          Positioned(
+            top: widget.overlayPadding.top,
+            right: widget.overlayPadding.right,
+            child: _LocationLoadingBadge(theme: theme),
+          ),
+        if (_selectedEntry != null)
+          Positioned(
+            left: widget.overlayPadding.left,
+            right: widget.overlayPadding.right,
+            bottom: widget.overlayPadding.bottom,
+            child: ListingMapPrestataireCard(
+              entry: _selectedEntry!,
+              clientLocation: widget.clientLocation,
+              route: _route,
+              routeLoading: _routeLoading,
+            ),
+          ),
+      ],
+    );
 
     if (widget.borderRadius == BorderRadius.zero) {
       return mapStack;
@@ -276,91 +386,6 @@ class _ClientMarker extends StatelessWidget {
   }
 }
 
-class _PrestataireMapCard extends StatelessWidget {
-  const _PrestataireMapCard({required this.entry});
-
-  final PrestataireCatalogEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final ville = entry.profile.ville?.trim();
-    final note = entry.profile.noteMoyenne;
-
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        elevation: 8,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                foregroundColor: theme.colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.spa_outlined),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      entry.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (ville != null && ville.isNotEmpty)
-                          Text(
-                            ville,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        if (note != null)
-                          Text(
-                            '★ ${note.toStringAsFixed(1)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonal(
-                onPressed: () =>
-                    context.pushPrestataireDetail(entry.profile.id),
-                style: FilledButton.styleFrom(
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                ),
-                child: const Text(DiscList.mapOpenDetail),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class ListingMapOverlayButton extends StatelessWidget {
   const ListingMapOverlayButton({
     super.key,
@@ -465,4 +490,3 @@ class _MapEmptyState extends StatelessWidget {
     );
   }
 }
-

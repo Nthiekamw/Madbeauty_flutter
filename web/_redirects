@@ -1,1 +1,5 @@
+# Remplace le catch-all SPA pour Digital Asset Links / Universal Links.
+# Dossier source : web/well-known/ (sans point — Netlify ignore souvent .well-known).
+/.well-known/*  /well-known/:splat  200!
+
 /*    /index.html   200

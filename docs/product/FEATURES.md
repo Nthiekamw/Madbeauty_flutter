@@ -70,6 +70,7 @@ Synthèse de ce qui est **en place** sur la branche de travail actuelle vs **pro
 
 - Boutique produits + packs/offres (services et/ou produits) — panier, checkout, commandes presta + historique client (`feature/boutique-packs`)
   - Pack multi-services au **prix pack** (créneau durée cumulée) : prévu en itération suivante
+  - Admin : commandes + catalogues (Flutter + web-admin)
 - Modération avis / signalements avancée
 - Badge `is_verified` (process manuel ou tiers)
 - Admin : litiges, exports, outils pays / plans

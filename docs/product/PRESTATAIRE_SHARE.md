@@ -60,8 +60,7 @@ https://vjjasrdoyguqkftfhaei.supabase.co/functions/v1/prestataire_share?prestata
 
 Doit rediriger vers Netlify sans erreur 401.
 
-## Forcer le schéma app seul
+## App Links Android (Play Console)
 
-```env
-SHARE_BASE_URL=custom
-```
+Si Play signale « Échec de la validation de domaine » : voir [../store/ANDROID_APP_LINKS.md](../store/ANDROID_APP_LINKS.md)  
+(`assetlinks.json` sur `madbeauty.pro`, pas `madbeauty.app`).

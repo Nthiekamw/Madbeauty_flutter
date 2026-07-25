@@ -141,6 +141,8 @@ extension AppNavigationX on BuildContext {
   void pushAdminAccountDeletions() =>
       pushNamed(AppRouteNames.adminAccountDeletions);
   void pushAdminReservations() => pushNamed(AppRouteNames.adminReservations);
+  void pushAdminBoutiqueOrders() =>
+      pushNamed(AppRouteNames.adminBoutiqueOrders);
   void pushAdminAudit() => pushNamed(AppRouteNames.adminAudit);
   void pushAdminPush() => pushNamed(AppRouteNames.adminPush);
   void pushAdminSubscriptionTrial() =>

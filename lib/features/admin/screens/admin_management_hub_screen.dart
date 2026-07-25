@@ -64,6 +64,12 @@ class AdminManagementHubScreen extends ConsumerWidget {
                         onTap: () => context.pushAdminReservations(),
                       ),
                       AdminHubActionTile(
+                        icon: Icons.storefront_outlined,
+                        title: DiscProfile.actionAdminBoutique,
+                        subtitle: DiscProfile.actionAdminBoutiqueHint,
+                        onTap: () => context.pushAdminBoutiqueOrders(),
+                      ),
+                      AdminHubActionTile(
                         icon: Icons.card_giftcard_outlined,
                         title: DiscProfile.actionAdminSubscriptionTrial,
                         subtitle: DiscProfile.actionAdminSubscriptionTrialHint,

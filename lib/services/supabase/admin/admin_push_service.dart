@@ -42,6 +42,7 @@ class AdminPushSendResult {
     required this.failed,
     this.credentialError,
     this.firstError,
+    this.staleTokensCleared = 0,
   });
 
   final int recipients;
@@ -49,6 +50,7 @@ class AdminPushSendResult {
   final int failed;
   final String? credentialError;
   final String? firstError;
+  final int staleTokensCleared;
 }
 
 class AdminPushService {
@@ -110,6 +112,7 @@ class AdminPushService {
           failed: _intField(data, 'failed'),
           credentialError: data['credentialError'] as String?,
           firstError: data['firstError'] as String?,
+          staleTokensCleared: _intField(data, 'staleTokensCleared'),
         );
       },
     );

@@ -57,17 +57,9 @@
                     android:host="prestataire"
                     android:pathPrefix="/"/>
             </intent-filter>
-            <!-- App Links : https://madbeauty.app/prestataire/{id} -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data
-                    android:scheme="https"
-                    android:host="madbeauty.app"
-                    android:pathPrefix="/prestataire"/>
-            </intent-filter>
-            <!-- App Links prod web : https://madbeauty.pro/prestataire/{id} -->
+            <!-- App Links : https://madbeauty.pro/prestataire/{id}
+                 Requiert https://madbeauty.pro/.well-known/assetlinks.json (voir docs/store/ANDROID_APP_LINKS.md).
+                 Ne pas déclarer madbeauty.app tant que le domaine ne pointe pas vers l’app web. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

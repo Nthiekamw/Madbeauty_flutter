@@ -233,6 +233,33 @@ abstract final class DiscProfile {
   static const adminReservationsFilterTo = 'Au';
   static const adminReservationsClearDates = 'Effacer les dates';
 
+  static const actionAdminBoutique = 'Boutique & commandes';
+  static const actionAdminBoutiqueHint =
+      'Commandes produits et catalogues prestataires';
+  static const adminBoutiqueIntroTitle = 'Boutique MadBeauty';
+  static const adminBoutiqueIntroBody =
+      'Suivi des commandes boutique et aperçu des catalogues produits / packs.';
+  static const adminBoutiqueTabOrders = 'Commandes';
+  static const adminBoutiqueTabCatalog = 'Catalogues';
+  static const adminBoutiqueOrdersEmpty = 'Aucune commande boutique.';
+  static const adminBoutiqueCatalogEmpty =
+      'Aucun prestataire avec boutique ou packs.';
+  static const adminBoutiqueLoadErr =
+      'Impossible de charger la boutique. Réessaie.';
+  static const adminBoutiqueFilterStatut = 'Statut commande';
+  static const adminBoutiqueFilterPayment = 'Statut paiement';
+  static const adminBoutiqueFilterSearch = 'Salon ou cliente';
+  static String adminBoutiqueItemsCount(int n) =>
+      n <= 1 ? '$n article' : '$n articles';
+  static String adminBoutiqueCatalogCounts({
+    required int produits,
+    required int packs,
+    required int commandes,
+  }) =>
+      '$produits produit${produits > 1 ? 's' : ''} · '
+      '$packs pack${packs > 1 ? 's' : ''} · '
+      '$commandes cmd ouverte${commandes > 1 ? 's' : ''}';
+
   static const adminUsersBanReasonLabel = 'Motif du bannissement';
   static const adminUsersBanReasonHint = 'Ex. signalements répétés, fraude…';
   static const adminUsersBanReasonRequired = 'Le motif est obligatoire.';
@@ -369,6 +396,11 @@ abstract final class DiscProfile {
     }
     return '$sent envoyée${sent > 1 ? 's' : ''}, $failed échec${failed > 1 ? 's' : ''}.';
   }
+
+  static const adminPushTokenUnregisteredHint =
+      'Token FCM périmé (app désinstallée ou notifications révoquées). '
+      'L’utilisateur doit rouvrir MadBeauty avec les notifications autorisées, '
+      'puis tu pourras renvoyer.';
   static const adminPushExcludeBannedLabel = 'Exclure les utilisateurs bannis';
   static const adminPushExcludeBannedHint =
       'Les comptes bannis ne recevront pas la notification.';

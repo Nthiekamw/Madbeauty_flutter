@@ -4,6 +4,8 @@ import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/user/lieu_travail.dart';
 import '../../../../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
+import '../../../../../../shared/utils/maps_directions_launcher.dart';
+import '../../../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../logic/lieu_travail_display.dart';
 import '../../../../logic/professional_experience_entries.dart';
 
@@ -102,8 +104,18 @@ class PrestataireDetailAboutBlock extends StatelessWidget {
           const SizedBox(height: 16),
           _WorkLocationChip(lieu: profile.lieuTravail!),
         ],
+        if (_hasGeo(profile)) ...[
+          const SizedBox(height: 12),
+          _DirectionsButton(profile: profile),
+        ],
       ],
     );
+  }
+
+  static bool _hasGeo(PrestataireProfile profile) {
+    final lat = profile.latitude;
+    final lng = profile.longitude;
+    return lat != null && lng != null;
   }
 }
 
@@ -139,5 +151,61 @@ class _WorkLocationChip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DirectionsButton extends StatelessWidget {
+  const _DirectionsButton({required this.profile});
+
+  final PrestataireProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ville = profile.ville?.trim() ?? '';
+    final label = [
+      if ((profile.nomSalon ?? '').trim().isNotEmpty) profile.nomSalon!.trim(),
+      if (ville.isNotEmpty) ville,
+    ].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => _open(context, label),
+          icon: const Icon(Icons.directions_rounded, size: 20),
+          label: const Text(DiscPrestaDetail.actionDirections),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            alignment: Alignment.center,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          DiscPrestaDetail.actionDirectionsHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _open(BuildContext context, String label) async {
+    final lat = profile.latitude;
+    final lng = profile.longitude;
+    if (lat == null || lng == null) {
+      AppSnackBar.warning(context, DiscPrestaDetail.directionsUnavailable);
+      return;
+    }
+    final ok = await MapsDirectionsLauncher.openDirections(
+      destLat: lat,
+      destLng: lng,
+      destLabel: label.isEmpty ? null : label,
+    );
+    if (!context.mounted) return;
+    if (!ok) {
+      AppSnackBar.error(context, DiscPrestaDetail.directionsOpenFailed);
+    }
   }
 }

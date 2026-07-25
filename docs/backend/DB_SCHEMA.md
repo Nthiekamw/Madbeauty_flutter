@@ -219,6 +219,8 @@ Commandes de produits boutique (paiement Stripe Web ou à régler sur place).
 
 **Push / expire** : triggers `boutique_order_*_push` → Edge `on_boutique_order_created` / `on_boutique_order_updated` ; `expire_stale_boutique_pending_orders` (service_role, 2 h) + `expire_own_stale_boutique_pending_orders` (client).
 
+**Admin** : RPCs `admin_list_boutique_orders`, `admin_list_boutique_catalog` (`is_admin_user`).
+
 ### `public.boutique_commande_items`
 
 | Colonne | Type | Contraintes |

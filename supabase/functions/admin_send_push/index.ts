@@ -1,5 +1,7 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
+  clearStaleFcmTokenForUser,
+  isFcmTokenUnregisteredError,
   isFirebaseCredentialError,
   sendFcmNotification,
 } from "../_shared/booking_notify.ts";
@@ -391,6 +393,7 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     let failed = 0;
+    let staleTokensCleared = 0;
     let firstError: string | undefined;
     for (const row of recipients) {
       const result = await sendFcmWithResult({
@@ -403,7 +406,20 @@ Deno.serve(async (req) => {
         sent += 1;
       } else {
         failed += 1;
-        firstError ??= result.error;
+        if (
+          result.error &&
+          isFcmTokenUnregisteredError(result.error)
+        ) {
+          await clearStaleFcmTokenForUser(admin, {
+            userId: row.user_id,
+            token: row.fcm_token,
+          });
+          staleTokensCleared += 1;
+          firstError ??=
+            "Token FCM invalide (appareil désinscrit). Token effacé : l’utilisateur doit rouvrir l’app (notifications autorisées) pour en recevoir à nouveau.";
+        } else {
+          firstError ??= result.error;
+        }
       }
     }
 
@@ -428,6 +444,7 @@ Deno.serve(async (req) => {
         recipients: recipientCount,
         sent,
         failed,
+        stale_tokens_cleared: staleTokensCleared,
         exclude_banned: excludeBanned,
         nav,
         prestataire_id: prestataireId ?? null,
@@ -444,6 +461,7 @@ Deno.serve(async (req) => {
       recipients: recipientCount,
       sent,
       failed,
+      staleTokensCleared,
       audience,
       excludeBanned,
       nav,

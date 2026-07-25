@@ -54,6 +54,7 @@ abstract final class AppRoutes {
   static const String adminUsers = '/admin/users';
   static const String adminAccountDeletions = '/admin/account-deletions';
   static const String adminReservations = '/admin/reservations';
+  static const String adminBoutiqueOrders = '/admin/boutique-orders';
   static const String adminAudit = '/admin/audit';
   static const String adminPush = '/admin/push';
   static const String adminSubscriptionTrial = '/admin/subscription-trial';
@@ -138,6 +139,7 @@ abstract final class AppRouteNames {
   static const String adminUsers = 'admin-users';
   static const String adminAccountDeletions = 'admin-account-deletions';
   static const String adminReservations = 'admin-reservations';
+  static const String adminBoutiqueOrders = 'admin-boutique-orders';
   static const String adminAudit = 'admin-audit';
   static const String adminPush = 'admin-push';
   static const String adminSubscriptionTrial = 'admin-subscription-trial';
