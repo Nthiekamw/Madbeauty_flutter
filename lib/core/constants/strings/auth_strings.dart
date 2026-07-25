@@ -15,6 +15,10 @@ abstract final class AuthStrings {
       'La connexion Google a pris trop de temps. Réessaie ou utilise le navigateur.';
   static const String authGoogleFirebaseNotConfigured =
       'Google natif indisponible sur cet appareil. Ouverture via le navigateur…';
+  /// Erreur config souvent renvoyée à tort comme « canceled » (SHA-1, client OAuth).
+  static const String authGoogleNativeConfigFailed =
+      'Connexion Google impossible (configuration Android/iOS). '
+      'Vérifie le SHA-1 Firebase / Google Cloud, ou réessaie via le navigateur.';
   static const String authGoogleSupabaseLinkFailed =
       'Compte Google reconnu mais la session n’a pas pu s’ouvrir. '
       'Vérifie que le fournisseur Google est activé dans Supabase (Auth → Providers).';

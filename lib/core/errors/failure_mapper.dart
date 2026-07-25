@@ -55,6 +55,43 @@ abstract final class FailureMapper {
         e.code == GoogleSignInExceptionCode.uiUnavailable;
   }
 
+  /// `canceled` est souvent un faux positif (SHA-1 manquant, « Account reauth failed »).
+  static bool isGoogleSignInFakeCancel(GoogleSignInException e) {
+    if (e.code != GoogleSignInExceptionCode.canceled) return false;
+    final detail = '${e.description ?? ''} ${e.details ?? ''}'.toLowerCase();
+    if (detail.trim().isEmpty) return false;
+    return detail.contains('reauth') ||
+        detail.contains('sha') ||
+        detail.contains('10:') ||
+        detail.contains('12500') ||
+        detail.contains('developer_error') ||
+        detail.contains('api_exception') ||
+        detail.contains('network_error') ||
+        detail.contains('sign_in_failed') ||
+        detail.contains('sign in failed') ||
+        detail.contains('current activity is null');
+  }
+
+  static AppFailure fromGoogleSignInException(GoogleSignInException e) {
+    if (isGoogleSignInSetupError(e) || isGoogleSignInFakeCancel(e)) {
+      return AppFailure(
+        AuthStrings.authGoogleNativeConfigFailed,
+        cause: e,
+      );
+    }
+    if (e.code == GoogleSignInExceptionCode.canceled) {
+      return AppFailure(AuthStrings.authGoogleSignInCanceled, cause: e);
+    }
+    if (e.code == GoogleSignInExceptionCode.interrupted) {
+      return AppFailure(AuthStrings.authGoogleSignInTimeout, cause: e);
+    }
+    final description = e.description?.trim();
+    if (description != null && description.isNotEmpty) {
+      return AppFailure(description, cause: e);
+    }
+    return AppFailure(CoreStrings.errorUnexpected, cause: e);
+  }
+
   static AppFailure fromPostgrestException(PostgrestException e) {
     final msg = e.message.trim();
     if (msg.isNotEmpty) {

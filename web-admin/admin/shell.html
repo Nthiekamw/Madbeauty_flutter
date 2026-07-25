@@ -952,11 +952,17 @@
       </div>
       <div class="card push-card">
         <div class="form-group">
+          <label class="form-label">Modèles prêts à l'emploi</label>
+          <div class="push-templates" id="push-templates"></div>
+          <p class="push-hint" style="margin-top:8px;">Un clic préremplit le titre, le message, l’audience et l’écran d’ouverture. Tu peux encore tout modifier.</p>
+        </div>
+        <div class="form-group">
           <label class="form-label">Audience</label>
           <select class="form-input" id="push-audience" onchange="onPushAudienceChange()">
             <option value="all">Tous (avec token FCM)</option>
             <option value="client">Clients</option>
             <option value="prestataire">Prestataires</option>
+            <option value="prestataire_incomplete">Prestataires — profil incomplet</option>
             <option value="user">Un utilisateur</option>
             <option value="users">Utilisateurs filtrés</option>
           </select>
@@ -998,6 +1004,19 @@
           Exclure les comptes bannis
         </label>
         <div class="form-group" style="margin-top:12px;">
+          <label class="form-label">À l’ouverture de la notif</label>
+          <select class="form-input" id="push-nav">
+            <option value="none">Aucun écran spécifique</option>
+            <option value="client_home">Accueil client</option>
+            <option value="client_search">Catalogue / recherche</option>
+            <option value="client_reservations">Réservations client</option>
+            <option value="client_messages">Messages client</option>
+            <option value="prestataire_dashboard">Dashboard presta</option>
+            <option value="prestataire_profile_edit">Édition profil presta</option>
+            <option value="prestataire_subscription">Abonnement presta</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">Titre</label>
           <input class="form-input" id="push-title" maxlength="120" placeholder="Titre de la notification">
         </div>

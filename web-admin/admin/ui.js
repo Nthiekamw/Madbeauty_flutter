@@ -41,6 +41,9 @@ function showSection(id, el) {
   if (id === 'clients' || id === 'presta') {
     applyUserFilters();
   }
+  if (id === 'push') {
+    renderPushTemplates();
+  }
   if (id === 'forfaits') {
     setTimeout(() => {
       if (typeof renderPrestataireSubscriptions === 'function') renderPrestataireSubscriptions();
@@ -1446,6 +1449,125 @@ function renderAuditTable() {
 // ─── PUSH ─────────────────────────────────────────────────────
 var pushSelectedUserId = null;
 var pushSearchResults = [];
+var pushPendingPayload = null;
+var pushActiveTemplateId = null;
+
+const PUSH_TEMPLATES = [
+  {
+    id: 'incomplete_profile',
+    label: 'Profil presta incomplet',
+    icon: 'fa-user-pen',
+    audience: 'prestataire_incomplete',
+    nav: 'prestataire_profile_edit',
+    title: 'Complète ton profil MadBeauty',
+    body: 'Ton profil pro est encore incomplet. Ajoute les infos manquantes pour apparaître dans le catalogue et recevoir des clientes.',
+  },
+  {
+    id: 'app_update',
+    label: 'Nouvelle mise à jour',
+    icon: 'fa-rocket',
+    audience: 'all',
+    nav: 'none',
+    title: 'Nouvelle mise à jour MadBeauty',
+    body: 'Une nouvelle version de MadBeauty est disponible. Mets à jour l’app pour profiter des dernières améliorations.',
+  },
+  {
+    id: 'subscription',
+    label: 'Abonnement catalogue',
+    icon: 'fa-crown',
+    audience: 'prestataire',
+    nav: 'prestataire_subscription',
+    title: 'Active ton abonnement',
+    body: 'Passe en abonnement pour rester visible dans le catalogue et continuer à recevoir des réservations.',
+  },
+  {
+    id: 'catalog_hidden',
+    label: 'Profil masqué',
+    icon: 'fa-eye-slash',
+    audience: 'prestataire',
+    nav: 'prestataire_subscription',
+    title: 'Ton salon est masqué du catalogue',
+    body: 'Les clientes ne voient plus ton profil. Vérifie ton abonnement ou ton essai catalogue pour réactiver ta visibilité.',
+  },
+  {
+    id: 'clients_welcome',
+    label: 'Clients — découverte',
+    icon: 'fa-heart',
+    audience: 'client',
+    nav: 'client_search',
+    title: 'Trouve ton prochain RDV beauté',
+    body: 'Parcours le catalogue MadBeauty et réserve chez un prestataire près de chez toi.',
+  },
+  {
+    id: 'custom',
+    label: 'Message libre',
+    icon: 'fa-pen',
+    audience: 'all',
+    nav: 'none',
+    title: '',
+    body: '',
+  },
+];
+
+function pushAudienceLabel(audience) {
+  switch (audience) {
+    case 'client': return 'Clients';
+    case 'prestataire': return 'Prestataires';
+    case 'prestataire_incomplete': return 'Prestataires — profil incomplet';
+    case 'user': return 'Un utilisateur';
+    case 'users': return 'Utilisateurs filtrés';
+    default: return 'Tous (avec token FCM)';
+  }
+}
+
+function pushNavLabel(nav) {
+  switch (nav) {
+    case 'client_home': return 'Accueil client';
+    case 'client_reservations': return 'Réservations client';
+    case 'client_search': return 'Catalogue / recherche';
+    case 'client_messages': return 'Messages client';
+    case 'prestataire_dashboard': return 'Dashboard presta';
+    case 'prestataire_subscription': return 'Abonnement presta';
+    case 'prestataire_profile_edit': return 'Édition profil presta';
+    case 'booking': return 'Réservation';
+    default: return 'Aucun écran';
+  }
+}
+
+function renderPushTemplates() {
+  const box = document.getElementById('push-templates');
+  if (!box) return;
+  box.innerHTML = PUSH_TEMPLATES.map((t) => `
+    <button type="button"
+      class="push-template-chip${pushActiveTemplateId === t.id ? ' active' : ''}"
+      onclick="applyPushTemplate('${t.id}')">
+      <i class="fa-solid ${t.icon}"></i>
+      <span>${escapeHtml(t.label)}</span>
+    </button>`).join('');
+}
+
+function applyPushTemplate(templateId) {
+  const t = PUSH_TEMPLATES.find((x) => x.id === templateId);
+  if (!t) return;
+  pushActiveTemplateId = t.id;
+  const audienceEl = document.getElementById('push-audience');
+  const titleEl = document.getElementById('push-title');
+  const bodyEl = document.getElementById('push-body');
+  const navEl = document.getElementById('push-nav');
+  if (audienceEl) audienceEl.value = t.audience;
+  if (titleEl) titleEl.value = t.title;
+  if (bodyEl) bodyEl.value = t.body;
+  if (navEl) navEl.value = t.nav;
+  onPushAudienceChange();
+  renderPushTemplates();
+  const result = document.getElementById('push-result');
+  if (result) {
+    result.textContent = t.id === 'custom'
+      ? 'Modèle libre : rédige ton titre et ton message.'
+      : `Modèle « ${t.label} » appliqué — tu peux encore modifier le texte avant envoi.`;
+  }
+  showToast(`Modèle : ${t.label}`);
+}
 
 function onPushAudienceChange() {
   const audience = document.getElementById('push-audience')?.value || 'all';
@@ -1531,11 +1653,12 @@ async function searchPushUsers() {
 function buildPushPayload(dryRun) {
   const audience = document.getElementById('push-audience')?.value || 'all';
   const excludeBanned = document.getElementById('push-exclude-banned')?.checked !== false;
+  const nav = document.getElementById('push-nav')?.value || 'none';
   const payload = {
     audience,
     excludeBanned,
     dryRun,
-    nav: 'none',
+    nav,
   };
   if (audience === 'user') {
     payload.audience = 'user';
@@ -1562,6 +1685,10 @@ async function refreshPushPreview() {
   }
   if (audience === 'users' && !getPushFilteredUsers().length) {
     text.textContent = 'Aucun utilisateur ne correspond aux filtres.';
+    return;
+  }
+  if (audience === 'prestataire_incomplete') {
+    text.textContent = 'Cliquez sur Prévisualiser pour compter les prestataires au profil incomplet (token FCM).';
     return;
   }
   text.textContent = 'Cliquez sur Prévisualiser pour compter les destinataires FCM.';
@@ -1592,9 +1719,42 @@ async function previewPush() {
   }
 }
 
+function openPushConfirmModal(payload) {
+  pushPendingPayload = payload;
+  const previewText = document.getElementById('push-preview-text')?.textContent || '';
+  const hasCount = previewText
+    && !previewText.startsWith('Cliquez')
+    && !previewText.startsWith('Sélectionnez')
+    && !previewText.startsWith('Aucun');
+  openModalShell({
+    title: 'Confirmer l’envoi',
+    variant: 'warning',
+    bodyHtml: `
+      <div class="modal-alert modal-alert--warning">
+        <div class="modal-alert-icon"><i class="fa-solid fa-paper-plane"></i></div>
+        <div>
+          <div class="modal-alert-title">Envoyer cette notification push ?</div>
+          <div class="modal-alert-sub">L’envoi est immédiat aux destinataires avec un token FCM actif.</div>
+        </div>
+      </div>
+      <div class="push-confirm-summary">
+        <div class="push-confirm-row"><span>Audience</span><strong>${escapeHtml(pushAudienceLabel(payload.audience))}</strong></div>
+        <div class="push-confirm-row"><span>Ouverture</span><strong>${escapeHtml(pushNavLabel(payload.nav))}</strong></div>
+        <div class="push-confirm-row"><span>Titre</span><strong>${escapeHtml(payload.title || '—')}</strong></div>
+        <div class="push-confirm-row push-confirm-row--block"><span>Message</span><p>${escapeHtml(payload.body || '—')}</p></div>
+      </div>
+      ${hasCount
+        ? `<p class="modal-hint" style="margin-bottom:0;">${escapeHtml(previewText)}</p>`
+        : '<p class="modal-hint" style="margin-bottom:0;">Astuce : utilise « Prévisualiser » avant l’envoi pour connaître le nombre de destinataires.</p>'}`,
+    footerHtml: `
+      <button type="button" class="btn btn-outline" onclick="closeModal(); pushPendingPayload=null;">Annuler</button>
+      <button type="button" class="btn btn-primary" id="push-confirm-send-btn" onclick="confirmSendPush()">
+        <i class="fa-solid fa-paper-plane"></i> Confirmer l’envoi
+      </button>`,
+  });
+}
+
 async function sendPush() {
-  const btn = document.getElementById('push-send-btn');
-  const result = document.getElementById('push-result');
   try {
     const payload = buildPushPayload(false);
     if (!payload.title) throw new Error('Le titre est obligatoire.');
@@ -1603,8 +1763,27 @@ async function sendPush() {
     if (payload.audience === 'users' && (!payload.userIds || !payload.userIds.length)) {
       throw new Error('Aucun utilisateur ne correspond aux filtres.');
     }
-    const ok = window.confirm('Envoyer cette notification push ?');
-    if (!ok) return;
+    openPushConfirmModal(payload);
+  } catch (e) {
+    showToast(e.message || 'Erreur envoi push');
+    const result = document.getElementById('push-result');
+    if (result) result.textContent = e.message || 'Erreur envoi push';
+  }
+}
+
+async function confirmSendPush() {
+  const payload = pushPendingPayload;
+  if (!payload) { closeModal(); return; }
+  const btn = document.getElementById('push-send-btn');
+  const confirmBtn = document.getElementById('push-confirm-send-btn');
+  const result = document.getElementById('push-result');
+  try {
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…';
+    }
+    closeModal();
+    pushPendingPayload = null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…'; }
     const r = await MBApi.pushInvoke(payload);
     const msg = `Envoyé : ${r?.sent ?? 0} / ${r?.recipients ?? 0} destinataire(s)${r?.failed ? ` (${r.failed} échec(s))` : ''}`;

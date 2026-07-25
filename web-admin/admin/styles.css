@@ -584,6 +584,7 @@ body {
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-footer { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
 .modal--danger { border-top: 3px solid var(--danger); }
+.modal--warning { border-top: 3px solid var(--gold2); }
 .modal-alert {
   display: flex; gap: 14px; align-items: flex-start;
   padding: 14px 16px; border-radius: 12px; margin-bottom: 18px;
@@ -591,6 +592,14 @@ body {
 .modal-alert--danger {
   background: rgba(192, 57, 43, 0.08);
   border: 1px solid rgba(192, 57, 43, 0.18);
+}
+.modal-alert--warning {
+  background: rgba(196, 149, 106, 0.12);
+  border: 1px solid rgba(196, 149, 106, 0.28);
+}
+.modal-alert--warning .modal-alert-icon {
+  background: rgba(196, 149, 106, 0.2);
+  color: var(--gold2);
 }
 .modal-alert-icon {
   width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
@@ -794,6 +803,38 @@ body {
 .push-panel { margin: 12px 0; padding: 12px; border-radius: 12px; background: var(--cream); border: 1px solid var(--cream2); }
 .push-hint { font-size: 13px; color: var(--text3); margin: 0; line-height: 1.45; }
 .push-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); margin-top: 8px; cursor: pointer; }
+.push-templates {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.push-template-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-radius: 999px;
+  border: 1px solid var(--cream2); background: var(--cream);
+  color: var(--text2); font-size: 12.5px; font-family: inherit;
+  cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+}
+.push-template-chip i { color: var(--gold2); font-size: 12px; }
+.push-template-chip:hover { border-color: var(--gold); background: rgba(196,149,106,.1); color: var(--brown); }
+.push-template-chip.active {
+  border-color: var(--gold2); background: rgba(196,149,106,.16);
+  color: var(--brown); font-weight: 600;
+}
+.push-confirm-summary {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--cream); border: 1px solid var(--cream2);
+  margin-bottom: 16px;
+}
+.push-confirm-row {
+  display: flex; gap: 12px; justify-content: space-between; align-items: flex-start;
+  font-size: 13px;
+}
+.push-confirm-row span { color: var(--text3); flex-shrink: 0; }
+.push-confirm-row strong { color: var(--text); text-align: right; font-weight: 600; word-break: break-word; }
+.push-confirm-row--block { flex-direction: column; gap: 4px; }
+.push-confirm-row--block p {
+  margin: 0; color: var(--text); line-height: 1.45; text-align: left; font-size: 13.5px;
+}
 .push-preview-box {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   margin-top: 12px; padding: 14px; border-radius: 12px;

@@ -330,30 +330,48 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     final googleAuth = ref.read(googleAuthServiceProvider);
     if (googleAuth.canUseNativeGoogle) {
-      final result = await googleAuth.signInWithGoogleNative();
-      var user = await _resolveUserAfterAuth(result.response);
-      if (user == null) {
-        throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
-      }
+      try {
+        final result = await googleAuth.signInWithGoogleNative();
+        var user = await _resolveUserAfterAuth(result.response);
+        if (user == null) {
+          throw AppFailure(AuthStrings.authGoogleSupabaseLinkFailed);
+        }
 
-      final syncedUser = await GoogleIdentitySync(_auth)
-          .applyAccountIfNeeded(result.account, user);
-      if (syncedUser != null) {
-        user = syncedUser;
-      }
-      _pendingOAuthIdentityHints = OAuthIdentityHints.fromGoogleAccount(
-        result.account,
-        user,
-      );
+        final syncedUser = await GoogleIdentitySync(_auth)
+            .applyAccountIfNeeded(result.account, user);
+        if (syncedUser != null) {
+          user = syncedUser;
+        }
+        _pendingOAuthIdentityHints = OAuthIdentityHints.fromGoogleAccount(
+          result.account,
+          user,
+        );
 
-      await _prepareOfflineCacheForSession(user);
-      await _cacheCurrentEmail(user);
-      _markBiometricSessionUnlocked();
-      state = AsyncData(user);
-      if (kDebugMode) {
-        debugPrint('[GoogleAuth] session Supabase OK: ${user.email}');
+        await _prepareOfflineCacheForSession(user);
+        await _cacheCurrentEmail(user);
+        _markBiometricSessionUnlocked();
+        state = AsyncData(user);
+        if (kDebugMode) {
+          debugPrint('[GoogleAuth] session Supabase OK: ${user.email}');
+        }
+        return user;
+      } on AppFailure catch (e) {
+        // Vrai abandon utilisateur : ne pas ouvrir le navigateur.
+        if (e.message == AuthStrings.authGoogleSignInCanceled) {
+          rethrow;
+        }
+        // Config / reauth : repli OAuth navigateur (message « Ouverture via… »).
+        final shouldFallbackToOAuth =
+            e.message == AuthStrings.authGoogleNativeConfigFailed ||
+            e.message == AuthStrings.authGoogleFirebaseNotConfigured ||
+            e.message == AuthStrings.authGoogleSignInTimeout;
+        if (!shouldFallbackToOAuth) rethrow;
+        if (kDebugMode) {
+          debugPrint(
+            '[GoogleAuth] natif échoué (${e.message}) → OAuth navigateur',
+          );
+        }
       }
-      return user;
     }
 
     final redirectTo = AppConfig.authOAuthRedirectTo;

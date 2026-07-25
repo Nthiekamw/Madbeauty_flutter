@@ -8,7 +8,13 @@ import {
   serviceClient,
 } from "../_shared/supabase_auth.ts";
 
-type Audience = "all" | "client" | "prestataire" | "user" | "users";
+type Audience =
+  | "all"
+  | "client"
+  | "prestataire"
+  | "prestataire_incomplete"
+  | "user"
+  | "users";
 
 type NavTarget =
   | "none"
@@ -94,6 +100,45 @@ async function roleUserIds(
   return (data ?? []).map((r) => String(r.user_id)).filter(Boolean);
 }
 
+/** Prestataires dont le profil pro n’est pas complet (RPC métier). */
+async function incompletePrestataireUserIds(
+  supabase: ReturnType<typeof serviceClient>,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("prestataire_profiles")
+    .select("id, user_id");
+  if (error) {
+    console.error("prestataire_profiles incomplete:", error);
+    return [];
+  }
+  const ids: string[] = [];
+  const chunkSize = 40;
+  const rows = data ?? [];
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const results = await Promise.all(
+      chunk.map(async (row) => {
+        const pid = String(row.id ?? "");
+        const uid = String(row.user_id ?? "").trim();
+        if (!pid || !uid) return null;
+        const { data: complete, error: rpcError } = await supabase.rpc(
+          "prestataire_is_professionally_complete",
+          { p_prestataire_id: pid },
+        );
+        if (rpcError) {
+          console.error("prestataire_is_professionally_complete:", rpcError);
+          return null;
+        }
+        return complete === true ? null : uid;
+      }),
+    );
+    for (const uid of results) {
+      if (uid) ids.push(uid);
+    }
+  }
+  return [...new Set(ids)];
+}
+
 async function fetchRecipientTokens(
   supabase: ReturnType<typeof serviceClient>,
   audience: Audience,
@@ -161,6 +206,11 @@ async function fetchRecipientTokens(
   let allowedIds: Set<string> | null = null;
   if (audience === "client" || audience === "prestataire") {
     const ids = await roleUserIds(supabase, audience);
+    allowedIds = new Set(ids);
+    if (allowedIds.size === 0) return [];
+  }
+  if (audience === "prestataire_incomplete") {
+    const ids = await incompletePrestataireUserIds(supabase);
     allowedIds = new Set(ids);
     if (allowedIds.size === 0) return [];
   }
@@ -301,7 +351,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    const validAudiences: Audience[] = ["all", "client", "prestataire", "user", "users"];
+    const validAudiences: Audience[] = [
+      "all",
+      "client",
+      "prestataire",
+      "prestataire_incomplete",
+      "user",
+      "users",
+    ];
     if (!validAudiences.includes(audience)) {
       return jsonResponse({ error: "Audience invalide" }, 400);
     }

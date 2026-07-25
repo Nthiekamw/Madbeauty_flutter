@@ -74,16 +74,11 @@ class GoogleAuthService {
     await warmUp();
 
     try {
-      // google_sign_in 7.x : authenticate() sans signOut préalable peut bloquer.
-      try {
-        await GoogleSignIn.instance.signOut();
-      } catch (_) {
-        /* best-effort */
-      }
-
       if (kDebugMode) debugPrint('[GoogleAuth] authenticate…');
+      // Ne pas faire signOut() systématiquement : ça force une reauth et
+      // Android renvoie souvent `canceled` + « Account reauth failed » (SHA-1).
       final googleUser = await GoogleSignIn.instance
-          .authenticate()
+          .authenticate(scopeHint: const ['email', 'openid', 'profile'])
           .timeout(authenticateTimeout);
 
       final googleIdToken = googleUser.authentication.idToken;
@@ -104,13 +99,13 @@ class GoogleAuthService {
     } on AppFailure {
       rethrow;
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        throw AppFailure(AuthStrings.authGoogleSignInCanceled);
+      if (kDebugMode) {
+        debugPrint(
+          '[GoogleAuth] GoogleSignInException '
+          'code=${e.code.name} description=${e.description} details=${e.details}',
+        );
       }
-      if (FailureMapper.isGoogleSignInSetupError(e)) {
-        throw AppFailure(AuthStrings.authGoogleFirebaseNotConfigured, cause: e);
-      }
-      throw FailureMapper.fromUnknown(e);
+      throw FailureMapper.fromGoogleSignInException(e);
     } catch (e, st) {
       if (kDebugMode) debugPrint('[GoogleAuth] unexpected: $e\n$st');
       throw FailureMapper.fromUnknown(e);
