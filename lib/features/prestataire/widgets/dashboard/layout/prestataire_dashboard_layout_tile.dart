@@ -142,6 +142,11 @@ class PrestataireDashboardLayoutTile extends StatelessWidget {
           DiscPrestaDash.weekTitle,
           theme.colorScheme.secondary,
         ),
+      PrestataireDashboardSectionId.boutique => (
+          Icons.storefront_rounded,
+          DiscPrestaDash.sectionBoutique,
+          theme.colorScheme.primary,
+        ),
     };
   }
 }

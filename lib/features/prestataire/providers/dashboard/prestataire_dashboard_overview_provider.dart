@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/models/domain/stats/stats_prestataire.dart';
 import '../../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../../services/supabase/prestataire/boutique/boutique_providers.dart';
 import '../../../../services/supabase/stats/stats_service_providers.dart';
 import '../../../booking/logic/client_reservation_ui_status.dart';
 import '../../models/prestataire_reservation_item.dart';
@@ -19,6 +20,7 @@ class PrestataireDashboardOverviewData {
     required this.monthRevenueChangePercent,
     required this.totalRevenueEur,
     required this.totalRevenueChangePercent,
+    this.openBoutiqueOrders = 0,
   });
 
   final int todayAppointments;
@@ -29,6 +31,7 @@ class PrestataireDashboardOverviewData {
   final double? monthRevenueChangePercent;
   final double totalRevenueEur;
   final double? totalRevenueChangePercent;
+  final int openBoutiqueOrders;
 
   static const empty = PrestataireDashboardOverviewData(
     todayAppointments: 0,
@@ -39,6 +42,7 @@ class PrestataireDashboardOverviewData {
     monthRevenueChangePercent: null,
     totalRevenueEur: 0,
     totalRevenueChangePercent: null,
+    openBoutiqueOrders: 0,
   );
 }
 
@@ -49,6 +53,7 @@ final prestataireDashboardOverviewProvider =
 
   final statsService = ref.watch(statsServiceProvider);
   final bookingService = ref.watch(bookingServiceProvider);
+  final boutiqueCommandeSvc = ref.watch(boutiqueCommandeServiceProvider);
   if (statsService == null) return PrestataireDashboardOverviewData.empty;
 
   final stats30 = await statsService.getStatsForDays(
@@ -60,6 +65,12 @@ final prestataireDashboardOverviewProvider =
   var yesterdayCount = 0;
   var clientsThisMonth = 0;
   var clientsPrevMonth = 0;
+  var openBoutiqueOrders = 0;
+
+  if (boutiqueCommandeSvc != null) {
+    openBoutiqueOrders =
+        await boutiqueCommandeSvc.countOpenForPrestataire(presta.id);
+  }
 
   if (bookingService != null) {
     final now = DateTime.now();
@@ -111,6 +122,7 @@ final prestataireDashboardOverviewProvider =
     monthRevenueChangePercent: _percentChange(monthRevenuePrev, monthRevenue),
     totalRevenueEur: totalRevenue,
     totalRevenueChangePercent: _percentChange(monthRevenuePrev, totalRevenue),
+    openBoutiqueOrders: openBoutiqueOrders,
   );
 });
 

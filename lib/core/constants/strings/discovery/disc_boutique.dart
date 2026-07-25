@@ -187,6 +187,8 @@ abstract final class DiscBoutique {
   static const statutCanceled = 'Annulée';
   static const dashOrdersOpen = 'Commandes ouvertes';
   static const dashManageOrders = 'Commandes';
+  static String dashManageOrdersOpen(int n) =>
+      n <= 0 ? dashManageOrders : 'Commandes ($n)';
   static String nextActionLabel(String statutDb) => switch (statutDb) {
         'pay_on_site' || 'paid' => 'Passer en préparation',
         'preparing' => 'Marquer prête',

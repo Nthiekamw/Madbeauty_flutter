@@ -12,6 +12,7 @@ class PrestataireDashboardLayout {
 
   static const defaultOrder = <PrestataireDashboardSectionId>[
     PrestataireDashboardSectionId.pending,
+    PrestataireDashboardSectionId.boutique,
     PrestataireDashboardSectionId.today,
     PrestataireDashboardSectionId.week,
     PrestataireDashboardSectionId.analytics,

@@ -18,7 +18,6 @@ import '../providers/dashboard/prestataire_dashboard_overview_provider.dart';
 import '../providers/boutique/boutique_providers.dart';
 import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_overview_grid.dart';
-import '../widgets/dashboard/content/prestataire_dashboard_boutique_card.dart';
 import '../widgets/dashboard/content/prestataire_dashboard_reorderable_sections.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
@@ -46,12 +45,15 @@ class _PrestataireDashboardScreenState
     ref.invalidate(prestataireDashboardLayoutProvider);
     ref.invalidate(prestataireSubscriptionStatusProvider);
     ref.invalidate(ownBoutiqueSummaryProvider);
+    ref.invalidate(ownBoutiqueOrdersOpenCountProvider);
     await Future.wait([
       ref.read(prestataireProfileFormProvider.future),
       ref.read(prestataireAnalyticsProvider.future),
       ref.read(prestataireDashboardProvider.future),
       ref.read(prestataireDashboardLayoutProvider.future),
       ref.read(prestataireSubscriptionStatusProvider.future),
+      ref.read(prestataireDashboardOverviewProvider.future),
+      ref.read(ownBoutiqueSummaryProvider.future),
     ]);
   }
 
@@ -110,9 +112,6 @@ class _PrestataireDashboardScreenState
                       ),
                     const SliverToBoxAdapter(
                       child: PrestataireDashboardOverviewGrid(),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: PrestataireDashboardBoutiqueCard(),
                     ),
                     PrestataireDashboardReorderableSections(
                       embedInParentScroll: true,

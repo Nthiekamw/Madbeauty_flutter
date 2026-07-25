@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../router/navigation_extensions.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
@@ -81,7 +82,7 @@ class _OverviewGridSkeleton extends StatelessWidget {
   }
 }
 
-class _OverviewGridBody extends StatelessWidget {
+class _OverviewGridBody extends ConsumerWidget {
   const _OverviewGridBody({required this.data});
 
   final PrestataireDashboardOverviewData data;
@@ -89,7 +90,7 @@ class _OverviewGridBody extends StatelessWidget {
   static const double _spacing = 10;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cards = <_OverviewCard>[
       _OverviewCard(
         icon: Icons.calendar_today_rounded,
@@ -123,14 +124,15 @@ class _OverviewGridBody extends StatelessWidget {
         positiveTrend: (data.monthRevenueChangePercent ?? 0) >= 0,
       ),
       _OverviewCard(
-        icon: Icons.trending_up_rounded,
-        value: formatOverviewCurrency(data.totalRevenueEur),
-        label: DiscPrestaDash.overviewRevenueTotal,
-        trend: formatOverviewTrend(
-          percent: data.totalRevenueChangePercent,
-          vsLabel: DiscPrestaDash.overviewVsLastMonth,
-        ),
-        positiveTrend: (data.totalRevenueChangePercent ?? 0) >= 0,
+        icon: Icons.shopping_bag_outlined,
+        value: '${data.openBoutiqueOrders}',
+        label: DiscPrestaDash.overviewBoutiqueOrders,
+        trend: data.openBoutiqueOrders > 0
+            ? DiscPrestaDash.overviewBoutiqueOrdersHint
+            : '',
+        positiveTrend: true,
+        emphasized: data.openBoutiqueOrders > 0,
+        onTap: () => context.pushPrestataireBoutiqueOrders(),
       ),
     ];
 
@@ -166,6 +168,8 @@ class _OverviewCard extends StatelessWidget {
     required this.label,
     required this.trend,
     required this.positiveTrend,
+    this.emphasized = false,
+    this.onTap,
   });
 
   final IconData icon;
@@ -173,116 +177,132 @@ class _OverviewCard extends StatelessWidget {
   final String label;
   final String trend;
   final bool positiveTrend;
+  final bool emphasized;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.cardSurfaceFor(theme.brightness),
+    return Material(
+      color: AppColors.cardSurfaceFor(theme.brightness),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.28 : 0.1,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: theme.colorScheme.primary,
-                    size: 17,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w900,
-                      height: 1.05,
-                      letterSpacing: -0.5,
-                      fontSize: 22,
-                      color: theme.colorScheme.onSurface,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: emphasized
+                  ? theme.colorScheme.primary.withValues(alpha: 0.45)
+                  : theme.colorScheme.outline.withValues(
+                      alpha:
+                          theme.brightness == Brightness.dark ? 0.28 : 0.1,
                     ),
-                  ),
-                ),
-              ],
+              width: emphasized ? 1.5 : 1,
             ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              softWrap: true,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.3,
-                fontWeight: FontWeight.w600,
-                fontSize: 12.5,
-              ),
-            ),
-            if (trend.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandGold.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        positiveTrend
-                            ? Icons.arrow_upward_rounded
-                            : Icons.arrow_downward_rounded,
-                        size: 13,
-                        color: positiveTrend
-                            ? AppColors.success
-                            : theme.colorScheme.error,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          trend,
-                          softWrap: true,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10.5,
-                            height: 1.2,
-                            color: theme.colorScheme.onSurface,
-                          ),
+                      child: Icon(
+                        icon,
+                        color: theme.colorScheme.primary,
+                        size: 17,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontFamily: AppFonts.display,
+                          fontWeight: FontWeight.w900,
+                          height: 1.05,
+                          letterSpacing: -0.5,
+                          fontSize: 22,
+                          color: emphasized
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  softWrap: true,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
                   ),
                 ),
-              ),
-            ],
-          ],
+                if (trend.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandGold.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!emphasized)
+                            Icon(
+                              positiveTrend
+                                  ? Icons.arrow_upward_rounded
+                                  : Icons.arrow_downward_rounded,
+                              size: 13,
+                              color: positiveTrend
+                                  ? AppColors.success
+                                  : theme.colorScheme.error,
+                            ),
+                          if (!emphasized) const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              trend,
+                              softWrap: true,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10.5,
+                                height: 1.2,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

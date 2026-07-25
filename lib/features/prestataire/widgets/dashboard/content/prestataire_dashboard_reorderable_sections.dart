@@ -9,11 +9,13 @@ import '../../../models/prestataire_dashboard_data.dart';
 import '../../../models/prestataire_dashboard_layout.dart';
 import '../../../models/prestataire_dashboard_section_id.dart';
 import '../../../models/prestataire_reservation_item.dart';
+import '../../../providers/boutique/boutique_providers.dart';
 import '../../../providers/dashboard/prestataire_dashboard_layout_provider.dart';
 import '../../../providers/profile/prestataire_profile_form_provider.dart';
 import '../../analytics/prestataire_analytics_panel.dart';
 import '../layout/prestataire_dashboard_layout_tile.dart';
 import '../layout/prestataire_dashboard_section_empty.dart';
+import 'prestataire_dashboard_boutique_card.dart';
 
 typedef PrestataireReservationTimelineBuilder = Widget Function(
   List<PrestataireReservationItem> items,
@@ -124,6 +126,9 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
     final dashboardLoading = dashboardAsync.isLoading && dashboard == null;
     final dashboardError = dashboardAsync.hasError && dashboard == null;
 
+    final boutiqueOpen =
+        ref.watch(ownBoutiqueOrdersOpenCountProvider).asData?.value ?? 0;
+
     return PrestataireDashboardLayoutTile(
       key: ValueKey(sectionId),
       sectionId: sectionId,
@@ -131,9 +136,10 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
         sectionId: sectionId,
         layout: layout,
         dashboard: dashboard,
+        boutiqueOpen: boutiqueOpen,
       ),
       onToggleCollapsed: () => layoutNotifier.toggleCollapsed(sectionId),
-      badgeCount: _badgeCount(sectionId, dashboard),
+      badgeCount: _badgeCount(sectionId, dashboard, boutiqueOpen),
       child: _sectionChild(
         context: context,
         theme: theme,
@@ -152,12 +158,14 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
   int? _badgeCount(
     PrestataireDashboardSectionId id,
     PrestataireDashboardData? dashboard,
+    int boutiqueOpen,
   ) {
-    if (dashboard == null) return null;
     return switch (id) {
-      PrestataireDashboardSectionId.pending => dashboard.pending.length,
-      PrestataireDashboardSectionId.today => dashboard.todayConfirmed.length,
-      PrestataireDashboardSectionId.week => dashboard.weekConfirmed.length,
+      PrestataireDashboardSectionId.pending => dashboard?.pending.length,
+      PrestataireDashboardSectionId.today => dashboard?.todayConfirmed.length,
+      PrestataireDashboardSectionId.week => dashboard?.weekConfirmed.length,
+      PrestataireDashboardSectionId.boutique =>
+        boutiqueOpen > 0 ? boutiqueOpen : null,
       _ => null,
     };
   }
@@ -166,7 +174,12 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
     required PrestataireDashboardSectionId sectionId,
     required PrestataireDashboardLayout layout,
     required PrestataireDashboardData? dashboard,
+    required int boutiqueOpen,
   }) {
+    if (sectionId == PrestataireDashboardSectionId.boutique &&
+        boutiqueOpen > 0) {
+      return false;
+    }
     if (dashboard != null) {
       final hasItems = switch (sectionId) {
         PrestataireDashboardSectionId.pending => dashboard.pending.isNotEmpty,
@@ -191,6 +204,11 @@ class PrestataireDashboardReorderableSections extends ConsumerWidget {
       case PrestataireDashboardSectionId.hero:
       case PrestataireDashboardSectionId.stats:
         return const SizedBox.shrink();
+      case PrestataireDashboardSectionId.boutique:
+        return const PrestataireDashboardBoutiqueCard(
+          hideOuterHeader: true,
+          embedInSection: true,
+        );
       case PrestataireDashboardSectionId.analytics:
         return const PrestataireAnalyticsPanel(
           hideOuterHeader: true,

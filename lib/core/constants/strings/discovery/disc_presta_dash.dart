@@ -21,11 +21,14 @@ abstract final class DiscPrestaDash {
   static const layoutExpand = 'Déplier la section';
   static const sectionHero = 'Mon salon';
   static const sectionStats = 'Aperçu rapide';
+  static const sectionBoutique = 'Boutique & offres';
   static const overviewTitle = 'Aperçu';
   static const overviewToday = 'Rendez-vous aujourd\'hui';
   static const overviewClientsMonth = 'Clients ce mois';
   static const overviewRevenueMonth = 'Revenus ce mois';
   static const overviewRevenueTotal = 'Revenus totaux';
+  static const overviewBoutiqueOrders = 'Commandes boutique';
+  static const overviewBoutiqueOrdersHint = 'À préparer ou remettre';
   static const overviewVsYesterday = 'vs hier';
   static const overviewVsLastMonth = 'vs mois dernier';
   static const welcome =

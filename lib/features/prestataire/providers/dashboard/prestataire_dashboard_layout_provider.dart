@@ -82,23 +82,22 @@ List<PrestataireDashboardSectionId> visiblePrestataireDashboardSections({
 }) {
   final out = <PrestataireDashboardSectionId>[];
   for (final id in layout.order) {
-    switch (id) {
-      case PrestataireDashboardSectionId.hero:
-      case PrestataireDashboardSectionId.stats:
-        break;
-      case PrestataireDashboardSectionId.analytics:
-        if (profileLoaded) out.add(id);
-      case PrestataireDashboardSectionId.pending:
-        if (dashboardLoaded) out.add(id);
-      case PrestataireDashboardSectionId.today:
-        if (dashboardLoaded) out.add(id);
-      case PrestataireDashboardSectionId.week:
-        if (dashboardLoaded &&
+    final include = switch (id) {
+      PrestataireDashboardSectionId.hero ||
+      PrestataireDashboardSectionId.stats =>
+        false,
+      PrestataireDashboardSectionId.analytics ||
+      PrestataireDashboardSectionId.boutique =>
+        profileLoaded,
+      PrestataireDashboardSectionId.pending ||
+      PrestataireDashboardSectionId.today =>
+        dashboardLoaded,
+      PrestataireDashboardSectionId.week =>
+        dashboardLoaded &&
             dashboard != null &&
-            dashboard.weekConfirmed.isNotEmpty) {
-          out.add(id);
-        }
-    }
+            dashboard.weekConfirmed.isNotEmpty,
+    };
+    if (include) out.add(id);
   }
   return out;
 }

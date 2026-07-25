@@ -3,6 +3,7 @@ enum PrestataireDashboardSectionId {
   hero,
   analytics,
   stats,
+  boutique,
   pending,
   today,
   week;
