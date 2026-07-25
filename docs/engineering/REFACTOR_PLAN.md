@@ -1,7 +1,7 @@
 # Plan de refactor architecture — MadBeauty
 
-Document opérationnel aligné sur `.cursor/skills/madbeauty/SKILL.md` et `docs/ARCHITECTURE.md`.  
-Objectif : réduire la dette **sans bloquer le MVP** — petits PRs, une zone à la fois.
+Document opérationnel aligné sur `.cursor/skills/madbeauty/SKILL.md` et [ARCHITECTURE.md](../ARCHITECTURE.md).  
+Objectif : réduire la dette **sans bloquer le produit** — petits PRs, une zone à la fois.
 
 ---
 
@@ -22,7 +22,7 @@ Objectif : réduire la dette **sans bloquer le MVP** — petits PRs, une zone à
 | **0** — Garde-fous | Immédiat | 1 h | Évite la dette future |
 | **1** — Modèles & dépendances services | Haute | 2–3 j | Corrige l’inversion de couches |
 | **2** — God screens | Haute | 3–5 j | Lisibilité + tests |
-| **3** — Routeur modulaire | Moyenne | 2 j | Maintenance navigation |
+| **3** — Routeur modulaire | **Fait** | — | `app_router` ~70 lignes |
 | **4** — Providers & notifications | Basse | 1–2 j | Cohérence Riverpod |
 
 Chaque phase = **1 ou plusieurs PR** (`refactor/phase-N-…`).
@@ -180,40 +180,27 @@ services/supabase/booking/booking_service.dart          → uniquement core/mode
 
 ---
 
-## Phase 3 — Routeur modulaire
+## Phase 3 — Routeur modulaire — **largement fait**
 
-**Fichier actuel :** `router/app_router.dart` (~779 lignes, ~53 routes).
+**État actuel** : `lib/router/app_router.dart` est une façade (~70 lignes) qui assemble :
 
-### 3.1 Créer des modules routes (calquer `auth/login/routes/`)
+- `routes/auth_routes.dart`, `client_shell_routes.dart`, `prestataire_shell_routes.dart`
+- `booking_routes.dart`, `detail_routes.dart`, `client_profile_routes.dart`, `admin_routes.dart`
+- shells dans `lib/router/shell/`
+- auth feature : `features/auth/*/routes/`
 
-| Nouveau fichier | Routes |
-|-----------------|--------|
-| `features/home/routes/client_home_routes.dart` | accueil client shell branche 0 |
-| `features/listing/routes/listing_routes.dart` | recherche, all prestataires |
-| `features/booking/routes/booking_routes.dart` | réservation, confirmation, historique client |
-| `features/messaging/routes/messaging_routes.dart` | inbox, chat |
-| `features/prestataire/routes/prestataire_shell_routes.dart` | shell + dashboard, agenda, clients, messages, profil |
-| `features/prestataire/routes/prestataire_stack_routes.dart` | hub, horaires, détail RDV, abonnement |
-| `features/profile/routes/profile_routes.dart` | profil client, edit, become prestataire |
-| `router/shell_routes.dart` | `StatefulShellRoute` client / prestataire / admin |
+### 3.1 Reste éventuel
 
-### 3.2 `app_router.dart` cible (~150 lignes)
+| Action | Note |
+|--------|------|
+| Co-localiser plus de routes sous `features/<x>/routes/` | Optionnel — modules déjà dans `lib/router/routes/` |
+| Documenter alias `search/` → `listing` | Voir phase 4 |
 
-```dart
-// app_router.dart — assemblage uniquement
-routes: [
-  ...authRoutes,
-  ...shellRoutes(ref),
-  ...prestataireStackRoutes,
-],
-redirect: authRedirect(ref),
-```
-
-### 3.3 PR suggérée
+### 3.2 PR historiques (déjà mergées)
 
 1. `refactor/router-extract-prestataire`
 2. `refactor/router-extract-client-shell`
-3. `refactor/router-slim-app-router`
+3. `refactor/router-slim-app_router`
 
 ---
 
@@ -249,12 +236,9 @@ Documenter dans SKILL : « Si le provider ne fait qu’exposer un `Service` + ma
 ## Ordre d’exécution recommandé
 
 ```
-Semaine 1   Phase 0 + Phase 1.1 (modèles booking/prestataire)
-Semaine 2   Phase 1.3 (découpler booking_service_providers + offline sync)
-Semaine 3   Phase 2.1 (hub notifier — plus gros ROI prestataire)
-Semaine 4   Phase 2.3 (booking_service split)
-Semaine 5   Phase 3 (router prestataire + client shell)
-Semaine 6+  Phase 2.2, 2.4, Phase 4 (selon besoin produit)
+Fait        Phase 0 + Phase 1 (modèles / découplage services) + Phase 3 (routeur)
+En cours    Phase 2 (god files restants : hub < 250, analytics, wizards…)
+Ensuite     Phase 2.4 + Phase 4 (providers / coquilles search|client|trust)
 ```
 
 ---
@@ -287,8 +271,8 @@ Semaine 6+  Phase 2.2, 2.4, Phase 4 (selon besoin produit)
 |----------|-------------|--------------|
 | Fichiers > 800 lignes | 4 | 0 |
 | Imports `services/` → `features/` | ~25 | < 5 (providers seulement, puis 0) |
-| Lignes `app_router.dart` | ~779 | < 200 |
-| Routes co-localisées | auth only | client + prestataire + booking |
+| Lignes `app_router.dart` | ~70 (fait) | < 200 ✓ |
+| Routes modulaires | `lib/router/routes/` + auth feature | co-localisation feature optionnelle |
 
 ---
 
@@ -301,4 +285,4 @@ Semaine 6+  Phase 2.2, 2.4, Phase 4 (selon besoin produit)
 
 ---
 
-*Dernière mise à jour : généré depuis l’audit architecture du dépôt MadBeauty.*
+*Dernière mise à jour : réorganisation `docs/` + état routeur (phase 3 faite).*

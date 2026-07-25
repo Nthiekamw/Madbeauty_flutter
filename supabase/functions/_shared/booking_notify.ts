@@ -186,7 +186,7 @@ export async function sendFcmNotification(opts: {
   if (!res.ok) {
     const txt = await res.text();
     console.error(`FCM erreur ${res.status}: ${txt}`);
-    return false;
+    throw new Error(`FCM ${res.status}: ${txt.slice(0, 500)}`);
   }
   return true;
 }
@@ -196,7 +196,10 @@ export function isFirebaseCredentialError(message: string): boolean {
   const lower = message.toLowerCase();
   return lower.includes("invalid jwt signature") ||
     lower.includes("invalid_grant") ||
-    lower.includes("firebase_service_account_json");
+    lower.includes("firebase_service_account_json") ||
+    lower.includes("unauthorized") ||
+    lower.includes("permission_denied") ||
+    lower.includes("403");
 }
 
 export function normalizeStatut(raw: unknown): string {

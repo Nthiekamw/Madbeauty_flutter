@@ -269,9 +269,9 @@ Les clés **`SUPABASE_URL`** / **`SUPABASE_ANON_KEY`** du `.env` servent au **cl
 
 ### Schema metier (documentation)
 
-Le détail des tables / relations / RLS est visé dans `docs/DB_SCHEMA.md` — à **aligner** avec le SQL des migrations au fil du temps.
+Le détail des tables / relations / RLS est dans [`docs/backend/DB_SCHEMA.md`](docs/backend/DB_SCHEMA.md) — à **aligner** avec le SQL des migrations au fil du temps.
 
-Tables principales prevues : `profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris`.
+Tables principales : `user_profiles`, `prestataire_profiles`, `services`, `disponibilites`, `reservations`, `avis`, `messages`, `favoris`.
 
 > Row Level Security (RLS) doit rester active sur les tables exposées à l’API ; les politiques se definissent dans le SQL des migrations ou le SQL Editor.
 
@@ -279,13 +279,16 @@ Tables principales prevues : `profiles`, `prestataires`, `services`, `disponibil
 
 ## Documentation
 
+Index : [`docs/README.md`](docs/README.md).
+
 | Document | Contenu |
 | --- | --- |
-| `docs/BOOKING_PUSH_NOTIFICATIONS.md` | Push FCM, Edge Functions réservation, webhooks, boîte locale in-app |
-| `docs/ARCHITECTURE.md` | Choix techniques, structure du code, patterns utilises |
-| `docs/DB_SCHEMA.md` | Schema complet Supabase avec relations et politiques RLS |
-| `docs/FEATURES.md` | Liste des features MVP vs V2 |
-| `CONTRIBUTING.md` | Conventions Git, workflow, regles de PR |
+| `docs/ARCHITECTURE.md` | Choix techniques, structure du code, patterns |
+| `docs/backend/DB_SCHEMA.md` | Schema Supabase, relations, RLS |
+| `docs/product/FEATURES.md` | Etat produit / prochaines etapes |
+| `docs/notifications/PUSH.md` | Push FCM, Edge Functions, webhooks |
+| `docs/payments/` | Stripe Connect, abonnements, tests |
+| `docs/CONTRIBUTING.md` | Conventions Git, workflow, regles de PR |
 | `CHANGELOG.md` | Historique des versions |
 
 ---
@@ -542,22 +545,24 @@ features/[feature]/
 
 ## Base de donn�es
 
-Le sch�ma complet est document� dans [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md).
+Le schéma complet est documenté dans [`docs/backend/DB_SCHEMA.md`](docs/backend/DB_SCHEMA.md).
 
-Tables principales : `profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris`.
+Tables principales : `user_profiles`, `prestataire_profiles`, `services`, `disponibilites`, `reservations`, `avis`, `messages`, `favoris`.
 
-> **Row Level Security (RLS)** est activ�e sur toutes les tables. Les politiques sont d�finies dans le SQL Editor Supabase.
+> **Row Level Security (RLS)** est activée sur toutes les tables. Les politiques sont définies dans le SQL des migrations Supabase.
 
 ---
 
 ## Documentation
 
+Index : [`docs/README.md`](docs/README.md).
+
 | Document | Contenu |
 | --- | --- |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Choix techniques, structure du code, patterns utilis�s |
-| [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) | Sch�ma complet Supabase avec relations et politiques RLS |
-| [`docs/FEATURES.md`](docs/FEATURES.md) | Liste des features MVP vs V2 |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Conventions Git, workflow, r�gles de PR |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Choix techniques, structure du code, patterns |
+| [`docs/backend/DB_SCHEMA.md`](docs/backend/DB_SCHEMA.md) | Schéma Supabase, relations, RLS |
+| [`docs/product/FEATURES.md`](docs/product/FEATURES.md) | État produit / prochaines étapes |
+| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Conventions Git, workflow, règles de PR |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historique des versions |
 
 ---

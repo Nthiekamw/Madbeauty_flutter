@@ -85,4 +85,4 @@ test(domain): roundtrip SupabaseDomainCodec avec mocks
 
 ## Questions
 
-En cas de doute sur le périmètre MVP vs V2, se référer à [FEATURES.md](./FEATURES.md).
+En cas de doute sur le périmètre produit, se référer à [product/FEATURES.md](./product/FEATURES.md).

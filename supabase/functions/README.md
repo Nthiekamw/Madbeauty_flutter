@@ -128,7 +128,7 @@ npx supabase functions deploy prepare_prestataire_customer_sheet
 npx supabase functions deploy stripe_webhook --no-verify-jwt
 ```
 
-Documentation complète : **`docs/STRIPE_CONNECT_SETUP.md`**.
+Documentation complète : **`docs/payments/CONNECT.md`**.
 
 ## Test local
 

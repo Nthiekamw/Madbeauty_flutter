@@ -108,7 +108,7 @@ Le **Signing secret** (`whsec_...`) ne change pas si tu modifies seulement la li
 
 ### Si tu crées un nouvel endpoint
 
-Même URL, tous les événements réservation **+** abonnement listés dans `docs/STRIPE_CONNECT_SETUP.md` § 6 **+** les 4 ci-dessus.
+Même URL, tous les événements réservation **+** abonnement listés dans [CONNECT.md](./CONNECT.md) § 6 **+** les 4 ci-dessus.
 
 Puis :
 
@@ -209,7 +209,7 @@ Même flux avec l’onglet **Annuel** → **S’abonner (annuel)**. Checkout aff
 | `4000 0000 0000 0002` | Carte refusée |
 | `4000 0025 0000 3155` | 3D Secure (suivre l’invite Stripe) |
 
-Même règles que `docs/STRIPE_TEST_FLOW.md` § cartes.
+Même règles que [TEST_FLOW.md](./TEST_FLOW.md) § cartes.
 
 ### Vérifier côté Stripe Dashboard
 
@@ -302,5 +302,5 @@ sequenceDiagram
 
 - [Stripe — Testing](https://docs.stripe.com/testing)
 - [Stripe — Checkout subscriptions](https://docs.stripe.com/billing/subscriptions/build-subscriptions?ui=checkout)
-- Réservations + Connect : `docs/STRIPE_CONNECT_SETUP.md`, `docs/STRIPE_TEST_FLOW.md`
-- Modèle tarifaire produit : `docs/MODELE_TARIFAIRE.md`
+- Réservations + Connect : [CONNECT.md](./CONNECT.md), [TEST_FLOW.md](./TEST_FLOW.md)
+- Modèle tarifaire produit : [../product/PRICING.md](../product/PRICING.md)

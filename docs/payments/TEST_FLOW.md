@@ -11,8 +11,8 @@ Checklist pour valider **Connect + paiement réservation + capture** sur le proj
 | Secrets Supabase | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, optionnel `STRIPE_PLATFORM_FEE_PERCENT=10` |
 | Login CLI | `npx supabase login` puis `npx supabase secrets list` |
 | Migrations | `npx supabase db push` (à jour) |
-| Functions | Voir commandes dans `docs/STRIPE_CONNECT_SETUP.md` § 5 |
-| Webhook | URL `https://vjjasrdoyguqkftfhaei.supabase.co/functions/v1/stripe_webhook` + événements listés dans le setup |
+| Functions | Voir commandes dans [CONNECT.md](./CONNECT.md) § 5 |
+| Webhook | URL `https://vjjasrdoyguqkftfhaei.supabase.co/functions/v1/stripe_webhook` + événements listés dans [CONNECT.md](./CONNECT.md) |
 | Appareil | `flutter run --dart-define-from-file=.env` (un seul appareil USB si `adb` signale plusieurs devices) |
 
 ### Configurer les secrets (une fois)

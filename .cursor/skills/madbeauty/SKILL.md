@@ -81,7 +81,7 @@ En cas d'arbitrage, préférer la solution la plus fiable en prod plutôt que la
 - `services/` → **pas** de `features/*/screens`, `features/*/widgets`
 - `services/` → éviter `features/*/providers` (préférer callbacks / façade côté feature)
 - `core/` → **pas** d’import `features/`
-- Fichier **> ~400 lignes** → scinder (notifier + widgets) — voir `docs/REFACTOR_PLAN.md`
+- Fichier **> ~400 lignes** → scinder (notifier + widgets) — voir `docs/engineering/REFACTOR_PLAN.md`
 
 ## Organisation des fichiers
 
@@ -154,7 +154,7 @@ Variables via `--dart-define-from-file=.env` (voir `.env.example`). **Ne jamais 
 - **Client** : découverte, réservation, messagerie, avis, favoris
 - **Prestataire** : agenda, services, horaires, dashboard, abonnement Stripe
 
-Périmètre MVP vs V2 : `docs/FEATURES.md`.
+Périmètre produit : `docs/product/FEATURES.md`.
 
 ## Skills complémentaires
 
@@ -167,6 +167,6 @@ Périmètre MVP vs V2 : `docs/FEATURES.md`.
 
 ## Références détaillées
 
-- Architecture : [reference.md](reference.md) ou `docs/ARCHITECTURE.md`
-- Plan de refactor : `docs/REFACTOR_PLAN.md`
-- Schéma BDD : `docs/DB_SCHEMA.md`
+- Architecture : [reference.md](reference.md) ou `docs/ARCHITECTURE.md` (index : `docs/README.md`)
+- Plan de refactor : `docs/engineering/REFACTOR_PLAN.md`
+- Schéma BDD : `docs/backend/DB_SCHEMA.md`

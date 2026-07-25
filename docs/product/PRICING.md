@@ -33,7 +33,7 @@ Le frais de 1 € est distinct du prix de la prestation et revient à la platefo
 | **2 services ou plus** | 17,99 € | 180 € |
 
 Constantes : `lib/core/config/prestataire_subscription_config.dart`.  
-Paiement : Stripe Checkout (abonnement) + webhooks — voir [STRIPE_SUBSCRIPTION_SETUP.md](STRIPE_SUBSCRIPTION_SETUP.md).
+Paiement : Stripe Checkout (abonnement) + webhooks — voir [../payments/SUBSCRIPTION.md](../payments/SUBSCRIPTION.md).
 
 ## 4. Implémentation technique
 

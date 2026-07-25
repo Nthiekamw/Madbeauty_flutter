@@ -1,6 +1,8 @@
-# Notifications push — réservations (FCM + Edge Functions)
+# Notifications push — MadBeauty (FCM + Edge Functions)
 
-Ce document complète l’implémentation **MadBeauty** pour les alertes réservation : stockage du token FCM dans `user_profiles`, envoi depuis **Supabase Edge Functions**, réception dans l’app (**firebase_messaging** + **flutter_local_notifications**) et boîte **locale** dans l’UI.
+Alertes **réservation** et **messagerie** : token FCM dans `user_profiles`, envoi depuis **Supabase Edge Functions**, réception (**firebase_messaging** + **flutter_local_notifications**), boîte **locale** in-app.
+
+Setup iOS (capabilities, APNs, Sign in with Apple) : [../store/IOS_SETUP.md](../store/IOS_SETUP.md).
 
 ## Prérequis
 

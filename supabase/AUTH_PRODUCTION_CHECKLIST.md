@@ -30,7 +30,7 @@
 - [ ] App ID `com.nthiekamw.madbeauty` : capability **Sign In with Apple** activée.
 - [ ] **Authentication → Providers → Apple** : activé dans Supabase (Services ID, clé `.p8`, Team ID, Key ID).
 - [ ] `ios/Runner/Runner.entitlements` : `com.apple.developer.applesignin` présent.
-- [ ] Détail : `docs/IOS_APPLE_PUSH_SETUP.md`
+- [ ] Détail : `docs/store/IOS_SETUP.md`
 
 ## Notifications push iOS
 
@@ -38,7 +38,7 @@
 - [ ] Clé APNs uploadée dans Firebase Console (Cloud Messaging).
 - [ ] Capabilities Xcode : Push Notifications + Remote notifications.
 - [ ] `aps-environment` dans `Runner.entitlements` (`development` en dev, `production` en prod).
-- [ ] Checklist complète : `docs/BOOKING_PUSH_NOTIFICATIONS.md` + `docs/IOS_APPLE_PUSH_SETUP.md`
+- [ ] Checklist complète : `docs/notifications/PUSH.md` + `docs/store/IOS_SETUP.md`
 
 ## Rate limits
 

@@ -2,7 +2,7 @@
 
 Référence des tables **`public`**, colonnes, relations et **Row Level Security (RLS)** après application des migrations du dépôt.
 
-> Ordre d’application : `20260507140000_init_extensions` → … → `20260526220000_update_note_moyenne_trigger` → `20260529140000_stripe_booking_payments` → `20260530120000_stripe_connect_webhooks`.
+> Ordre d’application : migrations dans `supabase/migrations/` (chronologique). Doc à aligner après changements structurels notables.
 
 ---
 
@@ -95,11 +95,18 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `stripe_connect_payouts_enabled` | `boolean` | NOT NULL, default `false` |
 | `stripe_connect_details_submitted` | `boolean` | NOT NULL, default `false` |
 | `stripe_connect_updated_at` | `timestamptz` | nullable — dernière synchro webhook / `prestataire_connect_sync` |
+| `stripe_billing_customer_id` | `text` | nullable — customer Billing (`cus_...`) pour abonnement |
+| `stripe_subscription_id` | `text` | nullable, unique si renseigné — `sub_...` |
+| `subscription_status` | `text` | NOT NULL, default `'none'` — `none`, `active`, `trialing`, `past_due`, `canceled`, … |
+| `subscription_tier` | `text` | nullable — `solo` \| `multi` |
+| `subscription_interval` | `text` | nullable — `month` \| `year` |
+| `subscription_current_period_end` | `timestamptz` | nullable |
+| `subscription_updated_at` | `timestamptz` | nullable |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-**Index** : `idx_prestataire_profiles_ville` sur `ville`.
+**Index** : `idx_prestataire_profiles_ville` sur `ville` ; unique partiel sur `stripe_subscription_id`.
 
-**Paiements** : le prestataire doit avoir `stripe_connect_account_id` renseigné et `stripe_connect_charges_enabled = true` pour accepter les réservations payantes (voir `docs/STRIPE_CONNECT_SETUP.md`).
+**Paiements** : le prestataire doit avoir `stripe_connect_account_id` renseigné et `stripe_connect_charges_enabled = true` pour accepter les réservations payantes (voir [../payments/CONNECT.md](../payments/CONNECT.md)). Abonnement : [../payments/SUBSCRIPTION.md](../payments/SUBSCRIPTION.md).
 
 ---
 
@@ -323,7 +330,7 @@ Agrégat lecture seule par réservation (dernier message, compteur). `security_i
 
 ### Edge Function `on_message_created`
 
-Webhook **INSERT** sur `public.messages` → FCM vers le **destinataire** (client ou prestataire de la réservation, ≠ `sender_id`). Voir `docs/BOOKING_PUSH_NOTIFICATIONS.md` § messagerie.
+Webhook **INSERT** sur `public.messages` → FCM vers le **destinataire** (client ou prestataire de la réservation, ≠ `sender_id`). Voir [../notifications/PUSH.md](../notifications/PUSH.md) § messagerie.
 
 ---
 
@@ -505,7 +512,7 @@ RLS **activé**, **aucune policy** : lecture/écriture réservées aux Edge Func
 | `prestataire_connect_sync` | JWT prestataire | Met à jour les colonnes `stripe_connect_*` |
 | `stripe_webhook` | Signature Stripe | Idempotence + synchro paiements / comptes |
 
-Déploiement et secrets : `docs/STRIPE_CONNECT_SETUP.md`. Test manuel : `docs/STRIPE_TEST_FLOW.md`.
+Déploiement et secrets : [../payments/CONNECT.md](../payments/CONNECT.md). Test manuel : [../payments/TEST_FLOW.md](../payments/TEST_FLOW.md).
 
 ---
 

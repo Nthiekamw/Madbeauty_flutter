@@ -789,6 +789,9 @@
       }
     }
     renderMobile();
+    if (typeof renderPushIncompletePanel === 'function') {
+      renderPushIncompletePanel();
+    }
   }
 
   async function enter() {

@@ -24,8 +24,6 @@ abstract final class DiscProfile {
       'Alertes réservations et messages sur le navigateur';
   static const prefPushWebInactiveHint =
       'Active les notifications pour ne rien manquer';
-  static const prefPushWebFootnote =
-      'Ajoute FIREBASE_WEB_VAPID_KEY pour les alertes hors session navigateur.';
   static const prefPushPromptTitle = 'Active les notifications';
   static const prefPushPromptBody =
       'Reçois les confirmations de réservation, les messages et les rappels '

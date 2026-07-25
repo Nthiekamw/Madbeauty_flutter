@@ -43,6 +43,7 @@ function showSection(id, el) {
   }
   if (id === 'push') {
     renderPushTemplates();
+    renderPushIncompletePanel();
   }
   if (id === 'forfaits') {
     setTimeout(() => {
@@ -1562,11 +1563,12 @@ function applyPushTemplate(templateId) {
   renderPushTemplates();
   const result = document.getElementById('push-result');
   if (result) {
-    result.textContent = t.id === 'custom'
-      ? 'Modèle libre : rédige ton titre et ton message.'
-      : `Modèle « ${t.label} » appliqué — tu peux encore modifier le texte avant envoi.`;
+    if (t.id === 'custom') {
+      setPushResult('Modèle libre : rédige ton titre et ton message.', 'info');
+    } else {
+      setPushResult(`Modèle « ${t.label} » appliqué — tu peux encore modifier le texte avant envoi.`, 'info');
+    }
   }
-  showToast(`Modèle : ${t.label}`);
 }
 
 function onPushAudienceChange() {
@@ -1580,7 +1582,73 @@ function onPushAudienceChange() {
     updatePushSelectedLabel();
   }
   if (audience === 'users') updatePushFilterSummary();
+  renderPushIncompletePanel();
   refreshPushPreview();
+}
+
+function getIncompletePrestataires() {
+  const excludeBanned = document.getElementById('push-exclude-banned')?.checked !== false;
+  return (USERS || []).filter((u) => {
+    if (!u.isPresta) return false;
+    if (u.prestaIsProfileComplete !== false) return false;
+    if (excludeBanned && u.status === 'inactive') return false;
+    return true;
+  });
+}
+
+function renderPushIncompletePanel() {
+  const panel = document.getElementById('push-incomplete-panel');
+  const list = document.getElementById('push-incomplete-list');
+  const summary = document.getElementById('push-incomplete-summary');
+  if (!panel || !list) return;
+  const audience = document.getElementById('push-audience')?.value || 'all';
+  const show = audience === 'prestataire_incomplete';
+  panel.hidden = !show;
+  if (!show) return;
+
+  const rows = getIncompletePrestataires();
+  const withToken = rows.filter((u) => u.hasFcmToken).length;
+  if (summary) {
+    summary.textContent = rows.length
+      ? `${rows.length} profil(s) · ${withToken} avec token FCM`
+      : 'Aucun prestataire au profil incomplet.';
+  }
+  if (!rows.length) {
+    list.innerHTML = '<div class="push-incomplete-empty">Aucun profil incomplet pour le moment.</div>';
+    return;
+  }
+  list.innerHTML = rows.map((u) => {
+    const salon = u.prestaNomSalon || '—';
+    const missing = (u.prestaMissingLabels || []).filter(Boolean);
+    const missingHtml = missing.length
+      ? `<div class="missing">Manque : ${escapeHtml(missing.slice(0, 4).join(' · '))}${missing.length > 4 ? ` (+${missing.length - 4})` : ''}</div>`
+      : '';
+    const tokenBadge = u.hasFcmToken
+      ? '<span class="badge active" style="margin-top:6px;display:inline-block;">Token FCM</span>'
+      : '<span class="badge inactive" style="margin-top:6px;display:inline-block;">Sans token</span>';
+    return `<div class="push-incomplete-item">
+      <strong>${escapeHtml(u.name || salon)}</strong>
+      <div class="meta">${escapeHtml(u.email || '—')} · ${escapeHtml(salon)}</div>
+      ${missingHtml}
+      ${tokenBadge}
+    </div>`;
+  }).join('');
+}
+
+function setPushResult(message, kind = 'info') {
+  const el = document.getElementById('push-result');
+  if (!el) return;
+  const icons = {
+    success: 'fa-circle-check',
+    error: 'fa-circle-xmark',
+    warning: 'fa-triangle-exclamation',
+    info: 'fa-circle-info',
+  };
+  const icon = icons[kind] || icons.info;
+  el.hidden = false;
+  el.className = `push-result-banner push-result-banner--${kind}`;
+  el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+  showToast(message);
 }
 
 function getPushFilteredUsers() {
@@ -1697,7 +1765,6 @@ async function refreshPushPreview() {
 async function previewPush() {
   const btn = document.getElementById('push-preview-btn');
   const text = document.getElementById('push-preview-text');
-  const result = document.getElementById('push-result');
   try {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
     const payload = buildPushPayload(true);
@@ -1709,11 +1776,10 @@ async function previewPush() {
     const count = r?.recipients ?? 0;
     const label = count === 1 ? '1 destinataire avec token FCM' : `${count} destinataires avec token FCM`;
     if (text) text.textContent = label;
-    if (result) result.textContent = `Prévisualisation : ${label}.`;
-    showToast(label);
+    setPushResult(`Prévisualisation : ${label}.`, count > 0 ? 'info' : 'warning');
   } catch (e) {
     if (text) text.textContent = e.message || 'Erreur de prévisualisation';
-    showToast(e.message || 'Erreur de prévisualisation');
+    setPushResult(e.message || 'Erreur de prévisualisation', 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Prévisualiser'; }
   }
@@ -1765,9 +1831,7 @@ async function sendPush() {
     }
     openPushConfirmModal(payload);
   } catch (e) {
-    showToast(e.message || 'Erreur envoi push');
-    const result = document.getElementById('push-result');
-    if (result) result.textContent = e.message || 'Erreur envoi push';
+    setPushResult(e.message || 'Erreur envoi push', 'error');
   }
 }
 
@@ -1776,7 +1840,6 @@ async function confirmSendPush() {
   if (!payload) { closeModal(); return; }
   const btn = document.getElementById('push-send-btn');
   const confirmBtn = document.getElementById('push-confirm-send-btn');
-  const result = document.getElementById('push-result');
   try {
     if (confirmBtn) {
       confirmBtn.disabled = true;
@@ -1786,15 +1849,33 @@ async function confirmSendPush() {
     pushPendingPayload = null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…'; }
     const r = await MBApi.pushInvoke(payload);
-    const msg = `Envoyé : ${r?.sent ?? 0} / ${r?.recipients ?? 0} destinataire(s)${r?.failed ? ` (${r.failed} échec(s))` : ''}`;
-    if (result) result.textContent = msg;
-    if (r?.credentialError) showToast(r.credentialError);
-    else if (r?.failed > 0 && !r?.sent) showToast(r.firstError || msg);
-    else showToast(msg);
+    const sent = r?.sent ?? 0;
+    const failed = r?.failed ?? 0;
+    const recipients = r?.recipients ?? 0;
+
+    if (r?.credentialError) {
+      setPushResult(r.credentialError, 'error');
+    } else if (recipients === 0) {
+      setPushResult('Échec : aucun destinataire avec token FCM pour cette audience.', 'error');
+    } else if (sent === 0 && failed > 0) {
+      setPushResult(
+        `Échec d’envoi : 0 / ${recipients} destinataire(s). ${r.firstError || 'Vérifie la configuration Firebase.'}`,
+        'error',
+      );
+    } else if (failed > 0) {
+      setPushResult(
+        `Envoi partiel : ${sent} succès, ${failed} échec(s) sur ${recipients} destinataire(s).`,
+        'warning',
+      );
+    } else {
+      setPushResult(
+        `Notification envoyée avec succès à ${sent} destinataire${sent > 1 ? 's' : ''}.`,
+        'success',
+      );
+    }
     if (typeof MBLive?.reloadAudit === 'function') MBLive.reloadAudit();
   } catch (e) {
-    showToast(e.message || 'Erreur envoi push');
-    if (result) result.textContent = e.message || 'Erreur envoi push';
+    setPushResult(e.message || 'Échec de l’envoi de la notification push.', 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Envoyer'; }
   }

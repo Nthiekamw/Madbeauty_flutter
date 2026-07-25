@@ -65,21 +65,6 @@ class _ProfilePreferencesSectionState
                 value: prefs.pushNotificationsEnabled,
                 onChanged: (value) => _onPushChanged(context, ref, value),
               ),
-              if (!nativePush) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Text(
-                    DiscProfile.prefPushWebFootnote,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant
-                              .withValues(alpha: 0.85),
-                          height: 1.35,
-                        ),
-                  ),
-                ),
-              ],
               Divider(
                 height: 1,
                 indent: 16,

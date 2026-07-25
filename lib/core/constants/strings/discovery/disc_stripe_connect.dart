@@ -26,5 +26,5 @@ abstract final class DiscStripeConnect {
       'Un administrateur doit l’activer sur dashboard.stripe.com/connect (mode test).';
   static const errInvalidRedirectUrl =
       'URL de retour Stripe invalide. Redéploie les fonctions Connect '
-      '(voir docs/STRIPE_CONNECT_SETUP.md) et supprime les anciens secrets com.madbeauty://.';
+      '(voir docs/payments/CONNECT.md) et supprime les anciens secrets com.madbeauty://.';
 }

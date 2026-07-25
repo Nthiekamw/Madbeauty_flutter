@@ -89,7 +89,7 @@ En test, Stripe fournit des données fictives (ex. IBAN `FR893000600001123456789
 | 5 | Prestataire | Marquer **terminée** | `statut=terminee` |
 | 6 | Serveur | `capture_booking_payment` + webhook | `payment_status=captured`, virement Connect |
 
-Checklist détaillée : **`docs/STRIPE_TEST_FLOW.md`**.
+Checklist détaillée : **[TEST_FLOW.md](./TEST_FLOW.md)**.
 
 ## 9. Cartes de test
 

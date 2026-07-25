@@ -3,7 +3,7 @@ name: madbeauty-supabase
 description: >-
   Backend Supabase MadBeauty : migrations SQL, RLS, Edge Functions TypeScript,
   schéma PostgreSQL. Utiliser pour tables, policies, triggers, fonctions
-  serverless, sync Stripe, ou questions sur docs/DB_SCHEMA.md.
+  serverless, sync Stripe, ou questions sur docs/backend/DB_SCHEMA.md.
 ---
 
 # Supabase MadBeauty
@@ -24,7 +24,7 @@ Concevoir chaque changement backend comme pour une application de production à 
 | Migrations SQL | `supabase/migrations/` (timestamp + nom) |
 | Edge Functions | `supabase/functions/<nom>/index.ts` |
 | Helpers partagés | `supabase/functions/_shared/` |
-| Schéma documenté | `docs/DB_SCHEMA.md` |
+| Schéma documenté | `docs/backend/DB_SCHEMA.md` |
 | Commandes CLI | `supabase/MIGRATIONS_COMMANDS.md` |
 
 ## Migrations
@@ -49,7 +49,7 @@ npx supabase db reset         # local — rejoue toutes les migrations
 
 ## Tables principales (rappel)
 
-`profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris` — détail et relations dans `docs/DB_SCHEMA.md`.
+`profiles`, `prestataires`, `services`, `disponibilites`, `bookings`, `reviews`, `messages`, `favoris` — détail et relations dans `docs/backend/DB_SCHEMA.md`.
 
 ## Côté Flutter
 
@@ -67,5 +67,5 @@ npx supabase db reset         # local — rejoue toutes les migrations
 
 - [ ] Migration idempotente ou ordre clair
 - [ ] Policies RLS pour SELECT/INSERT/UPDATE/DELETE selon rôle client/prestataire
-- [ ] `docs/DB_SCHEMA.md` mis à jour si changement structurel notable
+- [ ] `docs/backend/DB_SCHEMA.md` mis à jour si changement structurel notable
 - [ ] `supabase db reset` OK en local
