@@ -7,6 +7,7 @@ enum AdminPushAudience {
   all('all'),
   client('client'),
   prestataire('prestataire'),
+  prestataireIncomplete('prestataire_incomplete'),
   user('user');
 
   const AdminPushAudience(this.value);

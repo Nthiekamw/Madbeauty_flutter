@@ -11,6 +11,7 @@ import '../../../shared/theme/discovery_styles.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/content/discovery_section_error.dart';
+import '../logic/admin_push_templates.dart';
 import '../models/admin_user_summary.dart';
 import '../providers/admin_push_provider.dart';
 import '../providers/admin_users_provider.dart';
@@ -33,6 +34,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
   AdminPushAudience _audience = AdminPushAudience.all;
   AdminPushNavTarget _navTarget = AdminPushNavTarget.none;
   AdminUserSummary? _selectedUser;
+  String? _activeTemplateId;
   String _userQuery = '';
   int? _recipientPreview;
   bool _previewLoading = false;
@@ -69,6 +71,18 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         _selectedUser = null;
       });
     });
+  }
+
+  void _applyTemplate(AdminPushTemplate template) {
+    setState(() {
+      _activeTemplateId = template.id;
+      _audience = template.audience;
+      _navTarget = template.nav;
+      _titleController.text = template.title;
+      _bodyController.text = template.body;
+      _selectedUser = null;
+    });
+    _refreshPreview();
   }
 
   Future<void> _refreshPreview() async {
@@ -127,12 +141,41 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
     }
 
     final count = _recipientPreview ?? 0;
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(DiscProfile.adminPushConfirmTitle),
-        content: Text(
-          DiscProfile.adminPushConfirmBody(count),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(DiscProfile.adminPushConfirmBody(count)),
+              const SizedBox(height: 14),
+              _ConfirmRow(
+                label: DiscProfile.adminPushConfirmAudience,
+                value: _audienceLabel(_audience),
+              ),
+              _ConfirmRow(
+                label: DiscProfile.adminPushConfirmOpen,
+                value: _navLabel(_navTarget),
+              ),
+              _ConfirmRow(
+                label: DiscProfile.adminPushTitleLabel,
+                value: title,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                DiscProfile.adminPushConfirmMessage,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(body, style: theme.textTheme.bodyMedium),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -185,6 +228,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
       }
       _titleController.clear();
       _bodyController.clear();
+      setState(() => _activeTemplateId = null);
       await _refreshPreview();
     } catch (e) {
       if (!mounted) return;
@@ -213,6 +257,47 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
           ),
           const SizedBox(height: 16),
           Text(
+            DiscProfile.adminPushTemplatesLabel,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontFamily: AppFonts.display,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            DiscProfile.adminPushTemplatesHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: AdminPushTemplates.all.map((template) {
+              final selected = _activeTemplateId == template.id;
+              return ChoiceChip(
+                avatar: Icon(
+                  template.icon,
+                  size: 18,
+                  color: selected
+                      ? AppColors.adminAccentMid
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+                label: Text(template.label),
+                selected: selected,
+                onSelected: (_) => _applyTemplate(template),
+                selectedColor: AppColors.adminBg12,
+                side: BorderSide(
+                  color: selected
+                      ? AppColors.adminAccentMid
+                      : AppColors.adminBorder30,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          Text(
             DiscProfile.adminPushAudienceLabel,
             style: theme.textTheme.titleSmall?.copyWith(
               fontFamily: AppFonts.display,
@@ -233,6 +318,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                   setState(() {
                     _audience = audience;
                     _selectedUser = null;
+                    _activeTemplateId = null;
                   });
                   _refreshPreview();
                 },
@@ -269,30 +355,33 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                     return Column(
                       children: users.take(8).map((user) {
                         final selected = _selectedUser?.userId == user.userId;
-                        return Material(
-                          color: theme.colorScheme.surface,
-                          borderRadius: DiscoveryStyles.cardBorderRadius,
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: DiscoveryStyles.cardBorderRadius,
-                              side: BorderSide(
-                                color: selected
-                                    ? AppColors.adminAccentMid
-                                    : AppColors.adminBorder30,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Material(
+                            color: theme.colorScheme.surface,
+                            borderRadius: DiscoveryStyles.cardBorderRadius,
+                            child: ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: DiscoveryStyles.cardBorderRadius,
+                                side: BorderSide(
+                                  color: selected
+                                      ? AppColors.adminAccentMid
+                                      : AppColors.adminBorder30,
+                                ),
                               ),
+                              title: Text(user.displayName),
+                              subtitle: Text(user.email),
+                              trailing: selected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: AppColors.adminAccentMid,
+                                    )
+                                  : null,
+                              onTap: () {
+                                setState(() => _selectedUser = user);
+                                _refreshPreview();
+                              },
                             ),
-                            title: Text(user.displayName),
-                            subtitle: Text(user.email),
-                            trailing: selected
-                                ? Icon(
-                                    Icons.check_circle,
-                                    color: AppColors.adminAccentMid,
-                                  )
-                                : null,
-                            onTap: () {
-                              setState(() => _selectedUser = user);
-                              _refreshPreview();
-                            },
                           ),
                         );
                       }).toList(),
@@ -330,6 +419,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<AdminPushNavTarget>(
+            // ignore: deprecated_member_use
             value: _navTarget,
             decoration: const InputDecoration(
               labelText: DiscProfile.adminPushNavLabel,
@@ -344,7 +434,10 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                 .toList(),
             onChanged: (value) {
               if (value == null) return;
-              setState(() => _navTarget = value);
+              setState(() {
+                _navTarget = value;
+                _activeTemplateId = null;
+              });
             },
           ),
           if (_navTarget == AdminPushNavTarget.booking) ...[
@@ -374,6 +467,11 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
             ),
             maxLength: 120,
             textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) {
+              if (_activeTemplateId != null) {
+                setState(() => _activeTemplateId = null);
+              }
+            },
           ),
           const SizedBox(height: 8),
           TextField(
@@ -387,6 +485,11 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
             minLines: 3,
             maxLines: 6,
             textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) {
+              if (_activeTemplateId != null) {
+                setState(() => _activeTemplateId = null);
+              }
+            },
           ),
           const SizedBox(height: 12),
           DecoratedBox(
@@ -452,6 +555,8 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
       AdminPushAudience.all => DiscProfile.adminPushAudienceAll,
       AdminPushAudience.client => DiscProfile.adminPushAudienceClients,
       AdminPushAudience.prestataire => DiscProfile.adminPushAudiencePrestataires,
+      AdminPushAudience.prestataireIncomplete =>
+        DiscProfile.adminPushAudiencePrestataireIncomplete,
       AdminPushAudience.user => DiscProfile.adminPushAudienceUser,
     };
   }
@@ -472,5 +577,42 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         DiscProfile.adminPushNavPrestataireProfileEdit,
       AdminPushNavTarget.booking => DiscProfile.adminPushNavBooking,
     };
+  }
+}
+
+class _ConfirmRow extends StatelessWidget {
+  const _ConfirmRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 88,
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -314,7 +314,35 @@ abstract final class DiscProfile {
   static const adminPushAudienceAll = 'Tous';
   static const adminPushAudienceClients = 'Clientes';
   static const adminPushAudiencePrestataires = 'Prestataires';
+  static const adminPushAudiencePrestataireIncomplete =
+      'Prestas — profil incomplet';
   static const adminPushAudienceUser = 'Un utilisateur';
+  static const adminPushTemplatesLabel = 'Modèles prêts à l’emploi';
+  static const adminPushTemplatesHint =
+      'Un tap préremplit le titre, le message, l’audience et l’écran d’ouverture.';
+  static const adminPushTemplateIncompleteProfile = 'Profil presta incomplet';
+  static const adminPushTemplateAppUpdate = 'Nouvelle mise à jour';
+  static const adminPushTemplateSubscription = 'Abonnement catalogue';
+  static const adminPushTemplateCatalogHidden = 'Profil masqué';
+  static const adminPushTemplateClientsWelcome = 'Clients — découverte';
+  static const adminPushTemplateCustom = 'Message libre';
+  static const adminPushTplIncompleteTitle = 'Complète ton profil MadBeauty';
+  static const adminPushTplIncompleteBody =
+      'Ton profil pro est encore incomplet. Ajoute les infos manquantes pour apparaître dans le catalogue et recevoir des clientes.';
+  static const adminPushTplAppUpdateTitle = 'Nouvelle mise à jour MadBeauty';
+  static const adminPushTplAppUpdateBody =
+      'Une nouvelle version de MadBeauty est disponible. Mets à jour l’app pour profiter des dernières améliorations.';
+  static const adminPushTplSubscriptionTitle = 'Active ton abonnement';
+  static const adminPushTplSubscriptionBody =
+      'Passe en abonnement pour rester visible dans le catalogue et continuer à recevoir des réservations.';
+  static const adminPushTplCatalogHiddenTitle =
+      'Ton salon est masqué du catalogue';
+  static const adminPushTplCatalogHiddenBody =
+      'Les clientes ne voient plus ton profil. Vérifie ton abonnement ou ton essai catalogue pour réactiver ta visibilité.';
+  static const adminPushTplClientsWelcomeTitle =
+      'Trouve ton prochain RDV beauté';
+  static const adminPushTplClientsWelcomeBody =
+      'Parcours le catalogue MadBeauty et réserve chez un prestataire près de chez toi.';
   static const adminPushTitleLabel = 'Titre';
   static const adminPushTitleHint = 'Ex. Nouveauté MadBeauty';
   static const adminPushBodyLabel = 'Message';
@@ -327,6 +355,9 @@ abstract final class DiscProfile {
   static const adminPushConfirmTitle = 'Confirmer l’envoi ?';
   static String adminPushConfirmBody(int count) =>
       'Cette notification sera envoyée à $count appareil${count > 1 ? 's' : ''}.';
+  static const adminPushConfirmAudience = 'Audience';
+  static const adminPushConfirmOpen = 'Ouverture';
+  static const adminPushConfirmMessage = 'Message';
   static const adminPushFieldsRequired =
       'Le titre et le message sont obligatoires.';
   static const adminPushUserRequired =
