@@ -10,6 +10,7 @@ import '../../models/client_home_section_id.dart';
 import '../../providers/client_home_layout_provider.dart';
 import '../sections/client_home_explore_row.dart';
 import '../sections/client_home_promo_banner.dart';
+import '../sections/client_home_offers_section.dart';
 import '../sections/client_home_feed_prestataires_section.dart';
 import '../sections/client_home_nearby_prestataires_section.dart';
 import '../sections/client_home_next_appointment_section.dart';
@@ -87,6 +88,7 @@ class ClientHomeReorderableSections extends ConsumerWidget {
         const ClientHomeNextAppointmentSection(),
       ClientHomeSectionId.inspiration => const ClientHomeExploreRow(),
       ClientHomeSectionId.promo => const ClientHomePromoBanner(),
+      ClientHomeSectionId.offers => const ClientHomeOffersSection(),
       ClientHomeSectionId.feed => const ClientHomeFeedPrestatairesSection(),
       ClientHomeSectionId.nearby =>
         const ClientHomeNearbyPrestatairesSection(),

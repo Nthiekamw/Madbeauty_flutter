@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../booking/providers/booking_session_providers.dart';
 import '../../listing/providers/client_location_provider.dart';
 import '../../profile/providers/current_user_profile_provider.dart';
+import '../providers/home_featured_packs_provider.dart';
 import '../providers/home_feed_provider.dart';
 import '../providers/home_prestataire_entries_provider.dart';
 import '../providers/home_profile_provider.dart';
@@ -20,6 +21,7 @@ void invalidateClientHome(WidgetRef ref) {
   ref.invalidate(nearbyPrestataireEntriesProvider);
   ref.invalidate(topRatedPrestatairesProvider);
   ref.invalidate(topRatedPrestataireEntriesProvider);
+  ref.invalidate(homeFeaturedPacksProvider);
   invalidateClientReservations(ref);
 }
 
@@ -36,6 +38,7 @@ Future<void> refreshClientHome(WidgetRef ref) async {
     ref.read(nearbyPrestataireEntriesProvider.future),
     ref.read(topRatedPrestatairesProvider.future),
     ref.read(topRatedPrestataireEntriesProvider.future),
+    ref.read(homeFeaturedPacksProvider.future),
     ref.read(clientReservationsProvider.future),
   ]);
 }

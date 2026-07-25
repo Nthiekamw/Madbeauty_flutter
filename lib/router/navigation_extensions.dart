@@ -84,6 +84,11 @@ extension AppNavigationX on BuildContext {
       pushNamed(AppRouteNames.prestatairePaymentMethods);
   void pushPrestataireReceivedReviews() =>
       pushNamed(AppRouteNames.prestataireReceivedReviews);
+  void pushPrestataireBoutique() =>
+      pushNamed(AppRouteNames.prestataireBoutique);
+  void pushPrestatairePacks() => pushNamed(AppRouteNames.prestatairePacks);
+  void pushPrestataireBoutiqueOrders() =>
+      pushNamed(AppRouteNames.prestataireBoutiqueOrders);
   void goClientProfile() => goNamed(AppRouteNames.clientProfile);
   void goBecomePrestataire() => goNamed(AppRouteNames.becomePrestataire);
   void pushBecomePrestataire() => pushNamed(AppRouteNames.becomePrestataire);
@@ -92,6 +97,9 @@ extension AppNavigationX on BuildContext {
   void pushClientPaymentMethods() =>
       pushNamed(AppRouteNames.clientPaymentMethods);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
+  void pushClientCart() => pushNamed(AppRouteNames.clientCart);
+  void pushClientBoutiqueOrders() =>
+      pushNamed(AppRouteNames.clientBoutiqueOrders);
   void pushAllPrestataires() => pushNamed(AppRouteNames.clientAllPrestataires);
   void pushClientReviews() => pushNamed(AppRouteNames.clientReviews);
   void pushClientHistory() => pushNamed(AppRouteNames.clientHistory);

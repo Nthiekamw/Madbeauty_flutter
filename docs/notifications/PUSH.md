@@ -75,6 +75,8 @@ Sans `FIREBASE_WEB_VAPID_KEY`, le web retombe sur les notifications in-app (sess
 | `on_booking_created`   | `INSERT reservations` | FCM prestataire : « Nouvelle demande de réservation »     |
 | `on_booking_updated`   | `UPDATE reservations`| FCM cliente si statut passe à confirmé ou annulé / refus  |
 | `on_message_created`   | `INSERT messages`   | FCM destinataire : aperçu du message (`content` / `contenu`) |
+| `on_boutique_order_created` | `INSERT` / `paid` boutique | FCM prestataire : nouvelle commande boutique |
+| `on_boutique_order_updated` | `UPDATE statut boutique` | FCM cliente : préparation / prêt / terminé / annulé |
 
 Partagé : `supabase/functions/_shared/booking_notify.ts`
 
@@ -84,6 +86,8 @@ Partagé : `supabase/functions/_shared/booking_notify.ts`
 npx supabase functions deploy on_booking_created --no-verify-jwt
 npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
+npx supabase functions deploy on_boutique_order_created --no-verify-jwt
+npx supabase functions deploy on_boutique_order_updated --no-verify-jwt
 ```
 
 `--no-verify-jwt` est adapté lorsque les appels viennent des **Database Webhooks** (pas de JWT utilisateur dans le corps de la requête).
@@ -173,6 +177,8 @@ La fonction normalise le texte : `confirmee`, `confirmed`, `validee`… décle
 4. Envoyer un message dans un fil lié à une réservation → l’autre participant reçoit la push si le webhook **INSERT messages** est actif.
 
 Pour les erreurs **FCM 404 / Unauthorized**, vérifier le JSON du compte de service, l’activation de l’API FCM dans Google Cloud pour le projet lié au même Firebase, et les tokens enregistrés.
+
+**`UNREGISTERED` / `NotRegistered`** : le `fcm_token` en base est mort (app désinstallée, cache vidé, permission retirée). L’Edge Function `admin_send_push` efface alors le token. Solution utilisateur : rouvrir MadBeauty avec les notifications autorisées pour enregistrer un nouveau token.
 
 ## 6. Realtime côté app (messagerie)
 

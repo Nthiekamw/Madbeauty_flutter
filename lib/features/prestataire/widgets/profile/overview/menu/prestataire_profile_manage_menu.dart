@@ -78,6 +78,42 @@ class PrestataireProfileManageMenu extends StatelessWidget {
             subtitle: DiscPrestaProfile.menuHorairesHint,
             onTap: () => context.pushPrestataireHoraires(),
           ),
+          Divider(
+            height: 1,
+            indent: 4,
+            endIndent: 4,
+            color: theme.colorScheme.outline.withValues(alpha: 0.12),
+          ),
+          DiscoveryMenuTile(
+            icon: Icons.storefront_outlined,
+            title: DiscBoutique.menuBoutique,
+            subtitle: DiscBoutique.menuBoutiqueHint,
+            onTap: () => context.pushPrestataireBoutique(),
+          ),
+          Divider(
+            height: 1,
+            indent: 4,
+            endIndent: 4,
+            color: theme.colorScheme.outline.withValues(alpha: 0.12),
+          ),
+          DiscoveryMenuTile(
+            icon: Icons.local_offer_outlined,
+            title: DiscBoutique.menuPacks,
+            subtitle: DiscBoutique.menuPacksHint,
+            onTap: () => context.pushPrestatairePacks(),
+          ),
+          Divider(
+            height: 1,
+            indent: 4,
+            endIndent: 4,
+            color: theme.colorScheme.outline.withValues(alpha: 0.12),
+          ),
+          DiscoveryMenuTile(
+            icon: Icons.receipt_long_outlined,
+            title: DiscBoutique.menuOrders,
+            subtitle: DiscBoutique.menuOrdersHint,
+            onTap: () => context.pushPrestataireBoutiqueOrders(),
+          ),
         ],
       ),
     );

@@ -31,6 +31,8 @@ InAppNotificationAudience resolveInAppNotificationAudience(
     'client_booking_confirmed' ||
     'client_booking_cancelled' ||
     'client_booking_done' ||
+    'client_boutique_order' ||
+    'boutique_order_status' ||
     'slot_waitlist' ||
     'bug_report_status' =>
       InAppNotificationAudience.client,
@@ -38,6 +40,7 @@ InAppNotificationAudience resolveInAppNotificationAudience(
     'booking_confirmed' ||
     'booking_cancelled' ||
     'booking_done' ||
+    'boutique_order_created' ||
     'prestataire_like' ||
     'prestataire_review' ||
     'prestataire_verification_approved' ||

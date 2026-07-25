@@ -24,6 +24,14 @@ abstract final class DiscNotif {
   static const clientCancelledTitle = 'Réservation annulée';
   static const clientDoneTitle = 'Prestation terminée';
 
+  static const boutiqueOrderPreparingTitle = 'Commande en préparation';
+  static const boutiqueOrderReadyTitle = 'Commande prête';
+  static const boutiqueOrderCompletedTitle = 'Commande terminée';
+  static const boutiqueOrderCanceledTitle = 'Commande annulée';
+  static const boutiqueOrderReceivedTitle = 'Commande boutique enregistrée';
+  static const boutiqueOrderNewTitle = 'Nouvelle commande boutique';
+  static String boutiqueOrderBody(String salonOrClient) => salonOrClient;
+
   static String bookingBody({
     required String clientOrSalon,
     required String service,

@@ -1,5 +1,6 @@
 export 'sections/prestataire_detail_surface.dart';
 export 'sections/prestataire_detail_about_block.dart';
+export 'sections/prestataire_detail_boutique_block.dart';
 export 'sections/prestataire_detail_empty_state.dart';
 export 'sections/prestataire_detail_gallery_grouped.dart';
 export 'sections/prestataire_detail_gallery_strip.dart';

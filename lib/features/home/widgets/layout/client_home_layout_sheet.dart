@@ -165,6 +165,11 @@ Future<void> showClientHomeLayoutSheet(BuildContext context, WidgetRef ref) {
         DiscHome.sectionPromo,
         theme.colorScheme.tertiary,
       ),
+    ClientHomeSectionId.offers => (
+        Icons.local_offer_outlined,
+        DiscHome.sectionOffers,
+        theme.colorScheme.primary,
+      ),
     ClientHomeSectionId.feed => (
         Icons.local_fire_department_outlined,
         DiscHome.sectionTrending,

@@ -104,6 +104,8 @@ List<ClientHomeSectionId> visibleClientHomeSections({
         out.add(id);
       case ClientHomeSectionId.promo:
         out.add(id);
+      case ClientHomeSectionId.offers:
+        if (hasSupabase) out.add(id);
       case ClientHomeSectionId.feed:
         if (hasSupabase) out.add(id);
       case ClientHomeSectionId.nearby:
@@ -129,6 +131,8 @@ List<ClientHomeSectionId> layoutSheetClientHomeSections({
         out.add(id);
       case ClientHomeSectionId.promo:
         out.add(id);
+      case ClientHomeSectionId.offers:
+        if (hasSupabase) out.add(id);
       case ClientHomeSectionId.feed:
         if (hasSupabase) out.add(id);
       case ClientHomeSectionId.nearby:

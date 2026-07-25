@@ -142,6 +142,94 @@ Table de liaison **prestataire ↔ catégorie**.
 
 **Index** : `idx_services_beaute_prestataire` sur `prestataire_id`.
 
+### `public.produits_boutique`
+
+Produits physiques vendus par un prestataire (onglet Boutique).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
+| `nom` | `text` | NOT NULL, longueur 1–120 |
+| `description` | `text` | nullable |
+| `conditionnement` | `text` | nullable — ex. `250 ml` |
+| `categorie` | `text` | NOT NULL, default `autre` — `cheveux` \| `visage` \| `corps` \| `accessoires` \| `autre` |
+| `prix` | `numeric(12,2)` | NOT NULL, `>= 0` |
+| `image_url` | `text` | nullable |
+| `is_actif` | `boolean` | NOT NULL, default `true` |
+| `created_at` | `timestamptz` | NOT NULL |
+| `updated_at` | `timestamptz` | NOT NULL |
+
+**Index** : `(prestataire_id, is_actif)` ; partiel `(prestataire_id, categorie)` si actif.
+
+**RLS** : lecture anon/authenticated si actif + catalogue visible (ou propriétaire) ; write owner.
+
+### `public.packs_offre`
+
+Packs / offres composés de services et/ou produits (créés par le prestataire).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
+| `titre` | `text` | NOT NULL, longueur 1–120 |
+| `description` | `text` | nullable |
+| `image_url` | `text` | nullable |
+| `prix_pack` | `numeric(12,2)` | NOT NULL, `>= 0` |
+| `is_offre_du_jour` | `boolean` | NOT NULL, default `false` |
+| `is_actif` | `boolean` | NOT NULL, default `false` (brouillon jusqu’à composition) |
+| `starts_at` / `ends_at` | `timestamptz` | nullable |
+| `created_at` / `updated_at` | `timestamptz` | NOT NULL |
+
+**Règle** : un pack actif doit avoir **≥ 2** `pack_items` (trigger).
+
+### `public.pack_items`
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `pack_id` | `uuid` | NOT NULL, FK → `packs_offre(id)` ON DELETE CASCADE |
+| `item_type` | `text` | `service` \| `produit` |
+| `service_id` | `uuid` | nullable, FK → `services_beaute` |
+| `produit_id` | `uuid` | nullable, FK → `produits_boutique` |
+| `quantite` | `integer` | NOT NULL, `> 0`, default 1 |
+| `sort_order` | `integer` | NOT NULL, default 0 |
+
+**Check** : exactement une référence selon `item_type` ; même `prestataire_id` que le pack (trigger).
+
+### `public.boutique_commandes`
+
+Commandes de produits boutique (paiement Stripe Web ou à régler sur place).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `client_id` | `uuid` | NOT NULL, FK → `client_profiles` |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles` |
+| `statut` | `text` | `pending_payment` \| `paid` \| `preparing` \| `ready` \| `completed` \| `canceled` \| `pay_on_site` |
+| `payment_status` | `text` | `unpaid` \| `pending` \| `paid` \| `failed` \| `refunded` |
+| `amount_cents` | `integer` | NOT NULL, `> 0` |
+| `currency` | `text` | default `eur` |
+| `stripe_payment_intent_id` | `text` | unique nullable |
+| `fulfillment` | `text` | `pickup` \| `hand_delivery` |
+| `notes_client` | `text` | nullable |
+| `created_at` / `paid_at` / `updated_at` | `timestamptz` | |
+
+**RLS identité client** : un prestataire peut lire `client_profiles` / `user_profiles` d’un client s’il a une réservation, une conversation **ou une commande boutique** avec ce client (`prestataire_has_boutique_order_with_client`).
+
+**Push / expire** : triggers `boutique_order_*_push` → Edge `on_boutique_order_created` / `on_boutique_order_updated` ; `expire_stale_boutique_pending_orders` (service_role, 2 h) + `expire_own_stale_boutique_pending_orders` (client).
+
+### `public.boutique_commande_items`
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `commande_id` | `uuid` | FK → `boutique_commandes` CASCADE |
+| `produit_id` | `uuid` | nullable FK → `produits_boutique` |
+| `nom_snapshot` / `conditionnement_snapshot` | `text` | |
+| `prix_cents` | `integer` | `>= 0` |
+| `quantite` | `integer` | `> 0` |
+
 ---
 
 ## Disponibilités prestataire
@@ -569,6 +657,8 @@ Les policies `anon` ouvrent uniquement la lecture du catalogue public :
 - `categories_service`
 - `prestataire_specialites`
 - `services_beaute`
+- `produits_boutique`
+- `packs_offre` / `pack_items`
 - `avis`
 - `photos_realisation`
 

@@ -4,9 +4,12 @@ import '../../features/booking/screens/client_reservation_detail_screen.dart';
 import '../../features/messaging/providers/messaging_inbox_providers.dart';
 import '../../features/messaging/screens/chat_screen.dart';
 import '../../features/prestataire/models/prestataire_profile_edit_section.dart';
+import '../../features/prestataire/screens/prestataire_boutique_orders_screen.dart';
+import '../../features/prestataire/screens/prestataire_boutique_screen.dart';
 import '../../features/prestataire/screens/prestataire_detail_screen.dart';
 import '../../features/prestataire/screens/prestataire_horaires_screen.dart';
 import '../../features/prestataire/screens/prestataire_hub_screen.dart';
+import '../../features/prestataire/screens/prestataire_packs_screen.dart';
 import '../../features/prestataire/screens/prestataire_payment_methods_screen.dart';
 import '../../features/prestataire/screens/prestataire_received_reviews_screen.dart';
 import '../../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
@@ -93,6 +96,21 @@ List<RouteBase> buildDetailRoutes() => [
         builder: (context, state) => const PrestataireReceivedReviewsScreen(),
       ),
       GoRoute(
+        name: AppRouteNames.prestataireBoutique,
+        path: AppRoutes.prestataireBoutique,
+        builder: (context, state) => const PrestataireBoutiqueScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestatairePacks,
+        path: AppRoutes.prestatairePacks,
+        builder: (context, state) => const PrestatairePacksScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireBoutiqueOrders,
+        path: AppRoutes.prestataireBoutiqueOrders,
+        builder: (context, state) => const PrestataireBoutiqueOrdersScreen(),
+      ),
+      GoRoute(
         name: AppRouteNames.prestataireProfileEdit,
         path: AppRoutes.prestataireProfileEdit,
         builder: (context, state) {
@@ -117,6 +135,9 @@ List<RouteBase> buildDetailRoutes() => [
             'subscription' => AppRoutes.prestataireSubscription,
             'payment-methods' => AppRoutes.prestatairePaymentMethods,
             'horaires' => AppRoutes.prestataireHoraires,
+            'boutique' => AppRoutes.prestataireBoutique,
+            'packs' => AppRoutes.prestatairePacks,
+            'boutique-orders' => AppRoutes.prestataireBoutiqueOrders,
             _ => AppRoutes.clientSearch,
           };
         },

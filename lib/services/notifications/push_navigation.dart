@@ -61,6 +61,13 @@ void navigateFromPushDataWithRouter(
         _openReservationDetail(router, reservationId, role: role);
       }
       return;
+    case 'boutique_order_created':
+      router.pushNamed(AppRouteNames.prestataireBoutiqueOrders);
+      return;
+    case 'boutique_order_status':
+    case 'client_boutique_order':
+      router.pushNamed(AppRouteNames.clientBoutiqueOrders);
+      return;
     case 'message':
       final conversationId = _str(data, 'conversation_id') ??
           _str(data, 'conversationId');

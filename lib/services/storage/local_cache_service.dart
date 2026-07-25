@@ -31,6 +31,7 @@ class LocalCacheService {
   /// Réservation en attente après partage / mode invité.
   static const String pendingBookingIntentKey = 'booking.pending_intent_v1';
   static const String clientHomeLayoutKey = 'client.home_layout_v1';
+  static const String boutiqueCartKey = 'client.boutique_cart_v1';
   static const String appThemeModeKey = 'app.theme_mode_v1';
   static const String appLanguageCodeKey = 'app.language_code_v1';
   static const String marketCountryCodeKey = 'app.market_country_v1';
@@ -163,6 +164,13 @@ class LocalCacheService {
 
   Future<bool> setClientHomeLayoutJson(String value) =>
       setString(clientHomeLayoutKey, value);
+
+  String? get boutiqueCartJson => getString(boutiqueCartKey);
+
+  Future<bool> setBoutiqueCartJson(String value) =>
+      setString(boutiqueCartKey, value);
+
+  Future<bool> clearBoutiqueCart() => remove(boutiqueCartKey);
 
   String? get appThemeMode => getString(appThemeModeKey);
 

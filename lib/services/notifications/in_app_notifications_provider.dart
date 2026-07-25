@@ -385,6 +385,8 @@ class InAppNotificationsNotifier extends Notifier<List<InAppNotification>> {
 String? _audienceWireFromPushType(String? type, String? role) {
   return switch (type) {
     'booking_created' => InAppNotificationAudience.prestataire.wire,
+    'boutique_order_created' => InAppNotificationAudience.prestataire.wire,
+    'boutique_order_status' => InAppNotificationAudience.client.wire,
     'prestataire_like' ||
     'prestataire_review' ||
     'prestataire_catalog_visibility' ||

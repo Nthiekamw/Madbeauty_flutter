@@ -8,6 +8,8 @@
 | `on_booking_updated` | `UPDATE` / `DELETE reservations` | client (statut) + liste d'attente (créneau libéré) |
 | `on_message_created` | `INSERT messages` | autre participant |
 | `on_user_support_message_created` | `INSERT user_support_messages` | utilisateur ou admins |
+| `on_boutique_order_created` | `INSERT` / passage `paid` boutique | prestataire |
+| `on_boutique_order_updated` | `UPDATE statut` boutique | client |
 
 Partagé : `_shared/booking_notify.ts`
 
@@ -16,6 +18,8 @@ npx supabase functions deploy on_booking_created --no-verify-jwt
 npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
 npx supabase functions deploy on_user_support_message_created --no-verify-jwt
+npx supabase functions deploy on_boutique_order_created --no-verify-jwt
+npx supabase functions deploy on_boutique_order_updated --no-verify-jwt
 ```
 
 ## Bugs signalés (push admins + e-mail)
@@ -103,7 +107,8 @@ npx supabase functions deploy on_verification_requested --no-verify-jwt
 | `create_client_billing_portal` | JWT client | Portail web (secours) |
 | `list_prestataire_payment_methods` | JWT prestataire | Cartes d’abonnement prestataire |
 | `prepare_prestataire_customer_sheet` | JWT prestataire | Customer Sheet abonnement prestataire |
-| `stripe_webhook` | Signature Stripe | Webhooks (réservations + comptes) |
+| `create_boutique_order_payment_intent` | JWT client | PaymentIntent boutique (capture auto, Connect) |
+| `stripe_webhook` | Signature Stripe | Webhooks (réservations + boutique + comptes) |
 
 Partagé : `_shared/stripe_booking.ts`, `stripe_connect.ts`, `stripe_reservation.ts`
 
@@ -125,6 +130,7 @@ npx supabase functions deploy prepare_client_customer_sheet
 npx supabase functions deploy create_client_billing_portal
 npx supabase functions deploy list_prestataire_payment_methods
 npx supabase functions deploy prepare_prestataire_customer_sheet
+npx supabase functions deploy create_boutique_order_payment_intent
 npx supabase functions deploy stripe_webhook --no-verify-jwt
 ```
 

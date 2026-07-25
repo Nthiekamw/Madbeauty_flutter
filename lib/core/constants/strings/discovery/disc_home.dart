@@ -45,7 +45,15 @@ abstract final class DiscHome {
   static const sectionNearby = 'Proches de vous';
   static const sectionTopRated = 'Les mieux notés';
   static const sectionPromo = 'Bannière promo';
+  static const sectionOffers = 'Offres spéciales';
   static const sectionTrending = 'Tendances cette semaine';
+
+  static const offersTitle = 'Offres spéciales près de vous';
+  static const offersEmptyTitle = 'Aucune offre pour le moment';
+  static const offersEmptyBody =
+      'Dès qu’un prestataire publie un pack, il apparaîtra ici.';
+  static const offersLoadFail =
+      'Impossible de charger les offres. Réessaie.';
   static const heroBannerLead = 'Trouvez le professionnel idéal pour';
   static const heroBannerAccent = 'toute la famille';
   static const heroBannerSub =

@@ -31,6 +31,8 @@ abstract final class AppRoutes {
   static const String editClientAccount = '/client/profile/edit';
   static const String clientPaymentMethods = '/client/payment-methods';
   static const String clientFavorites = '/client/favorites';
+  static const String clientCart = '/client/cart';
+  static const String clientBoutiqueOrders = '/client/boutique-orders';
   static const String clientAllPrestataires = '/client/prestataires';
   static const String clientReviews = '/client/reviews';
   static const String clientHistory = '/client/history';
@@ -72,6 +74,9 @@ abstract final class AppRoutes {
   static const String prestatairePaymentMethods = '/prestataire/payment-methods';
   static const String prestataireReceivedReviews =
       '/prestataire/received-reviews';
+  static const String prestataireBoutique = '/prestataire/boutique';
+  static const String prestatairePacks = '/prestataire/packs';
+  static const String prestataireBoutiqueOrders = '/prestataire/boutique-orders';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
   static const String home = '/';
@@ -109,6 +114,8 @@ abstract final class AppRouteNames {
   static const String editClientAccount = 'edit-client-account';
   static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
+  static const String clientCart = 'client-cart';
+  static const String clientBoutiqueOrders = 'client-boutique-orders';
   static const String clientAllPrestataires = 'client-all-prestataires';
   static const String clientReviews = 'client-reviews';
   static const String clientHistory = 'client-history';
@@ -151,4 +158,7 @@ abstract final class AppRouteNames {
   static const String prestatairePaymentMethods = 'prestataire-payment-methods';
   static const String prestataireReceivedReviews =
       'prestataire-received-reviews';
+  static const String prestataireBoutique = 'prestataire-boutique';
+  static const String prestatairePacks = 'prestataire-packs';
+  static const String prestataireBoutiqueOrders = 'prestataire-boutique-orders';
 }

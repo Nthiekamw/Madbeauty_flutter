@@ -143,6 +143,10 @@ class _BookingPushCoordinatorState
         return;
       case 'booking_status':
         break;
+      case 'boutique_order_created':
+      case 'boutique_order_status':
+        refreshInAppNotificationsSync(ref);
+        return;
       default:
         final body = (msg.notification?.body ?? msg.data['body'] as String? ?? '')
             .toLowerCase();

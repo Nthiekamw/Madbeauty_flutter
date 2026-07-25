@@ -2,8 +2,11 @@ import 'package:madbeauty/core/logic/text/city_name_format.dart';
 import 'package:madbeauty/core/models/domain/booking/favori.dart';
 import 'package:madbeauty/core/models/domain/booking/reservation.dart';
 import 'package:madbeauty/core/models/domain/catalog/categorie_service.dart';
+import 'package:madbeauty/core/models/domain/catalog/pack_item.dart';
+import 'package:madbeauty/core/models/domain/catalog/pack_offre.dart';
 import 'package:madbeauty/core/models/domain/catalog/photo_realisation.dart';
 import 'package:madbeauty/core/models/domain/catalog/prestataire_specialite.dart';
+import 'package:madbeauty/core/models/domain/catalog/produit_boutique.dart';
 import 'package:madbeauty/core/models/domain/catalog/service_beaute.dart';
 import 'package:madbeauty/core/models/domain/messaging/conversation.dart';
 import 'package:madbeauty/core/models/domain/messaging/message.dart';
@@ -71,6 +74,15 @@ abstract final class SupabaseDomainCodec {
   static ServiceBeaute serviceBeaute(Map<String, dynamic> r) =>
       ServiceBeaute.fromJson(row(r));
 
+  static ProduitBoutique produitBoutique(Map<String, dynamic> r) =>
+      ProduitBoutique.fromJson(row(r));
+
+  static PackOffre packOffre(Map<String, dynamic> r) =>
+      PackOffre.fromJson(row(r));
+
+  static PackItem packItem(Map<String, dynamic> r) =>
+      PackItem.fromJson(row(r));
+
   static Reservation reservation(Map<String, dynamic> r) =>
       Reservation.fromJson(row(r));
 
@@ -129,6 +141,21 @@ extension PrestataireSpecialiteSupabaseMap on PrestataireSpecialite {
 }
 
 extension ServiceBeauteSupabaseMap on ServiceBeaute {
+  Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
+      SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
+}
+
+extension ProduitBoutiqueSupabaseMap on ProduitBoutique {
+  Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
+      SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
+}
+
+extension PackOffreSupabaseMap on PackOffre {
+  Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
+      SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
+}
+
+extension PackItemSupabaseMap on PackItem {
   Map<String, dynamic> toSupabaseMap({bool omitNullKeys = false}) =>
       SupabaseDomainCodec.toMap(toJson(), omitNullKeys: omitNullKeys);
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/logic/booking/client_reservation_ui_status.dart';
+import '../../core/models/domain/catalog/boutique_commande.dart';
 import '../../core/models/user_role.dart';
 import '../../features/admin/providers/admin_bug_reports_provider.dart';
 import '../../features/auth/providers/my_roles_provider.dart';
@@ -10,6 +11,7 @@ import '../../features/auth/providers/auth_notifier.dart';
 import '../../services/supabase/support/user_support_providers.dart';
 import '../../services/supabase/bug_report/bug_report_providers.dart';
 import '../../services/supabase/booking/booking_service_providers.dart';
+import '../../services/supabase/prestataire/boutique/boutique_providers.dart';
 import '../../features/reviews/providers/review_provider.dart';
 import '../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../services/supabase/trust/account_moderation_service.dart';
@@ -26,54 +28,54 @@ Future<List<InAppNotification>> fetchActivityNotifications(
 
   final out = <InAppNotification>[];
   final booking = ref.read(bookingServiceProvider);
-  if (booking == null) return const [];
-
   final cutoff = DateTime.now().subtract(const Duration(days: 30));
 
-  try {
-    final prestaItems = await booking.listForCurrentPrestataire();
-    for (final item in prestaItems) {
-      if (item.dateHeure.isBefore(cutoff)) continue;
-      final status = clientReservationUiStatusFromStatut(item.statut);
-      final (title, type) = switch (status) {
-        ClientReservationUiStatus.pending => (
-            DiscNotif.bookingPendingTitle,
-            'booking_pending',
-          ),
-        ClientReservationUiStatus.confirmed => (
-            DiscNotif.bookingConfirmedTitle,
-            'booking_confirmed',
-          ),
-        ClientReservationUiStatus.cancelled => (
-            DiscNotif.bookingCancelledTitle,
-            'booking_cancelled',
-          ),
-        ClientReservationUiStatus.done => (
-            DiscNotif.bookingDoneTitle,
-            'booking_done',
-          ),
-        _ => (null, null),
-      };
-      if (title == null || type == null) continue;
+  if (booking != null) {
+    try {
+      final prestaItems = await booking.listForCurrentPrestataire();
+      for (final item in prestaItems) {
+        if (item.dateHeure.isBefore(cutoff)) continue;
+        final status = clientReservationUiStatusFromStatut(item.statut);
+        final (title, type) = switch (status) {
+          ClientReservationUiStatus.pending => (
+              DiscNotif.bookingPendingTitle,
+              'booking_pending',
+            ),
+          ClientReservationUiStatus.confirmed => (
+              DiscNotif.bookingConfirmedTitle,
+              'booking_confirmed',
+            ),
+          ClientReservationUiStatus.cancelled => (
+              DiscNotif.bookingCancelledTitle,
+              'booking_cancelled',
+            ),
+          ClientReservationUiStatus.done => (
+              DiscNotif.bookingDoneTitle,
+              'booking_done',
+            ),
+          _ => (null, null),
+        };
+        if (title == null || type == null) continue;
 
-      out.add(
-        InAppNotification(
-          id: 'prestataire_reservation_${item.id}',
-          title: title,
-          body: DiscNotif.bookingBody(
-            clientOrSalon: item.clientName,
-            service: item.serviceName,
+        out.add(
+          InAppNotification(
+            id: 'prestataire_reservation_${item.id}',
+            title: title,
+            body: DiscNotif.bookingBody(
+              clientOrSalon: item.clientName,
+              service: item.serviceName,
+            ),
+            createdAt: item.dateHeure,
+            read: status != ClientReservationUiStatus.pending,
+            actionType: type,
+            reservationId: item.id,
+            audience: InAppNotificationAudience.prestataire.wire,
           ),
-          createdAt: item.dateHeure,
-          read: status != ClientReservationUiStatus.pending,
-          actionType: type,
-          reservationId: item.id,
-          audience: InAppNotificationAudience.prestataire.wire,
-        ),
-      );
+        );
+      }
+    } catch (_) {
+      /* Pas prestataire ou erreur réseau */
     }
-  } catch (_) {
-    /* Pas prestataire ou erreur réseau */
   }
 
   try {
@@ -213,7 +215,7 @@ Future<List<InAppNotification>> fetchActivityNotifications(
   }
 
   try {
-    final clientItems = await booking.listForCurrentClient();
+    final clientItems = await booking?.listForCurrentClient() ?? const [];
     for (final item in clientItems) {
       if (item.dateHeure.isBefore(cutoff)) continue;
       final status = clientReservationUiStatusFromStatut(item.statut);
@@ -262,6 +264,58 @@ Future<List<InAppNotification>> fetchActivityNotifications(
     }
   } catch (_) {
     /* Pas client ou erreur réseau */
+  }
+
+  try {
+    final boutiqueSvc = ref.read(boutiqueCommandeServiceProvider);
+    if (boutiqueSvc != null) {
+      final commandes = await boutiqueSvc.listForCurrentClient();
+      for (final c in commandes) {
+        if (c.createdAt.isBefore(cutoff)) continue;
+        final (title, unread) = switch (c.statut) {
+          BoutiqueCommandeStatut.preparing => (
+              DiscNotif.boutiqueOrderPreparingTitle,
+              true,
+            ),
+          BoutiqueCommandeStatut.ready => (
+              DiscNotif.boutiqueOrderReadyTitle,
+              true,
+            ),
+          BoutiqueCommandeStatut.completed => (
+              DiscNotif.boutiqueOrderCompletedTitle,
+              false,
+            ),
+          BoutiqueCommandeStatut.canceled => (
+              DiscNotif.boutiqueOrderCanceledTitle,
+              false,
+            ),
+          BoutiqueCommandeStatut.payOnSite ||
+          BoutiqueCommandeStatut.paid => (
+              DiscNotif.boutiqueOrderReceivedTitle,
+              true,
+            ),
+          _ => (null, false),
+        };
+        if (title == null) continue;
+        final salon = c.prestataireDisplayName?.trim().isNotEmpty == true
+            ? c.prestataireDisplayName!
+            : DiscBoutique.clientOrdersUnknownSalon;
+        out.add(
+          InAppNotification(
+            id: 'client_boutique_order_${c.id}',
+            title: title,
+            body: DiscNotif.boutiqueOrderBody(salon),
+            createdAt: c.createdAt,
+            read: !unread,
+            actionType: 'client_boutique_order',
+            prestataireId: c.prestataireId,
+            audience: InAppNotificationAudience.client.wire,
+          ),
+        );
+      }
+    }
+  } catch (_) {
+    /* Pas client boutique ou erreur réseau */
   }
 
   try {

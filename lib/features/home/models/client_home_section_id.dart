@@ -3,6 +3,7 @@ enum ClientHomeSectionId {
   nextAppointment('next_appointment'),
   inspiration('inspiration'),
   promo('promo'),
+  offers('offers'),
   feed('feed'),
   nearby('nearby'),
   topRated('top_rated');

@@ -9,6 +9,7 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/app_fonts.dart';
 import '../../../../../shared/utils/text_normalizer.dart';
 import '../../../../../shared/widgets/app/app_avatar.dart';
+import '../../../../cart/providers/boutique_cart_provider.dart';
 import '../../agenda/prestataire_availability_badge.dart';
 import '../media/prestataire_realisation_carousel_scope.dart';
 
@@ -90,6 +91,21 @@ class PrestataireDetailHero extends ConsumerWidget {
         ),
       ),
       actions: [
+        Consumer(
+          builder: (context, ref, _) {
+            final count = ref.watch(boutiqueCartItemCountProvider);
+            if (count <= 0) return const SizedBox.shrink();
+            return Badge(
+              label: Text(DiscBoutique.cartBadge(count)),
+              child: _HeroIconButton(
+                icon: Icons.shopping_bag_outlined,
+                tooltip: DiscBoutique.menuCart,
+                onPressed: () => context.pushClientCart(),
+                onCover: true,
+              ),
+            );
+          },
+        ),
         if (onReport != null)
           _HeroIconButton(
             icon: Icons.flag_outlined,

@@ -40,6 +40,13 @@ class PrestataireDetailSectionNav extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _NavChip(
+                  label: DiscBoutique.navBoutique,
+                  icon: Icons.storefront_outlined,
+                  selected: selected == PrestataireDetailSection.boutique,
+                  onTap: () => onSelected(PrestataireDetailSection.boutique),
+                ),
+                const SizedBox(width: 8),
+                _NavChip(
                   label: DiscPrestaDetail.navGallery,
                   icon: Icons.photo_library_outlined,
                   selected: selected == PrestataireDetailSection.gallery,

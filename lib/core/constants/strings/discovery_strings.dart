@@ -2,6 +2,7 @@
 library;
 
 export 'discovery/disc_booking.dart';
+export 'discovery/disc_boutique.dart';
 export 'discovery/disc_payment.dart';
 export 'discovery/disc_home.dart';
 export 'discovery/disc_list.dart';

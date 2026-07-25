@@ -133,6 +133,17 @@ Deno.serve(async (req) => {
       }
       case "payment_intent.succeeded": {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.madbeauty_type === "boutique_order") {
+          await admin
+            .from("boutique_commandes")
+            .update({
+              statut: "paid",
+              payment_status: "paid",
+              paid_at: new Date().toISOString(),
+            })
+            .eq("stripe_payment_intent_id", pi.id);
+          break;
+        }
         const { reservationId } = await ensureReservationForPaymentIntent(
           admin,
           pi,
@@ -149,11 +160,33 @@ Deno.serve(async (req) => {
       }
       case "payment_intent.payment_failed": {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.madbeauty_type === "boutique_order") {
+          await admin
+            .from("boutique_commandes")
+            .update({
+              statut: "canceled",
+              payment_status: "failed",
+            })
+            .eq("stripe_payment_intent_id", pi.id)
+            .eq("statut", "pending_payment");
+          break;
+        }
         await updateReservationPaymentByIntentId(admin, pi.id, "failed");
         break;
       }
       case "payment_intent.canceled": {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.madbeauty_type === "boutique_order") {
+          await admin
+            .from("boutique_commandes")
+            .update({
+              statut: "canceled",
+              payment_status: "failed",
+            })
+            .eq("stripe_payment_intent_id", pi.id)
+            .eq("statut", "pending_payment");
+          break;
+        }
         await updateReservationPaymentByIntentId(admin, pi.id, "canceled");
         break;
       }

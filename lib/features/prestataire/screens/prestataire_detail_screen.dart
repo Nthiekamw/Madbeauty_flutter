@@ -19,8 +19,8 @@ import '../widgets/profile/overview/sections/prestataire_client_experience_secti
 import '../widgets/public/detail/prestataire_client_engagement_row.dart';
 import '../logic/prestataire_services_grouping.dart';
 import '../widgets/public/detail/prestataire_detail_sections.dart';
-import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/public/detail/prestataire_detail_shell.dart';
+import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../widgets/public/prestataire_detail_messaging_section.dart';
 import '../widgets/public/prestataire_public_horaires_section.dart';
 import '../../reviews/models/client_review_list_item.dart';
@@ -46,6 +46,7 @@ class _PrestataireDetailScreenState
       PrestataireDetailSection.services;
 
   final _servicesKey = GlobalKey();
+  final _boutiqueKey = GlobalKey();
   final _galleryKey = GlobalKey();
   final _aboutKey = GlobalKey();
   final _reviewsKey = GlobalKey();
@@ -60,6 +61,7 @@ class _PrestataireDetailScreenState
     setState(() => _selectedSection = section);
     final key = switch (section) {
       PrestataireDetailSection.services => _servicesKey,
+      PrestataireDetailSection.boutique => _boutiqueKey,
       PrestataireDetailSection.gallery => _galleryKey,
       PrestataireDetailSection.about => _aboutKey,
       PrestataireDetailSection.reviews => _reviewsKey,
@@ -208,6 +210,7 @@ class _PrestataireDetailScreenState
                           data: data,
                           isOwnProfile: isOwnProfile,
                           servicesKey: _servicesKey,
+                          boutiqueKey: _boutiqueKey,
                           galleryKey: _galleryKey,
                           aboutKey: _aboutKey,
                           reviewsKey: _reviewsKey,
@@ -265,6 +268,7 @@ class _DetailContent extends StatelessWidget {
     required this.data,
     required this.isOwnProfile,
     required this.servicesKey,
+    required this.boutiqueKey,
     required this.galleryKey,
     required this.aboutKey,
     required this.reviewsKey,
@@ -273,6 +277,7 @@ class _DetailContent extends StatelessWidget {
   final PrestataireDetailData data;
   final bool isOwnProfile;
   final GlobalKey servicesKey;
+  final GlobalKey boutiqueKey;
   final GlobalKey galleryKey;
   final GlobalKey aboutKey;
   final GlobalKey reviewsKey;
@@ -322,6 +327,14 @@ class _DetailContent extends StatelessWidget {
                       serviceId: serviceId,
                     ),
                   ),
+          ),
+        ),
+        KeyedSubtree(
+          key: boutiqueKey,
+          child: PrestataireDetailBoutiqueBlock(
+            prestataireId: data.profile.id,
+            prestataireName: _profileDisplayTitle(data.profile),
+            canShop: !isOwnProfile,
           ),
         ),
         KeyedSubtree(
