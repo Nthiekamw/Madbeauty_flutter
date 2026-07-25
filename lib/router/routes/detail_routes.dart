@@ -14,6 +14,7 @@ import '../../features/prestataire/screens/prestataire_payment_methods_screen.da
 import '../../features/prestataire/screens/prestataire_received_reviews_screen.dart';
 import '../../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
 import '../../features/prestataire/screens/prestataire_subscription_screen.dart';
+import '../../features/reel/screens/prestataire_reel_manage_screen.dart';
 import '../../features/support/screens/user_support_chat_screen.dart';
 import '../app_routes.dart';
 import '../prestataire_public_route.dart';
@@ -111,6 +112,11 @@ List<RouteBase> buildDetailRoutes() => [
         builder: (context, state) => const PrestataireBoutiqueOrdersScreen(),
       ),
       GoRoute(
+        name: AppRouteNames.prestataireReel,
+        path: AppRoutes.prestataireReel,
+        builder: (context, state) => const PrestataireReelManageScreen(),
+      ),
+      GoRoute(
         name: AppRouteNames.prestataireProfileEdit,
         path: AppRoutes.prestataireProfileEdit,
         builder: (context, state) {
@@ -138,6 +144,7 @@ List<RouteBase> buildDetailRoutes() => [
             'boutique' => AppRoutes.prestataireBoutique,
             'packs' => AppRoutes.prestatairePacks,
             'boutique-orders' => AppRoutes.prestataireBoutiqueOrders,
+            'reel' => AppRoutes.prestataireReel,
             _ => AppRoutes.clientSearch,
           };
         },

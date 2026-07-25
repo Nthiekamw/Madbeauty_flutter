@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/booking/screens/client_history_screen.dart';
+import '../../features/booking/screens/client_reservations_screen.dart';
 import '../../features/cart/screens/client_boutique_cart_screen.dart';
 import '../../features/cart/screens/client_boutique_orders_screen.dart';
 import '../../features/favorites/screens/client_favorites_screen.dart';
@@ -51,6 +52,11 @@ List<RouteBase> buildClientProfileRoutes() => [
         name: AppRouteNames.clientReviews,
         path: AppRoutes.clientReviews,
         builder: (context, state) => const ClientReviewsScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientReservations,
+        path: AppRoutes.clientReservations,
+        builder: (context, state) => const ClientReservationsScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientHistory,

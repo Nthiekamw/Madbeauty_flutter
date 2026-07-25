@@ -337,6 +337,25 @@ Un avis par réservation (`reservation_id` unique). Réservé aux réservations 
 | `categorie_id` | `uuid` | nullable, FK → `categories_service(id)` ON DELETE SET NULL |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
+### `public.reel_posts`
+
+Feed **Reel** (photos/vidéos scrollables).
+
+| Colonne | Type | Notes |
+|---------|------|--------|
+| `id` | `uuid` | PK |
+| `prestataire_id` | `uuid` | FK → `prestataire_profiles` CASCADE |
+| `media_type` | `text` | `image` \| `video` |
+| `media_url` | `text` | URL Storage `reel-media` |
+| `caption` | `text` | nullable ≤ 500 |
+| `status` | `text` | `draft` \| `published` \| `hidden` |
+| `likes_count` / `views_count` | `integer` | dénormalisés |
+| `created_at` / `updated_at` | `timestamptz` | |
+
+Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_catalog_visible`). Tables liées : `reel_likes`, `reel_views`.
+
+**RPC** : `list_reel_feed` (score = réservations + ville + catégories client + likes/vues + fraîcheur, pagination cursor), `toggle_reel_like`, `record_reel_view`.
+
 ### `public.favoris`
 
 | Colonne | Type | Contraintes |
@@ -623,7 +642,8 @@ Les buckets sont créés par migrations SQL dans `storage.buckets`.
 | Bucket | Public | Taille max | MIME autorisés | Usage |
 |--------|--------|------------|----------------|-------|
 | `profile-photos` | oui | 5 MiB | `image/jpeg`, `image/png`, `image/webp` | avatars utilisateurs / prestataires |
-| `realisation-photos` | oui | 10 MiB | `image/jpeg`, `image/png`, `image/webp` | galerie réalisations prestataires |
+| `realisation-photos` | oui | 10 MiB | `image/jpeg`, `image/png`, `image/webp` (+ vidéos) | galerie réalisations prestataires |
+| `reel-media` | oui | 50 MiB | tous (validés côté app) | photos/vidéos feed Reel |
 
 Policies `storage.objects` :
 

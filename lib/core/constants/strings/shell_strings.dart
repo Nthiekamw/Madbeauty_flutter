@@ -75,6 +75,7 @@ abstract final class ShellStrings {
   static const String navClientHome = 'Accueil';
   static const String navClientSearch = 'Catalogue';
   static const String navClientReservations = 'Réservations';
+  static const String navClientReel = 'Reel';
   static const String navClientMessages = 'Chat';
   static const String navClientProfile = 'Profil';
 

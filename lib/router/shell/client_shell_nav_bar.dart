@@ -8,21 +8,21 @@ import '../../shared/theme/app_colors.dart';
 const _kNavLabels = [
   ShellStrings.navClientHome,
   ShellStrings.navClientSearch,
-  ShellStrings.navClientReservations,
+  ShellStrings.navClientReel,
   ShellStrings.navClientMessages,
   ShellStrings.navClientProfile,
 ];
 const _kNavOutlined = [
   Icons.home_outlined,
   Icons.search_outlined,
-  Icons.event_outlined,
+  Icons.movie_filter_outlined,
   Icons.chat_bubble_outline_rounded,
   Icons.person_outline_rounded,
 ];
 const _kNavFilled = [
   Icons.home_rounded,
   Icons.search_rounded,
-  Icons.event_rounded,
+  Icons.movie_filter_rounded,
   Icons.chat_bubble_rounded,
   Icons.person_rounded,
 ];
@@ -33,13 +33,13 @@ class ClientShellNavBar extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onTap,
-    this.reservationsBadgeCount = 0,
+    this.profileBadgeCount = 0,
     this.messagesBadgeCount = 0,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onTap;
-  final int reservationsBadgeCount;
+  final int profileBadgeCount;
   final int messagesBadgeCount;
 
   @override
@@ -65,10 +65,10 @@ class ClientShellNavBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
           child: Row(
             children: List.generate(_kNavLabels.length, (index) {
-              final selected = selectedIndex == index;
+              final selected = index == selectedIndex;
               final badgeCount = switch (index) {
-                2 => reservationsBadgeCount,
                 3 => messagesBadgeCount,
+                4 => profileBadgeCount,
                 _ => 0,
               };
 

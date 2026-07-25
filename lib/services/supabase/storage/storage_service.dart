@@ -13,6 +13,7 @@ const realisationPhotosBucket = 'realisation-photos';
 const reviewPhotosBucket = 'review-photos';
 const chatAttachmentsBucket = 'chat-attachments';
 const bugReportScreenshotsBucket = 'bug-report-screenshots';
+const reelMediaBucket = 'reel-media';
 const maxSourceImageBytes = 12 * 1024 * 1024;
 const maxSourceVideoBytes = 50 * 1024 * 1024;
 
@@ -120,6 +121,49 @@ class StorageService {
         onProgress?.call(1);
         return publicUrl;
       },
+    );
+  }
+
+  /// Upload photo ou vidéo pour un Reel (`reel-media` / `{prestataireId}/…`).
+  Future<String> uploadReelMedia({
+    required String prestataireId,
+    required StorageUploadFile file,
+    StorageUploadProgress? onProgress,
+  }) {
+    if (isVideoFile(file)) {
+      return SupabaseErrorHandler.run(
+        operation: 'storage.uploadReelVideo',
+        action: () async {
+          validateVideoFile(file);
+          onProgress?.call(0.1);
+          final stamp = DateTime.now().millisecondsSinceEpoch;
+          final ext = _videoExtensionForFile(file);
+          final contentType = _videoContentTypeForFile(file);
+          final path = '$prestataireId/reel_$stamp.$ext';
+
+          await _client.storage.from(reelMediaBucket).uploadBinary(
+                path,
+                file.bytes,
+                fileOptions: FileOptions(
+                  contentType: contentType,
+                  upsert: false,
+                ),
+              );
+          onProgress?.call(0.9);
+          final publicUrl =
+              _client.storage.from(reelMediaBucket).getPublicUrl(path);
+          onProgress?.call(1);
+          return publicUrl;
+        },
+      );
+    }
+    return _uploadImage(
+      operation: 'storage.uploadReelImage',
+      bucket: reelMediaBucket,
+      pathPrefix: prestataireId,
+      baseName: 'reel',
+      file: file,
+      onProgress: onProgress,
     );
   }
 

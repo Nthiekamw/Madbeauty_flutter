@@ -35,6 +35,7 @@ abstract final class AdminRoutePolicy {
       AppRoutes.prestataireBoutique,
       AppRoutes.prestatairePacks,
       AppRoutes.prestataireBoutiqueOrders,
+      AppRoutes.prestataireReel,
       AppRoutes.prestataireProfileEdit,
       '/prestataire/reservations/',
     ];

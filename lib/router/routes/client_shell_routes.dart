@@ -1,9 +1,9 @@
 import 'package:go_router/go_router.dart';
 
-import '../../features/booking/screens/client_reservations_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/messaging/screens/conversations_inbox_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/reel/screens/client_reel_feed_screen.dart';
 import '../../features/search/screens/search_screen.dart';
 import '../../services/supabase/messaging/messaging_providers.dart';
 import '../app_routes.dart';
@@ -44,11 +44,11 @@ RouteBase buildClientShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            name: AppRouteNames.clientReservations,
-            path: AppRoutes.clientReservations,
+            name: AppRouteNames.clientReel,
+            path: AppRoutes.clientReel,
             pageBuilder: (context, state) => shellTabPage(
               key: state.pageKey,
-              child: const ClientReservationsScreen(),
+              child: const ClientReelFeedScreen(),
             ),
           ),
         ],

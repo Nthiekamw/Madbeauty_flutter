@@ -22,7 +22,7 @@ class ClientShellScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   static const int homeTabIndex = 0;
-  static const int reservationsTabIndex = 2;
+  static const int reelTabIndex = 2;
   static const int messagesTabIndex = 3;
   static const int profileTabIndex = 4;
 
@@ -80,14 +80,11 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
     }
 
     final destinations = ClientShellDestinations.build(
-      reservationsBadge: pendingCount,
+      profileBadge: pendingCount,
       messagesBadge: messagesUnread,
     );
 
     void onTab(int index) {
-      if (index == ClientShellScaffold.reservationsTabIndex) {
-        invalidateClientReservations(ref);
-      }
       if (index == ClientShellScaffold.messagesTabIndex) {
         refreshMessagingInbox(ref, role: MessagingInboxRole.client);
       }
@@ -104,7 +101,7 @@ class _ClientShellScaffoldState extends ConsumerState<ClientShellScaffold> {
       pageTitle: destinations[selectedIndex].label,
       bottomNavigationBar: ClientShellNavBar(
         selectedIndex: selectedIndex,
-        reservationsBadgeCount: pendingCount,
+        profileBadgeCount: pendingCount,
         messagesBadgeCount: messagesUnread,
         onTap: onTab,
       ),

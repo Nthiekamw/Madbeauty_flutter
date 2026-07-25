@@ -23,6 +23,7 @@ abstract final class AppRoutes {
 
   static const String clientHome = '/client/home';
   static const String clientSearch = '/client/search';
+  static const String clientReel = '/client/reel';
   static const String clientReservations = '/client/reservations';
   static const String clientReservationDetail = '/client/reservations/:id';
   static const String clientMessages = '/client/messages';
@@ -78,6 +79,7 @@ abstract final class AppRoutes {
   static const String prestataireBoutique = '/prestataire/boutique';
   static const String prestatairePacks = '/prestataire/packs';
   static const String prestataireBoutiqueOrders = '/prestataire/boutique-orders';
+  static const String prestataireReel = '/prestataire/reel';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
   static const String home = '/';
@@ -106,6 +108,7 @@ abstract final class AppRouteNames {
 
   static const String clientHome = 'client-home';
   static const String clientSearch = 'client-search';
+  static const String clientReel = 'client-reel';
   static const String clientReservations = 'client-reservations';
   static const String clientReservationDetail = 'client-reservation-detail';
   static const String clientMessages = 'client-messages';
@@ -163,4 +166,5 @@ abstract final class AppRouteNames {
   static const String prestataireBoutique = 'prestataire-boutique';
   static const String prestatairePacks = 'prestataire-packs';
   static const String prestataireBoutiqueOrders = 'prestataire-boutique-orders';
+  static const String prestataireReel = 'prestataire-reel';
 }

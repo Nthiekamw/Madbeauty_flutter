@@ -165,7 +165,9 @@ void _openAdminNavTarget(
     case 'client_home':
       router.goNamed(AppRouteNames.clientHome);
     case 'client_reservations':
-      router.goNamed(AppRouteNames.clientReservations);
+      router.pushNamed(AppRouteNames.clientReservations);
+    case 'client_reel':
+      router.goNamed(AppRouteNames.clientReel);
     case 'client_search':
       router.goNamed(AppRouteNames.clientSearch);
     case 'client_messages':

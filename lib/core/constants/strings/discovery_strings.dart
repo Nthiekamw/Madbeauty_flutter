@@ -35,5 +35,6 @@ export 'discovery/disc_support.dart';
 export 'discovery/disc_referral.dart';
 export 'discovery/disc_client_workspace.dart';
 export 'discovery/disc_like.dart';
+export 'discovery/disc_reel.dart';
 export 'discovery/disc_appearance.dart';
 export 'discovery/disc_pwa.dart';

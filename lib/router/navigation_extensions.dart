@@ -174,7 +174,11 @@ extension AppNavigationX on BuildContext {
         queryParameters:
             as != null && as.isNotEmpty ? {'as': as} : const {},
       );
-  void goMyReservations() => goNamed(AppRouteNames.clientReservations);
+  void goMyReservations() => pushNamed(AppRouteNames.clientReservations);
+  void pushMyReservations() => pushNamed(AppRouteNames.clientReservations);
+  void goClientReel() => goNamed(AppRouteNames.clientReel);
+  void pushPrestataireReel() => pushNamed(AppRouteNames.prestataireReel);
+
   void pushClientReservationDetail(String reservationId) => pushNamed(
         AppRouteNames.clientReservationDetail,
         pathParameters: {'id': reservationId},

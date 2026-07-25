@@ -10,33 +10,33 @@ abstract final class ClientShellDestinations {
   static const _labels = [
     ShellStrings.navClientHome,
     ShellStrings.navClientSearch,
-    ShellStrings.navClientReservations,
+    ShellStrings.navClientReel,
     ShellStrings.navClientMessages,
     ShellStrings.navClientProfile,
   ];
   static const _outlined = [
     Icons.home_outlined,
     Icons.search_outlined,
-    Icons.event_outlined,
+    Icons.movie_filter_outlined,
     Icons.chat_bubble_outline_rounded,
     Icons.person_outline_rounded,
   ];
   static const _filled = [
     Icons.home_rounded,
     Icons.search_rounded,
-    Icons.event_rounded,
+    Icons.movie_filter_rounded,
     Icons.chat_bubble_rounded,
     Icons.person_rounded,
   ];
 
   static List<ShellNavDestination> build({
-    int reservationsBadge = 0,
+    int profileBadge = 0,
     int messagesBadge = 0,
   }) {
     return List.generate(_labels.length, (index) {
       final badge = switch (index) {
-        2 => reservationsBadge,
         3 => messagesBadge,
+        4 => profileBadge,
         _ => 0,
       };
       return ShellNavDestination(

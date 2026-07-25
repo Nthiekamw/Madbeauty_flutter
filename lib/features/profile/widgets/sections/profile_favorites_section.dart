@@ -32,6 +32,18 @@ class ProfileFavoritesSection extends ConsumerWidget {
           child: Column(
             children: [
               DiscoveryMenuTile(
+                icon: Icons.event_outlined,
+                title: DiscReel.profileReservationsTitle,
+                subtitle: DiscReel.profileReservationsHint,
+                onTap: () => context.pushMyReservations(),
+              ),
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.colorScheme.outline.withValues(alpha: 0.12),
+              ),
+              DiscoveryMenuTile(
                 icon: Icons.bookmark_rounded,
                 title: DiscProfile.actionFavorites,
                 subtitle: subtitle,
