@@ -72,7 +72,7 @@ class PrestatairePendingRequestCard extends StatelessWidget {
                           clientName: item.clientDisplayName,
                           clientPrenom: item.clientPrenom,
                           clientNom: item.clientNom,
-                          serviceName: item.serviceName,
+                          serviceName: item.offerTitle,
                           clientAvatarUrl: item.clientAvatarUrl,
                           avatarRadius: 22,
                         ),

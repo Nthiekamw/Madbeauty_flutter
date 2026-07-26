@@ -103,7 +103,7 @@ class PrestataireAppointmentTile extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         [
-                          item.serviceName,
+                          item.offerTitle,
                           if (dateLabel != null) dateLabel,
                         ].join(' · '),
                         style: theme.textTheme.bodySmall?.copyWith(

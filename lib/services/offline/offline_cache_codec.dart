@@ -4,6 +4,7 @@ import '../../core/models/domain/user/prestataire_profile.dart';
 import '../../core/models/domain/user/user_profile.dart';
 import '../../core/models/domain/booking/client_reservation_summary.dart';
 import '../../core/models/domain/booking/prestataire_reservation_item.dart';
+import '../../core/models/domain/booking/reservation_pack_line.dart';
 import '../../core/models/domain/prestataire/prestataire_dashboard_data.dart';
 
 /// Sérialisation JSON pour le cache hors ligne.
@@ -106,6 +107,23 @@ abstract final class OfflineCacheCodec {
         'needsCompletion': _encodeReservationItems(data.needsCompletion),
       };
 
+  static List<ReservationPackLine> _decodePackLines(Object? raw) {
+    if (raw is! List) return const [];
+    return raw.whereType<Map>().map((m) {
+      final map = Map<String, dynamic>.from(m);
+      return ReservationPackLine(
+        itemType: (map['itemType'] as String?) ??
+            (map['item_type'] as String?) ??
+            'service',
+        label: (map['label'] as String?) ?? '',
+        quantite: (map['quantite'] as num?)?.toInt() ?? 1,
+        sortOrder: (map['sortOrder'] as num?)?.toInt() ??
+            (map['sort_order'] as num?)?.toInt() ??
+            0,
+      );
+    }).toList();
+  }
+
   static List<PrestataireReservationItem> _decodeReservationItems(Object? raw) {
     if (raw is! List) return const [];
     return raw.whereType<Map>().map((m) {
@@ -131,6 +149,9 @@ abstract final class OfflineCacheCodec {
             (map['prestataireAmountCents'] as num?)?.toInt(),
         durationMinutes:
             (map['durationMinutes'] as num?)?.toInt() ?? 60,
+        packId: map['packId'] as String?,
+        packTitle: map['packTitle'] as String?,
+        packItems: _decodePackLines(map['packItems']),
       );
     }).toList();
   }
@@ -167,6 +188,18 @@ abstract final class OfflineCacheCodec {
               'platformFeeCents': e.platformFeeCents,
               'prestataireAmountCents': e.prestataireAmountCents,
               'durationMinutes': e.durationMinutes,
+              'packId': e.packId,
+              'packTitle': e.packTitle,
+              'packItems': e.packItems
+                  .map(
+                    (l) => {
+                      'itemType': l.itemType,
+                      'label': l.label,
+                      'quantite': l.quantite,
+                      'sortOrder': l.sortOrder,
+                    },
+                  )
+                  .toList(),
             },
           )
           .toList();

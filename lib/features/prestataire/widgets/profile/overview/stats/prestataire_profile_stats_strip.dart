@@ -31,7 +31,9 @@ class PrestataireProfileStatsStrip extends ConsumerWidget {
             .maybeWhen(data: (v) => v, orElse: () => 0);
 
     return Padding(
-      padding: PrestataireProfileInsets.page(context).copyWith(top: 10),
+      padding: PrestataireProfileInsets.page(context).copyWith(
+        top: PrestataireProfileInsets.sectionTop,
+      ),
       child: Row(
         children: [
           Expanded(

@@ -49,6 +49,7 @@ abstract final class DiscBk {
       'Ta réservation sera envoyée dès que tu seras reconnecté(e). '
       'Tu la retrouveras dans « Mes réservations » en attendant.';
   static const doneSeeMine = 'Voir mes réservations';
+  static const doneGoHome = 'Retour à l’accueil';
 
   static const emptyListTitle = 'Aucune réservation';
   static const emptyListBody = 'Tes prochaines réservations apparaîtront ici.';

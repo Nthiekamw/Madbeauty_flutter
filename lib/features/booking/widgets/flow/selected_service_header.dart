@@ -8,9 +8,16 @@ import '../../../../shared/utils/currency_format.dart';
 import '../../logic/booking_formatters.dart';
 
 class SelectedServiceHeader extends StatelessWidget {
-  const SelectedServiceHeader({super.key, required this.service});
+  const SelectedServiceHeader({
+    super.key,
+    required this.service,
+    this.overrideLabel,
+    this.overrideTitle,
+  });
 
   final ServiceBeaute service;
+  final String? overrideLabel;
+  final String? overrideTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +76,7 @@ class SelectedServiceHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DiscBk.selectedServiceLabel,
+                    overrideLabel ?? DiscBk.selectedServiceLabel,
                     style: TextStyle(
                       fontFamily: AppFonts.body,
                       fontSize: 11,
@@ -80,7 +87,7 @@ class SelectedServiceHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    service.nom,
+                    overrideTitle ?? service.nom,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

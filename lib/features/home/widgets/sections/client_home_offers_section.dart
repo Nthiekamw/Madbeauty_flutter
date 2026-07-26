@@ -15,13 +15,21 @@ import '../../providers/home_featured_packs_provider.dart';
 import '../shared/client_home_section_header.dart';
 import '../catalog/prestataire_catalog_section_empty.dart';
 
-/// Section accueil « Offres spéciales ».
+/// Section accueil « Offres spéciales » (cartes portrait).
 class ClientHomeOffersSection extends ConsumerWidget {
   const ClientHomeOffersSection({super.key});
+
+  static const double _listHeight = 188;
+  static const double _listHeightWeb = 200;
+  static const double _cardWidth = 132;
+  static const double _cardWidthWeb = 144;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(homeFeaturedPacksProvider);
+    final web = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final listHeight = web ? _listHeightWeb : _listHeight;
+    final cardWidth = web ? _cardWidthWeb : _cardWidth;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,9 +40,12 @@ class ClientHomeOffersSection extends ConsumerWidget {
           actionLabel: DiscHome.ctaSeeAll,
           onAction: () => context.goClientSearch(),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         async.when(
-          loading: () => const _OffersSkeleton(),
+          loading: () => _OffersSkeleton(
+            listHeight: listHeight,
+            cardWidth: cardWidth,
+          ),
           error: (_, __) => DiscoverySectionError(
             message: DiscHome.offersLoadFail,
             onRetry: () => ref.invalidate(homeFeaturedPacksProvider),
@@ -48,15 +59,17 @@ class ClientHomeOffersSection extends ConsumerWidget {
               );
             }
             return SizedBox(
-              height: DiscoveryResponsive.of(context).useWebSiteLayout
-                  ? 148
-                  : 138,
+              height: listHeight,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: entries.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
-                  return _HomeOfferCard(entry: entries[index]);
+                  return _HomeOfferCard(
+                    entry: entries[index],
+                    width: cardWidth,
+                    height: listHeight,
+                  );
                 },
               ),
             );
@@ -68,9 +81,15 @@ class ClientHomeOffersSection extends ConsumerWidget {
 }
 
 class _HomeOfferCard extends StatelessWidget {
-  const _HomeOfferCard({required this.entry});
+  const _HomeOfferCard({
+    required this.entry,
+    required this.width,
+    required this.height,
+  });
 
   final PackOffreHomeEntry entry;
+  final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -79,115 +98,107 @@ class _HomeOfferCard extends StatelessWidget {
     final pack = entry.pack;
     final image = pack.imageUrl?.trim();
     final discount = entry.discountPercent?.round();
-    final width = DiscoveryResponsive.of(context).useWebSiteLayout ? 300.0 : 280.0;
+    final photoH = height * 0.58;
 
     return SizedBox(
       width: width,
+      height: height,
       child: Material(
         color: AppColors.cardSurfaceFor(theme.brightness),
         elevation: isDark ? 0 : 1,
         shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => context.pushPrestataireDetail(pack.prestataireId),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 72,
-                    height: 72,
-                    child: image != null && image.isNotEmpty
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: photoH,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    image != null && image.isNotEmpty
                         ? AppNetworkImage(url: image, fit: BoxFit.cover)
                         : ColoredBox(
                             color: theme.colorScheme.surfaceContainerHighest,
                             child: Icon(
                               Icons.local_offer_outlined,
+                              size: 28,
                               color: theme.colorScheme.outline,
                             ),
                           ),
-                  ),
+                    if (discount != null && discount > 0)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            DiscBoutique.discountLabel(discount),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (pack.isOffreDuJour)
-                        Text(
-                          DiscBoutique.badgeOffreDuJour,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: AppFonts.body,
-                          ),
-                        ),
                       Text(
                         pack.titre,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           fontFamily: AppFonts.body,
+                          height: 1.2,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         entry.prestataireDisplayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.15,
+                          fontSize: 10,
                         ),
                       ),
                       const Spacer(),
-                      Row(
-                        children: [
-                          Text(
-                            CurrencyFormat.eur(pack.prixPack, decimals: true),
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          if (discount != null && discount > 0) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                DiscBoutique.discountLabel(discount),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          Text(
-                            DiscBoutique.actionReserver,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        CurrencyFormat.eur(pack.prixPack, decimals: true),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.primary,
+                          height: 1.1,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -196,7 +207,13 @@ class _HomeOfferCard extends StatelessWidget {
 }
 
 class _OffersSkeleton extends StatelessWidget {
-  const _OffersSkeleton();
+  const _OffersSkeleton({
+    required this.listHeight,
+    required this.cardWidth,
+  });
+
+  final double listHeight;
+  final double cardWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -204,16 +221,17 @@ class _OffersSkeleton extends StatelessWidget {
     return DiscoveryShimmer.wrap(
       context: context,
       child: SizedBox(
-        height: 138,
+        height: listHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, __) => Container(
-            width: 280,
+            width: cardWidth,
+            height: listHeight,
             decoration: BoxDecoration(
               color: track,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),

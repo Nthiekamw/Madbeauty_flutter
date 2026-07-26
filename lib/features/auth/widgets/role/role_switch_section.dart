@@ -57,14 +57,20 @@ class RoleSwitchSection extends ConsumerWidget {
             AsyncData(:final value) => value != null,
             _ => false,
           };
+          final hasClientByProfile = switch (clientProfileAsync) {
+            AsyncData(:final value) => value != null,
+            _ => false,
+          };
           final hasPresta =
               hasPrestaByRole || hasPrestaByProfile || activeRole == 'prestataire';
-
-          final hasClient = hasClientByRole;
+          // Aligné sur hasPresta : profil client / espace actif suffisent
+          // (le rôle client a pu être retiré à l’inscription presta).
+          final hasClient =
+              hasClientByRole || hasClientByProfile || activeRole == 'client';
 
           /// Même logique que le profil prestataire : évite une zone vide si
           /// `user_roles` n'a pas encore (ou pas) la ligne « client ».
-          final awaitingClientProfile = !hasClientByRole &&
+          final awaitingClientProfile = !hasClient &&
               !hasPresta &&
               clientProfileAsync.isLoading;
           if (awaitingClientProfile) {

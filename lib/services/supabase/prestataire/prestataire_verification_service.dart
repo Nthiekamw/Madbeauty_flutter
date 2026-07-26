@@ -50,10 +50,14 @@ class PrestataireVerificationService {
         if (userId == null) return PrestataireVerificationState.empty();
 
         final raw = await _client.rpc('prestataire_verification_status');
-        if (raw is! Map) return PrestataireVerificationState.empty();
-        return PrestataireVerificationState.fromJson(
-          Map<String, dynamic>.from(raw),
-        );
+        final Map<String, dynamic>? map = switch (raw) {
+          final Map m => Map<String, dynamic>.from(m),
+          final List list when list.isNotEmpty && list.first is Map =>
+            Map<String, dynamic>.from(list.first as Map),
+          _ => null,
+        };
+        if (map == null) return PrestataireVerificationState.empty();
+        return PrestataireVerificationState.fromJson(map);
       },
     );
   }

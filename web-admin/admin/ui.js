@@ -1,5 +1,5 @@
 ﻿// Données partagées (var = global entre ui.js et live.js)
-var USERS = [], RDV_DATA = [], BOUTIQUE_ORDERS = [], BOUTIQUE_CATALOG = [], PAYMENTS = [], FEEDBACKS = [], CHATS = [];
+var USERS = [], RDV_DATA = [], BOUTIQUE_ORDERS = [], BOUTIQUE_CATALOG = [], BOUTIQUE_AVIS = [], PAYMENTS = [], FEEDBACKS = [], CHATS = [];
 var PAYS_DATA = [], ZONES = [];
 var userListFilter = { type: 'all', status: 'all', query: '' };
 
@@ -577,7 +577,7 @@ function renderPrestataireSubscriptions() {
 }
 
 function renderTables() {
-  ['recent-users-tbody','all-users-tbody','clients-tbody','presta-tbody','rdv-tbody','payments-tbody','boutique-orders-tbody','boutique-catalog-tbody'].forEach(id => {
+  ['recent-users-tbody','all-users-tbody','clients-tbody','presta-tbody','rdv-tbody','payments-tbody','boutique-orders-tbody','boutique-catalog-tbody','boutique-avis-tbody'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
@@ -686,18 +686,45 @@ function renderTables() {
   const boutiqueOrdersTbody = document.getElementById('boutique-orders-tbody');
   if (boutiqueOrdersTbody) {
     if (!BOUTIQUE_ORDERS.length) {
-      boutiqueOrdersTbody.innerHTML = emptyRow(7, 'Aucune commande boutique');
+      boutiqueOrdersTbody.innerHTML = emptyRow(8, 'Aucune commande boutique');
     } else {
       BOUTIQUE_ORDERS.forEach((o) => {
+        const canConfirm = ['ready', 'preparing', 'paid', 'pay_on_site'].includes(o.statut);
+        const canCancel = o.statut !== 'canceled' && o.statut !== 'completed';
+        const actions = [
+          canConfirm ? `<button class="btn btn-outline btn-sm" type="button" onclick="adminBoutiqueConfirmReceipt('${o.id}')">Réception</button>` : '',
+          o.statut !== 'completed' ? `<button class="btn btn-outline btn-sm" type="button" onclick="adminBoutiqueSetStatut('${o.id}','completed')">Terminer</button>` : '',
+          canCancel ? `<button class="btn btn-outline btn-sm" type="button" onclick="adminBoutiqueSetStatut('${o.id}','canceled')">Annuler</button>` : '',
+        ].filter(Boolean).join(' ');
         boutiqueOrdersTbody.innerHTML += `
     <tr>
-      <td>${o.date}</td>
+      <td>${o.date}${o.packLinked ? ' · Pack' : ''}${o.hasAvis ? ' · Avis' : ''}</td>
       <td>${o.client}</td>
       <td>${o.presta}</td>
       <td>${o.items}</td>
       <td style="font-weight:600;" class="blur-val">${o.amount}</td>
       <td><span class="badge ${o.statusBadge}">${o.statut}</span></td>
       <td>${o.payment}</td>
+      <td style="white-space:nowrap;">${actions || '—'}</td>
+    </tr>`;
+      });
+    }
+  }
+
+  const boutiqueAvisTbody = document.getElementById('boutique-avis-tbody');
+  if (boutiqueAvisTbody) {
+    if (!BOUTIQUE_AVIS.length) {
+      boutiqueAvisTbody.innerHTML = emptyRow(6, 'Aucun avis boutique');
+    } else {
+      BOUTIQUE_AVIS.forEach((a) => {
+        boutiqueAvisTbody.innerHTML += `
+    <tr>
+      <td>${a.date}</td>
+      <td>${a.client}</td>
+      <td>${a.presta}</td>
+      <td>${a.note}/5</td>
+      <td>${a.commentaire}</td>
+      <td><button class="btn btn-outline btn-sm" type="button" onclick="adminBoutiqueDeleteAvis('${a.id}')">Supprimer</button></td>
     </tr>`;
       });
     }

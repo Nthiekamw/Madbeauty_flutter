@@ -8,15 +8,18 @@ class PendingBookingIntent {
   const PendingBookingIntent({
     required this.prestataireId,
     this.serviceId,
+    this.packId,
     this.initialDay,
   });
 
   final String prestataireId;
   final String? serviceId;
+  final String? packId;
   final String? initialDay;
 
   static const _prestataireKey = 'prestataireId';
   static const _serviceKey = 'serviceId';
+  static const _packKey = 'packId';
   static const _dayKey = 'initialDay';
 
   static PendingBookingIntent? read() {
@@ -31,6 +34,7 @@ class PendingBookingIntent {
       return PendingBookingIntent(
         prestataireId: id,
         serviceId: (map[_serviceKey] as String?)?.trim(),
+        packId: (map[_packKey] as String?)?.trim(),
         initialDay: (map[_dayKey] as String?)?.trim(),
       );
     } catch (_) {
@@ -41,14 +45,20 @@ class PendingBookingIntent {
   static Future<void> remember({
     required String prestataireId,
     String? serviceId,
+    String? packId,
     String? initialDay,
   }) async {
     final id = prestataireId.trim();
     if (id.isEmpty) return;
     final payload = <String, String>{_prestataireKey: id};
-    final service = serviceId?.trim();
-    if (service != null && service.isNotEmpty) {
-      payload[_serviceKey] = service;
+    final pack = packId?.trim();
+    if (pack != null && pack.isNotEmpty) {
+      payload[_packKey] = pack;
+    } else {
+      final service = serviceId?.trim();
+      if (service != null && service.isNotEmpty) {
+        payload[_serviceKey] = service;
+      }
     }
     final day = initialDay?.trim();
     if (day != null && day.isNotEmpty) {
@@ -71,9 +81,14 @@ class PendingBookingIntent {
 
   String get bookingPath {
     final params = <String, String>{'prestataireId': prestataireId};
-    final service = serviceId?.trim();
-    if (service != null && service.isNotEmpty) {
-      params['serviceId'] = service;
+    final pack = packId?.trim();
+    if (pack != null && pack.isNotEmpty) {
+      params['packId'] = pack;
+    } else {
+      final service = serviceId?.trim();
+      if (service != null && service.isNotEmpty) {
+        params['serviceId'] = service;
+      }
     }
     final day = initialDay?.trim();
     if (day != null && day.isNotEmpty) {

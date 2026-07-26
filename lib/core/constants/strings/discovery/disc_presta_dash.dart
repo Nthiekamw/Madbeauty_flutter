@@ -27,7 +27,7 @@ abstract final class DiscPrestaDash {
   static const overviewClientsMonth = 'Clients ce mois';
   static const overviewRevenueMonth = 'Revenus ce mois';
   static const overviewRevenueTotal = 'Revenus totaux';
-  static const overviewBoutiqueOrders = 'Commandes boutique';
+  static const overviewBoutiqueOrders = 'Commandes';
   static const overviewBoutiqueOrdersHint = 'À préparer ou remettre';
   static const overviewVsYesterday = 'vs hier';
   static const overviewVsLastMonth = 'vs mois dernier';

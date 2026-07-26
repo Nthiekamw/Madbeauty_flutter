@@ -71,7 +71,7 @@ class PrestataireHistoryClientSection extends StatelessWidget {
                   ),
                 ),
           subtitle: Text(
-            latest?.serviceName ??
+            latest?.offerTitle ??
                 DiscPrestaClients.clientReservationCount(
                   group.reservations.length,
                 ),
@@ -126,7 +126,7 @@ class _HistoryReservationTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.serviceName,
+                        item.offerTitle,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontFamily: AppFonts.display,
                           fontWeight: FontWeight.w700,

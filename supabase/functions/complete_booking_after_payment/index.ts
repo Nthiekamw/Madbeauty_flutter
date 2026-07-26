@@ -12,6 +12,7 @@ interface Body {
   paymentIntentId?: string;
   prestataireId?: string;
   serviceId?: string;
+  packId?: string;
   dateHeure?: string;
   notesClient?: string;
 }
@@ -30,10 +31,14 @@ Deno.serve(async (req) => {
     const paymentIntentId = String(body.paymentIntentId ?? "").trim();
     const prestataireId = String(body.prestataireId ?? "").trim();
     const serviceId = String(body.serviceId ?? "").trim();
+    const packId = String(body.packId ?? "").trim();
     const dateHeure = String(body.dateHeure ?? "").trim();
     const notesClient = body.notesClient?.trim();
 
-    if (!paymentIntentId || !prestataireId || !serviceId || !dateHeure) {
+    if (!paymentIntentId || !prestataireId || !dateHeure) {
+      return jsonResponse({ error: "Paramètres invalides" }, 400);
+    }
+    if (!packId && !serviceId) {
       return jsonResponse({ error: "Paramètres invalides" }, 400);
     }
 
@@ -67,10 +72,19 @@ Deno.serve(async (req) => {
     const normalizedMetaDate = normalizeBookingInstant(
       String(meta.date_heure ?? ""),
     );
+    const metaPackId = String(meta.pack_id ?? "").trim();
+    const metaServiceId = String(meta.service_id ?? "").trim();
+    const packOk = packId
+      ? metaPackId === packId
+      : metaPackId.length === 0;
+    const serviceOk = packId
+      ? true
+      : metaServiceId === serviceId;
     if (
       meta.supabase_user_id !== user.id ||
       meta.prestataire_id !== prestataireId ||
-      meta.service_id !== serviceId ||
+      !packOk ||
+      !serviceOk ||
       normalizedMetaDate !== normalizedRequestDate
     ) {
       return jsonResponse({ error: "Métadonnées de paiement invalides" }, 400);

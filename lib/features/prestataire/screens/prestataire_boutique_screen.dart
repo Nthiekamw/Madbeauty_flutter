@@ -163,6 +163,8 @@ class _ProduitTile extends StatelessWidget {
               children: [
                 Text(
                   produit.nom,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -170,31 +172,101 @@ class _ProduitTile extends StatelessWidget {
                 if (produit.conditionnement?.trim().isNotEmpty == true)
                   Text(
                     produit.conditionnement!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.outline,
                     ),
                   ),
                 const SizedBox(height: 4),
-                Text(
-                  CurrencyFormat.eur(produit.prix, decimals: true),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      CurrencyFormat.eur(produit.prix, decimals: true),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    _StockBadge(produit: produit),
+                  ],
                 ),
               ],
             ),
           ),
-          IconButton(
+          const SizedBox(width: 4),
+          PopupMenuButton<_ProduitTileAction>(
             tooltip: DiscBoutique.boutiqueEdit,
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
-            tooltip: DiscBoutique.actionRetirer,
-            onPressed: onDeactivate,
-            icon: const Icon(Icons.delete_outline_rounded),
+            onSelected: (action) {
+              switch (action) {
+                case _ProduitTileAction.edit:
+                  onEdit();
+                case _ProduitTileAction.deactivate:
+                  onDeactivate();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _ProduitTileAction.edit,
+                child: Text(DiscBoutique.boutiqueEdit),
+              ),
+              const PopupMenuItem(
+                value: _ProduitTileAction.deactivate,
+                child: Text(DiscBoutique.actionRetirer),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert_rounded),
           ),
         ],
+      ),
+    );
+  }
+}
+
+enum _ProduitTileAction { edit, deactivate }
+
+class _StockBadge extends StatelessWidget {
+  const _StockBadge({required this.produit});
+
+  final ProduitBoutique produit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color bg;
+    final Color fg;
+    final String label;
+    if (produit.stockIllimite) {
+      label = DiscBoutique.stockBadgeUnlimited;
+      bg = theme.colorScheme.surfaceContainerHighest;
+      fg = theme.colorScheme.onSurfaceVariant;
+    } else if (produit.isOutOfStock) {
+      label = DiscBoutique.stockBadgeOut;
+      bg = theme.colorScheme.errorContainer;
+      fg = theme.colorScheme.onErrorContainer;
+    } else {
+      label = DiscBoutique.stockBadgeQty(produit.stockQty);
+      bg = produit.isLowStock
+          ? theme.colorScheme.tertiaryContainer
+          : theme.colorScheme.primary.withValues(alpha: 0.12);
+      fg = produit.isLowStock
+          ? theme.colorScheme.onTertiaryContainer
+          : theme.colorScheme.primary;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -215,8 +287,10 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
   late final TextEditingController _description;
   late final TextEditingController _conditionnement;
   late final TextEditingController _prix;
+  late final TextEditingController _stockQty;
   late ProduitBoutiqueCategorie _categorie;
   String? _imageUrl;
+  bool _stockIllimite = false;
   bool _saving = false;
   bool _uploadingPhoto = false;
 
@@ -230,6 +304,10 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
     _prix = TextEditingController(
       text: p == null ? '' : p.prix.toStringAsFixed(2),
     );
+    _stockIllimite = p?.stockIllimite ?? false;
+    _stockQty = TextEditingController(
+      text: p == null ? '0' : '${p.stockQty}',
+    );
     _categorie = p?.categorie ?? ProduitBoutiqueCategorie.autre;
     _imageUrl = p?.imageUrl;
   }
@@ -240,6 +318,7 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
     _description.dispose();
     _conditionnement.dispose();
     _prix.dispose();
+    _stockQty.dispose();
     super.dispose();
   }
 
@@ -289,6 +368,11 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
       AppSnackBar.error(context, DiscBoutique.validationPrix);
       return;
     }
+    final stockQty = int.tryParse(_stockQty.text.trim());
+    if (!_stockIllimite && (stockQty == null || stockQty < 0)) {
+      AppSnackBar.error(context, DiscBoutique.validationStock);
+      return;
+    }
 
     final presta = await ref.read(currentPrestataireProvider.future);
     final service = ref.read(produitBoutiqueServiceProvider);
@@ -311,6 +395,8 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
           prix: prix,
           imageUrl: _imageUrl,
           isActif: true,
+          stockIllimite: _stockIllimite,
+          stockQty: _stockIllimite ? 0 : (stockQty ?? 0),
         ),
       );
       if (!mounted) return;
@@ -421,6 +507,23 @@ class _ProduitEditorSheetState extends ConsumerState<_ProduitEditorSheet> {
                 labelText: DiscBoutique.fieldPrix,
               ),
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(DiscBoutique.fieldStockIllimite),
+              value: _stockIllimite,
+              onChanged: (v) => setState(() => _stockIllimite = v),
+            ),
+            if (!_stockIllimite)
+              TextField(
+                controller: _stockQty,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: const InputDecoration(
+                  labelText: DiscBoutique.fieldStockQty,
+                ),
+              ),
             const SizedBox(height: 12),
             DropdownButtonFormField<ProduitBoutiqueCategorie>(
               value: _categorie,

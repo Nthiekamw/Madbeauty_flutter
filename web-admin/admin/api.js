@@ -87,6 +87,27 @@ window.MBApi = (() => {
         p_limit: limit,
         p_search: search || null,
       }),
+    listBoutiqueAvis: (limit = 100, search = '') =>
+      rpc('admin_list_avis_boutique', {
+        p_limit: limit,
+        p_search: search || null,
+      }),
+    setBoutiqueOrderStatut: (commandeId, statut, reason) =>
+      rpc('admin_set_boutique_order_statut', {
+        p_commande_id: commandeId,
+        p_statut: statut,
+        p_reason: reason,
+      }),
+    confirmBoutiqueReceipt: (commandeId, reason) =>
+      rpc('admin_confirm_boutique_receipt', {
+        p_commande_id: commandeId,
+        p_reason: reason,
+      }),
+    deleteBoutiqueAvis: (avisId, reason) =>
+      rpc('admin_delete_avis_boutique', {
+        p_avis_id: avisId,
+        p_reason: reason,
+      }),
     listBugReports: (onlyPending = false, limit = 50) =>
       rpc('admin_list_bug_reports', { p_only_pending: onlyPending, p_limit: limit }),
     listSupportThreads: (limit = 50) => rpc('admin_list_user_support_threads', { p_limit: limit }),

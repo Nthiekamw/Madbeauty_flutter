@@ -44,9 +44,10 @@ class StripeBookingPaymentService {
 
   Future<BookingPaymentSheetData> createPaymentIntent({
     required String prestataireId,
-    required String serviceId,
     required DateTime dateHeure,
     required BookingPaymentModeKind paymentMode,
+    String? serviceId,
+    String? packId,
   }) async {
     if (!StripePlatformPolicy.isEnabled) {
       throw const StripePaymentGenericException(DiscPay.errWebUnsupported);
@@ -55,11 +56,19 @@ class StripeBookingPaymentService {
       throw const StripePaymentNotConfiguredException();
     }
 
+    final pack = packId?.trim();
+    final service = serviceId?.trim();
+    if ((pack == null || pack.isEmpty) && (service == null || service.isEmpty)) {
+      throw const StripePaymentGenericException('Paramètres de réservation invalides');
+    }
+
     final response = await _invoke(
       'create_booking_payment_intent',
       body: {
         'prestataireId': prestataireId,
-        'serviceId': serviceId,
+        if (pack != null && pack.isNotEmpty) 'packId': pack,
+        if ((pack == null || pack.isEmpty) && service != null && service.isNotEmpty)
+          'serviceId': service,
         'dateHeure': _bookingInstantPayload(dateHeure),
         'paymentMode': paymentMode.wireValue,
       },
@@ -132,15 +141,20 @@ class StripeBookingPaymentService {
   Future<Reservation> completeBookingAfterPayment({
     required String paymentIntentId,
     required String prestataireId,
-    required String serviceId,
     required DateTime dateHeure,
+    String? serviceId,
+    String? packId,
     String? notesClient,
   }) async {
+    final pack = packId?.trim();
+    final service = serviceId?.trim();
     final payload = {
       'paymentIntentId': paymentIntentId,
       'prestataireId': prestataireId,
-      'serviceId': serviceId,
       'dateHeure': _bookingInstantPayload(dateHeure),
+      if (pack != null && pack.isNotEmpty) 'packId': pack,
+      if ((pack == null || pack.isEmpty) && service != null && service.isNotEmpty)
+        'serviceId': service,
       if (notesClient != null && notesClient.trim().isNotEmpty)
         'notesClient': notesClient.trim(),
     };

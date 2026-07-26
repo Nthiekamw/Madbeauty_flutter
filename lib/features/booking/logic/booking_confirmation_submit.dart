@@ -17,7 +17,8 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
     show
         bookingServiceProvider,
         invalidateBookingDetail,
-        invalidateClientReservations;
+        invalidateClientReservations,
+        packBookingServiceProvider;
 import '../../../services/supabase/referral/referral_providers.dart';
 import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_create_failure.dart';
@@ -55,9 +56,12 @@ abstract final class BookingConfirmationSubmit {
     required BookingPaymentModeKind paymentMode,
     required void Function(BookingPaymentPhase phase) onPhase,
     required void Function(String message) onError,
+    String? packId,
   }) async {
     final bookingService = ref.read(bookingServiceProvider);
+    final packBookingService = ref.read(packBookingServiceProvider);
     final payments = ref.read(stripeBookingPaymentServiceProvider);
+    final isPack = packId != null && packId.trim().isNotEmpty;
 
     final depositAvailable = await ref.read(
       prestataireDepositAvailableProvider(prestataireId).future,
@@ -99,7 +103,12 @@ abstract final class BookingConfirmationSubmit {
       onError(DiscPay.errNotConfigured);
       return null;
     }
-    if (bookingService == null) {
+    if (isPack) {
+      if (packBookingService == null) {
+        onError(DiscBk.errGenericSave);
+        return null;
+      }
+    } else if (bookingService == null) {
       onError(DiscBk.errGenericSave);
       return null;
     }
@@ -110,30 +119,34 @@ abstract final class BookingConfirmationSubmit {
     final prestataireName =
         salon != null && salon.isNotEmpty ? salon : 'Salon';
 
-    final localId = PendingOfflineAction.newLocalReservationId();
-    final queued = await enqueueIfOffline(
-      ref: ref,
-      context: context,
-      action: PendingOfflineAction.create(
-        type: OfflineActionType.bookingCreate,
-        payload: {
-          'localReservationId': localId,
-          'prestataireId': prestataireId,
-          'serviceId': serviceId,
-          'dateHeure': dateTime.toIso8601String(),
-          'serviceName': serviceName,
-          'prestataireName': prestataireName,
-          'prestataireAvatarUrl': detail?.avatarUrl,
-        },
-      ),
-    );
-
-    if (queued) {
-      return const BookingConfirmSuccess(
-        queuedOffline: true,
-        paidWithStripe: false,
-        paidOnSite: false,
+    if (isPack) {
+      // Pack : online-only (pas de file offline).
+    } else {
+      final localId = PendingOfflineAction.newLocalReservationId();
+      final queued = await enqueueIfOffline(
+        ref: ref,
+        context: context,
+        action: PendingOfflineAction.create(
+          type: OfflineActionType.bookingCreate,
+          payload: {
+            'localReservationId': localId,
+            'prestataireId': prestataireId,
+            'serviceId': serviceId,
+            'dateHeure': dateTime.toIso8601String(),
+            'serviceName': serviceName,
+            'prestataireName': prestataireName,
+            'prestataireAvatarUrl': detail?.avatarUrl,
+          },
+        ),
       );
+
+      if (queued) {
+        return const BookingConfirmSuccess(
+          queuedOffline: true,
+          paidWithStripe: false,
+          paidOnSite: false,
+        );
+      }
     }
 
     onPhase(BookingPaymentPhase.idle);
@@ -148,7 +161,8 @@ abstract final class BookingConfirmationSubmit {
         final reservation = await flow.payAndCreateReservation(
           context: context,
           prestataireId: prestataireId,
-          serviceId: serviceId,
+          serviceId: isPack ? null : serviceId,
+          packId: isPack ? packId.trim() : null,
           dateHeure: dateTime,
           paymentMode: effectiveMode,
           onPhase: onPhase,
@@ -167,7 +181,39 @@ abstract final class BookingConfirmationSubmit {
         );
       }
 
-      final reservation = await bookingService.create(
+      if (isPack) {
+        final packSvc = packBookingService;
+        if (packSvc == null) {
+          onError(DiscBk.errGenericSave);
+          return null;
+        }
+        final reservation = await packSvc.createPackBooking(
+          packId: packId.trim(),
+          dateHeure: dateTime,
+          paymentMode: effectiveMode.wireValue,
+          servicePriceCents: breakdown.servicePriceCents,
+          platformFeeCents: breakdown.platformFeeCents,
+          prestataireAmountCents: 0,
+          originalServicePriceCents: breakdown.hasReferralDiscount
+              ? breakdown.originalServicePriceCents
+              : null,
+          referralDiscountPercent: breakdown.referralDiscountPercent,
+        );
+        _afterBookingCreated(
+          ref: ref,
+          reservationId: reservation.id,
+          dateHeure: reservation.dateHeure,
+          serviceName: serviceName,
+          statut: reservation.statut,
+        );
+        return const BookingConfirmSuccess(
+          queuedOffline: false,
+          paidWithStripe: false,
+          paidOnSite: true,
+        );
+      }
+
+      final reservation = await bookingService!.create(
         prestataireId: prestataireId,
         serviceId: serviceId,
         dateHeure: dateTime,

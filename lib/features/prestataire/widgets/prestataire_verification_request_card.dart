@@ -51,6 +51,9 @@ class _PrestataireVerificationRequestCardState
         _ => DiscProfile.prestataireVerificationRequestErr,
       };
       AppSnackBar.error(context, message);
+      if (e.code == 'already_pending' || e.code == 'already_verified') {
+        ref.invalidate(prestataireVerificationStatusProvider);
+      }
     } catch (_) {
       if (mounted) {
         AppSnackBar.error(context, DiscProfile.prestataireVerificationRequestErr);
@@ -70,16 +73,14 @@ class _PrestataireVerificationRequestCardState
         padding: const EdgeInsets.all(14),
         child: statusAsync.when(
           loading: () => const LinearProgressIndicator(),
-          error: (_, __) => _RequestBody(
-            theme: theme,
-            state: PrestataireVerificationState.empty(),
-            loading: _loading,
-            onRequest: _request,
-          ),
+          error: (_, __) => const SizedBox.shrink(),
           data: (state) {
             if (!state.found) return const SizedBox.shrink();
             if (state.isVerified) {
               return _VerifiedBody(theme: theme, verifiedAt: state.verifiedAt);
+            }
+            if (state.isPending) {
+              return _PendingBody(theme: theme);
             }
             return _RequestBody(
               theme: theme,
@@ -90,6 +91,67 @@ class _PrestataireVerificationRequestCardState
           },
         ),
       ),
+    );
+  }
+}
+
+class _PendingBody extends StatelessWidget {
+  const _PendingBody({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Icon(
+            Icons.hourglass_top_rounded,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DiscProfile.prestataireVerificationPendingTitle,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontFamily: AppFonts.display,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DiscProfile.prestataireVerificationPending,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DiscProfile.prestataireVerificationPendingBody,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -195,14 +257,6 @@ class _RequestBody extends StatelessWidget {
             height: 1.35,
           ),
         ),
-        if (state.isPending) ...[
-          const SizedBox(height: 12),
-          _StatusBanner(
-            icon: Icons.hourglass_top_rounded,
-            color: theme.colorScheme.primary,
-            text: DiscProfile.prestataireVerificationPending,
-          ),
-        ],
         if (state.wasRevoked) ...[
           const SizedBox(height: 12),
           _StatusBanner(

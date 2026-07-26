@@ -9,10 +9,12 @@ class BookingSuccessView extends StatefulWidget {
   const BookingSuccessView({
     super.key,
     required this.onViewReservations,
+    required this.onGoHome,
     this.body = DiscBk.doneBody,
   });
 
   final VoidCallback onViewReservations;
+  final VoidCallback onGoHome;
   final String body;
 
   @override
@@ -183,6 +185,22 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                     const Text(DiscBk.doneSeeMine),
                   ],
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FadeTransition(
+            opacity: _fade,
+            child: AppButton(
+              variant: AppButtonVariant.secondary,
+              onPressed: widget.onGoHome,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.home_outlined, size: 20),
+                  const SizedBox(width: 10),
+                  const Text(DiscBk.doneGoHome),
+                ],
               ),
             ),
           ),

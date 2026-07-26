@@ -62,12 +62,24 @@ class BookingClientOps {
           throw const BookingSlotTakenFailure();
         }
 
+        var durationMinutes = 30;
+        try {
+          final serviceRow = await _client
+              .from('services_beaute')
+              .select('duree_minutes')
+              .eq('id', serviceId)
+              .maybeSingle();
+          final d = (serviceRow?['duree_minutes'] as num?)?.toInt();
+          if (d != null && d > 0) durationMinutes = d;
+        } catch (_) {}
+
         final payload = <String, dynamic>{
           'client_id': clientId,
           'prestataire_id': prestataireId,
           'service_id': serviceId,
           'date_heure': localSlot.toUtc().toIso8601String(),
           'statut': 'en_attente',
+          'duration_minutes': durationMinutes,
           if (notesClient != null && notesClient.trim().isNotEmpty)
             'notes_client': notesClient.trim(),
           if (paymentMode != null && paymentMode.isNotEmpty)

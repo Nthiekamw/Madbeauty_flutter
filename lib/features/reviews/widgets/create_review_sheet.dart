@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../../services/storage/review_prompt_store.dart';
 import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/theme/app_fonts.dart';
-import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../providers/prestataire_note_moyenne_provider.dart';
 import '../providers/review_provider.dart';
 import 'review_photo_picker.dart';
@@ -57,6 +57,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
   int _note = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
+  String? _error;
   List<Uint8List> _photoBytes = const [];
 
   @override
@@ -65,19 +66,63 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (_note < 1 || _submitting) return;
+  String _mapErrorMessage(String raw) {
+    final msg = raw.toLowerCase();
+    if (msg.contains('terminée') ||
+        msg.contains('terminee') ||
+        msg.contains('terminé')) {
+      return DiscReview.errorNotCompleted;
+    }
+    if (msg.contains('déjà') ||
+        msg.contains('deja') ||
+        msg.contains('unique') ||
+        msg.contains('duplicate')) {
+      return DiscReview.errorAlreadyExists;
+    }
+    if (raw.trim().isNotEmpty &&
+        raw != CoreStrings.errorUnexpected &&
+        !raw.startsWith('SupabaseServiceException')) {
+      return raw;
+    }
+    return DiscReview.errorGeneric;
+  }
 
-    final service = ref.read(reviewServiceProvider);
-    final storage = ref.read(storageServiceProvider);
-    final client = await ref.read(currentClientProfileProvider.future);
-    final userId = ref.read(authNotifierProvider).asData?.value?.id;
-    if (service == null || client == null || storage == null || userId == null) {
-      if (mounted) AppSnackBar.error(context, DiscReview.errorGeneric);
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (_submitting) return;
+
+    if (_note < 1) {
+      setState(() => _error = DiscReview.errorSelectNote);
       return;
     }
 
-    setState(() => _submitting = true);
+    final service = ref.read(reviewServiceProvider);
+    var client = ref.read(currentClientProfileProvider).asData?.value;
+    if (client == null) {
+      try {
+        client = await ref.read(currentClientProfileProvider.future);
+      } catch (_) {
+        client = null;
+      }
+    }
+    if (service == null || client == null) {
+      if (mounted) setState(() => _error = DiscReview.errorGeneric);
+      return;
+    }
+
+    final needsPhotos = _photoBytes.isNotEmpty;
+    final storage = ref.read(storageServiceProvider);
+    final userId = ref.read(authNotifierProvider).asData?.value?.id;
+    if (needsPhotos && (storage == null || userId == null)) {
+      setState(() => _error = DiscReview.errorGeneric);
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+
     try {
       final reviewId = await service.create(
         bookingId: widget.bookingId,
@@ -86,11 +131,11 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
         commentaire: _commentController.text,
       );
 
-      if (_photoBytes.isNotEmpty) {
+      if (needsPhotos) {
         final urls = <String>[];
         for (final bytes in _photoBytes) {
-          final url = await storage.uploadReviewPhoto(
-            userId: userId,
+          final url = await storage!.uploadReviewPhoto(
+            userId: userId!,
             reviewId: reviewId,
             file: StorageUploadFile(bytes: bytes),
           );
@@ -102,6 +147,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
           photoUrls: urls,
         );
       }
+
       ref.invalidate(hasReviewedProvider(widget.bookingId));
       ref.invalidate(clientReviewsForCurrentClientProvider);
       final prestaId = widget.prestataireId;
@@ -114,20 +160,24 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
         await ReviewPromptStore.instance.bindToUser(authUserId);
       }
       await ReviewPromptStore.instance.markHandled(widget.bookingId);
-      if (mounted) {
-        AppSnackBar.show(context, message: DiscReview.success);
-        Navigator.of(context).pop(true);
-      }
-    } on StateError catch (e) {
+
       if (!mounted) return;
-      final msg = e.message.contains('terminée')
-          ? DiscReview.errorNotCompleted
-          : e.message.contains('déjà')
-              ? DiscReview.errorAlreadyExists
-              : DiscReview.errorGeneric;
-      AppSnackBar.error(context, msg);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      Navigator.of(context).pop(true);
+      // Après fermeture : le snackbar n’est plus masqué par la sheet.
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(DiscReview.success),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      setState(() => _error = _mapErrorMessage(e.message));
     } catch (_) {
-      if (mounted) AppSnackBar.error(context, DiscReview.errorGeneric);
+      if (!mounted) return;
+      setState(() => _error = DiscReview.errorGeneric);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -138,6 +188,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
     final theme = Theme.of(context);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final maxH = MediaQuery.sizeOf(context).height * 0.92;
+    final error = _error;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
@@ -182,9 +233,18 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
                     button: true,
                     selected: filled,
                     child: IconButton(
-                      onPressed: () => setState(() => _note = star),
+                      onPressed: _submitting
+                          ? null
+                          : () => setState(() {
+                                _note = star;
+                                if (_error == DiscReview.errorSelectNote) {
+                                  _error = null;
+                                }
+                              }),
                       icon: Icon(
-                        filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                        filled
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
                         color: filled
                             ? AppColors.starReview
                             : theme.colorScheme.outline,
@@ -213,6 +273,7 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
               const SizedBox(height: 12),
               TextField(
                 controller: _commentController,
+                enabled: !_submitting,
                 maxLines: 4,
                 minLines: 2,
                 textCapitalization: TextCapitalization.sentences,
@@ -223,16 +284,26 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
                   ),
                 ),
               ),
+              if (error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  error,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: _note >= 1 && !_submitting ? _submit : null,
+                onPressed: _submitting ? null : _submit,
                 child: _submitting
                     ? const SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(DiscReview.submit),
+                    : const Text(DiscReview.submit),
               ),
             ],
           ),
@@ -241,4 +312,3 @@ class _CreateReviewSheetState extends ConsumerState<CreateReviewSheet> {
     );
   }
 }
-

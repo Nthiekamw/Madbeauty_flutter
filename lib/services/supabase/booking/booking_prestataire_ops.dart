@@ -108,7 +108,9 @@ class BookingPrestataireOps {
 
         final snapshot = await _client
             .from('reservations')
-            .select('statut, date_heure, services_beaute(duree_minutes)')
+            .select(
+              'statut, date_heure, duration_minutes, services_beaute(duree_minutes)',
+            )
             .eq('id', bookingId)
             .maybeSingle();
 
@@ -126,10 +128,13 @@ class BookingPrestataireOps {
 
         final start =
             DateTime.parse(snapshot['date_heure'] as String).toLocal();
+        final dureeRes = (snapshot['duration_minutes'] as num?)?.toInt();
         final service = snapshot['services_beaute'];
-        final duration = service is Map
-            ? (service['duree_minutes'] as num?)?.toInt() ?? 60
-            : 60;
+        final duration = dureeRes != null && dureeRes > 0
+            ? dureeRes
+            : service is Map
+                ? (service['duree_minutes'] as num?)?.toInt() ?? 60
+                : 60;
         final end = start.add(Duration(minutes: duration <= 0 ? 60 : duration));
         if (end.isAfter(DateTime.now())) {
           throw AppFailure(DiscBk.errMarkDoneTooEarly);
@@ -226,8 +231,11 @@ class BookingPrestataireOps {
             .select(
               'id, date_heure, statut, client_id, notes_client, notes_prestataire, '
               'amount_cents, payment_status, payment_mode, service_price_cents, '
-              'platform_fee_cents, prestataire_amount_cents, '
-              'services_beaute(nom, duree_minutes), client_profiles(user_id)',
+              'platform_fee_cents, prestataire_amount_cents, duration_minutes, pack_id, '
+              'services_beaute(nom, duree_minutes), '
+              'packs_offre(titre), '
+              'reservation_pack_items(item_type, label, quantite, sort_order), '
+              'client_profiles(user_id)',
             )
             .eq('prestataire_id', prestataireId)
             .order('date_heure', ascending: true);

@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user } = await requireAuthUser(req);
+    const { user, supabase: userSb } = await requireAuthUser(req);
     const body = (await req.json()) as Body;
     const prestataireId = String(body.prestataireId ?? "").trim();
     const lines = Array.isArray(body.lines) ? body.lines : [];
@@ -40,19 +40,6 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const stripe = stripeClient();
 
-    // Nettoie les pending Stripe abandonnés (create-before-pay).
-    await admin.rpc("expire_stale_boutique_pending_orders");
-
-    const { data: clientRow } = await admin
-      .from("client_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (!clientRow?.id) {
-      return jsonResponse({ error: "Profil client manquant" }, 403);
-    }
-    const clientId = clientRow.id as string;
-
     const { data: ownPresta } = await admin
       .from("prestataire_profiles")
       .select("id")
@@ -60,52 +47,6 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (ownPresta?.id === prestataireId) {
       return jsonResponse({ error: "Achat sur son propre profil interdit" }, 403);
-    }
-
-    const produitIds = [
-      ...new Set(
-        lines
-          .map((l) => String(l.produitId ?? "").trim())
-          .filter((id) => id.length > 0),
-      ),
-    ];
-
-    const { data: produits } = await admin
-      .from("produits_boutique")
-      .select("id, nom, conditionnement, prix, is_actif, prestataire_id")
-      .in("id", produitIds)
-      .eq("prestataire_id", prestataireId)
-      .eq("is_actif", true);
-
-    const byId = new Map(
-      (produits ?? []).map((p) => [p.id as string, p]),
-    );
-
-    const itemRows: Array<Record<string, unknown>> = [];
-    let amountCents = 0;
-    for (const line of lines) {
-      const produitId = String(line.produitId ?? "").trim();
-      const quantite = Math.max(1, Math.floor(Number(line.quantite ?? 1)));
-      const produit = byId.get(produitId);
-      if (!produit) {
-        return jsonResponse(
-          { error: `Produit indisponible (${produitId})` },
-          400,
-        );
-      }
-      const prixCents = Math.round(Number(produit.prix) * 100);
-      amountCents += prixCents * quantite;
-      itemRows.push({
-        produit_id: produitId,
-        nom_snapshot: String(produit.nom ?? ""),
-        conditionnement_snapshot: produit.conditionnement ?? null,
-        prix_cents: prixCents,
-        quantite,
-      });
-    }
-
-    if (amountCents < 50) {
-      return jsonResponse({ error: "Montant trop faible" }, 400);
     }
 
     const { data: prestataire } = await admin
@@ -141,6 +82,53 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Création + décrément stock atomique (RPC, JWT utilisateur).
+    const { data: created, error: rpcErr } = await userSb.rpc(
+      "create_boutique_commande_from_cart",
+      {
+        p_payload: {
+          prestataire_id: prestataireId,
+          pay_on_site: false,
+          notes_client: notesClient || null,
+          items: lines.map((l) => ({
+            produit_id: String(l.produitId ?? "").trim(),
+            quantite: Math.max(1, Math.floor(Number(l.quantite ?? 1))),
+          })),
+        },
+      },
+    );
+
+    if (rpcErr || !created) {
+      const msg = rpcErr?.message?.trim() || "Création commande impossible";
+      return jsonResponse({ error: msg }, 400);
+    }
+
+    const map = created as Record<string, unknown>;
+    const commandeId = String(map.commande_id ?? "");
+    const amountCents = Number(map.amount_cents ?? 0);
+    if (!commandeId || amountCents < 50) {
+      if (commandeId) {
+        await admin
+          .from("boutique_commandes")
+          .update({
+            statut: "canceled",
+            payment_status: "failed",
+          })
+          .eq("id", commandeId);
+      }
+      return jsonResponse({ error: "Montant trop faible" }, 400);
+    }
+
+    const { data: clientRow } = await admin
+      .from("client_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!clientRow?.id) {
+      return jsonResponse({ error: "Profil client manquant" }, 403);
+    }
+    const clientId = clientRow.id as string;
+
     const customerId = await ensureStripeCustomer(
       admin,
       stripe,
@@ -154,49 +142,32 @@ Deno.serve(async (req) => {
       { apiVersion: "2024-11-20.acacia" },
     );
 
-    const { data: commande, error: commandeErr } = await admin
-      .from("boutique_commandes")
-      .insert({
-        client_id: clientId,
-        prestataire_id: prestataireId,
-        statut: "pending_payment",
-        payment_status: "pending",
-        amount_cents: amountCents,
+    let pi;
+    try {
+      pi = await stripe.paymentIntents.create({
+        amount: amountCents,
         currency: "eur",
-        fulfillment: "pickup",
-        notes_client: notesClient || null,
-      })
-      .select("id")
-      .single();
-
-    if (commandeErr || !commande?.id) {
-      return jsonResponse({ error: "Création commande impossible" }, 500);
+        customer: customerId,
+        capture_method: "automatic",
+        transfer_data: { destination: connectAccountId },
+        metadata: {
+          madbeauty_type: "boutique_order",
+          commande_id: commandeId,
+          client_id: clientId,
+          prestataire_id: prestataireId,
+          supabase_user_id: user.id,
+        },
+      });
+    } catch (e) {
+      await admin
+        .from("boutique_commandes")
+        .update({
+          statut: "canceled",
+          payment_status: "failed",
+        })
+        .eq("id", commandeId);
+      throw e;
     }
-
-    const commandeId = commande.id as string;
-    const { error: itemsErr } = await admin.from("boutique_commande_items")
-      .insert(
-        itemRows.map((row) => ({ ...row, commande_id: commandeId })),
-      );
-    if (itemsErr) {
-      await admin.from("boutique_commandes").delete().eq("id", commandeId);
-      return jsonResponse({ error: "Lignes commande invalides" }, 500);
-    }
-
-    const pi = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: "eur",
-      customer: customerId,
-      capture_method: "automatic",
-      transfer_data: { destination: connectAccountId },
-      metadata: {
-        madbeauty_type: "boutique_order",
-        commande_id: commandeId,
-        client_id: clientId,
-        prestataire_id: prestataireId,
-        supabase_user_id: user.id,
-      },
-    });
 
     await admin
       .from("boutique_commandes")

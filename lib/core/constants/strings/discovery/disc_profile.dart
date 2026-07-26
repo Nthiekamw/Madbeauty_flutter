@@ -238,19 +238,37 @@ abstract final class DiscProfile {
       'Commandes produits et catalogues prestataires';
   static const adminBoutiqueIntroTitle = 'Boutique MadBeauty';
   static const adminBoutiqueIntroBody =
-      'Suivi des commandes boutique et aperçu des catalogues produits / packs.';
+      'Suivi des commandes, confirmation de réception en litige, '
+      'et modération des avis produits.';
   static const adminBoutiqueTabOrders = 'Commandes';
   static const adminBoutiqueTabCatalog = 'Catalogues';
+  static const adminBoutiqueTabAvis = 'Avis produits';
   static const adminBoutiqueOrdersEmpty = 'Aucune commande boutique.';
   static const adminBoutiqueCatalogEmpty =
       'Aucun prestataire avec boutique ou packs.';
+  static const adminBoutiqueAvisEmpty = 'Aucun avis boutique.';
   static const adminBoutiqueLoadErr =
       'Impossible de charger la boutique. Réessaie.';
   static const adminBoutiqueFilterStatut = 'Statut commande';
   static const adminBoutiqueFilterPayment = 'Statut paiement';
   static const adminBoutiqueFilterSearch = 'Salon ou cliente';
+  static const adminBoutiquePackBadge = 'Pack';
+  static const adminBoutiqueHasAvis = 'Avis publié';
+  static const adminBoutiqueActionConfirmReceipt = 'Confirmer réception';
+  static const adminBoutiqueActionCancel = 'Annuler la commande';
+  static const adminBoutiqueActionSetReady = 'Passer en prête';
+  static const adminBoutiqueActionSetCompleted = 'Marquer terminée';
+  static const adminBoutiqueActionDeleteAvis = 'Supprimer l’avis';
+  static const adminBoutiqueReasonLabel = 'Motif (obligatoire)';
+  static const adminBoutiqueReasonHint =
+      'Ex. litige client, support, commande bloquée…';
+  static const adminBoutiqueReasonConfirm = 'Confirmer';
+  static const adminBoutiqueActionOk = 'Action enregistrée.';
+  static const adminBoutiqueActionErr =
+      'Impossible d’appliquer l’action. Réessaie.';
   static String adminBoutiqueItemsCount(int n) =>
       n <= 1 ? '$n article' : '$n articles';
+  static String adminBoutiqueAvisNote(int n) => '$n / 5';
   static String adminBoutiqueCatalogCounts({
     required int produits,
     required int packs,
@@ -453,8 +471,11 @@ abstract final class DiscProfile {
   static const prestataireVerificationRequestCta = 'Demander la vérification';
   static const prestataireVerificationRequestAgainCta =
       'Refaire une demande de vérification';
+  static const prestataireVerificationPendingTitle = 'Demande en cours';
   static const prestataireVerificationPending =
       'Demande envoyée — l’équipe examine ton profil.';
+  static const prestataireVerificationPendingBody =
+      'Tu n’as rien d’autre à faire. On te préviendra dès que le badge sera validé.';
   static const prestataireVerificationVerified = 'Profil vérifié';
   static const prestataireVerificationVerifiedBody =
       'Ton profil affiche le badge vérifié. Tu n’as plus besoin de faire une demande.';

@@ -6,13 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
+import '../../../core/logic/catalog/pack_booking_duration.dart';
+import '../../../core/models/domain/catalog/pack_item_type.dart';
+import '../../../core/models/domain/catalog/pack_offre_detail.dart';
 import '../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../core/models/domain/availability/time_slot.dart';
 import '../../../router/navigation_extensions.dart';
 import '../logic/pending_booking_intent.dart';
 import '../models/booked_slots_query.dart';
+import '../models/booking_selection_state.dart';
 import '../models/booking_slot.dart';
 import '../../prestataire/providers/agenda/disponibilite_provider.dart';
+import '../../prestataire/providers/boutique/boutique_providers.dart';
 import '../providers/booking_availability_provider.dart';
 import '../providers/booking_selection_provider.dart';
 import '../providers/booking_services_provider.dart';
@@ -28,11 +33,13 @@ class BookingScreen extends ConsumerStatefulWidget {
     super.key,
     this.prestataireId,
     this.serviceId,
+    this.packId,
     this.initialDay,
   });
 
   final String? prestataireId;
   final String? serviceId;
+  final String? packId;
   /// `YYYY-MM-DD` depuis deep link / notification.
   final String? initialDay;
 
@@ -67,6 +74,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         PendingBookingIntent.remember(
           prestataireId: prestataireId,
           serviceId: widget.serviceId,
+          packId: widget.packId,
           initialDay: widget.initialDay,
         ),
       );
@@ -124,93 +132,239 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 title: DiscBk.cannotBookOwnTitle,
                 message: DiscBk.cannotBookOwnBody,
               ),
-              _ => ref
-                .watch(bookingActiveServicesProvider(prestataireId))
-                .when(
-                  loading: () => const DiscoveryDetailSkeleton(),
-                  error: (_, __) => BookingMessage(
-                    icon: Icons.cloud_off_outlined,
-                    title: DiscBk.svcLoadFailTitle,
-                    message: DiscBk.svcLoadFailBody,
-                    actionLabel: DiscList.retry,
-                    onAction: () => ref.invalidate(
-                      bookingActiveServicesProvider(prestataireId),
-                    ),
-                  ),
-                  data: (services) {
-                    if (services.isEmpty) return const _NoServicesMessage();
-
-                    final selectedService = _selectedService(
-                      services,
-                      selection.selectedServiceId,
-                    );
-                    _ensureServiceSelected(selectedService);
-
-                    final bookedSlotsAsync = ref.watch(
-                      bookedSlotsProvider(
-                        BookedSlotsQuery(
-                          prestataireId: prestataireId,
-                          serviceId: selectedService.id,
-                          day: selection.selectedDay,
-                        ),
-                      ),
-                    );
-                    final Set<BookingSlot> bookedSlots =
-                        switch (bookedSlotsAsync) {
-                          AsyncData(:final value) => value,
-                          _ => const <BookingSlot>{},
-                        };
-                    _clearSlotIfBooked(bookedSlots);
-
-                    final rules = switch (availabilityAsync) {
-                      AsyncData(:final value) => value,
-                      _ => ref.read(bookingAvailabilityRulesProvider),
-                    };
-
-                    final creneauxAsync = ref.watch(
-                      creneauxAffichageProvider((
-                        prestataireId: prestataireId,
-                        date: selection.selectedDay,
-                      )),
-                    );
-                    final daySlots = _mergeDaySlots(
-                      creneauxAsync: creneauxAsync,
-                      bookedSlots: bookedSlots,
-                      day: selection.selectedDay,
-                    );
-
-                    return BookingStepOneContent(
-                      services: services,
-                      selectedService: selectedService,
-                      selection: selection,
-                      availabilityRules: rules,
-                      daySlots: daySlots,
-                      daySlotsLoading: creneauxAsync.isLoading,
-                      bookedSlots: bookedSlots,
-                      bookedSlotsLoading: bookedSlotsAsync.isLoading,
-                      canConfirm:
-                          selection.selectedServiceId != null &&
-                          selection.selectedSlot != null &&
-                          !bookedSlotsAsync.isLoading &&
-                          !bookedSlots.contains(selection.selectedSlot),
-                      onServiceSelected: ref
-                          .read(bookingSelectionProvider.notifier)
-                          .selectService,
-                      onDaySelected: ref
-                          .read(bookingSelectionProvider.notifier)
-                          .selectDay,
-                      onPageChanged: ref
-                          .read(bookingSelectionProvider.notifier)
-                          .setFocusedDay,
-                      onSlotSelected: ref
-                          .read(bookingSelectionProvider.notifier)
-                          .selectSlot,
-                      onContinue: () => _confirmSelection(selectedService),
-                      prestataireId: prestataireId,
-                    );
-                  },
-                ),
+              _ => _buildBookingBody(
+                context,
+                prestataireId: prestataireId,
+                selection: selection,
+                availabilityAsync: availabilityAsync,
+              ),
             },
+    );
+  }
+
+  Widget _buildBookingBody(
+    BuildContext context, {
+    required String prestataireId,
+    required BookingSelectionState selection,
+    required AsyncValue? availabilityAsync,
+  }) {
+    final packId = widget.packId?.trim();
+    final isPack = packId != null && packId.isNotEmpty;
+
+    if (isPack) {
+      final packsAsync = ref.watch(publicPacksOffreDetailProvider(prestataireId));
+      return packsAsync.when(
+        loading: () => const DiscoveryDetailSkeleton(),
+        error: (_, __) => BookingMessage(
+          icon: Icons.cloud_off_outlined,
+          title: DiscBoutique.packsLoadErr,
+          message: DiscBoutique.packsLoadErr,
+          actionLabel: DiscList.retry,
+          onAction: () =>
+              ref.invalidate(publicPacksOffreDetailProvider(prestataireId)),
+        ),
+        data: (packs) {
+          PackOffreDetail? detail;
+          for (final p in packs) {
+            if (p.pack.id == packId) {
+              detail = p;
+              break;
+            }
+          }
+          if (detail == null) {
+            return const BookingMessage(
+              icon: Icons.local_offer_outlined,
+              title: DiscBoutique.packBookingUnavailableTitle,
+              message: DiscBoutique.packBookingUnavailableBody,
+            );
+          }
+          final servicesById = <String, ServiceBeaute>{};
+          // Services hydratés via bookingActiveServices pour le 1er service.
+          return ref.watch(bookingActiveServicesProvider(prestataireId)).when(
+                loading: () => const DiscoveryDetailSkeleton(),
+                error: (_, __) => BookingMessage(
+                  icon: Icons.cloud_off_outlined,
+                  title: DiscBk.svcLoadFailTitle,
+                  message: DiscBk.svcLoadFailBody,
+                  actionLabel: DiscList.retry,
+                  onAction: () => ref.invalidate(
+                    bookingActiveServicesProvider(prestataireId),
+                  ),
+                ),
+                data: (services) {
+                  for (final s in services) {
+                    servicesById[s.id] = s;
+                  }
+                  final duration = computePackDurationMinutes(
+                    items: detail!.items,
+                    servicesById: servicesById,
+                  );
+                  if (duration < 1) {
+                    return const BookingMessage(
+                      icon: Icons.event_busy_outlined,
+                      title: DiscBoutique.packBookingNoServiceTitle,
+                      message: DiscBoutique.packBookingNoServiceBody,
+                    );
+                  }
+                  String? firstServiceId;
+                  for (final i in detail.items) {
+                    if (i.itemType == PackItemType.service &&
+                        i.serviceId != null) {
+                      firstServiceId = i.serviceId;
+                      break;
+                    }
+                  }
+                  ServiceBeaute? anchor;
+                  if (firstServiceId != null) {
+                    anchor = servicesById[firstServiceId];
+                  }
+                  anchor ??= services.isNotEmpty
+                      ? services.first
+                      : ServiceBeaute(
+                          id: firstServiceId ?? 'pack',
+                          prestataireId: prestataireId,
+                          nom: detail.pack.titre,
+                          dureeMinutes: duration,
+                          prix: detail.pack.prixPack,
+                        );
+                  final displayService = ServiceBeaute(
+                    id: anchor.id,
+                    prestataireId: prestataireId,
+                    nom: detail.pack.titre,
+                    dureeMinutes: duration,
+                    prix: detail.pack.prixPack,
+                    description: detail.pack.description,
+                    isActif: true,
+                  );
+                  _ensureServiceSelected(displayService);
+                  return _buildStepContent(
+                    prestataireId: prestataireId,
+                    selection: selection,
+                    availabilityAsync: availabilityAsync,
+                    services: [displayService],
+                    selectedService: displayService,
+                    durationMinutes: duration,
+                    hideServicePicker: true,
+                    packHeaderTitle: detail.pack.titre,
+                    packHeaderLabel: DiscBoutique.packBookingHeaderLabel,
+                    onContinue: () {
+                      final sel = ref.read(bookingSelectionProvider);
+                      final slot = sel.selectedSlot;
+                      if (slot == null) return;
+                      context.pushBookingConfirmation(
+                        prestataireId: prestataireId,
+                        serviceId: displayService.id,
+                        serviceName: detail!.pack.titre,
+                        price: detail.pack.prixPack,
+                        durationMinutes: duration,
+                        dateTime: slot.onDay(sel.selectedDay),
+                        packId: packId,
+                      );
+                    },
+                  );
+                },
+              );
+        },
+      );
+    }
+
+    return ref.watch(bookingActiveServicesProvider(prestataireId)).when(
+          loading: () => const DiscoveryDetailSkeleton(),
+          error: (_, __) => BookingMessage(
+            icon: Icons.cloud_off_outlined,
+            title: DiscBk.svcLoadFailTitle,
+            message: DiscBk.svcLoadFailBody,
+            actionLabel: DiscList.retry,
+            onAction: () =>
+                ref.invalidate(bookingActiveServicesProvider(prestataireId)),
+          ),
+          data: (services) {
+            if (services.isEmpty) return const _NoServicesMessage();
+            final selectedService = _selectedService(
+              services,
+              selection.selectedServiceId,
+            );
+            _ensureServiceSelected(selectedService);
+            return _buildStepContent(
+              prestataireId: prestataireId,
+              selection: selection,
+              availabilityAsync: availabilityAsync,
+              services: services,
+              selectedService: selectedService,
+              durationMinutes: selectedService.dureeMinutes,
+              hideServicePicker: false,
+              onContinue: () => _confirmSelection(selectedService),
+            );
+          },
+        );
+  }
+
+  Widget _buildStepContent({
+    required String prestataireId,
+    required BookingSelectionState selection,
+    required AsyncValue? availabilityAsync,
+    required List<ServiceBeaute> services,
+    required ServiceBeaute selectedService,
+    required int durationMinutes,
+    required bool hideServicePicker,
+    required VoidCallback onContinue,
+    String? packHeaderTitle,
+    String? packHeaderLabel,
+  }) {
+    final bookedSlotsAsync = ref.watch(
+      bookedSlotsProvider(
+        BookedSlotsQuery(
+          prestataireId: prestataireId,
+          serviceId: selectedService.id,
+          day: selection.selectedDay,
+        ),
+      ),
+    );
+    final Set<BookingSlot> bookedSlots = switch (bookedSlotsAsync) {
+      AsyncData(:final value) => value,
+      _ => const <BookingSlot>{},
+    };
+    _clearSlotIfBooked(bookedSlots);
+
+    final rules = switch (availabilityAsync) {
+      AsyncData(:final value) => value,
+      _ => ref.read(bookingAvailabilityRulesProvider),
+    };
+
+    final creneauxAsync = ref.watch(
+      creneauxAffichageProvider((
+        prestataireId: prestataireId,
+        date: selection.selectedDay,
+        durationMinutes: durationMinutes > 0 ? durationMinutes : null,
+      )),
+    );
+    final daySlots = _mergeDaySlots(
+      creneauxAsync: creneauxAsync,
+      bookedSlots: bookedSlots,
+      day: selection.selectedDay,
+    );
+
+    return BookingStepOneContent(
+      services: services,
+      selectedService: selectedService,
+      selection: selection,
+      availabilityRules: rules,
+      daySlots: daySlots,
+      daySlotsLoading: creneauxAsync.isLoading,
+      bookedSlots: bookedSlots,
+      bookedSlotsLoading: bookedSlotsAsync.isLoading,
+      canConfirm: selection.selectedSlot != null &&
+          !bookedSlotsAsync.isLoading &&
+          !bookedSlots.contains(selection.selectedSlot),
+      onServiceSelected: ref.read(bookingSelectionProvider.notifier).selectService,
+      onDaySelected: ref.read(bookingSelectionProvider.notifier).selectDay,
+      onPageChanged: ref.read(bookingSelectionProvider.notifier).setFocusedDay,
+      onSlotSelected: ref.read(bookingSelectionProvider.notifier).selectSlot,
+      onContinue: onContinue,
+      prestataireId: prestataireId,
+      hideServicePicker: hideServicePicker,
+      packHeaderTitle: packHeaderTitle,
+      packHeaderLabel: packHeaderLabel,
     );
   }
 

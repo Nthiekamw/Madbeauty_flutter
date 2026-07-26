@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../router/navigation_extensions.dart';
-import '../../../../../../../shared/widgets/discovery/discovery_menu_tile.dart';
-import '../../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
+import '../../../../../../shared/widgets/discovery/discovery_menu_tile.dart';
+import '../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../../models/prestataire_profile_edit_section.dart';
 import '../../../shared/prestataire_section_header.dart';
 
-/// Raccourcis pour modifier chaque bloc du profil prestataire.
+/// Entrées d’édition du salon (vitrine, adresse, services, galerie, confort).
 class PrestataireProfileManageMenu extends StatelessWidget {
   const PrestataireProfileManageMenu({
     super.key,
@@ -54,78 +54,6 @@ class PrestataireProfileManageMenu extends StatelessWidget {
                   context.pushPrestataireProfileEditSection(sections[i]),
             ),
           ],
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.rate_review_outlined,
-            title: DiscReview.receivedReviewsTitle,
-            subtitle: DiscReview.receivedReviewsSubtitle,
-            onTap: () => context.pushPrestataireReceivedReviews(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.schedule_rounded,
-            title: DiscPrestaProfile.horaires,
-            subtitle: DiscPrestaProfile.menuHorairesHint,
-            onTap: () => context.pushPrestataireHoraires(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.movie_filter_outlined,
-            title: DiscReel.menuTitle,
-            subtitle: DiscReel.menuHint,
-            onTap: () => context.pushPrestataireReel(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.storefront_outlined,
-            title: DiscBoutique.menuBoutique,
-            subtitle: DiscBoutique.menuBoutiqueHint,
-            onTap: () => context.pushPrestataireBoutique(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.local_offer_outlined,
-            title: DiscBoutique.menuPacks,
-            subtitle: DiscBoutique.menuPacksHint,
-            onTap: () => context.pushPrestatairePacks(),
-          ),
-          Divider(
-            height: 1,
-            indent: 4,
-            endIndent: 4,
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          DiscoveryMenuTile(
-            icon: Icons.receipt_long_outlined,
-            title: DiscBoutique.menuOrders,
-            subtitle: DiscBoutique.menuOrdersHint,
-            onTap: () => context.pushPrestataireBoutiqueOrders(),
-          ),
         ],
       ),
     );

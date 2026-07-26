@@ -178,6 +178,12 @@ extension AppNavigationX on BuildContext {
   void pushMyReservations() => pushNamed(AppRouteNames.clientReservations);
   void goClientReel() => goNamed(AppRouteNames.clientReel);
   void pushPrestataireReel() => pushNamed(AppRouteNames.prestataireReel);
+  void pushPrestataireProfileSalon() =>
+      pushNamed(AppRouteNames.prestataireProfileSalon);
+  void pushPrestataireProfileBoutique() =>
+      pushNamed(AppRouteNames.prestataireProfileBoutique);
+  void pushPrestataireProfileAccount() =>
+      pushNamed(AppRouteNames.prestataireProfileAccount);
 
   void pushClientReservationDetail(String reservationId) => pushNamed(
         AppRouteNames.clientReservationDetail,
@@ -210,15 +216,24 @@ extension AppNavigationX on BuildContext {
   void pushPrestataireDetail(String id) =>
       pushNamed(AppRouteNames.prestataireDetail, pathParameters: {'id': id});
   void pushPrestataire() => pushNamed(AppRouteNames.prestataireProfile);
-  void pushBooking({String? prestataireId, String? serviceId, DateTime? day}) {
+  void pushBooking({
+    String? prestataireId,
+    String? serviceId,
+    String? packId,
+    DateTime? day,
+  }) {
     final id = prestataireId?.trim();
     final service = serviceId?.trim();
+    final pack = packId?.trim();
     if (id != null && id.isNotEmpty) {
       pushNamed(
         AppRouteNames.booking,
         queryParameters: {
           'prestataireId': id,
-          if (service != null && service.isNotEmpty) 'serviceId': service,
+          if (pack != null && pack.isNotEmpty)
+            'packId': pack
+          else if (service != null && service.isNotEmpty)
+            'serviceId': service,
           if (day != null)
             'date': '${day.year.toString().padLeft(4, '0')}-'
                 '${day.month.toString().padLeft(2, '0')}-'
@@ -237,6 +252,7 @@ extension AppNavigationX on BuildContext {
     required double price,
     required int durationMinutes,
     required DateTime dateTime,
+    String? packId,
   }) {
     pushNamed(
       AppRouteNames.bookingConfirmation,
@@ -247,6 +263,7 @@ extension AppNavigationX on BuildContext {
         'price': price.toString(),
         'durationMinutes': durationMinutes.toString(),
         'dateTime': dateTime.toIso8601String(),
+        if (packId != null && packId.trim().isNotEmpty) 'packId': packId.trim(),
       },
     );
   }

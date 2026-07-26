@@ -18,7 +18,9 @@ abstract final class BookingWebPaymentPending {
     html.window.sessionStorage[_storageKey] = jsonEncode({
       'paymentIntentId': data.paymentIntentId,
       'prestataireId': data.prestataireId,
-      'serviceId': data.serviceId,
+      if (data.serviceId != null && data.serviceId!.isNotEmpty)
+        'serviceId': data.serviceId,
+      if (data.packId != null && data.packId!.isNotEmpty) 'packId': data.packId,
       'dateHeureIso': data.dateHeureIso,
     });
   }
@@ -32,17 +34,22 @@ abstract final class BookingWebPaymentPending {
       final paymentIntentId = map['paymentIntentId'] as String?;
       final prestataireId = map['prestataireId'] as String?;
       final serviceId = map['serviceId'] as String?;
+      final packId = map['packId'] as String?;
       final dateHeureIso = map['dateHeureIso'] as String?;
       if (paymentIntentId == null ||
           prestataireId == null ||
-          serviceId == null ||
           dateHeureIso == null) {
+        return null;
+      }
+      if ((packId == null || packId.isEmpty) &&
+          (serviceId == null || serviceId.isEmpty)) {
         return null;
       }
       return BookingWebPaymentPendingData(
         paymentIntentId: paymentIntentId,
         prestataireId: prestataireId,
         serviceId: serviceId,
+        packId: packId,
         dateHeureIso: dateHeureIso,
       );
     } catch (_) {

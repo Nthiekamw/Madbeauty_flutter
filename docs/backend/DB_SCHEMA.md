@@ -157,8 +157,12 @@ Produits physiques vendus par un prestataire (onglet Boutique).
 | `prix` | `numeric(12,2)` | NOT NULL, `>= 0` |
 | `image_url` | `text` | nullable |
 | `is_actif` | `boolean` | NOT NULL, default `true` |
+| `stock_illimite` | `boolean` | NOT NULL, default `false` — si `true`, pas de suivi de stock |
+| `stock_qty` | `integer` | NOT NULL, `>= 0`, default `0` — quantité dispo si non illimité |
 | `created_at` | `timestamptz` | NOT NULL |
 | `updated_at` | `timestamptz` | NOT NULL |
+
+**Stock** : décrément atomique à la création de commande (`create_boutique_commande_from_cart`) ; restauration si `statut → canceled` (trigger + flag `boutique_commandes.stock_restored`).
 
 **Index** : `(prestataire_id, is_actif)` ; partiel `(prestataire_id, categorie)` si actif.
 
@@ -213,11 +217,56 @@ Commandes de produits boutique (paiement Stripe Web ou à régler sur place).
 | `stripe_payment_intent_id` | `text` | unique nullable |
 | `fulfillment` | `text` | `pickup` \| `hand_delivery` |
 | `notes_client` | `text` | nullable |
+| `stock_restored` | `boolean` | NOT NULL, default `false` — idempotence restauration stock |
+| `reservation_id` | `uuid` | nullable, UNIQUE, FK → `reservations` — commande liée à un checkout pack |
+| `pack_id` | `uuid` | nullable, FK → `packs_offre` |
 | `created_at` / `paid_at` / `updated_at` | `timestamptz` | |
+
+**Flux remise** : prestataire avance jusqu’à `ready` ; le **client** confirme la réception (`ready` → `completed`) via RPC `client_confirm_boutique_receipt`, puis peut publier un avis (`avis_boutique`).
+
+**Admin (support / litige)** :
+- `admin_set_boutique_order_statut(uuid, text, text)` — force un statut (motif + audit)
+- `admin_confirm_boutique_receipt(uuid, text)` — confirme la réception à la place du client
+- `admin_list_avis_boutique` / `admin_delete_avis_boutique` — modération des avis produits
+
+**RPC** : `create_boutique_commande_from_cart(jsonb)` — création + décrément stock (authenticated).  
+**RPC pack** : `create_pack_booking(jsonb)` — réservation pack atomique (créneau durée cumulée + snapshot `reservation_pack_items` + commande boutique liée amount 0 + stock).  
+**RPC client** : `client_confirm_boutique_receipt(uuid)` — confirmation réception.  
+**RPC avis** : `create_avis_boutique(jsonb)` — 1 avis / commande après `completed`.
+
+### `public.avis_boutique`
+
+Avis client sur une commande boutique (après confirmation de réception).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `commande_id` | `uuid` | NOT NULL, UNIQUE, FK → `boutique_commandes` CASCADE |
+| `client_id` | `uuid` | NOT NULL, FK → `client_profiles` |
+| `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles` |
+| `note` | `integer` | 1–5 |
+| `commentaire` | `text` | nullable |
+| `created_at` / `updated_at` | `timestamptz` | |
+
+### `public.reservation_pack_items`
+
+Snapshot des lignes d’un pack au moment de la réservation.
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `reservation_id` | `uuid` | FK → `reservations` CASCADE |
+| `item_type` | `text` | `service` \| `produit` |
+| `service_id` / `produit_id` | `uuid` | selon type |
+| `quantite` | `integer` | `> 0` |
+| `label` | `text` | snapshot nom |
+| `unit_price_cents` | `integer` | `>= 0` |
+| `sort_order` | `integer` | |
+
+**Helpers** : `count_overlapping_reservations`, `slot_fits_disponibilite`, `slot_capacity_at`.
 
 **RLS identité client** : un prestataire peut lire `client_profiles` / `user_profiles` d’un client s’il a une réservation, une conversation **ou une commande boutique** avec ce client (`prestataire_has_boutique_order_with_client`).
 
-**Push / expire** : triggers `boutique_order_*_push` → Edge `on_boutique_order_created` / `on_boutique_order_updated` ; `expire_stale_boutique_pending_orders` (service_role, 2 h) + `expire_own_stale_boutique_pending_orders` (client).
+**Push / expire** : triggers `boutique_order_*_push` → Edge `on_boutique_order_created` / `on_boutique_order_updated` ; `expire_stale_boutique_pending_orders` (service_role, 2 h) + `expire_own_stale_boutique_pending_orders` (client) — l’annulation restaure le stock via trigger.
 
 **Admin** : RPCs `admin_list_boutique_orders`, `admin_list_boutique_catalog` (`is_admin_user`).
 
@@ -276,7 +325,9 @@ Fermetures **ponctuelles** (congés, jour off).
 | `id` | `uuid` | PK |
 | `client_id` | `uuid` | NOT NULL, FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
-| `service_id` | `uuid` | NOT NULL, FK → `services_beaute(id)` ON DELETE RESTRICT |
+| `service_id` | `uuid` | NOT NULL, FK → `services_beaute(id)` ON DELETE RESTRICT — pour un pack : premier service (compat agenda/avis) |
+| `pack_id` | `uuid` | nullable, FK → `packs_offre(id)` ON DELETE RESTRICT |
+| `duration_minutes` | `integer` | NOT NULL, `> 0` — durée bloquée du créneau (pack = somme services) |
 | `date_heure` | `timestamptz` | NOT NULL |
 | `statut` | `text` | NOT NULL, default `'en_attente'` — voir valeurs courantes ci-dessous |
 | `notes_client` | `text` | nullable |

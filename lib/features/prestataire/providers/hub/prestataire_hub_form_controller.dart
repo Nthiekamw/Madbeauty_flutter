@@ -246,29 +246,40 @@ class PrestataireHubFormController extends ChangeNotifier {
       codePostalController: codePostalController,
       adresseController: adresseController,
       setPays: setPays,
-      setLieuTravail: (value) => lieuTravail = value,
-      setAvatarUrl: (url) => avatarUrl = url,
+      setLieuTravail: (value) {
+        if (lieuTravail != null) return;
+        lieuTravail = value;
+      },
+      setAvatarUrl: (url) {
+        if (avatarUrl != null && avatarUrl!.trim().isNotEmpty) return;
+        avatarUrl = url;
+      },
       suggestionNomController: suggestionNomController,
       suggestionDescController: suggestionDescController,
       setComfortIds: (ids) {
+        if (selectedComfortIds.isNotEmpty) return;
         selectedComfortIds
           ..clear()
           ..addAll(ids);
       },
       setConditionIds: (ids) {
+        if (selectedConditionIds.isNotEmpty) return;
         selectedConditionIds
           ..clear()
           ..addAll(ids);
       },
       replaceServices: (list) {
+        if (services.isNotEmpty) return;
         disposeServices();
         services.addAll(list);
       },
       setHoraireWeek: (week) {
+        if (horairesHydrated && horaireWeek != null) return;
         horaireWeek = week;
         horairesHydrated = true;
         horairesFromDraft = true;
       },
+      fillEmptyOnly: true,
     );
     final restoredCatalog =
         PrestataireHubOnboardingDraft.catalogSelectionFromHub(hub);

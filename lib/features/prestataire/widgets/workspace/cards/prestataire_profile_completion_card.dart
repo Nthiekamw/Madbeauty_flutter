@@ -16,7 +16,7 @@ import '../../profile/overview/layout/prestataire_profile_insets.dart';
 class PrestataireProfileCompletionCard extends ConsumerWidget {
   const PrestataireProfileCompletionCard({super.key});
 
-  static const _topPadding = 12.0;
+  static const _topPadding = 10.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +61,6 @@ class PrestataireProfileCompletionCard extends ConsumerWidget {
         return Padding(
           padding: PrestataireProfileInsets.page(context).copyWith(
             top: _topPadding,
-            bottom: 4,
           ),
           child: Material(
             color: theme.colorScheme.surface,

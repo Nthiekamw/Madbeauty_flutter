@@ -36,6 +36,9 @@ class BookingStepOneContent extends StatelessWidget {
     required this.onSlotSelected,
     required this.onContinue,
     this.prestataireId,
+    this.hideServicePicker = false,
+    this.packHeaderTitle,
+    this.packHeaderLabel,
   });
 
   final List<ServiceBeaute> services;
@@ -53,6 +56,9 @@ class BookingStepOneContent extends StatelessWidget {
   final ValueChanged<BookingSlot> onSlotSelected;
   final VoidCallback onContinue;
   final String? prestataireId;
+  final bool hideServicePicker;
+  final String? packHeaderTitle;
+  final String? packHeaderLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -65,30 +71,36 @@ class BookingStepOneContent extends StatelessWidget {
     final listView = ListView(
       padding: EdgeInsets.fromLTRB(innerPad, 12, innerPad, 24),
       children: [
-        SelectedServiceHeader(service: selectedService),
-        const SizedBox(height: 16),
-        BookingSectionTitle(
-          icon: Icons.content_cut_rounded,
-          title: DiscBk.stepService,
-          subtitle: DiscBk.svcCountLabel(services.length),
+        SelectedServiceHeader(
+          service: selectedService,
+          overrideLabel: packHeaderLabel,
+          overrideTitle: packHeaderTitle,
         ),
-        const SizedBox(height: 8),
-        DiscoverySurfaceCard(
-          includeHorizontalMargin: false,
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            children: [
-              for (var i = 0; i < services.length; i++) ...[
-                if (i > 0) const SizedBox(height: 8),
-                ServiceChoiceCard(
-                  service: services[i],
-                  selected: services[i].id == selectedService.id,
-                  onTap: () => onServiceSelected(services[i].id),
-                ),
-              ],
-            ],
+        if (!hideServicePicker) ...[
+          const SizedBox(height: 16),
+          BookingSectionTitle(
+            icon: Icons.content_cut_rounded,
+            title: DiscBk.stepService,
+            subtitle: DiscBk.svcCountLabel(services.length),
           ),
-        ),
+          const SizedBox(height: 8),
+          DiscoverySurfaceCard(
+            includeHorizontalMargin: false,
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              children: [
+                for (var i = 0; i < services.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  ServiceChoiceCard(
+                    service: services[i],
+                    selected: services[i].id == selectedService.id,
+                    onTap: () => onServiceSelected(services[i].id),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         const BookingSectionTitle(
           icon: Icons.calendar_month_rounded,

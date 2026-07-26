@@ -68,7 +68,7 @@ List<PrestataireClientSummary> listPrestataireClientSummaries(
         clientAvatarUrl: latest.clientAvatarUrl,
         reservations: sorted,
         lastVisit: latest.dateHeure,
-        lastServiceName: latest.serviceName,
+        lastServiceName: latest.offerTitle,
       ),
     );
   }

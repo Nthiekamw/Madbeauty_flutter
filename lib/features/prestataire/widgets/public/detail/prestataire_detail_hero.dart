@@ -351,27 +351,32 @@ class _HeroIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const size = 38.0;
+    const size = 32.0;
 
     return Center(
-      child: Material(
-        color: onCover
-            ? Colors.black.withValues(alpha: 0.38)
-            : theme.colorScheme.surface.withValues(alpha: 0.95),
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: IconButton(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          icon: Icon(
-            icon,
-            size: 20,
-            color: onCover ? AppColors.white : theme.colorScheme.onSurface,
-          ),
-          style: IconButton.styleFrom(
-            minimumSize: const Size(size, size),
-            maximumSize: const Size(size, size),
-            padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Material(
+          color: onCover
+              ? Colors.black.withValues(alpha: 0.38)
+              : theme.colorScheme.surface.withValues(alpha: 0.95),
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: IconButton(
+            tooltip: tooltip,
+            onPressed: onPressed,
+            visualDensity: VisualDensity.compact,
+            icon: Icon(
+              icon,
+              size: 17,
+              color: onCover ? AppColors.white : theme.colorScheme.onSurface,
+            ),
+            style: IconButton.styleFrom(
+              minimumSize: const Size(size, size),
+              maximumSize: const Size(size, size),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: EdgeInsets.zero,
+            ),
           ),
         ),
       ),

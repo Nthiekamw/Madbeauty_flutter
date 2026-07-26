@@ -105,10 +105,6 @@ class PrestataireReservationActions {
   }
 
   Future<bool> markDone(PrestataireReservationItem item) async {
-    if (!await resolvePrestataireCanManageBookings(ref)) {
-      _snack(DiscPrestaSub.bookingActionLocked);
-      return false;
-    }
     if (!context.mounted) return false;
     if (!prestataireCanMarkReservationDone(item)) {
       _snack(DiscPrestaAgenda.markDoneTooEarly);

@@ -214,19 +214,21 @@ class _PackTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 4,
+            runSpacing: 0,
             children: [
               TextButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text(DiscBoutique.packsEdit),
+                label: const Text(DiscBoutique.packsActionEdit),
               ),
               TextButton(
                 onPressed: onToggle,
                 child: Text(
                   pack.isActif
-                      ? DiscBoutique.packsDeactivated.split('.').first
-                      : DiscBoutique.fieldPublier,
+                      ? DiscBoutique.packsActionUnpublish
+                      : DiscBoutique.packsActionPublish,
                 ),
               ),
             ],

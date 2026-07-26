@@ -25,8 +25,9 @@ void main() {
       );
       expect(
         BoutiqueCommandeStatut.ready.nextForPrestataire,
-        BoutiqueCommandeStatut.completed,
+        isNull,
       );
+      expect(BoutiqueCommandeStatut.ready.canClientConfirmReceipt, isTrue);
       expect(BoutiqueCommandeStatut.completed.nextForPrestataire, isNull);
       expect(BoutiqueCommandeStatut.canceled.nextForPrestataire, isNull);
     });

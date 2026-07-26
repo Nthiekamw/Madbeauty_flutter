@@ -106,8 +106,12 @@ abstract final class PrestataireNavigation {
     await LocalCacheService.instance.setSignupShellRole('prestataire');
     try {
       final data = await container.read(prestataireProfileFormProvider.future);
-      if (data.isProfessionallyComplete) {
-        unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+      // Dashboard dès que le salon est opérationnel ; le wizard n’est forcé
+      // que s’il manque l’essentiel (identité / adresse / services).
+      if (data.isOperationalForDashboard) {
+        if (data.isProfessionallyComplete) {
+          unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+        }
         return AppRoutes.prestataireDashboard;
       }
       return AppRoutes.prestataireProfileEdit;
@@ -177,8 +181,10 @@ abstract final class PrestataireNavigation {
     PrestataireProfileFormData data, {
     bool hasHoraires = false,
   }) {
-    if (data.isProfessionallyComplete) {
-      unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+    if (data.isOperationalForDashboard) {
+      if (data.isProfessionallyComplete) {
+        unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+      }
       context.goPrestataireDashboard();
       return;
     }
@@ -198,8 +204,10 @@ abstract final class PrestataireNavigation {
     PrestataireProfileFormData data, {
     bool hasHoraires = false,
   }) async {
-    if (data.isProfessionallyComplete) {
-      unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+    if (data.isOperationalForDashboard) {
+      if (data.isProfessionallyComplete) {
+        unawaited(PrestataireHubOnboardingDraft.clearAfterProfileComplete());
+      }
       await router.goNamedDeferred(AppRouteNames.prestataireDashboard);
       return;
     }

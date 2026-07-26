@@ -54,6 +54,78 @@ class AdminBoutiqueService {
         },
       );
 
+  Future<List<AdminBoutiqueAvisSummary>> listAvis({
+    String? search,
+    int limit = 100,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'adminBoutique.listAvis',
+        action: () async {
+          final rows = await _client.rpc(
+            'admin_list_avis_boutique',
+            params: {
+              'p_limit': limit,
+              'p_search': _emptyToNull(search),
+            },
+          );
+          final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+          return list.map(_mapAvis).toList();
+        },
+      );
+
+  Future<void> setOrderStatut({
+    required String commandeId,
+    required String statut,
+    required String reason,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'adminBoutique.setOrderStatut',
+        action: () async {
+          await _client.rpc(
+            'admin_set_boutique_order_statut',
+            params: {
+              'p_commande_id': commandeId,
+              'p_statut': statut,
+              'p_reason': reason,
+            },
+          );
+        },
+      );
+
+  Future<void> confirmReceipt({
+    required String commandeId,
+    required String reason,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'adminBoutique.confirmReceipt',
+        action: () async {
+          await _client.rpc(
+            'admin_confirm_boutique_receipt',
+            params: {
+              'p_commande_id': commandeId,
+              'p_reason': reason,
+            },
+          );
+        },
+      );
+
+  Future<void> deleteAvis({
+    required String avisId,
+    required String reason,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'adminBoutique.deleteAvis',
+        action: () async {
+          await _client.rpc(
+            'admin_delete_avis_boutique',
+            params: {
+              'p_avis_id': avisId,
+              'p_reason': reason,
+            },
+          );
+        },
+      );
+
   String? _emptyToNull(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
@@ -76,6 +148,10 @@ class AdminBoutiqueService {
       itemsCount: (row['items_count'] as num?)?.toInt() ?? 0,
       stripePaymentIntentId: row['stripe_payment_intent_id'] as String?,
       paidAt: DateTime.tryParse((row['paid_at'] as String?) ?? ''),
+      packId: row['pack_id'] as String?,
+      reservationId: row['reservation_id'] as String?,
+      notesClient: row['notes_client'] as String?,
+      hasAvis: row['has_avis'] as bool? ?? false,
     );
   }
 
@@ -90,6 +166,21 @@ class AdminBoutiqueService {
       packsTotal: (row['packs_total'] as num?)?.toInt() ?? 0,
       commandesOuvertes: (row['commandes_ouvertes'] as num?)?.toInt() ?? 0,
       commandesTotal: (row['commandes_total'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  AdminBoutiqueAvisSummary _mapAvis(Map<String, dynamic> row) {
+    return AdminBoutiqueAvisSummary(
+      id: row['id'] as String? ?? '',
+      createdAt: DateTime.tryParse((row['created_at'] as String?) ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      note: (row['note'] as num?)?.toInt() ?? 0,
+      commentaire: row['commentaire'] as String?,
+      commandeId: row['commande_id'] as String? ?? '',
+      clientName: row['client_name'] as String?,
+      prestataireSalon: row['prestataire_salon'] as String?,
+      prestataireId: row['prestataire_id'] as String? ?? '',
+      commandeStatut: row['commande_statut'] as String?,
     );
   }
 }

@@ -80,6 +80,11 @@ abstract final class AppRoutes {
   static const String prestatairePacks = '/prestataire/packs';
   static const String prestataireBoutiqueOrders = '/prestataire/boutique-orders';
   static const String prestataireReel = '/prestataire/reel';
+  static const String prestataireProfileSalon = '/prestataire/profile/salon';
+  static const String prestataireProfileBoutique =
+      '/prestataire/profile/boutique';
+  static const String prestataireProfileAccount =
+      '/prestataire/profile/account';
 
   /// Anciennes routes — redirigées vers le shell client / prestataire.
   static const String home = '/';
@@ -167,4 +172,9 @@ abstract final class AppRouteNames {
   static const String prestatairePacks = 'prestataire-packs';
   static const String prestataireBoutiqueOrders = 'prestataire-boutique-orders';
   static const String prestataireReel = 'prestataire-reel';
+  static const String prestataireProfileSalon = 'prestataire-profile-salon';
+  static const String prestataireProfileBoutique =
+      'prestataire-profile-boutique';
+  static const String prestataireProfileAccount =
+      'prestataire-profile-account';
 }

@@ -48,7 +48,7 @@ abstract final class DiscHome {
   static const sectionOffers = 'Offres spéciales';
   static const sectionTrending = 'Tendances cette semaine';
 
-  static const offersTitle = 'Offres spéciales près de vous';
+  static const offersTitle = 'Offres spéciales';
   static const offersEmptyTitle = 'Aucune offre pour le moment';
   static const offersEmptyBody =
       'Dès qu’un prestataire publie un pack, il apparaîtra ici.';

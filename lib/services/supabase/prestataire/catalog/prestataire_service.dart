@@ -270,7 +270,8 @@ class PrestataireService {
     },
   );
 
-  /// Crée une ligne `prestataire_profiles` si absente (rôle + upsert minimal).
+  /// Crée une ligne `prestataire_profiles` si absente (rôle + insert minimal).
+  /// N’écrase jamais un profil déjà rempli (contrairement à un upsert vide).
   Future<String> ensureProfileForUser(String userId) =>
       SupabaseErrorHandler.run(
         operation: 'prestataire.ensureProfileForUser',
@@ -278,13 +279,25 @@ class PrestataireService {
           final existing = await getByUserId(userId);
           if (existing != null) return existing.id;
 
-          return upsert(
-            PrestataireUpsertData(
-              userId: userId,
-              nomSalon: '',
-              bio: '',
-              ville: '',
-            ),
+          try {
+            final response = await _client
+                .from('prestataire_profiles')
+                .insert({'user_id': userId})
+                .select('id')
+                .maybeSingle();
+            final id = response == null
+                ? null
+                : Map<String, dynamic>.from(response)['id'] as String?;
+            if (id != null && id.isNotEmpty) return id;
+          } catch (_) {
+            // Conflit concurrent ou RLS : on relit ci-dessous.
+          }
+
+          final again = await getByUserId(userId);
+          if (again != null) return again.id;
+
+          throw StateError(
+            'Impossible de créer ou retrouver le profil prestataire.',
           );
         },
       );

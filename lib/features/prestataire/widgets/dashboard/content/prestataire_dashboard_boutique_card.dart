@@ -23,6 +23,8 @@ class PrestataireDashboardBoutiqueCard extends ConsumerWidget {
   /// Intégré dans une section repliable (pas de padding page ni carte externe).
   final bool embedInSection;
 
+  static const double _statChipMinHeight = 56;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(ownBoutiqueSummaryProvider);
@@ -56,6 +58,7 @@ class PrestataireDashboardBoutiqueCard extends ConsumerWidget {
         final empty =
             summary.produitsActifs == 0 && summary.packsActifs == 0;
         final hasOpenOrders = summary.commandesOuvertes > 0;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -68,36 +71,39 @@ class PrestataireDashboardBoutiqueCard extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
             ],
-            Row(
-              children: [
-                Expanded(
-                  child: _StatChip(
-                    label: DiscBoutique.dashProduits,
-                    value: '${summary.produitsActifs}',
-                    onTap: () => context.pushPrestataireBoutique(),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _StatChip(
+                      label: DiscBoutique.dashProduits,
+                      value: '${summary.produitsActifs}',
+                      onTap: () => context.pushPrestataireBoutique(),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatChip(
-                    label: DiscBoutique.dashPacks,
-                    value: '${summary.packsActifs}',
-                    onTap: () => context.pushPrestatairePacks(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatChip(
+                      label: DiscBoutique.dashPacks,
+                      value: '${summary.packsActifs}',
+                      onTap: () => context.pushPrestatairePacks(),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatChip(
-                    label: DiscBoutique.dashOrdersOpen,
-                    value: '${summary.commandesOuvertes}',
-                    emphasized: hasOpenOrders,
-                    onTap: () => context.pushPrestataireBoutiqueOrders(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatChip(
+                      label: DiscBoutique.dashOrdersOpen,
+                      value: '${summary.commandesOuvertes}',
+                      emphasized: hasOpenOrders,
+                      onTap: () => context.pushPrestataireBoutiqueOrders(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             if (empty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 DiscBoutique.dashEmptyHint,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -105,31 +111,6 @@ class PrestataireDashboardBoutiqueCard extends ConsumerWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
-              children: [
-                OutlinedButton(
-                  onPressed: () => context.pushPrestataireBoutique(),
-                  child: const Text(DiscBoutique.dashManageBoutique),
-                ),
-                FilledButton.tonal(
-                  onPressed: () => context.pushPrestatairePacks(),
-                  child: const Text(DiscBoutique.dashManagePacks),
-                ),
-                FilledButton(
-                  onPressed: () => context.pushPrestataireBoutiqueOrders(),
-                  child: Text(
-                    hasOpenOrders
-                        ? DiscBoutique.dashManageOrdersOpen(
-                            summary.commandesOuvertes,
-                          )
-                        : DiscBoutique.dashManageOrders,
-                  ),
-                ),
-              ],
-            ),
           ],
         );
       },
@@ -179,33 +160,47 @@ class _StatChip extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w800,
-                  color: emphasized ? theme.colorScheme.primary : null,
+        borderRadius: BorderRadius.circular(10),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: PrestataireDashboardBoutiqueCard._statChipMinHeight,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                    color: emphasized ? theme.colorScheme.primary : null,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: emphasized
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant,
-                  fontWeight: emphasized ? FontWeight.w700 : null,
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: emphasized
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: emphasized ? FontWeight.w700 : null,
+                    height: 1.15,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

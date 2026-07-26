@@ -51,21 +51,17 @@ export async function ensureReservationForPaymentIntent(
   const clientId = meta.client_id as string | undefined;
   const prestataireId = meta.prestataire_id as string | undefined;
   const serviceId = meta.service_id as string | undefined;
+  const packId = meta.pack_id as string | undefined;
   const dateHeure = meta.date_heure as string | undefined;
 
-  if (!clientId || !prestataireId || !serviceId || !dateHeure) {
+  if (!clientId || !prestataireId || !dateHeure) {
+    return { created: false };
+  }
+  if (!packId && !serviceId) {
     return { created: false };
   }
 
-  const slotAt = new Date(dateHeure);
   const dateHeureDb = normalizeBookingInstant(dateHeure);
-
-  const capacity = await slotCapacity(admin, prestataireId, slotAt);
-  const booked = await activeReservationsAtSlot(admin, prestataireId, slotAt);
-  if (booked >= capacity) {
-    return { created: false };
-  }
-
   const paymentMode = meta.payment_mode as string | undefined;
   const platformFeeCents = Number(meta.platform_fee_cents ?? 0);
   const servicePriceCents = Number(meta.service_price_cents ?? pi.amount);
@@ -77,6 +73,53 @@ export async function ensureReservationForPaymentIntent(
     Number.isFinite(originalServicePriceCents) &&
     originalServicePriceCents > 0;
 
+  if (packId) {
+    const payload: Record<string, unknown> = {
+      pack_id: packId,
+      date_heure: dateHeureDb,
+      payment_mode: paymentMode ?? "deposit_20",
+      stripe_payment_intent_id: pi.id,
+      amount_cents: pi.amount,
+      service_price_cents: Number.isFinite(servicePriceCents)
+        ? servicePriceCents
+        : pi.amount,
+      platform_fee_cents: Number.isFinite(platformFeeCents) ? platformFeeCents : 0,
+      prestataire_amount_cents: Number.isFinite(prestataireAmountCents)
+        ? prestataireAmountCents
+        : 0,
+      payment_status: paymentStatusFromIntent(pi),
+      client_id: clientId,
+    };
+    if (hasReferralDiscount) {
+      payload.original_service_price_cents = originalServicePriceCents;
+      payload.referral_discount_percent = referralDiscountPercent;
+    }
+
+    const { data, error } = await admin.rpc("create_pack_booking", {
+      p_payload: payload,
+    });
+    if (error) {
+      console.error("ensureReservationForPaymentIntent pack", error);
+      return { created: false };
+    }
+    const map = data as Record<string, unknown> | null;
+    const reservationId = map?.reservation_id as string | undefined;
+    if (!reservationId) return { created: false };
+    return {
+      created: map?.already_created !== true,
+      reservationId,
+    };
+  }
+
+  const slotAt = new Date(dateHeure);
+  const capacity = await slotCapacity(admin, prestataireId, slotAt);
+  const booked = await activeReservationsAtSlot(admin, prestataireId, slotAt);
+  if (booked >= capacity) {
+    return { created: false };
+  }
+
+  const durationMinutes = Math.max(Number(meta.duration_minutes ?? 30), 1);
+
   const { data: inserted, error } = await admin
     .from("reservations")
     .insert({
@@ -84,6 +127,7 @@ export async function ensureReservationForPaymentIntent(
       prestataire_id: prestataireId,
       service_id: serviceId,
       date_heure: dateHeureDb,
+      duration_minutes: durationMinutes,
       statut: "en_attente",
       amount_cents: pi.amount,
       currency: pi.currency ?? "eur",

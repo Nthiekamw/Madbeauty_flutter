@@ -2,6 +2,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/booking/client_reservation_summary.dart';
 import '../../../core/models/domain/booking/prestataire_reservation_item.dart';
 import '../../../core/models/domain/booking/reservation.dart';
+import '../../../core/models/domain/booking/reservation_pack_line.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../core/models/domain/prestataire/prestataire_analytics_reservation.dart';
 import '../profile/profile_service.dart';
@@ -17,6 +18,28 @@ abstract final class BookingMappers {
   static String normalizeStatut(Object? raw) {
     if (raw is! String) return '';
     return raw.trim().toLowerCase().replaceAll('é', 'e');
+  }
+
+  static List<ReservationPackLine> packLinesFromRow(Object? raw) {
+    if (raw is! List) return const [];
+    final lines = <ReservationPackLine>[];
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final line = ReservationPackLine.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+      if (line.label.isEmpty) continue;
+      lines.add(line);
+    }
+    lines.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return lines;
+  }
+
+  static String? packTitleFromRow(Object? packRow) {
+    if (packRow is! Map) return null;
+    final title = (packRow['titre'] as String?)?.trim();
+    if (title == null || title.isEmpty) return null;
+    return title;
   }
 
   static List<Reservation> decodeReservationRows(Object response) {
@@ -35,9 +58,12 @@ abstract final class BookingMappers {
     Object? prestataire,
   ) {
     final paidRaw = map['paid_at'] as String?;
-    final duree = service is Map
-        ? (service['duree_minutes'] as num?)?.toInt() ?? 60
-        : 60;
+    final dureeRes = (map['duration_minutes'] as num?)?.toInt();
+    final duree = dureeRes != null && dureeRes > 0
+        ? dureeRes
+        : service is Map
+            ? (service['duree_minutes'] as num?)?.toInt() ?? 60
+            : 60;
     return ClientReservationSummary(
       id: map['id'] as String,
       dateHeure: DateTime.parse(map['date_heure'] as String).toLocal(),
@@ -69,11 +95,15 @@ abstract final class BookingMappers {
     String? clientNom,
     String? clientAvatarUrl,
   }) {
-    final duree = serviceRow is Map
-        ? (serviceRow['duree_minutes'] as num?)?.toInt() ?? 60
-        : 60;
+    final dureeRes = (map['duration_minutes'] as num?)?.toInt();
+    final duree = dureeRes != null && dureeRes > 0
+        ? dureeRes
+        : serviceRow is Map
+            ? (serviceRow['duree_minutes'] as num?)?.toInt() ?? 60
+            : 60;
     final serviceName =
         serviceRow is Map ? (serviceRow['nom'] as String?)?.trim() ?? '' : '';
+    final packId = (map['pack_id'] as String?)?.trim();
     return PrestataireReservationItem(
       id: map['id'] as String,
       dateHeure: DateTime.parse(map['date_heure'] as String).toLocal(),
@@ -96,6 +126,9 @@ abstract final class BookingMappers {
       prestataireAmountCents:
           (map['prestataire_amount_cents'] as num?)?.toInt(),
       durationMinutes: duree,
+      packId: packId != null && packId.isNotEmpty ? packId : null,
+      packTitle: packTitleFromRow(map['packs_offre']),
+      packItems: packLinesFromRow(map['reservation_pack_items']),
     );
   }
 
@@ -215,25 +248,11 @@ abstract final class BookingMappers {
     if (profileService == null || items.isEmpty) {
       return items
           .map(
-            (e) => PrestataireReservationItem(
-              id: e.id,
-              dateHeure: e.dateHeure,
-              statut: e.statut,
+            (e) => e.copyWith(
               serviceName: e.serviceName.isEmpty
                   ? DiscPrestaDash.unknownService
                   : e.serviceName,
               clientName: DiscPrestaDash.unknownClient,
-              clientId: e.clientId,
-              clientAvatarUrl: e.clientAvatarUrl,
-              notesClient: e.notesClient,
-              notesPrestataire: e.notesPrestataire,
-              amountCents: e.amountCents,
-              paymentStatus: e.paymentStatus,
-              paymentMode: e.paymentMode,
-              servicePriceCents: e.servicePriceCents,
-              platformFeeCents: e.platformFeeCents,
-              prestataireAmountCents: e.prestataireAmountCents,
-              durationMinutes: e.durationMinutes,
             ),
           )
           .toList();
@@ -249,25 +268,7 @@ abstract final class BookingMappers {
 
     if (userIds.isEmpty) {
       return items
-          .map(
-            (e) => PrestataireReservationItem(
-              id: e.id,
-              dateHeure: e.dateHeure,
-              statut: e.statut,
-              serviceName: e.serviceName,
-              clientName: DiscPrestaDash.unknownClient,
-              clientId: e.clientId,
-              notesClient: e.notesClient,
-              notesPrestataire: e.notesPrestataire,
-              amountCents: e.amountCents,
-              paymentStatus: e.paymentStatus,
-              paymentMode: e.paymentMode,
-              servicePriceCents: e.servicePriceCents,
-              platformFeeCents: e.platformFeeCents,
-              prestataireAmountCents: e.prestataireAmountCents,
-              durationMinutes: e.durationMinutes,
-            ),
-          )
+          .map((e) => e.copyWith(clientName: DiscPrestaDash.unknownClient))
           .toList();
     }
 

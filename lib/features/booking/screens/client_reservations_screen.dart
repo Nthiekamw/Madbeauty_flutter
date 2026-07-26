@@ -8,15 +8,13 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/offline/offline_queue_helper.dart';
 import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
-import '../../../shared/layout/adaptive_safe_area.dart';
-import '../../../shared/layout/discovery_responsive.dart';
-import '../../client/widgets/workspace/client_workspace_header.dart';
-import '../../client/widgets/workspace/client_workspace_shell.dart';
 import '../../auth/guest/widgets/guest_account_prompt.dart';
 import '../logic/client_reservation_lists.dart';
 import '../logic/client_reservation_ui_status.dart';
@@ -140,48 +138,36 @@ class _ClientReservationsScreenState
     });
 
     if (ref.watch(isGuestBrowsingProvider)) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: AdaptiveSafeArea(
-          child: ClientWorkspaceShell(
-            title: ShellStrings.navClientReservations,
-            subtitle: DiscBk.reservationsSubtitle,
-            panelOverlap: -8,
-            header: const ClientWorkspaceHeader(
-              subtitle: DiscBk.reservationsSubtitle,
-              compact: true,
-            ),
-            child: GuestAccountPrompt(
-              icon: Icons.event_outlined,
-              title: AuthStrings.guestReservationsTitle,
-              message: AuthStrings.guestReservationsBody,
-            ),
-          ),
+      return ProfileFlowScaffold(
+        title: DiscReel.profileReservationsTitle,
+        subtitle: DiscBk.reservationsSubtitle,
+        icon: Icons.event_outlined,
+        wrapPanel: false,
+        body: GuestAccountPrompt(
+          icon: Icons.event_outlined,
+          title: AuthStrings.guestReservationsTitle,
+          message: AuthStrings.guestReservationsBody,
         ),
       );
     }
 
     final reservationsAsync = ref.watch(clientReservationsProvider);
-
     final theme = Theme.of(context);
     final useWeb = DiscoveryResponsive.of(context).useWebSiteLayout;
     final hPad = useWeb ? 16.0 : 20.0;
 
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        body: AdaptiveSafeArea(
-          child: ClientWorkspaceShell(
-            title: ShellStrings.navClientReservations,
-            subtitle: DiscBk.reservationsSubtitle,
-            panelOverlap: -8,
-            header: const ClientWorkspaceHeader(
-              subtitle: DiscBk.reservationsSubtitle,
-              compact: true,
-            ),
-            top: Padding(
-              padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 0),
+      child: ProfileFlowScaffold(
+        title: DiscReel.profileReservationsTitle,
+        subtitle: DiscBk.reservationsSubtitle,
+        icon: Icons.event_outlined,
+        wrapPanel: false,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(hPad, useWeb ? 8 : 0, hPad, 0),
               child: DiscoverySurfaceCard(
                 includeHorizontalMargin: false,
                 padding: const EdgeInsets.all(5),
@@ -225,43 +211,45 @@ class _ClientReservationsScreenState
                 ),
               ),
             ),
-            child: reservationsAsync.when(
-              loading: () => const SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
-              ),
-              error: (_, __) => RefreshIndicator(
-                onRefresh: _refresh,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+            Expanded(
+              child: reservationsAsync.when(
+                loading: () => const SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: DiscoveryListSkeleton(rowCount: 4, rowHeight: 120),
+                ),
+                error: (_, __) => RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      DiscoveryEmptyState(
+                        icon: Icons.cloud_off_outlined,
+                        title: CoreStrings.networkErrorTitle,
+                        body: DiscBk.listErrBody,
+                        iconColor: theme.colorScheme.error,
+                        actionLabel: DiscList.retry,
+                        onAction: _refresh,
+                      ),
+                    ],
+                  ),
+                ),
+                data: (all) => TabBarView(
                   children: [
-                    DiscoveryEmptyState(
-                      icon: Icons.cloud_off_outlined,
-                      title: CoreStrings.networkErrorTitle,
-                      body: DiscBk.listErrBody,
-                      iconColor: theme.colorScheme.error,
-                      actionLabel: DiscList.retry,
-                      onAction: _refresh,
+                    _tabList(
+                      items: clientUpcomingReservations(all),
+                      emptyTitle: DiscBk.emptyFutureTitle,
+                      emptyBody: DiscBk.emptyFutureBody,
+                    ),
+                    _tabList(
+                      items: clientPastReservations(all),
+                      emptyTitle: DiscBk.emptyPastTitle,
+                      emptyBody: DiscBk.emptyPastBody,
                     ),
                   ],
                 ),
               ),
-              data: (all) => TabBarView(
-                children: [
-                  _tabList(
-                    items: clientUpcomingReservations(all),
-                    emptyTitle: DiscBk.emptyFutureTitle,
-                    emptyBody: DiscBk.emptyFutureBody,
-                  ),
-                  _tabList(
-                    items: clientPastReservations(all),
-                    emptyTitle: DiscBk.emptyPastTitle,
-                    emptyBody: DiscBk.emptyPastBody,
-                  ),
-                ],
-              ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -3,38 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
-import '../../profile/logic/account_deletion_flow.dart';
-import '../../support/navigation/user_support_navigation.dart';
-import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
-import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
-import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/providers/auth_notifier.dart';
+import '../../profile/logic/account_deletion_flow.dart';
 import '../../profile/providers/app_version_provider.dart';
-import '../../profile/widgets/account/profile_account_section.dart';
 import '../../profile/widgets/layout/profile_footer_actions.dart';
-import '../../profile/widgets/sections/profile_appearance_section.dart';
-import '../../profile/widgets/sections/profile_preferences_section.dart';
-import '../../profile/widgets/sections/profile_pwa_install_section.dart';
 import '../../profile/widgets/sections/profile_role_space_section.dart';
+import '../../support/navigation/user_support_navigation.dart';
 import '../logic/prestataire_profile_completeness.dart';
-import '../navigation/prestataire_hub_wizard_navigation.dart';
-import '../providers/agenda/disponibilite_provider.dart';
 import '../providers/profile/prestataire_profile_form_provider.dart';
-import '../widgets/profile/overview/menu/prestataire_profile_account_menu.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_insets.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_load_error.dart';
-import '../widgets/profile/overview/menu/prestataire_profile_manage_menu.dart';
+import '../widgets/profile/overview/menu/prestataire_profile_hub_grid.dart';
 import '../widgets/profile/overview/sections/prestataire_profile_section.dart';
 import '../widgets/profile/overview/stats/prestataire_profile_stats_strip.dart';
-import '../widgets/prestataire_verification_request_card.dart';
+import '../widgets/workspace/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_profile_completion_card.dart';
 import '../widgets/workspace/prestataire_profile_summary_card.dart';
 import '../widgets/workspace/prestataire_workspace_shell.dart';
 
-/// Onglet Profil de l’espace prestataire (compte + raccourcis pro).
+/// Onglet Profil presta — cockpit court (hub A).
+///
+/// Ordre : identité → alerte complétion → stats → raccourcis → espace → compte.
 class PrestataireProfileScreen extends ConsumerWidget {
   const PrestataireProfileScreen({super.key});
+
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(prestataireProfileFormProvider);
+    await ref.read(prestataireProfileFormProvider.future);
+  }
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     final go = await showDialog<bool>(
@@ -58,15 +55,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
     await ref.read(authNotifierProvider.notifier).signOut();
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
-    await runAccountDeletionRequestFlow(context: context, ref: ref);
-  }
-
-  Future<void> _refresh(WidgetRef ref) async {
-    ref.invalidate(prestataireProfileFormProvider);
-    await ref.read(prestataireProfileFormProvider.future);
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -87,10 +75,6 @@ class PrestataireProfileScreen extends ConsumerWidget {
           final salon = data.nomSalon.trim();
           final title = salon.isNotEmpty ? salon : DiscPrestaProfile.title;
           final complete = data.isProfessionallyComplete;
-          final hasHoraires = ref.watch(prestataireHorairesProvider).maybeWhen(
-                data: (h) => h.isNotEmpty,
-                orElse: () => false,
-              );
           final profession = data.description.trim().isNotEmpty
               ? data.description.trim().split('\n').first
               : DiscPrestaProfile.pageSubtitle;
@@ -108,104 +92,54 @@ class PrestataireProfileScreen extends ConsumerWidget {
                   bottom: PrestataireProfileInsets.listBottom(context),
                 ),
                 children: [
-                  const PrestataireProfileCompletionCard(),
+                  // 1. Identité salon
                   PrestataireProfileSummaryCard(
                     title: title,
                     subtitle: profession,
                     avatarUrl: data.avatarUrl,
                     trailingBadge: prestataireFreePlanBadge(context),
-                    onTap: () => context.pushPrestataireProfileEdit(),
+                    onTap: () => context.pushPrestataireProfileSalon(),
                   ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfileRoleSpaceSection(),
-                  ),
-                  if (!complete)
-                    Padding(
-                      padding: PrestataireProfileInsets.page(context)
-                          .copyWith(top: 12),
-                      child: FilledButton.icon(
-                        onPressed: () =>
-                            PrestataireHubWizardNavigation.openWizard(
-                          context,
-                          initialStep: PrestataireHubWizardNavigation
-                              .hubStepFromProfileData(
-                            data,
-                            hasHoraires: hasHoraires,
-                          ),
-                        ),
-                        icon: const Icon(Icons.arrow_forward_rounded),
-                        label: const Text(DiscPrestaProfile.incompleteCta),
-                      ),
-                    ),
-                  if (complete) ...[
-                    Padding(
-                      padding: PrestataireProfileInsets.page(context)
-                          .copyWith(top: 12),
-                      child: const PrestataireVerificationRequestCard(),
-                    ),
+                  // 2. Progression profil (si incomplet)
+                  const PrestataireProfileCompletionCard(),
+                  // 3. Stats activité
+                  if (complete)
                     PrestataireProfileStatsStrip(
                       servicesCount: data.services.length,
                       specialtiesCount: data.selectedCategoryIds.length,
                       photosCount: data.realisationPhotos.length,
                     ),
-                  ],
+                  // 4. Navigation métier
                   PrestataireProfileSection(
-                    title: DiscPrestaProfile.sectionActivity,
-                    icon: Icons.dashboard_customize_outlined,
-                    children: [
-                      const PrestataireProfileManageMenu(showHeader: true),
-                      if (data.prestataireId != null)
-                        DiscoverySurfaceCard(
-                          child: DiscoveryMenuTile(
-                            icon: Icons.visibility_rounded,
-                            title: DiscPrestaProfile.publicFiche,
-                            subtitle: DiscPrestaProfile.publicFicheHint,
-                            onTap: () => context.pushPrestataireDetail(
-                              data.prestataireId!,
-                            ),
-                          ),
-                        ),
+                    title: DiscPrestaProfile.hubSectionTitle,
+                    icon: Icons.apps_rounded,
+                    children: const [
+                      PrestataireProfileHubGrid(),
                     ],
                   ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfileAppearanceSection(),
+                  // 5. Basculer d’espace
+                  PrestataireProfileSection(
+                    title: DiscProfile.roleSpaceTitle,
+                    icon: Icons.swap_horiz_rounded,
+                    children: const [
+                      ProfileRoleSpaceSection(showHeader: false),
+                    ],
                   ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfilePreferencesSection(),
-                  ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfilePwaInstallSection(),
-                  ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context).copyWith(
-                      top: PrestataireProfileInsets.sectionTop,
-                    ),
-                    child: const ProfileAccountSection(
-                      menuPrefix: PrestataireProfileAccountMenu(),
-                      showClientReviews: false,
-                    ),
-                  ),
-                  Padding(
-                    padding: PrestataireProfileInsets.page(context)
-                        .copyWith(top: PrestataireProfileInsets.sectionTop),
-                    child: ProfileFooterActions(
-                      onSupportUser: () => openUserSupportChat(context, ref),
-                      onSignOut: () => _signOut(context, ref),
-                      onDeleteAccount: () =>
-                          _confirmDeleteAccount(context, ref),
-                    ),
+                  // 6. Support / session
+                  PrestataireProfileSection(
+                    title: DiscProfile.sectionAccount,
+                    icon: Icons.manage_accounts_outlined,
+                    children: [
+                      ProfileFooterActions(
+                        onSupportUser: () =>
+                            openUserSupportChat(context, ref),
+                        onSignOut: () => _signOut(context, ref),
+                        onDeleteAccount: () => runAccountDeletionRequestFlow(
+                          context: context,
+                          ref: ref,
+                        ),
+                      ),
+                    ],
                   ),
                   versionAsync.when(
                     data: (version) => Padding(

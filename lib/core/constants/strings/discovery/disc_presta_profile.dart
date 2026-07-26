@@ -15,6 +15,28 @@ abstract final class DiscPrestaProfile {
   static const sectionPro = 'Gérer mon activité';
   static const sectionProHint =
       'Modifie chaque partie de ta vitrine séparément.';
+  static const hubSectionTitle = 'Raccourcis';
+  static const hubSalonTitle = 'Mon salon';
+  static const hubSalonHint = 'Vitrine, services, galerie…';
+  static const hubSalonScreenTitle = 'Mon salon';
+  static const hubSalonScreenSubtitle =
+      'Modifie chaque bloc de ta fiche publique.';
+  static const hubBoutiqueTitle = 'Boutique';
+  static const hubBoutiqueHint = 'Produits, packs, commandes';
+  static const hubBoutiqueScreenTitle = 'Boutique';
+  static const hubBoutiqueScreenSubtitle =
+      'Gère ton catalogue et tes commandes produits.';
+  static const hubReelsTitle = 'Reels';
+  static const hubReelsHint = 'Photos et vidéos';
+  static const hubHorairesTitle = 'Horaires';
+  static const hubHorairesHint = 'Créneaux et congés';
+  static const hubAvisTitle = 'Avis';
+  static const hubAvisHint = 'Retours clientes';
+  static const hubCompteTitle = 'Compte';
+  static const hubCompteHint = 'Réglages et sécurité';
+  static const hubCompteScreenTitle = 'Compte';
+  static const hubCompteScreenSubtitle =
+      'Apparence, notifications et paramètres du compte.';
   static const menuVitrine = 'Vitrine & identité';
   static const menuVitrineHint =
       'Photo, salon, nom affiché, description, expérience';

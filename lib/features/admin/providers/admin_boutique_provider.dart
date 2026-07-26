@@ -27,3 +27,13 @@ final adminBoutiqueCatalogProvider =
   if (service == null) return const [];
   return service.listCatalog(search: search);
 });
+
+final adminBoutiqueAvisProvider =
+    FutureProvider.autoDispose.family<List<AdminBoutiqueAvisSummary>, String>((
+  ref,
+  search,
+) async {
+  final service = ref.watch(adminBoutiqueServiceProvider);
+  if (service == null) return const [];
+  return service.listAvis(search: search);
+});

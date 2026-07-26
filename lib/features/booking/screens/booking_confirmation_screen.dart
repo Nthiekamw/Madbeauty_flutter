@@ -31,6 +31,7 @@ class BookingConfirmationScreen extends ConsumerStatefulWidget {
     required this.price,
     required this.durationMinutes,
     required this.dateTime,
+    this.packId,
   });
 
   final String prestataireId;
@@ -39,6 +40,7 @@ class BookingConfirmationScreen extends ConsumerStatefulWidget {
   final double price;
   final int durationMinutes;
   final DateTime dateTime;
+  final String? packId;
 
   @override
   ConsumerState<BookingConfirmationScreen> createState() =>
@@ -66,6 +68,7 @@ class _BookingConfirmationScreenState
         ),
         body: BookingSuccessView(
           onViewReservations: () => context.goMyReservations(),
+          onGoHome: () => context.goHome(),
           body: _queuedOffline
               ? DiscBk.doneBodyQueued
               : _paidWithStripe
@@ -208,6 +211,7 @@ class _BookingConfirmationScreenState
       price: widget.price,
       dateTime: widget.dateTime,
       paymentMode: _paymentMode,
+      packId: widget.packId,
       onPhase: (phase) {
         if (!mounted) return;
         setState(() => _paymentPhase = phase);

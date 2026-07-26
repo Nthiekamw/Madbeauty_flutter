@@ -145,6 +145,7 @@ class _ReelPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isVideo = item.mediaType == RealisationMediaType.video;
     final caption = item.caption?.trim();
     final avatar = item.avatarUrl?.trim();
@@ -233,20 +234,42 @@ class _ReelPage extends StatelessWidget {
                       ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   FilledButton(
                     onPressed: onBook,
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     child: const Text(DiscReel.bookCta),
                   ),
                   OutlinedButton(
                     onPressed: onOpenSalon,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.white,
-                      side: const BorderSide(color: AppColors.white),
+                      side: const BorderSide(color: AppColors.white, width: 1),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     child: const Text(DiscReel.seeSalon),
                   ),
@@ -262,12 +285,15 @@ class _ReelPage extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onLike,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                padding: EdgeInsets.zero,
                 icon: Icon(
                   item.likedByMe
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   color: item.likedByMe ? Colors.pinkAccent : AppColors.white,
-                  size: 32,
+                  size: 26,
                 ),
                 tooltip: item.likedByMe
                     ? DiscReel.unlikeTooltip

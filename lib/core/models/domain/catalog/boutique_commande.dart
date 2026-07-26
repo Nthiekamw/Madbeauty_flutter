@@ -39,12 +39,15 @@ enum BoutiqueCommandeStatut {
       this == ready;
 
   /// Prochaine étape métier pour le prestataire (null si terminal).
+  /// La clôture (`completed`) est réservée au client (confirmation de réception).
   BoutiqueCommandeStatut? get nextForPrestataire => switch (this) {
         payOnSite || paid => preparing,
         preparing => ready,
-        ready => completed,
         _ => null,
       };
+
+  /// Le client peut confirmer la réception.
+  bool get canClientConfirmReceipt => this == ready;
 }
 
 class BoutiqueCommandeItem {
@@ -97,6 +100,9 @@ class BoutiqueCommande {
     this.items = const [],
     this.clientDisplayName,
     this.prestataireDisplayName,
+    this.reservationId,
+    this.packId,
+    this.hasClientReview = false,
   });
 
   final String id;
@@ -113,12 +119,23 @@ class BoutiqueCommande {
   final List<BoutiqueCommandeItem> items;
   final String? clientDisplayName;
   final String? prestataireDisplayName;
+  final String? reservationId;
+  final String? packId;
+  final bool hasClientReview;
 
   double get amountEuros => amountCents / 100;
+
+  bool get isPackLinked {
+    final pack = packId?.trim();
+    final reservation = reservationId?.trim();
+    return (pack != null && pack.isNotEmpty) ||
+        (reservation != null && reservation.isNotEmpty);
+  }
 
   BoutiqueCommande copyWith({
     String? clientDisplayName,
     String? prestataireDisplayName,
+    bool? hasClientReview,
   }) {
     return BoutiqueCommande(
       id: id,
@@ -136,6 +153,9 @@ class BoutiqueCommande {
       clientDisplayName: clientDisplayName ?? this.clientDisplayName,
       prestataireDisplayName:
           prestataireDisplayName ?? this.prestataireDisplayName,
+      reservationId: reservationId,
+      packId: packId,
+      hasClientReview: hasClientReview ?? this.hasClientReview,
     );
   }
 
@@ -162,6 +182,10 @@ class BoutiqueCommande {
           : (nomSalon.isNotEmpty ? nomSalon : null);
     }
 
+    final packId = (json['pack_id'] as String?)?.trim();
+    final reservationId = (json['reservation_id'] as String?)?.trim();
+    final hasReview = _hasAvisBoutique(json['avis_boutique']);
+
     return BoutiqueCommande(
       id: json['id'] as String,
       clientId: json['client_id'] as String,
@@ -180,7 +204,19 @@ class BoutiqueCommande {
       items: List.unmodifiable(items),
       clientDisplayName: null,
       prestataireDisplayName: salonName,
+      reservationId:
+          reservationId != null && reservationId.isNotEmpty
+              ? reservationId
+              : null,
+      packId: packId != null && packId.isNotEmpty ? packId : null,
+      hasClientReview: hasReview,
     );
+  }
+
+  static bool _hasAvisBoutique(Object? raw) {
+    if (raw is List) return raw.isNotEmpty;
+    if (raw is Map) return raw['id'] != null;
+    return false;
   }
 
   /// Extrait `user_id` du join `client_profiles` (si présent).

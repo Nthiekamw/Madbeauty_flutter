@@ -4,6 +4,8 @@ import '../../features/booking/screens/client_reservation_detail_screen.dart';
 import '../../features/messaging/providers/messaging_inbox_providers.dart';
 import '../../features/messaging/screens/chat_screen.dart';
 import '../../features/prestataire/models/prestataire_profile_edit_section.dart';
+import '../../features/prestataire/screens/prestataire_account_hub_screen.dart';
+import '../../features/prestataire/screens/prestataire_boutique_hub_screen.dart';
 import '../../features/prestataire/screens/prestataire_boutique_orders_screen.dart';
 import '../../features/prestataire/screens/prestataire_boutique_screen.dart';
 import '../../features/prestataire/screens/prestataire_detail_screen.dart';
@@ -13,6 +15,7 @@ import '../../features/prestataire/screens/prestataire_packs_screen.dart';
 import '../../features/prestataire/screens/prestataire_payment_methods_screen.dart';
 import '../../features/prestataire/screens/prestataire_received_reviews_screen.dart';
 import '../../features/prestataire/screens/prestataire_reservation_detail_screen.dart';
+import '../../features/prestataire/screens/prestataire_salon_hub_screen.dart';
 import '../../features/prestataire/screens/prestataire_subscription_screen.dart';
 import '../../features/reel/screens/prestataire_reel_manage_screen.dart';
 import '../../features/support/screens/user_support_chat_screen.dart';
@@ -117,6 +120,21 @@ List<RouteBase> buildDetailRoutes() => [
         builder: (context, state) => const PrestataireReelManageScreen(),
       ),
       GoRoute(
+        name: AppRouteNames.prestataireProfileSalon,
+        path: AppRoutes.prestataireProfileSalon,
+        builder: (context, state) => const PrestataireSalonHubScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireProfileBoutique,
+        path: AppRoutes.prestataireProfileBoutique,
+        builder: (context, state) => const PrestataireBoutiqueHubScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireProfileAccount,
+        path: AppRoutes.prestataireProfileAccount,
+        builder: (context, state) => const PrestataireAccountHubScreen(),
+      ),
+      GoRoute(
         name: AppRouteNames.prestataireProfileEdit,
         path: AppRoutes.prestataireProfileEdit,
         builder: (context, state) {
@@ -145,6 +163,9 @@ List<RouteBase> buildDetailRoutes() => [
             'packs' => AppRoutes.prestatairePacks,
             'boutique-orders' => AppRoutes.prestataireBoutiqueOrders,
             'reel' => AppRoutes.prestataireReel,
+            'salon' => AppRoutes.prestataireProfileSalon,
+            'profile-boutique' => AppRoutes.prestataireProfileBoutique,
+            'profile-account' => AppRoutes.prestataireProfileAccount,
             _ => AppRoutes.clientSearch,
           };
         },

@@ -15,6 +15,8 @@ class ProduitBoutiqueUpsertData {
     this.prix = 0,
     this.imageUrl,
     this.isActif = true,
+    this.stockIllimite = false,
+    this.stockQty = 0,
   });
 
   final String? id;
@@ -26,6 +28,8 @@ class ProduitBoutiqueUpsertData {
   final double prix;
   final String? imageUrl;
   final bool isActif;
+  final bool stockIllimite;
+  final int stockQty;
 }
 
 class ProduitBoutiqueService {
@@ -69,6 +73,10 @@ class ProduitBoutiqueService {
             'prix': data.prix,
             'categorie': data.categorie.dbValue,
             'is_actif': data.isActif,
+            'stock_illimite': data.stockIllimite,
+            'stock_qty': data.stockIllimite
+                ? 0
+                : (data.stockQty < 0 ? 0 : data.stockQty),
             if (data.description != null &&
                 data.description!.trim().isNotEmpty)
               'description': data.description!.trim()

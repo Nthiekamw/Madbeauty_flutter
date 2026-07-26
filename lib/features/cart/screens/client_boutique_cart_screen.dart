@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/stripe_platform_policy.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/models/domain/catalog/produit_boutique.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/stripe/stripe_payment_exception.dart';
 import '../../../services/stripe/stripe_payment_providers.dart';
@@ -15,6 +16,8 @@ import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../booking/widgets/confirmation/booking_web_payment_dialog.dart';
+import '../../prestataire/providers/boutique/boutique_providers.dart'
+    show publicProduitsBoutiqueProvider;
 import '../providers/boutique_cart_provider.dart';
 import '../providers/client_boutique_commandes_provider.dart';
 
@@ -58,12 +61,12 @@ class _ClientBoutiqueCartScreenState
           return;
         }
         if (revalidated.hasChanges) {
-          AppSnackBar.info(
-            context,
-            revalidated.removedNames.isNotEmpty
-                ? DiscBoutique.cartRevalidateRemoved
-                : DiscBoutique.cartRevalidatePrices,
-          );
+          final msg = revalidated.removedNames.isNotEmpty
+              ? DiscBoutique.cartRevalidateRemoved
+              : revalidated.quantitiesReduced
+                  ? DiscBoutique.cartRevalidateStockReduced
+                  : DiscBoutique.cartRevalidatePrices;
+          AppSnackBar.info(context, msg);
         }
       }
 
@@ -119,6 +122,17 @@ class _ClientBoutiqueCartScreenState
     final cart = ref.watch(boutiqueCartProvider);
     final theme = Theme.of(context);
     final canPayOnline = StripePlatformPolicy.isEnabled;
+    final prestaId = cart.prestataireId;
+    final stockByProduitId = <String, int?>{};
+    if (prestaId != null && prestaId.isNotEmpty) {
+      final produits = ref.watch(publicProduitsBoutiqueProvider(prestaId)).asData
+          ?.value;
+      if (produits != null) {
+        for (final p in produits) {
+          stockByProduitId[p.id] = p.maxOrderableQty;
+        }
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -216,6 +230,9 @@ class _ClientBoutiqueCartScreenState
                                             .setQuantity(
                                               line.produitId,
                                               line.quantite - 1,
+                                              maxOrderableQty:
+                                                  stockByProduitId[
+                                                      line.produitId],
                                             ),
                                     icon: const Icon(Icons.remove_circle_outline),
                                   ),
@@ -223,12 +240,31 @@ class _ClientBoutiqueCartScreenState
                                   IconButton(
                                     onPressed: _submitting
                                         ? null
-                                        : () => ref
-                                            .read(boutiqueCartProvider.notifier)
-                                            .setQuantity(
-                                              line.produitId,
-                                              line.quantite + 1,
-                                            ),
+                                        : () async {
+                                            final r = await ref
+                                                .read(
+                                                  boutiqueCartProvider.notifier,
+                                                )
+                                                .setQuantity(
+                                                  line.produitId,
+                                                  line.quantite + 1,
+                                                  maxOrderableQty:
+                                                      stockByProduitId[
+                                                          line.produitId],
+                                                );
+                                            if (!context.mounted) return;
+                                            if (r ==
+                                                    BoutiqueCartAddResult
+                                                        .clampedToStock ||
+                                                r ==
+                                                    BoutiqueCartAddResult
+                                                        .outOfStock) {
+                                              AppSnackBar.info(
+                                                context,
+                                                DiscBoutique.cartStockMaxReached,
+                                              );
+                                            }
+                                          },
                                     icon: const Icon(Icons.add_circle_outline),
                                   ),
                                 ],

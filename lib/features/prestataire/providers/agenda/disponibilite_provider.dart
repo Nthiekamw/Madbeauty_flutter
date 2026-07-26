@@ -7,10 +7,13 @@ import '../../../../features/booking/models/booking_availability_rules.dart';
 import '../../../../services/supabase/disponibilite/disponibilite_service_providers.dart';
 import '../resolve_prestataire_id.dart';
 
-/// Paramètre pour [creneauxDisponiblesProvider].
+/// Paramètre pour [creneauxDisponiblesProvider] / [creneauxAffichageProvider].
+/// [durationMinutes] : durée du rendez-vous (pack = somme services) pour filtrer
+/// les créneaux qui ne tiennent pas dans la plage ou chevauchent une résa.
 typedef CreneauxDisponiblesQuery = ({
   String prestataireId,
   DateTime date,
+  int? durationMinutes,
 });
 
 /// Horaires hebdomadaires du prestataire connecté.
@@ -30,6 +33,7 @@ final creneauxDisponiblesProvider = FutureProvider.autoDispose
       return service.getCreneauxDisponibles(
         query.prestataireId,
         query.date,
+        durationMinutes: query.durationMinutes,
       );
     });
 
@@ -41,6 +45,7 @@ final creneauxAffichageProvider = FutureProvider.autoDispose
       return service.getCreneauxAffichage(
         query.prestataireId,
         query.date,
+        durationMinutes: query.durationMinutes,
       );
     });
 

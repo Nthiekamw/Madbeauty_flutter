@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/supabase_error_handler.dart';
+import '../../../core/errors/supabase_service_exception.dart';
 import '../../../core/models/domain/reviews/review.dart';
 import '../../../core/models/domain/serialization/supabase_domain_codec.dart';
 import '../../../core/models/domain/reviews/client_review_list_item.dart';
@@ -47,6 +48,13 @@ class ReviewService {
 
   static const maxReviewPhotos = 3;
 
+  Never _fail(String message) {
+    throw SupabaseServiceException(
+      operation: 'review.create',
+      message: message,
+    );
+  }
+
   Future<String> create({
     required String bookingId,
     required String clientId,
@@ -58,7 +66,7 @@ class ReviewService {
         operation: 'review.create',
         action: () async {
           if (note < 1 || note > 5) {
-            throw ArgumentError('La note doit être entre 1 et 5.');
+            _fail('La note doit être entre 1 et 5.');
           }
 
           final reservation = await _client
@@ -68,12 +76,12 @@ class ReviewService {
               .maybeSingle();
 
           if (reservation == null) {
-            throw StateError('Réservation introuvable.');
+            _fail('Réservation introuvable.');
           }
 
           final row = Map<String, dynamic>.from(reservation);
           if (row['client_id'] != clientId) {
-            throw StateError(
+            _fail(
               'Seul le client de la réservation peut laisser un avis.',
             );
           }
@@ -81,7 +89,7 @@ class ReviewService {
           final statut =
               (row['statut'] as String? ?? '').trim().toLowerCase();
           if (!_completedStatuts.contains(statut)) {
-            throw StateError(
+            _fail(
               'La réservation doit être terminée pour laisser un avis.',
             );
           }
@@ -93,20 +101,33 @@ class ReviewService {
               .take(maxReviewPhotos)
               .toList();
 
-          final inserted = await _client
-              .from('avis')
-              .insert({
-                'reservation_id': bookingId,
-                'client_id': clientId,
-                'prestataire_id': row['prestataire_id'],
-                'note': note,
-                if (text != null && text.isNotEmpty) 'commentaire': text,
-                'photo_urls': urls,
-              })
-              .select('id')
-              .single();
+          try {
+            final inserted = await _client
+                .from('avis')
+                .insert({
+                  'reservation_id': bookingId,
+                  'client_id': clientId,
+                  'prestataire_id': row['prestataire_id'],
+                  'note': note,
+                  if (text != null && text.isNotEmpty) 'commentaire': text,
+                  'photo_urls': urls,
+                })
+                .select('id')
+                .single();
 
-          return Map<String, dynamic>.from(inserted)['id'] as String;
+            return Map<String, dynamic>.from(inserted)['id'] as String;
+          } on PostgrestException catch (e) {
+            final msg = (e.message).toLowerCase();
+            if (e.code == '23505' || msg.contains('unique')) {
+              _fail('Tu as déjà noté cette réservation.');
+            }
+            if (msg.contains('terminée') || msg.contains('terminee')) {
+              _fail(
+                'La réservation doit être terminée pour laisser un avis.',
+              );
+            }
+            rethrow;
+          }
         },
       );
 

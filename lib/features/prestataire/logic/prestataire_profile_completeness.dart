@@ -17,27 +17,42 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
 
   bool get hasRealisationGallery => realisationPhotos.isNotEmpty;
 
-  bool get servicesAreValid =>
-      selectedCategoryIds.isNotEmpty &&
-      services.isNotEmpty &&
-      services.every(
-        (s) =>
-            s.nom.trim().isNotEmpty &&
-            s.categorieId != null &&
-            s.categorieId!.trim().isNotEmpty &&
-            s.prix >= 1 &&
-            s.dureeMinutes > 0,
-      );
+  bool get servicesAreValid {
+    final fromSelection = selectedCategoryIds
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final fromServices = services
+        .map((s) => s.categorieId?.trim() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final categoriesOk =
+        fromSelection.isNotEmpty || fromServices.isNotEmpty;
+    return categoriesOk &&
+        services.isNotEmpty &&
+        services.every(
+          (s) =>
+              s.nom.trim().isNotEmpty &&
+              s.categorieId != null &&
+              s.categorieId!.trim().isNotEmpty &&
+              s.prix >= 1 &&
+              s.dureeMinutes > 0,
+        );
+  }
+
+  bool get hasAvatar =>
+      avatarUrl != null && avatarUrl!.trim().isNotEmpty;
+
+  /// Suffisant pour ouvrir le dashboard (carte de complétion si détails manquent).
+  bool get isOperationalForDashboard =>
+      hasMinimalPrestaIdentity && hasSalonAddress && servicesAreValid;
 
   bool get isProfessionallyComplete {
-    final hasAvatar = avatarUrl != null && avatarUrl!.trim().isNotEmpty;
-    return hasMinimalPrestaIdentity &&
-        hasSalonAddress &&
+    return isOperationalForDashboard &&
         hasPostalCode &&
         hasWorkLocation &&
         description.trim().isNotEmpty &&
-        hasAvatar &&
-        servicesAreValid;
+        hasAvatar;
   }
 
   List<PrestaCompletionChecklistItem> get missingChecklistItems {
@@ -46,7 +61,8 @@ extension PrestataireProfileCompleteness on PrestataireProfileFormData {
         !hasSalonAddress ||
         !hasPostalCode ||
         !hasWorkLocation ||
-        description.trim().isEmpty) {
+        description.trim().isEmpty ||
+        !hasAvatar) {
       items.add(PrestaCompletionChecklistItem.basics);
     }
     if (!servicesAreValid) {

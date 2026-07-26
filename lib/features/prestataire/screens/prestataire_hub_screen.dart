@@ -299,7 +299,8 @@ class _PrestataireHubScreenState extends ConsumerState<PrestataireHubScreen>
                 onPickHoraireEnd: (i) => PrestataireHubMediaActions
                     .pickHoraireTime(context, _form, i, false),
                 onCapaciteChanged: _form.setCapacite,
-                onboardingWizard: focused == null,
+                onboardingWizard: focused == null &&
+                    PrestataireHubOnboardingDraft.isActive,
               ),
             );
           },

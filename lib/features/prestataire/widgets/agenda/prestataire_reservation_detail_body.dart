@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/models/domain/booking/reservation_pack_line.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -58,7 +59,7 @@ class PrestataireReservationDetailBody extends StatelessWidget {
                   clientName: item.clientDisplayName,
                   clientPrenom: item.clientPrenom,
                   clientNom: item.clientNom,
-                  serviceName: item.serviceName,
+                  serviceName: item.offerTitle,
                   clientAvatarUrl: item.clientAvatarUrl,
                   avatarRadius: 28,
                   nameStyle: theme.textTheme.titleLarge?.copyWith(
@@ -73,20 +74,47 @@ class PrestataireReservationDetailBody extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: chip.backgroundColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  clientReservationStatusLabel(status),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontFamily: AppFonts.body,
-                    color: chip.foregroundColor,
-                    fontWeight: FontWeight.w700,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: chip.backgroundColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      clientReservationStatusLabel(status),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFonts.body,
+                        color: chip.foregroundColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
+                  if (item.isPack) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        DiscPrestaReservation.packBadge,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -120,13 +148,60 @@ class PrestataireReservationDetailBody extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _DetailRow(
-                icon: Icons.spa_outlined,
-                label: DiscPrestaReservation.labelService,
-                value: item.serviceName,
+                icon: item.isPack
+                    ? Icons.inventory_2_outlined
+                    : Icons.spa_outlined,
+                label: item.isPack
+                    ? DiscPrestaReservation.labelPack
+                    : DiscPrestaReservation.labelService,
+                value: item.offerTitle,
+              ),
+              const SizedBox(height: 12),
+              _DetailRow(
+                icon: Icons.timelapse_rounded,
+                label: DiscPrestaReservation.labelDuration,
+                value: DiscPrestaReservation.durationMinutes(
+                  item.durationMinutes,
+                ),
               ),
             ],
           ),
         ),
+        if (item.isPack && item.packItems.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          DiscoverySurfaceCard(
+            padding: const EdgeInsets.all(16),
+            includeHorizontalMargin: !useWeb,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.checklist_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      DiscPrestaReservation.labelPackContents,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                for (var i = 0; i < item.packItems.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 8),
+                  _PackContentRow(line: item.packItems[i]),
+                ],
+              ],
+            ),
+          ),
+        ],
         if (item.notesClient?.trim().isNotEmpty == true) ...[
           const SizedBox(height: 12),
           DiscoverySurfaceCard(
@@ -211,6 +286,64 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _PackContentRow extends StatelessWidget {
+  const _PackContentRow({required this.line});
+
+  final ReservationPackLine line;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final typeLabel = line.isProduit
+        ? DiscPrestaReservation.packItemProduit
+        : DiscPrestaReservation.packItemService;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          line.isProduit
+              ? Icons.shopping_bag_outlined
+              : Icons.spa_outlined,
+          size: 18,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                line.label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontFamily: AppFonts.body,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                typeLabel,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontFamily: AppFonts.body,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          DiscPrestaReservation.packItemQty(line.quantite),
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }

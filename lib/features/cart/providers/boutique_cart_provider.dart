@@ -10,6 +10,8 @@ import '../models/boutique_cart_state.dart';
 enum BoutiqueCartAddResult {
   added,
   switchedPrestataire,
+  outOfStock,
+  clampedToStock,
 }
 
 class BoutiqueCartNotifier extends Notifier<BoutiqueCartState> {
@@ -40,12 +42,17 @@ class BoutiqueCartNotifier extends Notifier<BoutiqueCartState> {
   }
 
   /// Ajoute un produit. Si le panier appartient à un autre presta, le remplace.
+  /// Respecte le stock ([ProduitBoutique.maxOrderableQty]) quand renseigné.
   Future<BoutiqueCartAddResult> addProduit({
     required ProduitBoutique produit,
     String? prestataireName,
     int quantite = 1,
   }) async {
-    final qty = quantite < 1 ? 1 : quantite;
+    final qtyWanted = quantite < 1 ? 1 : quantite;
+    if (produit.isOutOfStock) {
+      return BoutiqueCartAddResult.outOfStock;
+    }
+
     final current = state;
     var result = BoutiqueCartAddResult.added;
 
@@ -66,16 +73,27 @@ class BoutiqueCartNotifier extends Notifier<BoutiqueCartState> {
         : prestaName;
 
     final index = lines.indexWhere((l) => l.produitId == produit.id);
+    final existingQty = index >= 0 ? lines[index].quantite : 0;
+    final target = clampCartQuantity(
+      existingQty + qtyWanted,
+      produit.maxOrderableQty,
+    );
+    if (target <= 0) {
+      return BoutiqueCartAddResult.outOfStock;
+    }
+    if (target < existingQty + qtyWanted) {
+      result = BoutiqueCartAddResult.clampedToStock;
+    }
+
     if (index >= 0) {
-      final existing = lines[index];
-      lines[index] = existing.copyWith(quantite: existing.quantite + qty);
+      lines[index] = lines[index].copyWith(quantite: target);
     } else {
       lines.add(
         BoutiqueCartLine(
           produitId: produit.id,
           nom: produit.nom,
           prix: produit.prix,
-          quantite: qty,
+          quantite: target,
           conditionnement: produit.conditionnement,
           imageUrl: produit.imageUrl,
         ),
@@ -92,14 +110,27 @@ class BoutiqueCartNotifier extends Notifier<BoutiqueCartState> {
     return result;
   }
 
-  Future<void> setQuantity(String produitId, int quantite) async {
+  Future<BoutiqueCartAddResult> setQuantity(
+    String produitId,
+    int quantite, {
+    int? maxOrderableQty,
+  }) async {
     if (quantite <= 0) {
       await removeProduit(produitId);
-      return;
+      return BoutiqueCartAddResult.added;
+    }
+    final clamped = clampCartQuantity(quantite, maxOrderableQty);
+    if (clamped <= 0) {
+      await removeProduit(produitId);
+      return BoutiqueCartAddResult.outOfStock;
+    }
+    var result = BoutiqueCartAddResult.added;
+    if (clamped < quantite) {
+      result = BoutiqueCartAddResult.clampedToStock;
     }
     final lines = state.lines
         .map(
-          (l) => l.produitId == produitId ? l.copyWith(quantite: quantite) : l,
+          (l) => l.produitId == produitId ? l.copyWith(quantite: clamped) : l,
         )
         .toList();
     await _persist(
@@ -109,6 +140,7 @@ class BoutiqueCartNotifier extends Notifier<BoutiqueCartState> {
         lines: List.unmodifiable(lines),
       ),
     );
+    return result;
   }
 
   Future<void> removeProduit(String produitId) async {

@@ -11,6 +11,7 @@ abstract final class DiscReview {
   static const photosAdd = 'Ajouter une photo';
   static const photosMax = 'Maximum 3 photos par avis.';
   static const submit = 'Publier mon avis';
+  static const errorSelectNote = 'Choisis une note de 1 à 5 étoiles.';
   static const alreadyRated = 'Avis publié';
   static const rateCta = 'Noter';
   static const success = 'Merci pour ton avis !';

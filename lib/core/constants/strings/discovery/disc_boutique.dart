@@ -17,7 +17,7 @@ abstract final class DiscBoutique {
   static const dashSectionSubtitle =
       'Produits en vitrine et packs promo pour tes clientes';
   static const dashProduits = 'Produits';
-  static const dashPacks = 'Packs actifs';
+  static const dashPacks = 'Packs';
   static const dashEmptyHint =
       'Ajoute des produits ou crée un pack pour booster ta vitrine.';
   static const dashManageBoutique = 'Boutique';
@@ -54,6 +54,23 @@ abstract final class DiscBoutique {
       'Impossible d’envoyer la photo. Réessaie.';
   static const validationNom = 'Indique un nom de produit.';
   static const validationPrix = 'Indique un prix valide (≥ 0).';
+  static const validationStock =
+      'Indique une quantité en stock valide (≥ 0), ou active le stock illimité.';
+
+  static const fieldStockIllimite = 'Stock illimité';
+  static const fieldStockQty = 'Quantité en stock';
+  static const stockBadgeUnlimited = 'Illimité';
+  static const stockBadgeOut = 'Rupture';
+  static String stockBadgeQty(int n) =>
+      n <= 0 ? stockBadgeOut : (n == 1 ? '1 en stock' : '$n en stock');
+  static const stockLowHint = 'Stock bas';
+  static const stockOutClient = 'Rupture de stock';
+  static const stockLowClient = 'Plus que quelques exemplaires';
+  static const cartRevalidateStockReduced =
+      'Certaines quantités ont été ajustées (stock limité).';
+  static const cartStockMaxReached = 'Stock maximum atteint pour ce produit.';
+  static const cartAddOutOfStock =
+      'Ce produit est en rupture de stock.';
 
   static const catCheveux = 'Cheveux';
   static const catVisage = 'Visage';
@@ -71,6 +88,10 @@ abstract final class DiscBoutique {
       'Crée un pack (ex. Pack Mariage) pour proposer un prix avantageux.';
   static const packsAdd = 'Créer un pack';
   static const packsEdit = 'Modifier le pack';
+  /// Libellé court pour la carte liste (évite overflow).
+  static const packsActionEdit = 'Modifier';
+  static const packsActionPublish = 'Publier';
+  static const packsActionUnpublish = 'Dépublier';
   static const packsSaved = 'Pack enregistré.';
   static const packsDeactivated = 'Pack désactivé.';
   static const packsActivated = 'Pack publié.';
@@ -135,13 +156,41 @@ abstract final class DiscBoutique {
       'Le paiement en ligne des produits est disponible sur le site web. '
       'Tu peux aussi commander et régler sur place.';
   static const cartTotal = 'Total';
-  static const packBookServices = 'Réserver les services';
+  static const packBookServices = 'Réserver le pack';
   static const packAddProducts = 'Ajouter les produits au panier';
+  /// CTAs courts sur la fiche publique (évite overflow).
+  static const packBookServicesShort = 'Réserver';
+  static const packAddProductsShort = 'Au panier';
   static const packMixedHint =
       'Ce pack contient services et produits.';
   static const packBookMultiSoon =
       'La réservation multi-services d’un pack arrive bientôt. '
       'Contacte le salon ou réserve un service unitaire.';
+  static const packBookingHeaderLabel = 'Pack sélectionné';
+  static const packBookingUnavailableTitle = 'Pack indisponible';
+  static const packBookingUnavailableBody =
+      'Cette offre n’est plus disponible. Choisis un autre pack ou un service.';
+  static const packBookingNoServiceTitle = 'Pack non réservable';
+  static const packBookingNoServiceBody =
+      'Ce pack ne contient aucun service. Ajoute les produits au panier.';
+  static const packContentsTitle = 'Contenu inclus';
+  static const packItemService = 'Service';
+  static const packItemProduit = 'Produit';
+  static const packItemUnavailable = 'Élément indisponible';
+  static const packPrixCatalogue = 'Prix catalogue';
+  static const packPrixPack = 'Prix du pack';
+  static const packSeeDetailsHint = 'Appuie pour voir le détail';
+  static const produitSeeDetailsHint = 'Appuie pour voir le détail';
+  static String packItemQty(int qty) =>
+      qty <= 1 ? '×1' : '×$qty';
+  static String packServiceDuration(int minutes) => '$minutes min';
+  static String categorieLabel(String dbValue) => switch (dbValue) {
+        'cheveux' => catCheveux,
+        'visage' => catVisage,
+        'corps' => catCorps,
+        'accessoires' => catAccessoires,
+        _ => catAutre,
+      };
   static const cartRevalidateEmpty =
       'Aucun produit du panier n’est plus disponible.';
   static const cartRevalidateRemoved =
@@ -168,7 +217,10 @@ abstract final class DiscBoutique {
       'Suivi des commandes produits à préparer ou remettre.';
   static const ordersEmptyTitle = 'Aucune commande';
   static const ordersEmptyBody =
-      'Les commandes de tes clientes apparaîtront ici.';
+      'Les commandes produits (panier ou inclus dans un pack réservé) '
+      'apparaîtront ici.';
+  static const ordersPackBadge = 'Inclus pack';
+  static const ordersIncludedInBooking = 'Inclus dans la réservation';
   static const ordersLoadErr =
       'Impossible de charger les commandes. Réessaie.';
   static const ordersUpdateErr =
@@ -183,16 +235,34 @@ abstract final class DiscBoutique {
   static const statutPaid = 'Payée';
   static const statutPreparing = 'En préparation';
   static const statutReady = 'Prête';
-  static const statutCompleted = 'Terminée';
+  static const statutCompleted = 'Remise confirmée';
   static const statutCanceled = 'Annulée';
-  static const dashOrdersOpen = 'Commandes ouvertes';
+  static const dashOrdersOpen = 'Commandes';
   static const dashManageOrders = 'Commandes';
+  static const ordersAwaitingClientReceipt =
+      'En attente de confirmation de réception par la cliente.';
+  static const clientReadyHint =
+      'Le salon a préparé ta commande. Confirme quand tu as reçu tes produits.';
+  static const clientConfirmReceipt = 'J’ai reçu mes produits';
+  static const clientConfirmReceiptSuccess =
+      'Réception confirmée. Merci de noter tes produits.';
+  static const clientConfirmReceiptErr =
+      'Impossible de confirmer la réception. Réessaie.';
+  static const clientRateProducts = 'Noter les produits';
+  static const clientRateProductsDone = 'Avis publié';
+  static const clientReviewTitle = 'Noter tes produits';
+  static const clientReviewSubtitle =
+      'Ta note aide les autres clientes à choisir leurs soins et produits.';
+  static const clientReviewSubmit = 'Publier mon avis';
+  static const clientReviewSuccess = 'Merci pour ton avis !';
+  static const clientReviewError =
+      'Impossible d’enregistrer l’avis. Réessaie.';
+  static const clientReviewAlready = 'Tu as déjà noté cette commande.';
   static String dashManageOrdersOpen(int n) =>
-      n <= 0 ? dashManageOrders : 'Commandes ($n)';
+      n <= 0 ? dashManageOrders : 'Cmd ($n)';
   static String nextActionLabel(String statutDb) => switch (statutDb) {
-        'pay_on_site' || 'paid' => 'Passer en préparation',
-        'preparing' => 'Marquer prête',
-        'ready' => 'Marquer remise',
+        'pay_on_site' || 'paid' => 'Préparer',
+        'preparing' => 'Prête',
         _ => ordersActionAdvance,
       };
   static String cartBadge(int n) => n <= 0 ? '' : (n > 99 ? '99+' : '$n');

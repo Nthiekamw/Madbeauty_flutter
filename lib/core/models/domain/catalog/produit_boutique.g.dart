@@ -24,6 +24,8 @@ _ProduitBoutique _$ProduitBoutiqueFromJson(Map<String, dynamic> json) =>
           : const DecimalConverter().fromJson(json['prix']),
       imageUrl: json['image_url'] as String?,
       isActif: json['is_actif'] as bool? ?? true,
+      stockIllimite: json['stock_illimite'] as bool? ?? false,
+      stockQty: (json['stock_qty'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
@@ -43,6 +45,8 @@ Map<String, dynamic> _$ProduitBoutiqueToJson(_ProduitBoutique instance) =>
       'prix': const DecimalConverter().toJson(instance.prix),
       'image_url': instance.imageUrl,
       'is_actif': instance.isActif,
+      'stock_illimite': instance.stockIllimite,
+      'stock_qty': instance.stockQty,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };

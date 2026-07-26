@@ -3,13 +3,15 @@ class BookingWebPaymentPendingData {
   const BookingWebPaymentPendingData({
     required this.paymentIntentId,
     required this.prestataireId,
-    required this.serviceId,
     required this.dateHeureIso,
+    this.serviceId,
+    this.packId,
   });
 
   final String paymentIntentId;
   final String prestataireId;
-  final String serviceId;
+  final String? serviceId;
+  final String? packId;
   final String dateHeureIso;
 }
 

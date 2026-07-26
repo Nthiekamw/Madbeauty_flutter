@@ -69,7 +69,8 @@ Synthèse de ce qui est **en place** sur la branche de travail actuelle vs **pro
 ### Produit
 
 - Boutique produits + packs/offres (services et/ou produits) — panier, checkout, commandes presta + historique client (`feature/boutique-packs`)
-  - Pack multi-services au **prix pack** (créneau durée cumulée) : prévu en itération suivante
+  - **Stock** : quantité + option illimité ; décrément à la commande ; restauration si annulation / pending expiré
+  - **Pack unifié** : réservation multi-services au **prix_pack**, créneau durée cumulée, produits inclus (commande boutique liée + stock atomique)
   - Admin : commandes + catalogues (Flutter + web-admin)
 - Modération avis / signalements avancée
 - Badge `is_verified` (process manuel ou tiers)

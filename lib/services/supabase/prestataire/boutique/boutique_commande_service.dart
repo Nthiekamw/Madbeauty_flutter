@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/errors/supabase_error_handler.dart';
 import '../../../../core/models/domain/catalog/boutique_commande.dart';
+import '../../../../core/models/domain/catalog/produit_boutique.dart';
 import '../../../../features/cart/models/boutique_cart_state.dart';
 import '../../profile/profile_service.dart';
 
@@ -24,13 +25,16 @@ class BoutiqueCartRevalidateResult {
     required this.cart,
     this.removedNames = const [],
     this.pricesChanged = false,
+    this.quantitiesReduced = false,
   });
 
   final BoutiqueCartState cart;
   final List<String> removedNames;
   final bool pricesChanged;
+  final bool quantitiesReduced;
 
-  bool get hasChanges => removedNames.isNotEmpty || pricesChanged;
+  bool get hasChanges =>
+      removedNames.isNotEmpty || pricesChanged || quantitiesReduced;
 }
 
 /// Commandes boutique : création client + gestion prestataire.
@@ -43,7 +47,7 @@ class BoutiqueCommandeService {
   final SupabaseClient _client;
   final ProfileService? _profileService;
 
-  /// Aligne le panier local sur les prix / dispo DB (mono-presta).
+  /// Aligne le panier local sur les prix / dispo / stock DB (mono-presta).
   Future<BoutiqueCartRevalidateResult> revalidateCart(
     BoutiqueCartState cart,
   ) =>
@@ -59,7 +63,8 @@ class BoutiqueCommandeService {
           final produitsResponse = await _client
               .from('produits_boutique')
               .select(
-                'id, nom, conditionnement, prix, is_actif, prestataire_id, image_url',
+                'id, nom, conditionnement, prix, is_actif, prestataire_id, '
+                'image_url, stock_illimite, stock_qty',
               )
               .inFilter('id', produitIds)
               .eq('prestataire_id', prestaId)
@@ -74,10 +79,18 @@ class BoutiqueCommandeService {
           final nextLines = <BoutiqueCartLine>[];
           final removed = <String>[];
           var pricesChanged = false;
+          var quantitiesReduced = false;
 
           for (final line in cart.lines) {
             final db = byId[line.produitId];
             if (db == null) {
+              removed.add(line.nom);
+              continue;
+            }
+            final illimite = db['stock_illimite'] as bool? ?? false;
+            final stockQty = (db['stock_qty'] as num?)?.toInt() ?? 0;
+            final maxQty = illimite ? null : stockQty;
+            if (maxQty != null && maxQty <= 0) {
               removed.add(line.nom);
               continue;
             }
@@ -86,10 +99,19 @@ class BoutiqueCommandeService {
             if ((prix - line.prix).abs() > 0.009) {
               pricesChanged = true;
             }
+            final clamped = clampCartQuantity(line.quantite, maxQty);
+            if (clamped <= 0) {
+              removed.add(line.nom);
+              continue;
+            }
+            if (clamped < line.quantite) {
+              quantitiesReduced = true;
+            }
             nextLines.add(
               line.copyWith(
                 nom: nom,
                 prix: prix,
+                quantite: clamped,
                 conditionnement: (db['conditionnement'] as String?)?.trim(),
                 imageUrl: (db['image_url'] as String?)?.trim() ?? line.imageUrl,
               ),
@@ -105,6 +127,7 @@ class BoutiqueCommandeService {
             ),
             removedNames: List.unmodifiable(removed),
             pricesChanged: pricesChanged,
+            quantitiesReduced: quantitiesReduced,
           );
         },
       );
@@ -135,83 +158,37 @@ class BoutiqueCommandeService {
             throw const AppFailure('Connecte-toi pour commander.');
           }
 
-          final clientRow = await _client
-              .from('client_profiles')
-              .select('id')
-              .eq('user_id', userId)
-              .maybeSingle();
-          final clientId = clientRow?['id'] as String?;
-          if (clientId == null) {
-            throw const AppFailure('Profil client manquant.');
+          final payload = <String, dynamic>{
+            'prestataire_id': prestaId,
+            'pay_on_site': payOnSite,
+            if (notesClient != null && notesClient.trim().isNotEmpty)
+              'notes_client': notesClient.trim(),
+            'items': [
+              for (final line in cart.lines)
+                {
+                  'produit_id': line.produitId,
+                  'quantite': line.quantite,
+                },
+            ],
+          };
+
+          final raw = await _client.rpc(
+            'create_boutique_commande_from_cart',
+            params: {'p_payload': payload},
+          );
+
+          final map = raw is Map
+              ? Map<String, dynamic>.from(raw)
+              : <String, dynamic>{};
+          final commandeId = map['commande_id'] as String?;
+          final amountCents = (map['amount_cents'] as num?)?.toInt();
+          final statut = map['statut'] as String?;
+          if (commandeId == null ||
+              amountCents == null ||
+              statut == null ||
+              statut.isEmpty) {
+            throw const AppFailure('Réponse commande invalide.');
           }
-
-          await expireOwnStalePending();
-
-          final produitIds = cart.lines.map((l) => l.produitId).toList();
-          final produitsResponse = await _client
-              .from('produits_boutique')
-              .select('id, nom, conditionnement, prix, is_actif, prestataire_id')
-              .inFilter('id', produitIds)
-              .eq('prestataire_id', prestaId)
-              .eq('is_actif', true);
-
-          final byId = <String, Map<String, dynamic>>{};
-          for (final row in produitsResponse as List<dynamic>) {
-            final m = Map<String, dynamic>.from(row as Map);
-            byId[m['id'] as String] = m;
-          }
-
-          final itemRows = <Map<String, dynamic>>[];
-          var amountCents = 0;
-          for (final line in cart.lines) {
-            final db = byId[line.produitId];
-            if (db == null) {
-              throw AppFailure(
-                'Le produit « ${line.nom} » n’est plus disponible.',
-              );
-            }
-            final prix = (db['prix'] as num?)?.toDouble() ?? 0;
-            final prixCents = (prix * 100).round();
-            amountCents += prixCents * line.quantite;
-            itemRows.add({
-              'produit_id': line.produitId,
-              'nom_snapshot': (db['nom'] as String?)?.trim() ?? line.nom,
-              'conditionnement_snapshot':
-                  (db['conditionnement'] as String?)?.trim(),
-              'prix_cents': prixCents,
-              'quantite': line.quantite,
-            });
-          }
-
-          if (amountCents <= 0) {
-            throw const AppFailure('Montant de commande invalide.');
-          }
-
-          final statut = payOnSite ? 'pay_on_site' : 'pending_payment';
-          final paymentStatus = payOnSite ? 'unpaid' : 'pending';
-
-          final commande = await _client
-              .from('boutique_commandes')
-              .insert({
-                'client_id': clientId,
-                'prestataire_id': prestaId,
-                'statut': statut,
-                'payment_status': paymentStatus,
-                'amount_cents': amountCents,
-                'currency': 'eur',
-                'fulfillment': 'pickup',
-                if (notesClient != null && notesClient.trim().isNotEmpty)
-                  'notes_client': notesClient.trim(),
-              })
-              .select('id')
-              .single();
-
-          final commandeId = commande['id'] as String;
-          await _client.from('boutique_commande_items').insert(
-                itemRows
-                    .map((row) => {...row, 'commande_id': commandeId})
-                    .toList(),
-              );
 
           return BoutiqueCommandeCreateResult(
             commandeId: commandeId,
@@ -225,15 +202,30 @@ class BoutiqueCommandeService {
       SupabaseErrorHandler.run(
         operation: 'boutiqueCommande.listForClient',
         action: () async {
-          final response = await _client
-              .from('boutique_commandes')
-              .select(
-                '*, boutique_commande_items(*), '
-                'prestataire_profiles(id, nom_salon, nom_affiche)',
-              )
-              .eq('client_id', clientId)
-              .order('created_at', ascending: false);
-          return (response as List<dynamic>)
+          List<dynamic> rows;
+          try {
+            final response = await _client
+                .from('boutique_commandes')
+                .select(
+                  '*, boutique_commande_items(*), '
+                  'prestataire_profiles(id, nom_salon, nom_affiche), '
+                  'avis_boutique(id)',
+                )
+                .eq('client_id', clientId)
+                .order('created_at', ascending: false);
+            rows = response as List<dynamic>;
+          } catch (_) {
+            final response = await _client
+                .from('boutique_commandes')
+                .select(
+                  '*, boutique_commande_items(*), '
+                  'prestataire_profiles(id, nom_salon, nom_affiche)',
+                )
+                .eq('client_id', clientId)
+                .order('created_at', ascending: false);
+            rows = response as List<dynamic>;
+          }
+          return rows
               .map(
                 (row) => BoutiqueCommande.fromJson(
                   Map<String, dynamic>.from(row as Map),
@@ -266,14 +258,25 @@ class BoutiqueCommandeService {
       SupabaseErrorHandler.run(
         operation: 'boutiqueCommande.listForPrestataire',
         action: () async {
-          final response = await _client
-              .from('boutique_commandes')
-              .select(
-                '*, boutique_commande_items(*), client_profiles(user_id)',
-              )
-              .eq('prestataire_id', prestataireId)
-              .order('created_at', ascending: false);
-          final rows = response as List<dynamic>;
+          List<dynamic> rows;
+          try {
+            final response = await _client
+                .from('boutique_commandes')
+                .select(
+                  '*, boutique_commande_items(*), client_profiles(user_id)',
+                )
+                .eq('prestataire_id', prestataireId)
+                .order('created_at', ascending: false);
+            rows = response as List<dynamic>;
+          } catch (_) {
+            // Fallback si le join client_profiles est indisponible (RLS / schéma).
+            final response = await _client
+                .from('boutique_commandes')
+                .select('*, boutique_commande_items(*)')
+                .eq('prestataire_id', prestataireId)
+                .order('created_at', ascending: false);
+            rows = response as List<dynamic>;
+          }
           final commandes = <BoutiqueCommande>[];
           final userIds = <String>[];
           final userIdByIndex = <int, String>{};
@@ -379,5 +382,47 @@ class BoutiqueCommandeService {
         prestataireId: prestataireId,
         commandeId: commandeId,
         statut: BoutiqueCommandeStatut.canceled,
+      );
+
+  /// Client : confirme la réception (ready → completed).
+  Future<BoutiqueCommande> confirmReceiptAsClient(String commandeId) =>
+      SupabaseErrorHandler.run(
+        operation: 'boutiqueCommande.confirmReceiptAsClient',
+        action: () async {
+          final raw = await _client.rpc(
+            'client_confirm_boutique_receipt',
+            params: {'p_commande_id': commandeId},
+          );
+          if (raw is! Map) {
+            throw const AppFailure('Réponse confirmation invalide.');
+          }
+          return BoutiqueCommande.fromJson(Map<String, dynamic>.from(raw));
+        },
+      );
+
+  /// Client : publie un avis après réception confirmée.
+  Future<void> createAvisBoutique({
+    required String commandeId,
+    required int note,
+    String? commentaire,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'boutiqueCommande.createAvisBoutique',
+        action: () async {
+          if (note < 1 || note > 5) {
+            throw const AppFailure('La note doit être entre 1 et 5.');
+          }
+          await _client.rpc(
+            'create_avis_boutique',
+            params: {
+              'p_payload': {
+                'commande_id': commandeId,
+                'note': note,
+                if (commentaire != null && commentaire.trim().isNotEmpty)
+                  'commentaire': commentaire.trim(),
+              },
+            },
+          );
+        },
       );
 }

@@ -5,6 +5,7 @@ import '../../../core/models/domain/booking/reservation.dart';
 import '../profile/profile_providers.dart';
 import '../supabase_service.dart';
 import 'booking_service.dart';
+import 'pack_booking_service.dart';
 
 final bookingServiceProvider = Provider<BookingService?>((ref) {
   if (!AppConfig.hasSupabase) return null;
@@ -12,6 +13,11 @@ final bookingServiceProvider = Provider<BookingService?>((ref) {
     SupabaseService.client,
     ref.watch(profileServiceProvider),
   );
+});
+
+final packBookingServiceProvider = Provider<PackBookingService?>((ref) {
+  if (!AppConfig.hasSupabase) return null;
+  return PackBookingService(SupabaseService.client);
 });
 
 /// Détail réservation accessible au client ou prestataire participant ([RLS]).

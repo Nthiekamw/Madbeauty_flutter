@@ -12,6 +12,7 @@ List<RouteBase> buildBookingRoutes() => [
         builder: (context, state) => BookingScreen(
           prestataireId: state.uri.queryParameters['prestataireId'],
           serviceId: state.uri.queryParameters['serviceId'],
+          packId: state.uri.queryParameters['packId'],
           initialDay: state.uri.queryParameters['date'],
         ),
       ),
@@ -29,6 +30,7 @@ List<RouteBase> buildBookingRoutes() => [
             price: double.tryParse(params['price'] ?? '') ?? 0,
             durationMinutes: int.tryParse(params['durationMinutes'] ?? '') ?? 0,
             dateTime: dateTime,
+            packId: params['packId'],
           );
         },
       ),

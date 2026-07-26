@@ -279,38 +279,62 @@ abstract final class PrestataireHubOnboardingDraft {
     required void Function(List<PrestataireServiceFieldSet> services)
         replaceServices,
     required void Function(List<WeeklyJourHoraire> week) setHoraireWeek,
+    /// Si true (hydratation serveur), ne remplit que les champs encore vides.
+    bool fillEmptyOnly = true,
   }) {
     setCurrentStep(hub.currentStep.clamp(0, maxHubStepIndex));
-    nomController.text = hub.nomSalon;
-    nomAfficheController.text = hub.nomAffiche;
-    bioController.text = hub.bio;
-    descriptionController.text = hub.description;
-    experienceProController.text = hub.experienceProfessionnelle;
-    anneesExperienceController.text = hub.anneesExperience;
-    villeController.text = hub.ville;
-    codePostalController.text = hub.codePostal;
-    adresseController.text = hub.adresse;
-    setPays(hub.pays);
-    setLieuTravail(LieuTravail.fromValue(hub.lieuTravail));
-    setAvatarUrl(hub.avatarUrl);
-    suggestionNomController.text = hub.suggestionCategorieNom;
-    suggestionDescController.text = hub.suggestionCategorieDescription;
-    setComfortIds(hub.confortClient.toSet());
-    setConditionIds(hub.conditionsService.toSet());
-    replaceServices(
-      hub.services
-          .map(
-            (s) => PrestataireServiceFieldSet(
-              id: s.id,
-              nom: s.nom,
-              description: s.description,
-              categorieId: s.categorieId,
-              prix: s.prix,
-              duree: s.duree,
-            ),
-          )
-          .toList(),
-    );
+
+    void assign(TextEditingController controller, String value) {
+      final next = value.trim();
+      if (next.isEmpty) return;
+      if (fillEmptyOnly && controller.text.trim().isNotEmpty) return;
+      controller.text = value;
+    }
+
+    assign(nomController, hub.nomSalon);
+    assign(nomAfficheController, hub.nomAffiche);
+    assign(bioController, hub.bio);
+    assign(descriptionController, hub.description);
+    assign(experienceProController, hub.experienceProfessionnelle);
+    assign(anneesExperienceController, hub.anneesExperience);
+    assign(villeController, hub.ville);
+    assign(codePostalController, hub.codePostal);
+    assign(adresseController, hub.adresse);
+    if (hub.pays.trim().isNotEmpty) {
+      setPays(hub.pays);
+    }
+    final lieu = LieuTravail.fromValue(hub.lieuTravail);
+    if (lieu != null) {
+      setLieuTravail(lieu);
+    }
+    final avatar = hub.avatarUrl?.trim();
+    if (avatar != null && avatar.isNotEmpty) {
+      setAvatarUrl(avatar);
+    }
+    assign(suggestionNomController, hub.suggestionCategorieNom);
+    assign(suggestionDescController, hub.suggestionCategorieDescription);
+    if (hub.confortClient.isNotEmpty) {
+      setComfortIds(hub.confortClient.toSet());
+    }
+    if (hub.conditionsService.isNotEmpty) {
+      setConditionIds(hub.conditionsService.toSet());
+    }
+    if (hub.services.isNotEmpty) {
+      replaceServices(
+        hub.services
+            .map(
+              (s) => PrestataireServiceFieldSet(
+                id: s.id,
+                nom: s.nom,
+                description: s.description,
+                categorieId: s.categorieId,
+                prix: s.prix,
+                duree: s.duree,
+              ),
+            )
+            .toList(),
+      );
+    }
     if (hub.horaires.isNotEmpty) {
       setHoraireWeek(weeklyHorairesFromDrafts(hub.horaires));
     }

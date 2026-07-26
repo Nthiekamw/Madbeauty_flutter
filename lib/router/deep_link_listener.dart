@@ -135,6 +135,7 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
         paymentIntentId: pending.paymentIntentId,
         prestataireId: pending.prestataireId,
         serviceId: pending.serviceId,
+        packId: pending.packId,
         dateHeure: DateTime.parse(pending.dateHeureIso).toLocal(),
       );
       BookingWebPaymentPending.clear();

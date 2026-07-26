@@ -221,7 +221,7 @@ class RegisterWizardSubmitHandler {
 
     if (form.roleChoice == UserRole.prestataire) {
       await syncRoleBestEffort(UserRole.prestataire, providerContainer);
-      await removeClientRoleBestEffort(providerContainer);
+      // On conserve le rôle client pour le switch d’espace (dual-role).
       final address = form.postalAddress;
       await post.updatePrestataireExtras(
         userId: uid,

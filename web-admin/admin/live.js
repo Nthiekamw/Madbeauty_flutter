@@ -679,6 +679,7 @@
       const orders = await MBApi.listBoutiqueOrders(200, filters);
       store.boutiqueOrders = orders || [];
       BOUTIQUE_ORDERS = (orders || []).map((o) => ({
+        id: o.id,
         date: fmtDate(o.created_at),
         client: o.client_name || '—',
         presta: o.prestataire_salon || '—',
@@ -687,6 +688,8 @@
         statut: o.statut || '—',
         payment: o.payment_status || '—',
         statusBadge: boutiqueStatusBadge(o.statut),
+        packLinked: !!(o.pack_id || o.reservation_id),
+        hasAvis: !!o.has_avis,
       }));
       const open = (orders || []).filter((o) =>
         ['pay_on_site', 'paid', 'preparing', 'ready', 'pending_payment'].includes(o.statut)
@@ -694,6 +697,53 @@
       set('sec-boutique-sub', `${(orders || []).length} commande(s) · ${open} ouverte(s)`);
       renderTables();
     } catch (e) { showToast(e.message || 'Erreur commandes boutique'); }
+  };
+
+  window.reloadBoutiqueAvis = async () => {
+    const search = document.getElementById('boutique-avis-search')?.value?.trim() || '';
+    try {
+      const rows = await MBApi.listBoutiqueAvis(100, search);
+      store.boutiqueAvis = rows || [];
+      BOUTIQUE_AVIS = (rows || []).map((a) => ({
+        id: a.id,
+        date: fmtDate(a.created_at),
+        client: a.client_name || '—',
+        presta: a.prestataire_salon || '—',
+        note: a.note ?? '—',
+        commentaire: a.commentaire || '—',
+      }));
+      renderTables();
+    } catch (e) { showToast(e.message || 'Erreur avis boutique'); }
+  };
+
+  window.adminBoutiqueConfirmReceipt = async (commandeId) => {
+    const reason = prompt('Motif (obligatoire) — confirmer la réception pour la cliente :');
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      await MBApi.confirmBoutiqueReceipt(commandeId, reason.trim());
+      showToast('Réception confirmée');
+      await reloadBoutiqueOrders();
+    } catch (e) { showToast(e.message || 'Erreur confirmation'); }
+  };
+
+  window.adminBoutiqueSetStatut = async (commandeId, statut) => {
+    const reason = prompt(`Motif (obligatoire) — passer la commande en « ${statut} » :`);
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      await MBApi.setBoutiqueOrderStatut(commandeId, statut, reason.trim());
+      showToast('Statut mis à jour');
+      await reloadBoutiqueOrders();
+    } catch (e) { showToast(e.message || 'Erreur statut'); }
+  };
+
+  window.adminBoutiqueDeleteAvis = async (avisId) => {
+    const reason = prompt('Motif (obligatoire) — supprimer cet avis :');
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      await MBApi.deleteBoutiqueAvis(avisId, reason.trim());
+      showToast('Avis supprimé');
+      await reloadBoutiqueAvis();
+    } catch (e) { showToast(e.message || 'Erreur suppression avis'); }
   };
 
   window.reloadBoutiqueCatalog = async () => {
@@ -736,7 +786,7 @@
     const [
       analytics, users, reservations, countries, bugs, threads,
       verifications, contentReports, photos, audit, verificationEvents, trial, fee, prestataireTrials,
-      subscriptionPlans, boutiqueOrders, boutiqueCatalog,
+      subscriptionPlans, boutiqueOrders, boutiqueCatalog, boutiqueAvis,
     ] = await Promise.all([
       safeLoad('analytics', () => MBApi.getAnalytics(), {}),
       safeLoad('users', () => MBApi.searchUsers('', 200), []),
@@ -755,6 +805,7 @@
       safeLoad('subscriptionPlans', () => MBApi.getSubscriptionPlans(), {}),
       safeLoad('boutiqueOrders', () => MBApi.listBoutiqueOrders(200), []),
       safeLoad('boutiqueCatalog', () => MBApi.listBoutiqueCatalog(200), []),
+      safeLoad('boutiqueAvis', () => MBApi.listBoutiqueAvis(100), []),
     ]);
 
     store.analytics = analytics;
@@ -787,7 +838,9 @@
     }));
     store.boutiqueOrders = boutiqueOrders || [];
     store.boutiqueCatalog = boutiqueCatalog || [];
+    store.boutiqueAvis = boutiqueAvis || [];
     BOUTIQUE_ORDERS = (boutiqueOrders || []).map((o) => ({
+      id: o.id,
       date: fmtDate(o.created_at),
       client: o.client_name || '—',
       presta: o.prestataire_salon || '—',
@@ -796,6 +849,8 @@
       statut: o.statut || '—',
       payment: o.payment_status || '—',
       statusBadge: boutiqueStatusBadge(o.statut),
+      packLinked: !!(o.pack_id || o.reservation_id),
+      hasAvis: !!o.has_avis,
     }));
     BOUTIQUE_CATALOG = (boutiqueCatalog || []).map((r) => ({
       salon: r.prestataire_salon || '—',
@@ -804,6 +859,14 @@
       packs: `${r.packs_actifs ?? 0}/${r.packs_total ?? 0}`,
       open: r.commandes_ouvertes ?? 0,
       total: r.commandes_total ?? 0,
+    }));
+    BOUTIQUE_AVIS = (boutiqueAvis || []).map((a) => ({
+      id: a.id,
+      date: fmtDate(a.created_at),
+      client: a.client_name || '—',
+      presta: a.prestataire_salon || '—',
+      note: a.note ?? '—',
+      commentaire: a.commentaire || '—',
     }));
     const boutiqueOpen = (boutiqueOrders || []).filter((o) =>
       ['pay_on_site', 'paid', 'preparing', 'ready', 'pending_payment'].includes(o.statut)

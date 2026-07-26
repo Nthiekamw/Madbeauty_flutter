@@ -128,10 +128,12 @@ class DisponibiliteService {
       );
 
   /// Tous les créneaux du planning pour l’UI (y compris complets), hors passés.
+  /// [durationMinutes] filtre les créneaux trop courts pour la durée demandée.
   Future<List<TimeSlot>> getCreneauxAffichage(
     String prestataireId,
-    DateTime date,
-  ) =>
+    DateTime date, {
+    int? durationMinutes,
+  }) =>
       SupabaseErrorHandler.run(
         operation: 'disponibilite.getCreneauxAffichage',
         action: () => _collectSlotsForDay(
@@ -139,13 +141,15 @@ class DisponibiliteService {
           date: date,
           excludeFullyReserved: false,
           excludePast: true,
+          durationMinutes: durationMinutes,
         ),
       );
 
   Future<List<TimeSlot>> getCreneauxDisponibles(
     String prestataireId,
-    DateTime date,
-  ) =>
+    DateTime date, {
+    int? durationMinutes,
+  }) =>
       SupabaseErrorHandler.run(
         operation: 'disponibilite.getCreneauxDisponibles',
         action: () => _collectSlotsForDay(
@@ -153,6 +157,7 @@ class DisponibiliteService {
           date: date,
           excludeFullyReserved: true,
           excludePast: true,
+          durationMinutes: durationMinutes,
         ),
       );
 
@@ -161,10 +166,14 @@ class DisponibiliteService {
     required DateTime date,
     required bool excludeFullyReserved,
     required bool excludePast,
+    int? durationMinutes,
   }) async {
     final day = DateTime(date.year, date.month, date.day);
     final pgDow = DisponibiliteDow.fromDartWeekday(day.weekday);
     final now = DateTime.now();
+    final duration = (durationMinutes == null || durationMinutes < 1)
+        ? null
+        : durationMinutes;
 
     if (await _isDayFullyBlocked(prestataireId, day)) {
       return const [];
@@ -178,9 +187,12 @@ class DisponibiliteService {
       prestataireId: prestataireId,
       pgDow: pgDow,
     );
-    final reservedCounts = excludeFullyReserved
+    final reservedCounts = excludeFullyReserved && duration == null
         ? await _reservedSlotCounts(prestataireId, day)
         : const <TimeSlot, int>{};
+    final reservedIntervals = duration != null
+        ? await _reservedIntervals(prestataireId, day)
+        : const <DateTimeRange>[];
     final indispos = await _indisponibilitesForDay(prestataireId, day);
 
     final slots = <TimeSlot>[];
@@ -189,19 +201,36 @@ class DisponibiliteService {
         final at = slot.onDay(day);
         if (excludePast && _isSlotPast(day, at, now: now)) continue;
 
-        final capacity = _capacityFor(
-          at: at,
-          fallback: plage.capaciteSimultanee,
-          overrides: overrides,
-        );
-        if (_isBlocked(
-          at: at,
-          indispos: indispos,
-          reservedCount: reservedCounts[slot] ?? 0,
-          capacity: capacity,
-          checkCapacity: excludeFullyReserved,
-        )) {
-          continue;
+        if (duration != null) {
+          final end = at.add(Duration(minutes: duration));
+          if (!_fitsPlage(plage, at, end)) continue;
+          if (_intervalBlocked(at, end, indispos)) continue;
+          if (excludeFullyReserved) {
+            final capacity = _capacityFor(
+              at: at,
+              fallback: plage.capaciteSimultanee,
+              overrides: overrides,
+            );
+            final overlaps = reservedIntervals
+                .where((r) => at.isBefore(r.end) && end.isAfter(r.start))
+                .length;
+            if (overlaps >= capacity) continue;
+          }
+        } else {
+          final capacity = _capacityFor(
+            at: at,
+            fallback: plage.capaciteSimultanee,
+            overrides: overrides,
+          );
+          if (_isBlocked(
+            at: at,
+            indispos: indispos,
+            reservedCount: reservedCounts[slot] ?? 0,
+            capacity: capacity,
+            checkCapacity: excludeFullyReserved,
+          )) {
+            continue;
+          }
         }
         slots.add(slot);
       }
@@ -212,6 +241,58 @@ class DisponibiliteService {
       return cmp != 0 ? cmp : a.minute.compareTo(b.minute);
     });
     return slots;
+  }
+
+  bool _fitsPlage(HorairePlage plage, DateTime start, DateTime end) {
+    final startMin = start.hour * 60 + start.minute;
+    final endMin = end.hour * 60 + end.minute;
+    if (end.day != start.day) return false;
+    final plageStart = plage.heureDebut.hour * 60 + plage.heureDebut.minute;
+    final plageEnd = plage.heureFin.hour * 60 + plage.heureFin.minute;
+    return startMin >= plageStart && endMin <= plageEnd;
+  }
+
+  bool _intervalBlocked(
+    DateTime start,
+    DateTime end,
+    List<DateTimeRange> ranges,
+  ) {
+    for (final range in ranges) {
+      if (start.isBefore(range.end) && end.isAfter(range.start)) return true;
+    }
+    return false;
+  }
+
+  Future<List<DateTimeRange>> _reservedIntervals(
+    String prestataireId,
+    DateTime day,
+  ) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    final response = await _client
+        .from('reservations')
+        .select('date_heure, duration_minutes, statut')
+        .eq('prestataire_id', prestataireId)
+        .gte('date_heure', start.toUtc().toIso8601String())
+        .lt('date_heure', end.toUtc().toIso8601String());
+
+    final out = <DateTimeRange>[];
+    for (final raw in response as List<dynamic>) {
+      final row = Map<String, dynamic>.from(raw as Map);
+      final statut = (row['statut'] as String?)?.trim().toLowerCase() ?? '';
+      final normalized = statut.replaceAll('é', 'e');
+      if (!_activeReservationStatuses.contains(normalized)) continue;
+      final dt = DateTime.tryParse(row['date_heure'] as String)?.toLocal();
+      if (dt == null) continue;
+      final mins = (row['duration_minutes'] as num?)?.toInt() ?? 30;
+      out.add(
+        DateTimeRange(
+          start: dt,
+          end: dt.add(Duration(minutes: mins < 1 ? 30 : mins)),
+        ),
+      );
+    }
+    return out;
   }
 
   bool _isSlotPast(DateTime day, DateTime at, {required DateTime now}) {

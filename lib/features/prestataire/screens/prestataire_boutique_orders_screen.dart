@@ -37,10 +37,22 @@ class PrestataireBoutiqueOrdersScreen extends ConsumerWidget {
         ),
         data: (commandes) {
           if (commandes.isEmpty) {
-            return const DiscoveryEmptyState(
-              icon: Icons.receipt_long_outlined,
-              title: DiscBoutique.ordersEmptyTitle,
-              body: DiscBoutique.ordersEmptyBody,
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(ownBoutiqueCommandesProvider);
+                ref.invalidate(ownBoutiqueOrdersOpenCountProvider);
+                await ref.read(ownBoutiqueCommandesProvider.future);
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  DiscoveryEmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: DiscBoutique.ordersEmptyTitle,
+                    body: DiscBoutique.ordersEmptyBody,
+                  ),
+                ],
+              ),
             );
           }
           return RefreshIndicator(
@@ -50,6 +62,7 @@ class PrestataireBoutiqueOrdersScreen extends ConsumerWidget {
               await ref.read(ownBoutiqueCommandesProvider.future);
             },
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               itemCount: commandes.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -147,6 +160,7 @@ class _CommandeCardState extends ConsumerState<_CommandeCard> {
         c.clientDisplayName?.trim().isNotEmpty == true
             ? c.clientDisplayName!
             : DiscBoutique.ordersUnknownClient;
+    final notes = c.notesClient?.trim();
 
     return DiscoverySurfaceCard(
       padding: const EdgeInsets.all(14),
@@ -154,32 +168,63 @@ class _CommandeCardState extends ConsumerState<_CommandeCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   client,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _statutLabel(c.statut),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _statutLabel(c.statut),
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
+          if (c.isPackLinked) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                DiscBoutique.ordersPackBadge,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.tertiary,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 4),
           Text(
             dateLabel,
@@ -187,26 +232,63 @@ class _CommandeCardState extends ConsumerState<_CommandeCard> {
               color: theme.colorScheme.outline,
             ),
           ),
-          const SizedBox(height: 8),
-          for (final item in c.items)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                '${item.quantite}× ${item.nomSnapshot}',
-                style: theme.textTheme.bodyMedium,
+          if (notes != null && notes.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              notes,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
               ),
             ),
+          ],
+          const SizedBox(height: 8),
+          if (c.items.isEmpty)
+            Text(
+              c.isPackLinked
+                  ? DiscBoutique.ordersIncludedInBooking
+                  : DiscBoutique.ordersEmptyTitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            for (final item in c.items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '${item.quantite}× ${item.nomSnapshot}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
           const SizedBox(height: 8),
           Text(
-            CurrencyFormat.eur(c.amountEuros, decimals: true),
+            c.isPackLinked && c.amountCents <= 0
+                ? DiscBoutique.ordersIncludedInBooking
+                : CurrencyFormat.eur(c.amountEuros, decimals: true),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: theme.colorScheme.primary,
             ),
           ),
-          if (next != null || c.statut.isOpen) ...[
+          if (c.statut == BoutiqueCommandeStatut.ready) ...[
+            const SizedBox(height: 8),
+            Text(
+              DiscBoutique.ordersAwaitingClientReceipt,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          if (next != null ||
+              (c.statut.isOpen &&
+                  c.statut != BoutiqueCommandeStatut.completed &&
+                  c.statut != BoutiqueCommandeStatut.ready)) ...[
             const SizedBox(height: 10),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 if (next != null)
                   FilledButton(
@@ -216,14 +298,20 @@ class _CommandeCardState extends ConsumerState<_CommandeCard> {
                     ),
                   ),
                 if (c.statut.isOpen &&
-                    c.statut != BoutiqueCommandeStatut.completed) ...[
-                  const SizedBox(width: 8),
+                    c.statut != BoutiqueCommandeStatut.completed &&
+                    c.statut != BoutiqueCommandeStatut.ready)
                   TextButton(
                     onPressed: _busy ? null : _cancel,
                     child: const Text(DiscBoutique.ordersActionCancel),
                   ),
-                ],
               ],
+            ),
+          ],
+          if (c.statut == BoutiqueCommandeStatut.ready) ...[
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: _busy ? null : _cancel,
+              child: const Text(DiscBoutique.ordersActionCancel),
             ),
           ],
         ],

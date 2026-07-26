@@ -41,15 +41,17 @@ class BookingPaymentFlow {
   Future<Reservation> payAndCreateReservation({
     required BuildContext context,
     required String prestataireId,
-    required String serviceId,
     required DateTime dateHeure,
     required BookingPaymentModeKind paymentMode,
+    String? serviceId,
+    String? packId,
     void Function(BookingPaymentPhase phase)? onPhase,
   }) async {
     onPhase?.call(BookingPaymentPhase.preparing);
     final sheet = await _payments.createPaymentIntent(
       prestataireId: prestataireId,
       serviceId: serviceId,
+      packId: packId,
       dateHeure: dateHeure,
       paymentMode: paymentMode,
     );
@@ -66,6 +68,7 @@ class BookingPaymentFlow {
           paymentIntentId: sheet.paymentIntentId,
           prestataireId: prestataireId,
           serviceId: serviceId,
+          packId: packId,
           dateHeureIso: StripeBookingPaymentService.bookingInstantPayload(
             dateHeure,
           ),
@@ -94,6 +97,7 @@ class BookingPaymentFlow {
       paymentIntentId: sheet.paymentIntentId,
       prestataireId: prestataireId,
       serviceId: serviceId,
+      packId: packId,
       dateHeure: dateHeure,
     );
   }
