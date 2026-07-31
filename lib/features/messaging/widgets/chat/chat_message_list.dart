@@ -57,6 +57,9 @@ class ChatMessageList extends StatelessWidget {
                   text: ChatMessageModerator.sanitizeForDisplay(msg.content),
                   isMine: isMine,
                   imageUrl: msg.imageUrl,
+                  resultLabel: msg.kind == 'result_media'
+                      ? msg.resultLabel
+                      : null,
                   receiptStatus: isMine
                       ? chatOutgoingReceiptStatus(
                           isRead: msg.isRead,

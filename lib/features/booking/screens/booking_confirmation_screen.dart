@@ -1,10 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/booking/booking_platform_fee_settings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/referral/referral_providers.dart';
+import '../../../services/supabase/loyalty/loyalty_providers.dart';
+import '../../../services/supabase/relations/client_prestataire_relation_providers.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
@@ -21,6 +23,7 @@ import '../../../shared/layout/web_flow_panel.dart';
 import '../widgets/confirmation/booking_confirmation_recap_body.dart';
 import '../widgets/shared/booking_message.dart';
 import '../widgets/shared/booking_success_view.dart';
+import '../widgets/shared/add_to_calendar_sheet.dart';
 
 class BookingConfirmationScreen extends ConsumerStatefulWidget {
   const BookingConfirmationScreen({
@@ -57,6 +60,7 @@ class _BookingConfirmationScreenState
   String? _errorMessage;
   BookingPaymentPhase _paymentPhase = BookingPaymentPhase.idle;
   BookingPaymentModeKind _paymentMode = BookingPaymentModeKind.onSite;
+  bool _applyLoyaltyReward = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +73,17 @@ class _BookingConfirmationScreenState
         body: BookingSuccessView(
           onViewReservations: () => context.goMyReservations(),
           onGoHome: () => context.goHome(),
+          onAddToCalendar: _queuedOffline
+              ? null
+              : () => showAddToCalendarSheet(
+                    context,
+                    reservationId:
+                        '${widget.prestataireId}_${widget.dateTime.toIso8601String()}',
+                    title:
+                        '${widget.serviceName} — MadBeauty',
+                    start: widget.dateTime,
+                    durationMinutes: widget.durationMinutes,
+                  ),
           body: _queuedOffline
               ? DiscBk.doneBodyQueued
               : _paidWithStripe
@@ -99,10 +114,20 @@ class _BookingConfirmationScreenState
         );
     final referralDiscountPercent =
         ref.watch(clientReferralDiscountPercentProvider);
+    final vipDiscountPercent =
+        ref.watch(clientVipDiscountPercentProvider(widget.prestataireId));
+    final loyaltyInfo = ref.watch(myLoyaltyInfoProvider).maybeWhen(
+          data: (value) => value,
+          orElse: () => null,
+        );
+    final isPack = widget.packId != null && widget.packId!.trim().isNotEmpty;
+    final loyaltyAvailable = !isPack && loyaltyInfo?.canRedeem == true;
+    if (!loyaltyAvailable && _applyLoyaltyReward) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _applyLoyaltyReward = false);
+      });
+    }
     final stripeAvailable = BookingPaymentFlow.isPaymentAvailable;
-    final effectiveMode = depositAvailable && stripeAvailable
-        ? _paymentMode
-        : BookingPaymentModeKind.onSite;
 
     final platformFeeSettings = ref
         .watch(bookingPlatformFeeSettingsProvider)
@@ -110,19 +135,39 @@ class _BookingConfirmationScreenState
     final feeSettings =
         platformFeeSettings ?? BookingPlatformFeeSettings.defaults;
 
+    var provisionalMode = depositAvailable && stripeAvailable
+        ? _paymentMode
+        : BookingPaymentModeKind.onSite;
+
     BookingPricingBreakdown? breakdown;
     try {
       breakdown = computeBookingPricing(
         servicePriceEur: widget.price,
-        paymentMode: effectiveMode,
+        paymentMode: provisionalMode,
         priorBookingCount: priorCount,
         prestataireAcceptsConnect: depositAvailable,
         platformFeeSettings: feeSettings,
         referralDiscountPercent: referralDiscountPercent,
+        vipDiscountPercent: vipDiscountPercent,
+        applyLoyaltyReward: _applyLoyaltyReward && loyaltyAvailable,
       );
+      if (breakdown.isFullyCoveredByLoyalty) {
+        provisionalMode = BookingPaymentModeKind.onSite;
+        breakdown = computeBookingPricing(
+          servicePriceEur: widget.price,
+          paymentMode: provisionalMode,
+          priorBookingCount: priorCount,
+          prestataireAcceptsConnect: depositAvailable,
+          platformFeeSettings: feeSettings,
+          referralDiscountPercent: referralDiscountPercent,
+          vipDiscountPercent: vipDiscountPercent,
+          applyLoyaltyReward: _applyLoyaltyReward && loyaltyAvailable,
+        );
+      }
     } on BookingPricingException {
       breakdown = null;
     }
+    final effectiveMode = provisionalMode;
 
     return WebFlowScaffold(
       appBar: AppBar(
@@ -170,6 +215,11 @@ class _BookingConfirmationScreenState
             ctaLabel: _ctaLabel(breakdown),
             onPaymentModeChanged: (mode) => setState(() => _paymentMode = mode),
             onConfirm: _confirm,
+            loyaltyAvailable: loyaltyAvailable,
+            applyLoyaltyReward: _applyLoyaltyReward && loyaltyAvailable,
+            onApplyLoyaltyChanged: (v) =>
+                setState(() => _applyLoyaltyReward = v),
+            loyaltyMaxRewardEuros: loyaltyInfo?.maxRewardEuros ?? 50,
           ),
           );
         },
@@ -212,6 +262,7 @@ class _BookingConfirmationScreenState
       dateTime: widget.dateTime,
       paymentMode: _paymentMode,
       packId: widget.packId,
+      applyLoyaltyReward: _applyLoyaltyReward,
       onPhase: (phase) {
         if (!mounted) return;
         setState(() => _paymentPhase = phase);

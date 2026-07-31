@@ -22,6 +22,7 @@ class PackBookingService {
     int? prestataireAmountCents,
     int? originalServicePriceCents,
     int? referralDiscountPercent,
+    int? vipDiscountPercent,
     String? paymentStatus,
     String? clientId,
   }) {
@@ -54,6 +55,8 @@ class PackBookingService {
             'original_service_price_cents': originalServicePriceCents,
           if (referralDiscountPercent != null && referralDiscountPercent > 0)
             'referral_discount_percent': referralDiscountPercent,
+          if (vipDiscountPercent != null && vipDiscountPercent > 0)
+            'vip_discount_percent': vipDiscountPercent,
           if (paymentStatus != null) 'payment_status': paymentStatus,
           if (clientId != null) 'client_id': clientId,
         };

@@ -76,6 +76,8 @@ abstract final class DiscProfile {
   static const actionHelp = 'Aide & informations';
   static const actionReferral = 'Parrainage';
   static const actionReferralHint = 'Invite tes amies avec ton code';
+  static const actionLoyalty = 'Fidélité';
+  static const actionLoyaltyHint = 'Points et séance offerte jusqu’à 50 €';
   static const ambassadorBadgeLabel = 'Ambassadrice';
   static const historyTitle = 'Historique';
   static const historySubtitle =
@@ -540,7 +542,9 @@ abstract final class DiscProfile {
   static const prefPushWebEnabled = 'Notifications activées.';
   static const prefPushDisabled = 'Notifications désactivées.';
   static const prefPushDenied =
-      'Autorise les notifications dans les réglages du téléphone.';
+      'Notifications non autorisées pour le moment.';
+  static const prefPushFirebaseMissing =
+      'Notifications push indisponibles sur cet appareil (Firebase non configuré).';
   static const prefLocationEnabled = 'Géolocalisation activée.';
   static const prefLocationDisabled = 'Géolocalisation désactivée.';
   static const prefLocationDenied =

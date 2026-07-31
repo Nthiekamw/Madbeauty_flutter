@@ -6,7 +6,7 @@ class ClientHomeLayout {
 
   final List<ClientHomeSectionId> order;
 
-  static const layoutVersion = 6;
+  static const layoutVersion = 8;
 
   static const defaultOrder = <ClientHomeSectionId>[
     ClientHomeSectionId.inspiration,
@@ -33,7 +33,8 @@ class ClientHomeLayout {
     if (rawOrder is List) {
       for (final item in rawOrder) {
         final id = ClientHomeSectionId.tryParse(item?.toString());
-        if (id != null && !order.contains(id)) order.add(id);
+        if (id == null || id == ClientHomeSectionId.loyalty) continue;
+        if (!order.contains(id)) order.add(id);
       }
     }
     for (final id in defaultOrder) {

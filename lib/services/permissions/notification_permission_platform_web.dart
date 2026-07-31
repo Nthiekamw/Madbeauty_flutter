@@ -20,3 +20,8 @@ Future<bool> requestPlatformNotifications() async {
   return settings.authorizationStatus == AuthorizationStatus.authorized ||
       settings.authorizationStatus == AuthorizationStatus.provisional;
 }
+
+Future<bool> arePlatformNotificationsPermanentlyDenied() async {
+  if (!html.Notification.supported) return true;
+  return html.Notification.permission == 'denied';
+}

@@ -25,6 +25,14 @@ Le frais de 1 € est distinct du prix de la prestation et revient à la platefo
 | **`deposit_20`** | 20 % via Stripe Connect → prestataire ; 80 % sur place. Nécessite un compte Connect actif. |
 | **`on_site`** | 0 % prestation dans l’app ; règlement intégral chez le prestataire. |
 
+### Remises (ordre d’application)
+
+1. Parrainage (−10 % une fois) si actif  
+2. **VIP salon** (−5 %) si ≥ 3 RDV `terminee` chez ce presta (`SalonVipConfig`)  
+3. Fidélité (couverture jusqu’à 50 €) si activée au checkout  
+
+Snapshot : `reservations.referral_discount_percent`, `vip_discount_percent`, `loyalty_reward_cents`.
+
 ## 3. Abonnement prestataire
 
 | Profil | Mensuel | Annuel |

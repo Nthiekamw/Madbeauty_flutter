@@ -66,6 +66,71 @@ class ReelService {
         },
       );
 
+  Future<ReelCommentsPage> listComments({
+    required String reelId,
+    int limit = 30,
+    DateTime? cursorCreatedAt,
+    String? cursorId,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'reel.listComments',
+        action: () async {
+          final rows = await _client.rpc(
+            'list_reel_comments',
+            params: {
+              'p_reel_id': reelId,
+              'p_limit': limit,
+              'p_cursor_created_at':
+                  cursorCreatedAt?.toUtc().toIso8601String(),
+              'p_cursor_id': cursorId,
+            },
+          );
+          final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+          final items = list
+              .map(ReelComment.fromJson)
+              .where((e) => e.id.isNotEmpty && e.body.isNotEmpty)
+              .toList();
+          final last = items.isEmpty ? null : items.last;
+          return ReelCommentsPage(
+            items: items,
+            nextCursorCreatedAt: last?.createdAt,
+            nextCursorId: last?.id,
+          );
+        },
+      );
+
+  Future<ReelComment> addComment({
+    required String reelId,
+    required String body,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'reel.addComment',
+        action: () async {
+          final rows = await _client.rpc(
+            'add_reel_comment',
+            params: {
+              'p_reel_id': reelId,
+              'p_body': body,
+            },
+          );
+          final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+          if (list.isEmpty) {
+            throw StateError('Commentaire non créé.');
+          }
+          return ReelComment.fromJson(list.first);
+        },
+      );
+
+  Future<void> deleteComment(String commentId) => SupabaseErrorHandler.run(
+        operation: 'reel.deleteComment',
+        action: () async {
+          await _client.rpc(
+            'delete_reel_comment',
+            params: {'p_comment_id': commentId},
+          );
+        },
+      );
+
   Future<List<ReelPostOwned>> listOwnPosts({required String prestataireId}) =>
       SupabaseErrorHandler.run(
         operation: 'reel.listOwnPosts',

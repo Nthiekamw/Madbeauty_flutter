@@ -384,6 +384,10 @@ verify_jwt = false
 [functions.prestataire_share]
 verify_jwt = false
 
+# Cron file scheduled_pushes (aftercare / rebook) — pas de JWT utilisateur.
+[functions.process_scheduled_pushes]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

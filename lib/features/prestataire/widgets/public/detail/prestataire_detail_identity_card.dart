@@ -10,6 +10,7 @@ import '../../../../../shared/theme/discovery_styles.dart';
 import '../../../../../features/likes/logic/toggle_prestataire_like.dart';
 import '../../../../../features/likes/providers/client_prestataire_likes_provider.dart';
 import '../../../../../services/supabase/likes/prestataire_like_providers.dart';
+import '../../../../../services/supabase/relations/client_prestataire_relation_providers.dart';
 import '../../../providers/profile/prestataire_response_time_provider.dart';
 import '../../../../reviews/providers/prestataire_note_moyenne_provider.dart';
 import 'sections/prestataire_detail_surface.dart';
@@ -76,6 +77,12 @@ class _PrestataireDetailIdentityCardState
         .watch(prestataireLikesCountProvider(widget.profile.id))
         .maybeWhen(data: (v) => v, orElse: () => 0);
     final isLiked = ref.watch(isPrestataireLikedProvider(widget.profile.id));
+    final isVipHere = !widget.isOwnProfile &&
+        ref
+            .watch(
+              isCurrentClientVipAtPrestataireProvider(widget.profile.id),
+            )
+            .maybeWhen(data: (v) => v, orElse: () => false);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(pad, 0, pad, 0),
@@ -88,6 +95,44 @@ class _PrestataireDetailIdentityCardState
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (isVipHere) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Tooltip(
+                  message: DiscPay.vipBadgeHint,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F766E).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 16,
+                          color: Color(0xFF0F766E),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          DiscPay.vipBadgeClient,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontFamily: AppFonts.body,
+                            color: const Color(0xFF115E59),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
             Row(
               children: [
                 Expanded(

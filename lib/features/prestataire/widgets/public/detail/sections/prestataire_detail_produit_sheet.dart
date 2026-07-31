@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../core/models/domain/catalog/produit_boutique.dart';
 import '../../../../../../shared/layout/discovery_responsive.dart';
+import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/utils/currency_format.dart';
 import '../../../../../../shared/widgets/app/app_network_image.dart';
 import '../../../../../../shared/widgets/app/app_snack_bar.dart';
+import '../../../../../auth/providers/auth_notifier.dart';
 import '../../../../../cart/providers/boutique_cart_provider.dart';
+import '../../../../../wishlist/providers/client_wishlist_product_ids_provider.dart';
+import '../../../../../../router/navigation_extensions.dart';
 
 /// Bottom sheet : détail d’un produit boutique.
 Future<void> showPrestataireProduitDetailSheet(
@@ -70,6 +74,37 @@ class PrestataireDetailProduitSheet extends ConsumerWidget {
     }
   }
 
+  Future<void> _toggleWishlist(BuildContext context, WidgetRef ref) async {
+    final user = switch (ref.read(authNotifierProvider)) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+    if (user == null) {
+      AppSnackBar.show(context, message: DiscWishlist.loginRequired);
+      context.pushLogin();
+      return;
+    }
+
+    final wasInWishlist =
+        ref.read(isProduitInWishlistProvider(produit.id));
+    try {
+      await ref.read(clientWishlistProductIdsProvider.notifier).toggle(
+            produit.id,
+            lastSeenPrice: produit.prix,
+          );
+      if (!context.mounted) return;
+      AppSnackBar.show(
+        context,
+        message: wasInWishlist
+            ? DiscWishlist.removedFeedback
+            : DiscWishlist.addedFeedback,
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackBar.show(context, message: DiscWishlist.toggleError);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -77,6 +112,7 @@ class PrestataireDetailProduitSheet extends ConsumerWidget {
     final pad = DiscoveryResponsive.of(context).horizontalPadding;
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
     final canAdd = canShop && produit.isInStock;
+    final inWishlist = ref.watch(isProduitInWishlistProvider(produit.id));
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxH),
@@ -91,21 +127,65 @@ class PrestataireDetailProduitSheet extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 10,
-                        child: image != null && image.isNotEmpty
-                            ? AppNetworkImage(url: image, fit: BoxFit.cover)
-                            : ColoredBox(
-                                color: theme.colorScheme.surfaceContainerHighest,
-                                child: Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 48,
-                                  color: theme.colorScheme.outline,
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 10,
+                            child: image != null && image.isNotEmpty
+                                ? AppNetworkImage(
+                                    url: image,
+                                    fit: BoxFit.cover,
+                                  )
+                                : ColoredBox(
+                                    color: theme
+                                        .colorScheme.surfaceContainerHighest,
+                                    child: Icon(
+                                      Icons.shopping_bag_outlined,
+                                      size: 48,
+                                      color: theme.colorScheme.outline,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Material(
+                            color: AppColors.scrimDark38,
+                            shape: CircleBorder(
+                              side: BorderSide(
+                                color: inWishlist
+                                    ? AppColors.onPrimarySurface50
+                                    : AppColors.onPrimarySurface28,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: () => _toggleWishlist(context, ref),
+                              customBorder: const CircleBorder(),
+                              child: Tooltip(
+                                message: inWishlist
+                                    ? DiscWishlist.removeTooltip
+                                    : DiscWishlist.addTooltip,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(
+                                    inWishlist
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    size: 22,
+                                    color: inWishlist
+                                        ? AppColors.favorite
+                                        : AppColors.white,
+                                  ),
                                 ),
                               ),
-                      ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Text(

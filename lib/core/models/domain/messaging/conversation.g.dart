@@ -12,6 +12,7 @@ _Conversation _$ConversationFromJson(Map<String, dynamic> json) =>
       clientId: json['client_id'] as String,
       prestataireId: json['prestataire_id'] as String,
       reservationId: json['reservation_id'] as String?,
+      kind: json['kind'] as String? ?? 'booking',
       lastMessageAt: const NullableIsoDateTimeConverter().fromJson(
         json['last_message_at'],
       ),
@@ -23,6 +24,7 @@ Map<String, dynamic> _$ConversationToJson(_Conversation instance) =>
       'client_id': instance.clientId,
       'prestataire_id': instance.prestataireId,
       'reservation_id': instance.reservationId,
+      'kind': instance.kind,
       'last_message_at': const NullableIsoDateTimeConverter().toJson(
         instance.lastMessageAt,
       ),

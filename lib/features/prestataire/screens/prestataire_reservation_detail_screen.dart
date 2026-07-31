@@ -2,13 +2,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../router/navigation_extensions.dart';
+import '../../../services/supabase/disputes/dispute_providers.dart';
+import '../../../services/supabase/disputes/dispute_service.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
+import '../../disputes/widgets/open_dispute_sheet.dart';
 import '../logic/prestataire_reservation_actions.dart';
 import '../models/prestataire_reservation_item.dart';
 import '../providers/agenda/prestataire_agenda_provider.dart';
 import '../../messaging/messaging_navigation.dart';
 import '../../messaging/models/messaging_inbox_role.dart';
+import '../../messaging/widgets/send_result_media_sheet.dart';
+import '../../../services/supabase/relations/client_prestataire_relation_providers.dart';
+import '../providers/profile/current_prestataire_provider.dart';
 import '../widgets/agenda/prestataire_reservation_detail_body.dart';
 import '../widgets/workspace/layout/prestataire_brand_scaffold.dart';
 import '../widgets/workspace/prestataire_flow_scaffold.dart';
@@ -82,15 +89,48 @@ class _PrestataireReservationDetailScreenState
             );
           }
 
+          final activeDisputeAsync =
+              ref.watch(activeDisputeForReservationProvider(item.id));
+          final activeDispute = activeDisputeAsync.asData?.value;
+          final prestaId = ref
+              .watch(currentPrestataireProvider)
+              .maybeWhen(data: (p) => p?.id, orElse: () => null);
+          final isVip = item.clientId != null &&
+                  prestaId != null
+              ? ref
+                  .watch(
+                    isClientVipForPairProvider((
+                      clientId: item.clientId!,
+                      prestataireId: prestaId,
+                    )),
+                  )
+                  .maybeWhen(data: (v) => v, orElse: () => false)
+              : false;
+
           return PrestataireReservationDetailBody(
             item: item,
             busy: _acting,
+            isClientVip: isVip,
+            hasActiveDispute: activeDispute != null,
             onMessage: () => openChatForReservation(
               context,
               ref,
               item.id,
               viewerRole: MessagingInboxRole.prestataire,
             ),
+            onSendResultMedia: () => showSendResultMediaSheet(
+              context,
+              ref,
+              reservationId: item.id,
+            ),
+            onOpenDispute: () => showOpenDisputeSheet(
+              context,
+              reservationId: item.id,
+              viewerRole: DisputeSenderRole.prestataire,
+            ),
+            onViewDispute: activeDispute == null
+                ? null
+                : () => context.pushPrestataireDisputeDetail(activeDispute.id),
             onAccept: () => _runAction(() => _actions.accept(item.id)),
             onReject: () => _runAction(() => _actions.reject(item.id)),
             onMarkDone: () => _runAction(() => _actions.markDone(item)),

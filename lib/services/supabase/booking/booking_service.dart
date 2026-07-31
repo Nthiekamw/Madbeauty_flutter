@@ -39,6 +39,8 @@ class BookingService {
     int? platformFeeCents,
     int? originalServicePriceCents,
     int? referralDiscountPercent,
+    int? vipDiscountPercent,
+    int? loyaltyRewardCents,
   }) =>
       _clientOps.create(
         prestataireId: prestataireId,
@@ -51,6 +53,8 @@ class BookingService {
         platformFeeCents: platformFeeCents,
         originalServicePriceCents: originalServicePriceCents,
         referralDiscountPercent: referralDiscountPercent,
+        vipDiscountPercent: vipDiscountPercent,
+        loyaltyRewardCents: loyaltyRewardCents,
       );
 
   Future<void> cancel(String bookingId) =>

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../models/client_home_section_id.dart';
 import '../../providers/client_home_layout_provider.dart';
@@ -154,6 +155,11 @@ Future<void> showClientHomeLayoutSheet(BuildContext context, WidgetRef ref) {
         Icons.upcoming_rounded,
         DiscHome.sectionNextAppointment,
         theme.colorScheme.primary,
+      ),
+    ClientHomeSectionId.loyalty => (
+        Icons.stars_rounded,
+        DiscLoyalty.homeCardTitle,
+        AppColors.brandGold,
       ),
     ClientHomeSectionId.inspiration => (
         Icons.auto_awesome_rounded,

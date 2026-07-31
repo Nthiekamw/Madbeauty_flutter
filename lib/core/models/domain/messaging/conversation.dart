@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../serialization/json_converters.dart';
 
@@ -13,6 +13,7 @@ abstract class Conversation with _$Conversation {
     required String clientId,
     required String prestataireId,
     @JsonKey(name: 'reservation_id') String? reservationId,
+    @Default('booking') String kind,
     @NullableIsoDateTimeConverter() DateTime? lastMessageAt,
   }) = _Conversation;
 

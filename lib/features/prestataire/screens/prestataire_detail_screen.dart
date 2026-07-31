@@ -42,14 +42,9 @@ class PrestataireDetailScreen extends ConsumerStatefulWidget {
 class _PrestataireDetailScreenState
     extends ConsumerState<PrestataireDetailScreen> {
   final _scrollController = ScrollController();
+  final _sectionBodyKey = GlobalKey();
   PrestataireDetailSection _selectedSection =
       PrestataireDetailSection.services;
-
-  final _servicesKey = GlobalKey();
-  final _boutiqueKey = GlobalKey();
-  final _galleryKey = GlobalKey();
-  final _aboutKey = GlobalKey();
-  final _reviewsKey = GlobalKey();
 
   @override
   void dispose() {
@@ -57,22 +52,26 @@ class _PrestataireDetailScreenState
     super.dispose();
   }
 
-  void _scrollToSection(PrestataireDetailSection section) {
+  void _selectSection(PrestataireDetailSection section) {
+    if (_selectedSection == section) {
+      _ensureSectionBodyVisible();
+      return;
+    }
     setState(() => _selectedSection = section);
-    final key = switch (section) {
-      PrestataireDetailSection.services => _servicesKey,
-      PrestataireDetailSection.boutique => _boutiqueKey,
-      PrestataireDetailSection.gallery => _galleryKey,
-      PrestataireDetailSection.about => _aboutKey,
-      PrestataireDetailSection.reviews => _reviewsKey,
-    };
-    final ctx = key.currentContext;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _ensureSectionBodyVisible();
+    });
+  }
+
+  void _ensureSectionBodyVisible() {
+    final ctx = _sectionBodyKey.currentContext;
     if (ctx == null) return;
     Scrollable.ensureVisible(
       ctx,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeInOutCubic,
-      alignment: 0.12,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      alignment: 0.02,
     );
   }
 
@@ -202,18 +201,28 @@ class _PrestataireDetailScreenState
                         pinned: true,
                         delegate: PrestataireDetailSectionNavDelegate(
                           selected: _selectedSection,
-                          onSelected: _scrollToSection,
+                          onSelected: _selectSection,
+                          height: PrestataireDetailSectionNavDelegate.heightFor(
+                            context,
+                          ),
                         ),
                       ),
                       SliverToBoxAdapter(
-                        child: _DetailContent(
-                          data: data,
-                          isOwnProfile: isOwnProfile,
-                          servicesKey: _servicesKey,
-                          boutiqueKey: _boutiqueKey,
-                          galleryKey: _galleryKey,
-                          aboutKey: _aboutKey,
-                          reviewsKey: _reviewsKey,
+                        child: KeyedSubtree(
+                          key: _sectionBodyKey,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            child: KeyedSubtree(
+                              key: ValueKey(_selectedSection),
+                              child: _DetailSectionBody(
+                                section: _selectedSection,
+                                data: data,
+                                isOwnProfile: isOwnProfile,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -263,24 +272,16 @@ class _PrestataireDetailScreenState
   }
 }
 
-class _DetailContent extends StatelessWidget {
-  const _DetailContent({
+class _DetailSectionBody extends StatelessWidget {
+  const _DetailSectionBody({
+    required this.section,
     required this.data,
     required this.isOwnProfile,
-    required this.servicesKey,
-    required this.boutiqueKey,
-    required this.galleryKey,
-    required this.aboutKey,
-    required this.reviewsKey,
   });
 
+  final PrestataireDetailSection section;
   final PrestataireDetailData data;
   final bool isOwnProfile;
-  final GlobalKey servicesKey;
-  final GlobalKey boutiqueKey;
-  final GlobalKey galleryKey;
-  final GlobalKey aboutKey;
-  final GlobalKey reviewsKey;
 
   bool get _hasAboutContent {
     final p = data.profile;
@@ -293,125 +294,114 @@ class _DetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        KeyedSubtree(
-          key: servicesKey,
-          child: PrestataireDetailSectionCard(
-            icon: Icons.content_cut_rounded,
-            title: DiscPrestaDetail.svcTitle,
-            trailing: data.services.isNotEmpty
-                ? Text(
-                    '${data.services.length}',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  )
-                : null,
-            child: data.services.isEmpty
-                ? const PrestataireDetailEmptyState(
-                    icon: Icons.event_busy_outlined,
-                    title: DiscPrestaDetail.noSvcsTitle,
-                    body: DiscPrestaDetail.noSvcsBody,
-                  )
-                : PrestataireDetailServicesGrouped(
-                    groups: groupServicesByMain(
-                      data.services,
-                      otherGroupTitle: DiscPrestaDetail.servicesOtherGroup,
-                    ),
-                    canBook: !isOwnProfile,
-                    onBook: (serviceId) => context.pushBooking(
-                      prestataireId: data.profile.id,
-                      serviceId: serviceId,
-                    ),
+    return switch (section) {
+      PrestataireDetailSection.services => PrestataireDetailSectionCard(
+          icon: Icons.content_cut_rounded,
+          title: DiscPrestaDetail.svcTitle,
+          trailing: data.services.isNotEmpty
+              ? Text(
+                  '${data.services.length}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
                   ),
-          ),
-        ),
-        KeyedSubtree(
-          key: boutiqueKey,
-          child: PrestataireDetailBoutiqueBlock(
-            prestataireId: data.profile.id,
-            prestataireName: _profileDisplayTitle(data.profile),
-            canShop: !isOwnProfile,
-          ),
-        ),
-        KeyedSubtree(
-          key: galleryKey,
-          child: PrestataireDetailSectionCard(
-            icon: Icons.photo_library_outlined,
-            title: DiscPrestaDetail.galleryTitle,
-            child: data.photos.isEmpty
-                ? const PrestataireDetailEmptyState(
-                    icon: Icons.photo_library_outlined,
-                    title: DiscPrestaDetail.noPhotosTitle,
-                    body: DiscPrestaDetail.noPhotosBody,
-                  )
-                : PrestataireDetailGalleryGrouped(sections: data.gallerySections),
-          ),
-        ),
-        if (!isOwnProfile)
-          PrestataireDetailMessagingSection(
-            prestataireId: data.profile.id,
-          ),
-        if (isOwnProfile) const PrestataireDetailOwnProfileBanner(),
-        KeyedSubtree(
-          key: aboutKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_hasAboutContent)
-                PrestataireDetailSectionCard(
-                  icon: Icons.person_outline_rounded,
-                  title: DiscPrestaDetail.aboutTitle,
-                  child: PrestataireDetailAboutBlock(profile: data.profile),
-                ),
-              if (data.profile.confortClient.isNotEmpty ||
-                  data.profile.conditionsService.isNotEmpty)
-                PrestataireDetailSectionCard(
-                  icon: Icons.spa_outlined,
-                  title: DiscPrestaDetail.comfortTitle,
-                  child: PrestataireClientExperienceSection(
-                    comfortIds: data.profile.confortClient,
-                    conditionIds: data.profile.conditionsService,
-                    padding: EdgeInsets.zero,
+                )
+              : null,
+          child: data.services.isEmpty
+              ? const PrestataireDetailEmptyState(
+                  icon: Icons.event_busy_outlined,
+                  title: DiscPrestaDetail.noSvcsTitle,
+                  body: DiscPrestaDetail.noSvcsBody,
+                )
+              : PrestataireDetailServicesGrouped(
+                  groups: groupServicesByMain(
+                    data.services,
+                    otherGroupTitle: DiscPrestaDetail.servicesOtherGroup,
+                  ),
+                  canBook: !isOwnProfile,
+                  onBook: (serviceId) => context.pushBooking(
+                    prestataireId: data.profile.id,
+                    serviceId: serviceId,
                   ),
                 ),
-              if (data.specialtyGroups.isNotEmpty)
-                PrestataireDetailSectionCard(
-                  icon: Icons.auto_awesome_rounded,
-                  title: DiscPrestaDetail.specialtiesTitle,
-                  child: PrestataireDetailSpecialtiesByService(
-                    groups: data.specialtyGroups,
-                  ),
-                ),
-              PrestataireDetailSectionCard(
-                icon: Icons.schedule_outlined,
-                title: DiscPrestaDetail.horairesTitle,
-                child: PrestatairePublicHorairesSection(horaires: data.horaires),
+        ),
+      PrestataireDetailSection.boutique => PrestataireDetailBoutiqueBlock(
+          prestataireId: data.profile.id,
+          prestataireName: _profileDisplayTitle(data.profile),
+          canShop: !isOwnProfile,
+          mode: PrestataireDetailBoutiqueMode.produits,
+        ),
+      PrestataireDetailSection.offres => PrestataireDetailBoutiqueBlock(
+          prestataireId: data.profile.id,
+          prestataireName: _profileDisplayTitle(data.profile),
+          canShop: !isOwnProfile,
+          mode: PrestataireDetailBoutiqueMode.packs,
+        ),
+      PrestataireDetailSection.gallery => PrestataireDetailSectionCard(
+          icon: Icons.photo_library_outlined,
+          title: DiscPrestaDetail.galleryTitle,
+          child: data.photos.isEmpty
+              ? const PrestataireDetailEmptyState(
+                  icon: Icons.photo_library_outlined,
+                  title: DiscPrestaDetail.noPhotosTitle,
+                  body: DiscPrestaDetail.noPhotosBody,
+                )
+              : PrestataireDetailGalleryGrouped(sections: data.gallerySections),
+        ),
+      PrestataireDetailSection.about => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!isOwnProfile)
+              PrestataireDetailMessagingSection(
+                prestataireId: data.profile.id,
               ),
-            ],
-          ),
-        ),
-        KeyedSubtree(
-          key: reviewsKey,
-          child: PrestataireDetailSectionCard(
-            icon: Icons.star_outline_rounded,
-            title: DiscPrestaDetail.reviewsTitle,
-            child: PrestatairePublicReviewsLiveSection(
-              prestataireId: data.profile.id,
-              onReviewTap: isOwnProfile
-                  ? (review) => showViewReviewSheet(
-                        context,
-                        item: ClientReviewListItem(review: review),
-                      )
-                  : null,
+            if (isOwnProfile) const PrestataireDetailOwnProfileBanner(),
+            if (_hasAboutContent)
+              PrestataireDetailSectionCard(
+                icon: Icons.person_outline_rounded,
+                title: DiscPrestaDetail.aboutTitle,
+                child: PrestataireDetailAboutBlock(profile: data.profile),
+              ),
+            if (data.profile.confortClient.isNotEmpty ||
+                data.profile.conditionsService.isNotEmpty)
+              PrestataireDetailSectionCard(
+                icon: Icons.spa_outlined,
+                title: DiscPrestaDetail.comfortTitle,
+                child: PrestataireClientExperienceSection(
+                  comfortIds: data.profile.confortClient,
+                  conditionIds: data.profile.conditionsService,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            if (data.specialtyGroups.isNotEmpty)
+              PrestataireDetailSectionCard(
+                icon: Icons.auto_awesome_rounded,
+                title: DiscPrestaDetail.specialtiesTitle,
+                child: PrestataireDetailSpecialtiesByService(
+                  groups: data.specialtyGroups,
+                ),
+              ),
+            PrestataireDetailSectionCard(
+              icon: Icons.schedule_outlined,
+              title: DiscPrestaDetail.horairesTitle,
+              child: PrestatairePublicHorairesSection(horaires: data.horaires),
             ),
+          ],
+        ),
+      PrestataireDetailSection.reviews => PrestataireDetailSectionCard(
+          icon: Icons.star_outline_rounded,
+          title: DiscPrestaDetail.reviewsTitle,
+          child: PrestatairePublicReviewsLiveSection(
+            prestataireId: data.profile.id,
+            onReviewTap: isOwnProfile
+                ? (review) => showViewReviewSheet(
+                      context,
+                      item: ClientReviewListItem(review: review),
+                    )
+                : null,
           ),
         ),
-      ],
-    );
+    };
   }
 }
 

@@ -224,6 +224,7 @@ class _PrestataireReelManageScreenState
                               ),
                               subtitle: Text(
                                 '${DiscReel.likesCount(post.likesCount)} · '
+                                '${DiscReel.commentsCount(post.commentsCount)} · '
                                 '${DiscReel.viewsCount(post.viewsCount)}',
                               ),
                               trailing: IconButton(

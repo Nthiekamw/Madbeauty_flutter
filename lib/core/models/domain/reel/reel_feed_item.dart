@@ -8,6 +8,7 @@ class ReelFeedItem {
     required this.mediaType,
     required this.mediaUrl,
     required this.likesCount,
+    required this.commentsCount,
     required this.viewsCount,
     required this.createdAt,
     required this.score,
@@ -24,6 +25,7 @@ class ReelFeedItem {
   final String mediaUrl;
   final String? caption;
   final int likesCount;
+  final int commentsCount;
   final int viewsCount;
   final DateTime createdAt;
   final double score;
@@ -34,6 +36,7 @@ class ReelFeedItem {
 
   ReelFeedItem copyWith({
     int? likesCount,
+    int? commentsCount,
     bool? likedByMe,
   }) {
     return ReelFeedItem(
@@ -43,6 +46,7 @@ class ReelFeedItem {
       mediaUrl: mediaUrl,
       caption: caption,
       likesCount: likesCount ?? this.likesCount,
+      commentsCount: commentsCount ?? this.commentsCount,
       viewsCount: viewsCount,
       createdAt: createdAt,
       score: score,
@@ -64,6 +68,7 @@ class ReelFeedItem {
       mediaUrl: row['media_url'] as String? ?? '',
       caption: (row['caption'] as String?)?.trim(),
       likesCount: (row['likes_count'] as num?)?.toInt() ?? 0,
+      commentsCount: (row['comments_count'] as num?)?.toInt() ?? 0,
       viewsCount: (row['views_count'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse((row['created_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -78,6 +83,62 @@ class ReelFeedItem {
   }
 }
 
+/// Commentaire Reel (`list_reel_comments` / `add_reel_comment`).
+class ReelComment {
+  const ReelComment({
+    required this.id,
+    required this.reelId,
+    required this.clientId,
+    required this.body,
+    required this.createdAt,
+    required this.authorName,
+    required this.isMine,
+    this.authorAvatarUrl,
+  });
+
+  final String id;
+  final String reelId;
+  final String clientId;
+  final String body;
+  final DateTime createdAt;
+  final String authorName;
+  final String? authorAvatarUrl;
+  final bool isMine;
+
+  factory ReelComment.fromJson(Map<String, dynamic> row) {
+    return ReelComment(
+      id: row['id'] as String? ?? '',
+      reelId: row['reel_id'] as String? ?? '',
+      clientId: row['client_id'] as String? ?? '',
+      body: (row['body'] as String?)?.trim() ?? '',
+      createdAt: DateTime.tryParse((row['created_at'] as String?) ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      authorName: (row['author_name'] as String?)?.trim().isNotEmpty == true
+          ? (row['author_name'] as String).trim()
+          : 'Cliente',
+      authorAvatarUrl: row['author_avatar_url'] as String?,
+      isMine: row['is_mine'] as bool? ?? false,
+    );
+  }
+}
+
+class ReelCommentsPage {
+  const ReelCommentsPage({
+    required this.items,
+    this.nextCursorCreatedAt,
+    this.nextCursorId,
+  });
+
+  final List<ReelComment> items;
+  final DateTime? nextCursorCreatedAt;
+  final String? nextCursorId;
+
+  bool get hasMore =>
+      items.isNotEmpty &&
+      nextCursorCreatedAt != null &&
+      nextCursorId != null;
+}
+
 /// Post Reel côté gestion prestataire (table `reel_posts`).
 class ReelPostOwned {
   const ReelPostOwned({
@@ -87,6 +148,7 @@ class ReelPostOwned {
     required this.mediaUrl,
     required this.status,
     required this.likesCount,
+    required this.commentsCount,
     required this.viewsCount,
     required this.createdAt,
     this.caption,
@@ -99,6 +161,7 @@ class ReelPostOwned {
   final String? caption;
   final String status;
   final int likesCount;
+  final int commentsCount;
   final int viewsCount;
   final DateTime createdAt;
 
@@ -114,6 +177,7 @@ class ReelPostOwned {
       caption: (row['caption'] as String?)?.trim(),
       status: row['status'] as String? ?? 'published',
       likesCount: (row['likes_count'] as num?)?.toInt() ?? 0,
+      commentsCount: (row['comments_count'] as num?)?.toInt() ?? 0,
       viewsCount: (row['views_count'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse((row['created_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

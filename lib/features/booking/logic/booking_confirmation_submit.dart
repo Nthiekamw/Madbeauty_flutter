@@ -20,6 +20,8 @@ import '../../../services/supabase/booking/booking_service_providers.dart'
         invalidateClientReservations,
         packBookingServiceProvider;
 import '../../../services/supabase/referral/referral_providers.dart';
+import '../../../services/supabase/loyalty/loyalty_providers.dart';
+import '../../../services/supabase/relations/client_prestataire_relation_providers.dart';
 import '../../prestataire/providers/catalog/prestataire_detail_provider.dart';
 import '../logic/booking_create_failure.dart';
 import '../logic/booking_payment_flow.dart';
@@ -57,6 +59,7 @@ abstract final class BookingConfirmationSubmit {
     required void Function(BookingPaymentPhase phase) onPhase,
     required void Function(String message) onError,
     String? packId,
+    bool applyLoyaltyReward = false,
   }) async {
     final bookingService = ref.read(bookingServiceProvider);
     final packBookingService = ref.read(packBookingServiceProvider);
@@ -69,6 +72,11 @@ abstract final class BookingConfirmationSubmit {
     final priorCount = await ref.read(clientPriorBookingCountProvider.future);
     final referralDiscountPercent =
         ref.read(clientReferralDiscountPercentProvider);
+    final vipDiscountPercent =
+        ref.read(clientVipDiscountPercentProvider(prestataireId));
+    final canRedeemLoyalty = !isPack &&
+        applyLoyaltyReward &&
+        ref.read(clientLoyaltyCanRedeemProvider);
     final effectiveMode = depositAvailable && BookingPaymentFlow.isPaymentAvailable
         ? paymentMode
         : BookingPaymentModeKind.onSite;
@@ -86,11 +94,29 @@ abstract final class BookingConfirmationSubmit {
         prestataireAcceptsConnect: depositAvailable,
         platformFeeSettings: platformFeeSettings,
         referralDiscountPercent: referralDiscountPercent,
+        vipDiscountPercent: vipDiscountPercent,
+        applyLoyaltyReward: canRedeemLoyalty,
       );
+      if (breakdown.isFullyCoveredByLoyalty) {
+        breakdown = computeBookingPricing(
+          servicePriceEur: price,
+          paymentMode: BookingPaymentModeKind.onSite,
+          priorBookingCount: priorCount,
+          prestataireAcceptsConnect: depositAvailable,
+          platformFeeSettings: platformFeeSettings,
+          referralDiscountPercent: referralDiscountPercent,
+          vipDiscountPercent: vipDiscountPercent,
+          applyLoyaltyReward: canRedeemLoyalty,
+        );
+      }
     } on BookingPricingException {
       onError(DiscPay.errDepositRequiresConnect);
       return null;
     }
+
+    final resolvedMode = breakdown.isFullyCoveredByLoyalty
+        ? BookingPaymentModeKind.onSite
+        : effectiveMode;
 
     if (!AppConfig.hasSupabase) {
       onError(
@@ -164,7 +190,8 @@ abstract final class BookingConfirmationSubmit {
           serviceId: isPack ? null : serviceId,
           packId: isPack ? packId.trim() : null,
           dateHeure: dateTime,
-          paymentMode: effectiveMode,
+          paymentMode: resolvedMode,
+          applyLoyaltyReward: canRedeemLoyalty,
           onPhase: onPhase,
         );
         _afterBookingCreated(
@@ -177,7 +204,7 @@ abstract final class BookingConfirmationSubmit {
         return BookingConfirmSuccess(
           queuedOffline: false,
           paidWithStripe: true,
-          paidOnSite: effectiveMode == BookingPaymentModeKind.onSite,
+          paidOnSite: resolvedMode == BookingPaymentModeKind.onSite,
         );
       }
 
@@ -190,14 +217,13 @@ abstract final class BookingConfirmationSubmit {
         final reservation = await packSvc.createPackBooking(
           packId: packId.trim(),
           dateHeure: dateTime,
-          paymentMode: effectiveMode.wireValue,
+          paymentMode: resolvedMode.wireValue,
           servicePriceCents: breakdown.servicePriceCents,
           platformFeeCents: breakdown.platformFeeCents,
           prestataireAmountCents: 0,
-          originalServicePriceCents: breakdown.hasReferralDiscount
-              ? breakdown.originalServicePriceCents
-              : null,
+          originalServicePriceCents: breakdown.originalServicePriceCents,
           referralDiscountPercent: breakdown.referralDiscountPercent,
+          vipDiscountPercent: breakdown.vipDiscountPercent,
         );
         _afterBookingCreated(
           ref: ref,
@@ -217,13 +243,13 @@ abstract final class BookingConfirmationSubmit {
         prestataireId: prestataireId,
         serviceId: serviceId,
         dateHeure: dateTime,
-        paymentMode: effectiveMode.wireValue,
+        paymentMode: resolvedMode.wireValue,
         servicePriceCents: breakdown.servicePriceCents,
         platformFeeCents: breakdown.platformFeeCents,
-        originalServicePriceCents: breakdown.hasReferralDiscount
-            ? breakdown.originalServicePriceCents
-            : null,
+        originalServicePriceCents: breakdown.originalServicePriceCents,
         referralDiscountPercent: breakdown.referralDiscountPercent,
+        vipDiscountPercent: breakdown.vipDiscountPercent,
+        loyaltyRewardCents: breakdown.loyaltyRewardCents,
       );
       _afterBookingCreated(
         ref: ref,
@@ -259,6 +285,7 @@ abstract final class BookingConfirmationSubmit {
     invalidateClientReservations(ref);
     ref.invalidate(clientPriorBookingCountProvider);
     ref.invalidate(myReferralInfoProvider);
+    ref.invalidate(myLoyaltyInfoProvider);
     ref.invalidate(inAppNotificationsSyncProvider);
     unawaited(
       syncClientBookingRemindersForOne(

@@ -24,9 +24,18 @@ Synthèse de ce qui est **en place** sur la branche de travail actuelle vs **pro
 
 - [x] Découverte / listing (filtres, carte)
 - [x] Fiche prestataire + services + créneaux
+- [x] Feed Reel (photos/vidéos) + likes + commentaires style TikTok
 - [x] Réservation (création, liste, détail, statuts)
+- [x] Export calendrier (.ics + deep links Google / Apple) depuis succès et détail
 - [x] Messagerie liée aux réservations + Realtime
-- [x] Avis, favoris, parrainage
+- [x] Chat devis / conseil hors réservation (inquiry) depuis la fiche presta
+- [x] Avis, favoris, wishlist produits (alertes stock / baisse de prix)
+- [x] Litiges réservation (médiation admin ; remboursement Stripe manuel hors V1 auto)
+- [x] Parrainage
+- [x] Fidélité points (acompte → +2 pts, 200 pts = séance offerte max 50 €)
+- [x] VIP salon (≥ 3 RDV terminés chez le même presta → badge + remise 5 %)
+- [x] Rappels rebook 4 / 6 semaines + aftercare push J+1 (file `scheduled_pushes`)
+- [x] Rendus avant/après dans le chat (`messages.kind = result_media`)
 - [x] Partage de fiche ([PRESTATAIRE_SHARE.md](./PRESTATAIRE_SHARE.md))
 
 ### Parcours prestataire
@@ -74,7 +83,8 @@ Synthèse de ce qui est **en place** sur la branche de travail actuelle vs **pro
   - Admin : commandes + catalogues (Flutter + web-admin)
 - Modération avis / signalements avancée
 - Badge `is_verified` (process manuel ou tiers)
-- Admin : litiges, exports, outils pays / plans
+- Admin : refunds Stripe automatisés depuis litiges, exports, outils pays / plans
+- Sync calendrier OAuth / bidirectionnelle (EventKit)
 - RGPD : export données, parcours suppression déjà amorcé
 
 ---

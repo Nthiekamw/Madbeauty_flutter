@@ -8,6 +8,8 @@ import '../../features/admin/screens/admin_boutique_orders_screen.dart';
 import '../../features/admin/screens/admin_push_screen.dart';
 import '../../features/admin/screens/admin_bug_reports_screen.dart';
 import '../../features/admin/screens/admin_content_reports_screen.dart';
+import '../../features/admin/screens/admin_dispute_detail_screen.dart';
+import '../../features/admin/screens/admin_disputes_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 import '../../features/admin/screens/admin_management_hub_screen.dart';
 import '../../features/admin/screens/admin_moderation_hub_screen.dart';
@@ -150,6 +152,18 @@ List<RouteBase> buildAdminRoutes() => [
         name: AppRouteNames.adminUserSupport,
         path: AppRoutes.adminUserSupport,
         builder: (context, state) => const AdminUserSupportScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminDisputes,
+        path: AppRoutes.adminDisputes,
+        builder: (context, state) => const AdminDisputesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.adminDisputeDetail,
+        path: AppRoutes.adminDisputeDetail,
+        builder: (context, state) => AdminDisputeDetailScreen(
+          disputeId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         name: AppRouteNames.adminRealisationPhotos,

@@ -100,6 +100,8 @@ List<ClientHomeSectionId> visibleClientHomeSections({
     switch (id) {
       case ClientHomeSectionId.nextAppointment:
         if (isLoggedIn && hasSupabase) out.add(id);
+      case ClientHomeSectionId.loyalty:
+        break;
       case ClientHomeSectionId.inspiration:
         out.add(id);
       case ClientHomeSectionId.promo:
@@ -127,6 +129,8 @@ List<ClientHomeSectionId> layoutSheetClientHomeSections({
     switch (id) {
       case ClientHomeSectionId.nextAppointment:
         if (isLoggedIn && hasSupabase) out.add(id);
+      case ClientHomeSectionId.loyalty:
+        break;
       case ClientHomeSectionId.inspiration:
         out.add(id);
       case ClientHomeSectionId.promo:

@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
+import '../../../services/supabase/disputes/dispute_providers.dart';
+import '../../../services/supabase/disputes/dispute_service.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/web_flow_panel.dart';
 import '../../../shared/layout/web_flow_scaffold.dart';
@@ -11,7 +13,7 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
-import '../logic/reservation_calendar_export.dart';
+import '../widgets/shared/add_to_calendar_sheet.dart';
 import '../widgets/reservation/reservation_pending_banner.dart';
 import '../widgets/reservation/reservation_reject_reason_box.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
@@ -27,6 +29,9 @@ import '../models/client_reservation_summary.dart';
 import '../providers/client_reservation_detail_provider.dart';
 import '../widgets/reservation/client_reservation_review_action.dart';
 import '../widgets/reservation/reservation_payment_summary_card.dart';
+import '../../disputes/widgets/open_dispute_sheet.dart';
+import '../../../services/supabase/booking/rebook_reminder_providers.dart';
+import '../../../services/supabase/relations/client_prestataire_relation_providers.dart';
 
 class ClientReservationDetailScreen extends ConsumerStatefulWidget {
   const ClientReservationDetailScreen({
@@ -44,6 +49,33 @@ class ClientReservationDetailScreen extends ConsumerStatefulWidget {
 class _ClientReservationDetailScreenState
     extends ConsumerState<ClientReservationDetailScreen> {
   bool _cancelling = false;
+  bool _schedulingReminder = false;
+
+  Future<void> _scheduleRebookReminder(
+    ClientReservationSummary item,
+    int weeks,
+  ) async {
+    if (_schedulingReminder) return;
+    final service = ref.read(rebookReminderServiceProvider);
+    if (service == null) {
+      AppSnackBar.show(context, message: DiscBk.rebookRemindError);
+      return;
+    }
+    setState(() => _schedulingReminder = true);
+    try {
+      await service.schedule(
+        reservationId: item.id,
+        intervalWeeks: weeks,
+      );
+      if (!mounted) return;
+      AppSnackBar.success(context, DiscBk.rebookRemindSuccess);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(context, message: DiscBk.rebookRemindError);
+    } finally {
+      if (mounted) setState(() => _schedulingReminder = false);
+    }
+  }
 
   Future<void> _confirmCancel(ClientReservationSummary item) async {
     final go = await showDialog<bool>(
@@ -144,6 +176,20 @@ class _ClientReservationDetailScreenState
                 : DiscBk.unknownSvc;
         final canCancel = clientReservationCanCancel(ui);
         final canMessage = clientReservationCanMessage(ui);
+        final canDispute = ui == ClientReservationUiStatus.confirmed ||
+            ui == ClientReservationUiStatus.done ||
+            ui == ClientReservationUiStatus.cancelled;
+        final activeDisputeAsync =
+            canDispute
+                ? ref.watch(activeDisputeForReservationProvider(item.id))
+                : null;
+        final isVipAtSalon = item.prestataireId != null
+            ? ref
+                .watch(
+                  isCurrentClientVipAtPrestataireProvider(item.prestataireId!),
+                )
+                .maybeWhen(data: (v) => v, orElse: () => false)
+            : false;
 
         return ListView(
           padding: listPadding,
@@ -176,6 +222,27 @@ class _ClientReservationDetailScreenState
                               fontWeight: FontWeight.w800,
                             ),
                           ),
+                          if (isVipAtSalon) ...[
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F766E)
+                                    .withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                DiscPay.vipBadgeClient,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: const Color(0xFF115E59),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 4),
                           Text(
                             serviceLabel,
@@ -307,20 +374,13 @@ class _ClientReservationDetailScreenState
               if (canMessage || ui == ClientReservationUiStatus.confirmed) ...[
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
-                  onPressed: () async {
-                    final ok = await ReservationCalendarExport.openInGoogleCalendar(
-                      title: '$serviceLabel — $prestataireLabel',
-                      start: item.dateHeure,
-                      durationMinutes: item.durationMinutes,
-                    );
-                    if (!context.mounted) return;
-                    if (!ok) {
-                      AppSnackBar.show(
-                        context,
-                        message: DiscBk.calendarExportFail,
-                      );
-                    }
-                  },
+                  onPressed: () => showAddToCalendarSheet(
+                    context,
+                    reservationId: item.id,
+                    title: '$serviceLabel — $prestataireLabel',
+                    start: item.dateHeure,
+                    durationMinutes: item.durationMinutes,
+                  ),
                   icon: const Icon(Icons.event_available_outlined),
                   label: const Text(DiscBk.addToCalendar),
                 ),
@@ -337,6 +397,24 @@ class _ClientReservationDetailScreenState
                   icon: const Icon(Icons.replay_rounded),
                   label: const Text(DiscBk.rebookSamePresta),
                 ),
+                if (ui == ClientReservationUiStatus.done) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: _schedulingReminder
+                        ? null
+                        : () => _scheduleRebookReminder(item, 4),
+                    icon: const Icon(Icons.notifications_active_outlined),
+                    label: const Text(DiscBk.rebookRemind4Weeks),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _schedulingReminder
+                        ? null
+                        : () => _scheduleRebookReminder(item, 6),
+                    icon: const Icon(Icons.notifications_active_outlined),
+                    label: const Text(DiscBk.rebookRemind6Weeks),
+                  ),
+                ],
               ],
               if (item.prestataireId != null) ...[
                 const SizedBox(height: 10),
@@ -345,6 +423,40 @@ class _ClientReservationDetailScreenState
                       context.pushPrestataireDetail(item.prestataireId!),
                   icon: const Icon(Icons.storefront_outlined),
                   label: Text(prestataireLabel),
+                ),
+              ],
+              if (canDispute) ...[
+                const SizedBox(height: 10),
+                activeDisputeAsync!.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => OutlinedButton.icon(
+                    onPressed: () => showOpenDisputeSheet(
+                      context,
+                      reservationId: item.id,
+                      viewerRole: DisputeSenderRole.client,
+                    ),
+                    icon: const Icon(Icons.gavel_outlined),
+                    label: const Text(DiscDispute.openAction),
+                  ),
+                  data: (active) {
+                    if (active != null) {
+                      return OutlinedButton.icon(
+                        onPressed: () =>
+                            context.pushClientDisputeDetail(active.id),
+                        icon: const Icon(Icons.gavel_outlined),
+                        label: const Text(DiscDispute.viewAction),
+                      );
+                    }
+                    return OutlinedButton.icon(
+                      onPressed: () => showOpenDisputeSheet(
+                        context,
+                        reservationId: item.id,
+                        viewerRole: DisputeSenderRole.client,
+                      ),
+                      icon: const Icon(Icons.gavel_outlined),
+                      label: const Text(DiscDispute.openAction),
+                    );
+                  },
                 ),
               ],
             ],

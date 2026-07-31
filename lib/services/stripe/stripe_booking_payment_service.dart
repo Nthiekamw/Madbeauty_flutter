@@ -48,6 +48,7 @@ class StripeBookingPaymentService {
     required BookingPaymentModeKind paymentMode,
     String? serviceId,
     String? packId,
+    bool applyLoyaltyReward = false,
   }) async {
     if (!StripePlatformPolicy.isEnabled) {
       throw const StripePaymentGenericException(DiscPay.errWebUnsupported);
@@ -71,6 +72,7 @@ class StripeBookingPaymentService {
           'serviceId': service,
         'dateHeure': _bookingInstantPayload(dateHeure),
         'paymentMode': paymentMode.wireValue,
+        if (applyLoyaltyReward) 'applyLoyaltyReward': true,
       },
     );
 

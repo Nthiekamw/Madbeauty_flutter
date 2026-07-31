@@ -15,6 +15,7 @@ class ChatBubble extends StatelessWidget {
     required this.isMine,
     required this.timeLabel,
     this.imageUrl,
+    this.resultLabel,
     this.receiptStatus,
     this.isFirstInGroup = true,
     this.isLastInGroup = true,
@@ -24,6 +25,7 @@ class ChatBubble extends StatelessWidget {
   final bool isMine;
   final String timeLabel;
   final String? imageUrl;
+  final String? resultLabel;
   final ChatMessageReceiptStatus? receiptStatus;
   final bool isFirstInGroup;
   final bool isLastInGroup;
@@ -38,9 +40,14 @@ class ChatBubble extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final hasImage = imageUrl?.trim().isNotEmpty == true;
     final showText = text.trim().isNotEmpty &&
-        !(hasImage && text.trim() == DiscChat.imageMessagePreview);
+        !(hasImage &&
+            (text.trim() == DiscChat.imageMessagePreview ||
+                text.trim() == DiscChat.resultMediaPreview));
     final showMeta = isLastInGroup;
     final groupedGap = isFirstInGroup ? 6.0 : 2.0;
+    final resultBadge = resultLabel != null
+        ? DiscChat.resultLabelTitle(resultLabel)
+        : null;
 
     final fg = isMine ? AppColors.white : theme.colorScheme.onSurface;
 
@@ -111,6 +118,27 @@ class ChatBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (resultBadge != null) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: fg.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            resultBadge,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontFamily: AppFonts.body,
+                              color: fg,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                       if (hasImage) ...[
                         _ChatBubbleImage(
                           url: imageUrl!.trim(),

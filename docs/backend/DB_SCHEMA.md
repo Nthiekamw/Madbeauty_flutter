@@ -74,7 +74,26 @@ Rôles applicatifs (multi-rôle par utilisateur).
 | `latitude` | `double precision` | nullable |
 | `longitude` | `double precision` | nullable |
 | `stripe_customer_id` | `text` | nullable — client Stripe (`cus_...`) pour PaymentSheet |
+| `loyalty_points` | `integer` | NOT NULL, default 0 — solde points fidélité |
+| `loyalty_points_earned_total` | `integer` | NOT NULL, default 0 — total gagné (badges) |
+| `loyalty_rewards_redeemed` | `integer` | NOT NULL, default 0 — séances offertes utilisées |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+### `public.loyalty_ledger`
+
+Historique des mouvements de points (+2 earn / −200 redeem).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `client_id` | `uuid` | NOT NULL, FK → `client_profiles` |
+| `reservation_id` | `uuid` | nullable, FK → `reservations` |
+| `delta_points` | `integer` | NOT NULL, ≠ 0 |
+| `kind` | `text` | `earn` \| `redeem` \| `adjust` |
+| `balance_after` | `integer` | NOT NULL |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+**RPC** : `get_my_loyalty_info()` — solde, progression, badges.
 
 ### `public.prestataire_profiles`
 
@@ -337,6 +356,7 @@ Fermetures **ponctuelles** (congés, jour off).
 | `stripe_payment_intent_id` | `text` | nullable, UNIQUE si renseigné |
 | `payment_status` | `text` | nullable — `authorized`, `captured`, `failed`, `canceled` |
 | `paid_at` | `timestamptz` | nullable — autorisation ou capture selon le flux |
+| `vip_discount_percent` | `smallint` | nullable — remise VIP salon (ex. 5) snapshot checkout |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
 **Valeurs `statut` (app)** : `en_attente`, `confirmee`, `terminee`, `annulee` (variantes anglaises possibles en lecture).
@@ -350,6 +370,40 @@ Fermetures **ponctuelles** (congés, jour off).
 | Prestataire termine + `capture_booking_payment` | `terminee` | `captured` |
 
 **Index** : `date_heure`, `client_id`, `prestataire_id`, `idx_reservations_stripe_payment_intent` (unique partiel sur `stripe_payment_intent_id`).
+
+### `public.client_prestataire_relations`
+
+Relation client ↔ salon : compteur de RDV `terminee` + statut VIP (≥ 3).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `client_id` | `uuid` | PK composite, FK → `client_profiles` |
+| `prestataire_id` | `uuid` | PK composite, FK → `prestataire_profiles` |
+| `completed_count` | `integer` | NOT NULL, `>= 0` |
+| `is_vip` | `boolean` | NOT NULL |
+| `vip_since` | `timestamptz` | nullable |
+| `updated_at` | `timestamptz` | NOT NULL |
+
+**Trigger** : `trg_sync_client_presta_relation_on_terminee` — upsert au passage `statut → terminee`.  
+**RPC** : `is_client_vip_at_prestataire(client, presta)`.
+
+### `public.scheduled_pushes`
+
+File FCM planifiée (aftercare J+1, rappels rebook). Traitée par Edge `process_scheduled_pushes` (cron ~15 min).
+
+| Colonne | Type | Notes |
+|---------|------|-------|
+| `type` | `text` | `aftercare` \| `rebook_reminder` |
+| `send_at` | `timestamptz` | |
+| `status` | `text` | `pending` \| `sent` \| `cancelled` \| `failed` |
+| `client_id` / `prestataire_id` / `reservation_id` | `uuid` | |
+| `payload` | `jsonb` | |
+
+**Trigger aftercare** : `trg_schedule_aftercare_on_terminee` — insert `send_at = now() + 24h` au passage `terminee`.
+
+### `public.booking_rebook_reminders`
+
+Rappels « me rappeler dans 4 / 6 semaines » (pas de série auto). RPC client `schedule_rebook_reminder(reservation_id, interval_weeks)`.
 
 ### `public.avis`
 
@@ -400,12 +454,26 @@ Feed **Reel** (photos/vidéos scrollables).
 | `media_url` | `text` | URL Storage `reel-media` |
 | `caption` | `text` | nullable ≤ 500 |
 | `status` | `text` | `draft` \| `published` \| `hidden` |
-| `likes_count` / `views_count` | `integer` | dénormalisés |
+| `likes_count` / `comments_count` / `views_count` | `integer` | dénormalisés |
 | `created_at` / `updated_at` | `timestamptz` | |
 
-Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_catalog_visible`). Tables liées : `reel_likes`, `reel_views`.
+Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_catalog_visible`). Tables liées : `reel_likes`, `reel_views`, `reel_comments`.
 
-**RPC** : `list_reel_feed` (score = réservations + ville + catégories client + likes/vues + fraîcheur, pagination cursor), `toggle_reel_like`, `record_reel_view`.
+**RPC** : `list_reel_feed` (score = réservations + ville + catégories + likes/commentaires/vues + fraîcheur), `toggle_reel_like`, `record_reel_view`, `list_reel_comments`, `add_reel_comment`, `delete_reel_comment`.
+
+### `public.reel_comments`
+
+Commentaires clients sur un Reel (UI type TikTok).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `reel_id` | `uuid` | NOT NULL, FK → `reel_posts(id)` ON DELETE CASCADE |
+| `client_id` | `uuid` | NOT NULL, FK → `client_profiles(id)` ON DELETE CASCADE |
+| `body` | `text` | 1–500 caractères |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+**Triggers** : sync `comments_count` ; rate-limit soft 40 commentaires / jour / client.
 
 ### `public.favoris`
 
@@ -414,6 +482,56 @@ Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_
 | `client_id` | `uuid` | PK (composite), FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | PK (composite), FK → `prestataire_profiles(id)` ON DELETE CASCADE |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
+
+### `public.wishlist_produits`
+
+Wishlist client sur produits boutique + préférences d’alerte.
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `client_id` | `uuid` | PK (composite), FK → `client_profiles(id)` ON DELETE CASCADE |
+| `produit_id` | `uuid` | PK (composite), FK → `produits_boutique(id)` ON DELETE CASCADE |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` |
+| `alert_on_restock` | `boolean` | NOT NULL, default `true` |
+| `alert_on_price_drop` | `boolean` | NOT NULL, default `true` |
+| `last_seen_price` | `numeric(12,2)` | NOT NULL — snapshot au moment de l’ajout / après alerte |
+
+**RLS** : client owner (SELECT/INSERT/UPDATE/DELETE).  
+**Push** : trigger `trg_wishlist_product_updated_push` sur `produits_boutique` (restock 0→>0 / baisse `prix`) → Edge `on_wishlist_product_updated`.
+
+### `public.booking_disputes`
+
+Litiges réservation (médiation admin). **Pas** de refund Stripe automatique en V1.
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `reservation_id` | `uuid` | NOT NULL, FK → `reservations(id)` ON DELETE CASCADE |
+| `client_id` / `prestataire_id` | `uuid` | NOT NULL, FK profils |
+| `opened_by` | `text` | `client` \| `prestataire` |
+| `reason` | `text` | `no_show` \| `deposit` \| `quality` \| `refund` \| `other` |
+| `status` | `text` | `open` \| `under_review` \| `resolved_favor_client` \| `resolved_favor_presta` \| `closed` |
+| `amount_cents` | `integer` | nullable (snapshot) |
+| `summary` / `admin_notes` / `resolution` | `text` | nullable |
+| `created_at` / `updated_at` / `resolved_at` | `timestamptz` | |
+| `resolved_by` | `uuid` | nullable, FK → `auth.users` |
+
+**Index** : un seul litige actif (`open` / `under_review`) par `reservation_id`.  
+**RPC** : `open_booking_dispute`, `resolve_booking_dispute` (admin).  
+**Push** : → Edge `on_dispute_updated`.
+
+### `public.dispute_messages`
+
+Messages du fil de médiation (parties + admin).
+
+| Colonne | Type | Contraintes |
+|---------|------|-------------|
+| `id` | `uuid` | PK |
+| `dispute_id` | `uuid` | NOT NULL, FK → `booking_disputes(id)` ON DELETE CASCADE |
+| `sender_user_id` | `uuid` | NOT NULL, FK → `auth.users` |
+| `sender_role` | `text` | `client` \| `prestataire` \| `admin` |
+| `body` | `text` | 1–4000 caractères |
+| `created_at` | `timestamptz` | NOT NULL |
 
 ### `public.stripe_webhook_events`
 
@@ -432,7 +550,7 @@ Journal d’idempotence pour les webhooks Stripe (Edge Function `stripe_webhook`
 
 ## Messagerie
 
-Un fil de discussion est lié à une **réservation** (`reservation_id` / `booking_id`). Les messages sont synchronisés en temps réel via **Supabase Realtime** (`publication supabase_realtime` sur `messages`).
+Un fil unique par paire **client ↔ prestataire**. Peut être lié à une réservation (`reservation_id` / `booking_id`) ou en mode **inquiry** (devis / conseil hors réservation). Realtime sur `messages`.
 
 ### `public.conversations` (métadonnées du fil)
 
@@ -442,13 +560,14 @@ Un fil de discussion est lié à une **réservation** (`reservation_id` / `booki
 | `client_id` | `uuid` | NOT NULL, FK → `client_profiles(id)` ON DELETE CASCADE |
 | `prestataire_id` | `uuid` | NOT NULL, FK → `prestataire_profiles(id)` ON DELETE CASCADE |
 | `reservation_id` | `uuid` | nullable, FK → `reservations(id)` ON DELETE CASCADE |
+| `kind` | `text` | NOT NULL, default `booking` — `booking` \| `inquiry` |
 | `last_message_at` | `timestamptz` | nullable |
 
-**Index** : `conversations_reservation_id_uidx` UNIQUE sur `reservation_id` (où non null) — un fil par réservation.
+**Index** : UNIQUE `(client_id, prestataire_id)` — un fil par paire ; `conversations_reservation_id_uidx` UNIQUE sur `reservation_id` (où non null).
 
 **Index** : `idx_conversations_client_last`, `idx_conversations_prestataire_last` pour l’inbox.
 
-> L’ancienne contrainte UNIQUE `(client_id, prestataire_id)` a été retirée au profit du lien par réservation.
+**Inquiry** : messages sans `booking_id` autorisés si `kind = inquiry` (policy `messages_insert_inquiry_participant`) ; rate-limit soft 30 msg / jour / expéditeur (trigger).
 
 ### `public.messages`
 
@@ -460,6 +579,9 @@ Un fil de discussion est lié à une **réservation** (`reservation_id` / `booki
 | `sender_id` | `uuid` | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
 | `content` | `text` | nullable (canonique côté app) |
 | `contenu` | `text` | NOT NULL (legacy, synchronisé avec `content`) |
+| `image_url` | `text` | nullable |
+| `kind` | `text` | NOT NULL, default `text` — `text` \| `image` \| `result_media` |
+| `result_label` | `text` | nullable — `before` \| `after` \| `result` si `kind = result_media` |
 | `is_read` | `boolean` | NOT NULL, default `false` |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
@@ -653,7 +775,16 @@ Les clients **ne peuvent pas** insérer / modifier les catégories via l’API a
 |--------|----------|--------|
 | `messages_select_booking_participant` | SELECT | client ou prestataire de la réservation (`booking_id`) |
 | `messages_insert_booking_participant` | INSERT | `sender_id = auth.uid()` et participant à la réservation |
+| `messages_insert_inquiry_participant` | INSERT | `booking_id` null + conversation `kind = inquiry` + participant |
 | `messages_update_booking_participant` | UPDATE | participant à la réservation |
+
+### `wishlist_produits` / `booking_disputes` / `dispute_messages`
+
+| Table | Règle |
+|-------|--------|
+| `wishlist_produits` | client owner CRUD |
+| `booking_disputes` | participants SELECT ; ouverture via RPC ; résolution admin |
+| `dispute_messages` | participants + admin SELECT/INSERT |
 
 ### `stripe_webhook_events`
 

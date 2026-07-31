@@ -266,18 +266,7 @@ class BookingPushNotifications {
 
     if (cache.pushPermissionPrompted) return;
 
-    if (_isAndroidNative()) {
-      await requestPlatformNotifications();
-    } else if (_isIosNative()) {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    } else if (kIsWeb) {
-      await requestPlatformNotifications();
-    }
-
+    await requestPlatformNotifications();
     await cache.setPushPermissionPrompted();
   }
 

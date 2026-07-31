@@ -94,6 +94,8 @@ class ProfilePreferencesNotifier extends Notifier<ProfilePreferencesState> {
       if (!granted) {
         return false;
       }
+      // Marque la demande système comme faite (évite un double prompt).
+      await LocalCacheService.instance.setPushPermissionPrompted();
     }
 
     await LocalCacheService.instance.setProfilePushNotificationsEnabled(

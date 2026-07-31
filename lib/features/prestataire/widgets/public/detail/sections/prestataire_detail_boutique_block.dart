@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
@@ -21,16 +21,21 @@ import 'prestataire_detail_pack_sheet.dart';
 import 'prestataire_detail_produit_sheet.dart';
 import 'prestataire_detail_section_layout.dart';
 
-/// Onglet Boutique + Offres sur la fiche publique prestataire.
+/// Contenu boutique ou offres (onglets exclusifs fiche publique).
+enum PrestataireDetailBoutiqueMode { produits, packs }
+
+/// Bloc Boutique (produits) ou Offres (packs) sur la fiche publique.
 class PrestataireDetailBoutiqueBlock extends ConsumerWidget {
   const PrestataireDetailBoutiqueBlock({
     super.key,
     required this.prestataireId,
+    required this.mode,
     this.prestataireName,
     this.canShop = true,
   });
 
   final String prestataireId;
+  final PrestataireDetailBoutiqueMode mode;
   final String? prestataireName;
   final bool canShop;
 
@@ -54,109 +59,159 @@ class PrestataireDetailBoutiqueBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final produitsAsync =
-        ref.watch(publicProduitsBoutiqueProvider(prestataireId));
-    final packsAsync =
-        ref.watch(publicPacksOffreDetailProvider(prestataireId));
-    final servicesAsync = ref.watch(servicesProvider(prestataireId));
-    final cartCount = ref.watch(boutiqueCartItemCountProvider);
-    final services = servicesAsync.asData?.value ?? const <ServiceBeaute>[];
     final btn = _compactBtn(theme);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PrestataireDetailSectionCard(
-          icon: Icons.storefront_outlined,
-          title: DiscBoutique.clientBoutiqueTitle,
-          trailing: cartCount > 0
-              ? TextButton(
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 32),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () => context.pushClientCart(),
-                  child: Text(
-                    '${DiscBoutique.actionViewCart} (${DiscBoutique.cartBadge(cartCount)})',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                )
-              : null,
-          child: produitsAsync.when(
-            loading: () => const _BoutiqueShimmer(),
-            error: (_, __) => DiscoverySectionError(
-              message: DiscBoutique.boutiqueLoadErr,
-              onRetry: () => ref.invalidate(
-                publicProduitsBoutiqueProvider(prestataireId),
+    return switch (mode) {
+      PrestataireDetailBoutiqueMode.produits => _ProduitsSection(
+          prestataireId: prestataireId,
+          prestataireName: prestataireName,
+          canShop: canShop,
+          buttonStyle: btn,
+        ),
+      PrestataireDetailBoutiqueMode.packs => _PacksSection(
+          prestataireId: prestataireId,
+          prestataireName: prestataireName,
+          canShop: canShop,
+          buttonStyle: btn,
+        ),
+    };
+  }
+}
+
+class _ProduitsSection extends ConsumerWidget {
+  const _ProduitsSection({
+    required this.prestataireId,
+    required this.buttonStyle,
+    this.prestataireName,
+    this.canShop = true,
+  });
+
+  final String prestataireId;
+  final String? prestataireName;
+  final bool canShop;
+  final ButtonStyle buttonStyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final produitsAsync =
+        ref.watch(publicProduitsBoutiqueProvider(prestataireId));
+    final cartCount = ref.watch(boutiqueCartItemCountProvider);
+
+    return PrestataireDetailSectionCard(
+      icon: Icons.storefront_outlined,
+      title: DiscBoutique.clientBoutiqueTitle,
+      trailing: cartCount > 0
+          ? TextButton(
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-            ),
-            data: (produits) {
-              if (produits.isEmpty) {
-                return const PrestataireDetailEmptyState(
-                  icon: Icons.shopping_bag_outlined,
-                  title: DiscBoutique.clientBoutiqueEmptyTitle,
-                  body: DiscBoutique.clientBoutiqueEmptyBody,
-                );
-              }
-              return _BoutiqueHorizontalStrip(
-                itemCount: produits.length,
-                itemBuilder: (context, i) => _PublicProduitCard(
-                  produit: produits[i],
-                  prestataireName: prestataireName,
-                  canShop: canShop,
-                  buttonStyle: btn,
-                  compact: produits.length > 1,
+              onPressed: () => context.pushClientCart(),
+              child: Text(
+                '${DiscBoutique.actionViewCart} (${DiscBoutique.cartBadge(cartCount)})',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
                 ),
-              );
-            },
+              ),
+            )
+          : null,
+      child: produitsAsync.when(
+        loading: () => const _BoutiqueShimmer(),
+        error: (_, __) => DiscoverySectionError(
+          message: DiscBoutique.boutiqueLoadErr,
+          onRetry: () => ref.invalidate(
+            publicProduitsBoutiqueProvider(prestataireId),
           ),
         ),
-        PrestataireDetailSectionCard(
-          icon: Icons.local_offer_outlined,
-          title: DiscBoutique.clientPacksTitle,
-          child: packsAsync.when(
-            loading: () => const _BoutiqueShimmer(),
-            error: (_, __) => DiscoverySectionError(
-              message: DiscBoutique.packsLoadErr,
-              onRetry: () => ref.invalidate(
-                publicPacksOffreDetailProvider(prestataireId),
-              ),
+        data: (produits) {
+          if (produits.isEmpty) {
+            return const PrestataireDetailEmptyState(
+              icon: Icons.shopping_bag_outlined,
+              title: DiscBoutique.clientBoutiqueEmptyTitle,
+              body: DiscBoutique.clientBoutiqueEmptyBody,
+            );
+          }
+          return _BoutiqueHorizontalStrip(
+            itemCount: produits.length,
+            itemBuilder: (context, i) => _PublicProduitCard(
+              produit: produits[i],
+              prestataireName: prestataireName,
+              canShop: canShop,
+              buttonStyle: buttonStyle,
+              compact: produits.length > 1,
             ),
-            data: (packs) {
-              if (packs.isEmpty) {
-                return const PrestataireDetailEmptyState(
-                  icon: Icons.local_offer_outlined,
-                  title: DiscBoutique.clientPacksEmptyTitle,
-                  body: DiscBoutique.clientPacksEmptyBody,
-                );
-              }
-              final produits = produitsAsync.asData?.value ?? const [];
-              return _BoutiqueHorizontalStrip(
-                itemCount: packs.length,
-                itemBuilder: (context, i) => _PublicPackCard(
-                  detail: packs[i],
-                  services: services,
-                  produits: produits,
-                  prestataireName: prestataireName,
-                  canShop: canShop,
-                  buttonStyle: btn,
-                  compact: packs.length > 1,
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }
 
-/// Liste horizontale si plusieurs items, sinon carte pleine largeur.
+class _PacksSection extends ConsumerWidget {
+  const _PacksSection({
+    required this.prestataireId,
+    required this.buttonStyle,
+    this.prestataireName,
+    this.canShop = true,
+  });
+
+  final String prestataireId;
+  final String? prestataireName;
+  final bool canShop;
+  final ButtonStyle buttonStyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final packsAsync =
+        ref.watch(publicPacksOffreDetailProvider(prestataireId));
+    final produitsAsync =
+        ref.watch(publicProduitsBoutiqueProvider(prestataireId));
+    final servicesAsync = ref.watch(servicesProvider(prestataireId));
+    final services = servicesAsync.asData?.value ?? const <ServiceBeaute>[];
+
+    return PrestataireDetailSectionCard(
+      icon: Icons.local_offer_outlined,
+      title: DiscBoutique.clientPacksTitle,
+      child: packsAsync.when(
+        loading: () => const _BoutiqueShimmer(),
+        error: (_, __) => DiscoverySectionError(
+          message: DiscBoutique.packsLoadErr,
+          onRetry: () => ref.invalidate(
+            publicPacksOffreDetailProvider(prestataireId),
+          ),
+        ),
+        data: (packs) {
+          if (packs.isEmpty) {
+            return const PrestataireDetailEmptyState(
+              icon: Icons.local_offer_outlined,
+              title: DiscBoutique.clientPacksEmptyTitle,
+              body: DiscBoutique.clientPacksEmptyBody,
+            );
+          }
+          final produits = produitsAsync.asData?.value ?? const [];
+          return _BoutiqueHorizontalStrip(
+            itemCount: packs.length,
+            itemBuilder: (context, i) => _PublicPackCard(
+              detail: packs[i],
+              services: services,
+              produits: produits,
+              prestataireName: prestataireName,
+              canShop: canShop,
+              buttonStyle: buttonStyle,
+              compact: packs.length > 1,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Liste horizontale (mobile) ou grille (web tablette+).
 class _BoutiqueHorizontalStrip extends StatelessWidget {
   const _BoutiqueHorizontalStrip({
     required this.itemCount,
@@ -167,27 +222,42 @@ class _BoutiqueHorizontalStrip extends StatelessWidget {
   final IndexedWidgetBuilder itemBuilder;
 
   static const _listHeight = 212.0;
-  static const _listHeightWeb = 228.0;
   static const _cardWidth = 148.0;
-  static const _cardWidthWeb = 160.0;
 
   @override
   Widget build(BuildContext context) {
     if (itemCount <= 1) {
       return itemBuilder(context, 0);
     }
-    final web = DiscoveryResponsive.of(context).useWebSiteLayout;
-    final listHeight = web ? _listHeightWeb : _listHeight;
-    final cardWidth = web ? _cardWidthWeb : _cardWidth;
+    final layout = DiscoveryResponsive.of(context);
+    if (layout.useWebSiteLayout) {
+      final cols = layout.isDesktop
+          ? 4
+          : layout.isWide
+              ? 3
+              : 2;
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: itemCount,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: layout.isDesktop ? 0.78 : 0.72,
+        ),
+        itemBuilder: itemBuilder,
+      );
+    }
     return SizedBox(
-      height: listHeight,
+      height: _listHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: itemCount,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           return SizedBox(
-            width: cardWidth,
+            width: _cardWidth,
             child: itemBuilder(context, index),
           );
         },

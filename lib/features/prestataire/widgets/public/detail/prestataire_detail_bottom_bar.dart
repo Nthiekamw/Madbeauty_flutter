@@ -24,6 +24,9 @@ class PrestataireDetailBottomBar extends StatelessWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final layout = DiscoveryResponsive.of(context);
     final hPad = layout.pageHorizontalPadding(flow: true);
+    final barMaxWidth = layout.useWebSiteLayout
+        ? (layout.isDesktop ? 520.0 : 480.0)
+        : double.infinity;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -52,7 +55,10 @@ class PrestataireDetailBottomBar extends StatelessWidget {
           hPad,
           10 + bottom,
         ),
-        child: Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: barMaxWidth),
+            child: Row(
               children: [
                 if (minPrice != null) ...[
                   Column(
@@ -106,6 +112,8 @@ class PrestataireDetailBottomBar extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
       ),
     );
   }

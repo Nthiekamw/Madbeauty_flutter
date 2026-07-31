@@ -32,6 +32,7 @@ abstract final class AppRoutes {
   static const String editClientAccount = '/client/profile/edit';
   static const String clientPaymentMethods = '/client/payment-methods';
   static const String clientFavorites = '/client/favorites';
+  static const String clientWishlist = '/client/wishlist';
   static const String clientCart = '/client/cart';
   static const String clientBoutiqueOrders = '/client/boutique-orders';
   static const String clientAllPrestataires = '/client/prestataires';
@@ -44,6 +45,8 @@ abstract final class AppRoutes {
   static const String bugReportChat = '/bug-report/:id/chat';
   static const String userSupportChat = '/support/chat';
   static const String clientReferral = '/client/referral';
+  static const String clientLoyalty = '/client/loyalty';
+  static const String clientDisputeDetail = '/client/disputes/:id';
   static const String adminHome = '/admin/home';
   static const String adminModeration = '/admin/moderation';
   static const String adminSupport = '/admin/support';
@@ -62,6 +65,8 @@ abstract final class AppRoutes {
   static const String adminBookingPlatformFee = '/admin/booking-platform-fee';
   static const String adminRealisationPhotos = '/admin/realisation-photos';
   static const String adminUserSupport = '/admin/user-support';
+  static const String adminDisputes = '/admin/disputes';
+  static const String adminDisputeDetail = '/admin/disputes/:id';
 
   static const String prestataireDashboard = '/prestataire/dashboard';
   static const String prestataireAgenda = '/prestataire/agenda';
@@ -70,6 +75,7 @@ abstract final class AppRoutes {
   static const String prestataireMessages = '/prestataire/messages';
   static const String prestataireReservationDetail =
       '/prestataire/reservations/:id';
+  static const String prestataireDisputeDetail = '/prestataire/disputes/:id';
   static const String prestataireProfileEdit = '/prestataire/profile/edit';
   static const String prestataireHoraires = '/prestataire/horaires';
   static const String prestataireSubscription = '/prestataire/subscription';
@@ -123,6 +129,7 @@ abstract final class AppRouteNames {
   static const String editClientAccount = 'edit-client-account';
   static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
+  static const String clientWishlist = 'client-wishlist';
   static const String clientCart = 'client-cart';
   static const String clientBoutiqueOrders = 'client-boutique-orders';
   static const String clientAllPrestataires = 'client-all-prestataires';
@@ -136,6 +143,8 @@ abstract final class AppRouteNames {
   static const String userSupportChat = 'user-support-chat';
   static const String userSupportChatThread = 'user-support-chat-thread';
   static const String clientReferral = 'client-referral';
+  static const String clientLoyalty = 'client-loyalty';
+  static const String clientDisputeDetail = 'client-dispute-detail';
   static const String adminHome = 'admin-home';
   static const String adminModeration = 'admin-moderation';
   static const String adminSupport = 'admin-support';
@@ -154,6 +163,8 @@ abstract final class AppRouteNames {
   static const String adminBookingPlatformFee = 'admin-booking-platform-fee';
   static const String adminRealisationPhotos = 'admin-realisation-photos';
   static const String adminUserSupport = 'admin-user-support';
+  static const String adminDisputes = 'admin-disputes';
+  static const String adminDisputeDetail = 'admin-dispute-detail';
 
   static const String prestataireDashboard = 'prestataire-dashboard';
   static const String prestataireAgenda = 'prestataire-agenda';
@@ -162,6 +173,7 @@ abstract final class AppRouteNames {
   static const String prestataireMessages = 'prestataire-messages';
   static const String prestataireReservationDetail =
       'prestataire-reservation-detail';
+  static const String prestataireDisputeDetail = 'prestataire-dispute-detail';
   static const String prestataireProfileEdit = 'prestataire-profile-edit';
   static const String prestataireHoraires = 'prestataire-horaires';
   static const String prestataireSubscription = 'prestataire-subscription';

@@ -49,6 +49,7 @@ abstract final class DiscPay {
   static const checkoutPlatformFee = 'Frais MadBeauty';
   static const checkoutDeposit = 'Acompte prestation (20 %)';
   static const checkoutReferralDiscount = 'Remise parrainage';
+  static const checkoutVipDiscount = 'Remise VIP salon';
   static const checkoutServiceAfterDiscount = 'Prestation (après remise)';
   static const checkoutFreePlatformCount1 =
       'Pas de frais MadBeauty (1ʳᵉ réservation)';
@@ -58,7 +59,12 @@ abstract final class DiscPay {
   }
   static const recapReferralDiscountBanner =
       'Ta remise parrainage −10 % est appliquée sur cette réservation.';
-  static const errNoPaymentRequired =
+  static const recapVipDiscountBanner =
+      'Statut VIP chez ce salon : −5 % sur cette réservation.';
+  static const vipBadgeClient = 'VIP';
+  static const vipBadgeCliente = 'Cliente VIP';
+  static const vipBadgeHint =
+      'Tu es VIP chez ce salon (≥ 3 rendez-vous terminés).';  static const errNoPaymentRequired =
       'Aucun paiement en ligne requis : confirme sans passer par la carte.';
   static const errDepositRequiresConnect =
       'Ce prestataire n’accepte pas encore l’acompte en ligne.';

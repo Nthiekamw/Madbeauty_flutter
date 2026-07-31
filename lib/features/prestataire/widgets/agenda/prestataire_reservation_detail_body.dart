@@ -22,7 +22,12 @@ class PrestataireReservationDetailBody extends StatelessWidget {
     required this.onReject,
     required this.onMarkDone,
     this.onMessage,
+    this.onSendResultMedia,
+    this.onOpenDispute,
+    this.onViewDispute,
+    this.hasActiveDispute = false,
     this.busy = false,
+    this.isClientVip = false,
   });
 
   final PrestataireReservationItem item;
@@ -30,7 +35,12 @@ class PrestataireReservationDetailBody extends StatelessWidget {
   final VoidCallback? onReject;
   final VoidCallback? onMarkDone;
   final VoidCallback? onMessage;
+  final VoidCallback? onSendResultMedia;
+  final VoidCallback? onOpenDispute;
+  final VoidCallback? onViewDispute;
+  final bool hasActiveDispute;
   final bool busy;
+  final bool isClientVip;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +119,27 @@ class PrestataireReservationDetailBody extends StatelessWidget {
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontFamily: AppFonts.body,
                           color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (isClientVip) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F766E).withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        DiscPay.vipBadgeCliente,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: const Color(0xFF115E59),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -286,8 +317,45 @@ class PrestataireReservationDetailBody extends StatelessWidget {
             ),
           ),
         ],
+        if (onSendResultMedia != null &&
+            (status == ClientReservationUiStatus.done ||
+                status == ClientReservationUiStatus.confirmed)) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              onPressed: busy ? null : onSendResultMedia,
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: const Text(DiscChat.sendResultMedia),
+            ),
+          ),
+        ],
+        if (_canDispute(status) &&
+            (onOpenDispute != null || onViewDispute != null)) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: busy
+                  ? null
+                  : (hasActiveDispute ? onViewDispute : onOpenDispute),
+              icon: const Icon(Icons.gavel_outlined),
+              label: Text(
+                hasActiveDispute
+                    ? DiscDispute.viewAction
+                    : DiscDispute.openAction,
+              ),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  bool _canDispute(ClientReservationUiStatus status) {
+    return status == ClientReservationUiStatus.confirmed ||
+        status == ClientReservationUiStatus.done ||
+        status == ClientReservationUiStatus.cancelled;
   }
 }
 

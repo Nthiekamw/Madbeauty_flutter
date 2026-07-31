@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -10,11 +10,13 @@ class BookingSuccessView extends StatefulWidget {
     super.key,
     required this.onViewReservations,
     required this.onGoHome,
+    this.onAddToCalendar,
     this.body = DiscBk.doneBody,
   });
 
   final VoidCallback onViewReservations;
   final VoidCallback onGoHome;
+  final VoidCallback? onAddToCalendar;
   final String body;
 
   @override
@@ -188,6 +190,24 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
               ),
             ),
           ),
+          if (widget.onAddToCalendar != null) ...[
+            const SizedBox(height: 12),
+            FadeTransition(
+              opacity: _fade,
+              child: AppButton(
+                variant: AppButtonVariant.secondary,
+                onPressed: widget.onAddToCalendar,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.event_available_outlined, size: 20),
+                    SizedBox(width: 10),
+                    Text(DiscBk.addToCalendar),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           FadeTransition(
             opacity: _fade,

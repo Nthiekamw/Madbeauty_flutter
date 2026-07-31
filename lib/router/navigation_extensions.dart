@@ -97,6 +97,7 @@ extension AppNavigationX on BuildContext {
   void pushClientPaymentMethods() =>
       pushNamed(AppRouteNames.clientPaymentMethods);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
+  void pushClientWishlist() => pushNamed(AppRouteNames.clientWishlist);
   void pushClientCart() => pushNamed(AppRouteNames.clientCart);
   void pushClientBoutiqueOrders() =>
       pushNamed(AppRouteNames.clientBoutiqueOrders);
@@ -126,6 +127,16 @@ extension AppNavigationX on BuildContext {
     }
   }
   void pushClientReferral() => pushNamed(AppRouteNames.clientReferral);
+
+  void pushClientLoyalty() => pushNamed(AppRouteNames.clientLoyalty);
+  void pushClientDisputeDetail(String disputeId) => pushNamed(
+        AppRouteNames.clientDisputeDetail,
+        pathParameters: {'id': disputeId},
+      );
+  void pushPrestataireDisputeDetail(String disputeId) => pushNamed(
+        AppRouteNames.prestataireDisputeDetail,
+        pathParameters: {'id': disputeId},
+      );
   void goAdminHome() => goNamed(AppRouteNames.adminHome);
   void goAdminModeration() => goNamed(AppRouteNames.adminModeration);
   void goAdminSupport() => goNamed(AppRouteNames.adminSupport);
@@ -137,6 +148,11 @@ extension AppNavigationX on BuildContext {
   void pushAdminReports() => pushNamed(AppRouteNames.adminReports);
   void pushAdminBugReports() => pushNamed(AppRouteNames.adminBugReports);
   void pushAdminUserSupport() => pushNamed(AppRouteNames.adminUserSupport);
+  void pushAdminDisputes() => pushNamed(AppRouteNames.adminDisputes);
+  void pushAdminDisputeDetail(String disputeId) => pushNamed(
+        AppRouteNames.adminDisputeDetail,
+        pathParameters: {'id': disputeId},
+      );
   void pushAdminUsers() => pushNamed(AppRouteNames.adminUsers);
   void pushAdminAccountDeletions() =>
       pushNamed(AppRouteNames.adminAccountDeletions);

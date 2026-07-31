@@ -22,8 +22,15 @@ class PrestataireDetailGalleryGrouped extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final thumbWidth = DiscoveryResponsive.of(context).homeListCardWidth
-        .clamp(108.0, 130.0);
+    final layout = DiscoveryResponsive.of(context);
+    final useGrid = layout.useWebSiteLayout;
+    final thumbWidth = useGrid
+        ? (layout.isDesktop
+            ? 148.0
+            : layout.isWide
+                ? 136.0
+                : 124.0)
+        : DiscoveryResponsive.of(context).homeListCardWidth.clamp(108.0, 130.0);
 
     final allPhotos = sections
         .expand((s) => s.specialtyGroups)
@@ -51,27 +58,66 @@ class PrestataireDetailGalleryGrouped extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(
-              height: thumbWidth * 1.05,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: group.photos.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final photo = group.photos[index];
-                  final globalIndex = allPhotos.indexOf(photo);
-                  return _GalleryThumb(
-                    photo: photo,
-                    width: thumbWidth,
-                    onTap: () => FullscreenRealisationGallery.open(
-                      context,
-                      items: allPhotos,
-                      initialIndex: globalIndex < 0 ? index : globalIndex,
-                    ),
+            if (useGrid)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final gap = 8.0;
+                  final cols = layout.isDesktop
+                      ? 5
+                      : layout.isWide
+                          ? 4
+                          : 3;
+                  final cellW =
+                      (constraints.maxWidth - gap * (cols - 1)) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (var index = 0; index < group.photos.length; index++)
+                        SizedBox(
+                          width: cellW,
+                          height: cellW * 1.05,
+                          child: _GalleryThumb(
+                            photo: group.photos[index],
+                            width: cellW,
+                            onTap: () {
+                              final photo = group.photos[index];
+                              final globalIndex = allPhotos.indexOf(photo);
+                              FullscreenRealisationGallery.open(
+                                context,
+                                items: allPhotos,
+                                initialIndex:
+                                    globalIndex < 0 ? index : globalIndex,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   );
                 },
+              )
+            else
+              SizedBox(
+                height: thumbWidth * 1.05,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: group.photos.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final photo = group.photos[index];
+                    final globalIndex = allPhotos.indexOf(photo);
+                    return _GalleryThumb(
+                      photo: photo,
+                      width: thumbWidth,
+                      onTap: () => FullscreenRealisationGallery.open(
+                        context,
+                        items: allPhotos,
+                        initialIndex: globalIndex < 0 ? index : globalIndex,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 10),
           ],
         ],

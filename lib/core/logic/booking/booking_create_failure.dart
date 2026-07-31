@@ -72,6 +72,15 @@ String _fromSupabase(SupabaseServiceException error) {
       message.contains('referral_discount_amount_mismatch')) {
     return DiscBk.errReferralDiscountExpired;
   }
+  if (message.contains('loyalty_reward_not_available')) {
+    return DiscLoyalty.errNotAvailable;
+  }
+  if (message.contains('loyalty_reward_amount_mismatch') ||
+      message.contains('loyalty_reward_exceeds_max') ||
+      message.contains('loyalty_reward_exceeds_service') ||
+      message.contains('loyalty_reward_catalogue_required')) {
+    return DiscLoyalty.errMismatch;
+  }
   if (message.contains('network') ||
       message.contains('connection') ||
       message.contains('timeout')) {

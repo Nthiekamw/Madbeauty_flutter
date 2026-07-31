@@ -4,6 +4,13 @@ Alertes **réservation** et **messagerie** : token FCM dans `user_profiles`, env
 
 Setup iOS (capabilities, APNs, Sign in with Apple) : [../store/IOS_SETUP.md](../store/IOS_SETUP.md).
 
+## Toggle profil iOS
+
+Sur iOS, l’activation des notifications passe par **Firebase Messaging** (APNs), pas uniquement `permission_handler`.  
+Le `Podfile` active aussi `PERMISSION_NOTIFICATIONS=1`.
+
+Rebuild iOS : `cd ios && pod install` puis relancer l’app sur appareil physique.
+
 ## Prérequis
 
 - Projet Firebase avec **Cloud Messaging** activé pour **Android + iOS**
@@ -162,6 +169,22 @@ Le corps reprend le format des webhooks Supabase (`type`, `table`, `record`, `ol
 ### Statuts métier (`on_booking_updated`)
 
 La fonction normalise le texte : `confirmee`, `confirmed`, `validee`… déclenchent **« Votre réservation est confirmée✅ »** ; `annulee`, `cancelled`, `refusee`… déclenchent **« Votre réservation a été refusée »** (voir `booking_notify.ts`).
+
+**Note** : le passage à `terminee` ne déclenche **pas** de push immédiat ; l’aftercare J+1 passe par `scheduled_pushes` + `process_scheduled_pushes`.
+
+## 4bis. File planifiée — `process_scheduled_pushes`
+
+Table `scheduled_pushes` (`aftercare`, `rebook_reminder`). Edge Function **`process_scheduled_pushes`** (`--no-verify-jwt`) :
+
+```bash
+npx supabase functions deploy process_scheduled_pushes --no-verify-jwt
+```
+
+**Cron** : job `pg_cron` `process-scheduled-pushes` toutes les 15 min (migration `20260731130000_process_scheduled_pushes_cron.sql`) → `private.invoke_process_scheduled_pushes()` → pg_net vers l’EF. Prérequis : `private.webhook_config.functions_base` (script `setup_push_notifications.ps1`).
+
+Détail : [`supabase/functions/process_scheduled_pushes/README.md`](../../supabase/functions/process_scheduled_pushes/README.md).
+
+Deep links app : `type=aftercare` → détail résa client ; `type=rebook_reminder` → flow booking (`prestataire_id` / `service_id`).
 
 ## 5. Comportement côté app
 

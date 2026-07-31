@@ -68,7 +68,21 @@ abstract final class DiscBk {
       'En attente de confirmation par le prestataire. Tu seras notifié dès sa réponse.';
   static const rejectReasonTitle = 'Motif du refus';
   static const addToCalendar = 'Ajouter au calendrier';
+  static const addToCalendarTitle = 'Ajouter au calendrier';
+  static const addToCalendarBody =
+      'Choisis ton calendrier pour ne pas manquer le rendez-vous.';
+  static const addToGoogleCalendar = 'Google Calendar';
+  static const addToGoogleCalendarHint = 'Ouvre Google Calendar dans le navigateur';
+  static const addToAppleOutlook = 'Apple / Outlook (.ics)';
+  static const addToAppleOutlookHint =
+      'Partage un fichier calendrier compatible';
   static const rebookSamePresta = 'Réserver à nouveau';
+  static const rebookRemind4Weeks = 'Me rappeler dans 4 semaines';
+  static const rebookRemind6Weeks = 'Me rappeler dans 6 semaines';
+  static const rebookRemindSuccess =
+      'Rappel enregistré. Tu recevras une notification pour rebooker.';
+  static const rebookRemindError =
+      'Impossible d’enregistrer le rappel. Réessaie.';
   static const calendarExportFail =
       'Impossible d’ouvrir le calendrier sur cet appareil.';
   static const badgeSyncPending = 'En attente d’envoi';

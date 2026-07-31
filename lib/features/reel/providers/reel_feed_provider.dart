@@ -154,6 +154,17 @@ class ReelFeedController extends Notifier<ReelFeedState> {
       rethrow;
     }
   }
+
+  void bumpCommentsCount(String reelId, int delta) {
+    final index = state.items.indexWhere((e) => e.id == reelId);
+    if (index < 0) return;
+    final current = state.items[index];
+    final next = [...state.items];
+    next[index] = current.copyWith(
+      commentsCount: (current.commentsCount + delta).clamp(0, 1 << 30),
+    );
+    state = state.copyWith(items: next);
+  }
 }
 
 final reelFeedControllerProvider =

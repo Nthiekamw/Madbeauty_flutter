@@ -15,6 +15,7 @@ class ProfileAccountSection extends ConsumerWidget {
     this.topSection,
     this.menuPrefix,
     this.showClientReviews = true,
+    this.showClientPrograms = true,
   });
 
   /// Contenu optionnel au-dessus des entrées compte.
@@ -25,6 +26,9 @@ class ProfileAccountSection extends ConsumerWidget {
 
   /// « Mes avis » (avis laissés en tant que cliente). Masqué sur le profil prestataire.
   final bool showClientReviews;
+
+  /// Fidélité, wishlist, parrainage, historique client. Masqué côté prestataire.
+  final bool showClientPrograms;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,7 +57,7 @@ class ProfileAccountSection extends ConsumerWidget {
                 title: DiscProfile.actionEditAccount,
                 onTap: () => context.pushEditClientAccount(),
               ),
-              if (StripePlatformPolicy.isEnabled) ...[
+              if (showClientPrograms && StripePlatformPolicy.isEnabled) ...[
                 _divider(context),
                 DiscoveryMenuTile(
                   icon: Icons.credit_card_rounded,
@@ -71,19 +75,35 @@ class ProfileAccountSection extends ConsumerWidget {
                   onTap: () => context.pushClientReviews(),
                 ),
               ],
-              _divider(context),
-              DiscoveryMenuTile(
-                icon: Icons.history_rounded,
-                title: DiscProfile.actionHistory,
-                onTap: () => context.pushClientHistory(),
-              ),
-              _divider(context),
-              DiscoveryMenuTile(
-                icon: Icons.card_giftcard_rounded,
-                title: DiscProfile.actionReferral,
-                subtitle: DiscProfile.actionReferralHint,
-                onTap: isGuest ? null : () => context.pushClientReferral(),
-              ),
+              if (showClientPrograms) ...[
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.history_rounded,
+                  title: DiscProfile.actionHistory,
+                  onTap: () => context.pushClientHistory(),
+                ),
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.stars_rounded,
+                  title: DiscProfile.actionLoyalty,
+                  subtitle: DiscProfile.actionLoyaltyHint,
+                  onTap: isGuest ? null : () => context.pushClientLoyalty(),
+                ),
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.favorite_border_rounded,
+                  title: DiscWishlist.profileSectionTitle,
+                  subtitle: DiscWishlist.profileSectionHint,
+                  onTap: isGuest ? null : () => context.pushClientWishlist(),
+                ),
+                _divider(context),
+                DiscoveryMenuTile(
+                  icon: Icons.card_giftcard_rounded,
+                  title: DiscProfile.actionReferral,
+                  subtitle: DiscProfile.actionReferralHint,
+                  onTap: isGuest ? null : () => context.pushClientReferral(),
+                ),
+              ],
               _divider(context),
               DiscoveryMenuTile(
                 icon: Icons.bug_report_outlined,

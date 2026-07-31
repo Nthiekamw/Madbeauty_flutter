@@ -14,6 +14,10 @@ class BookingCheckoutPanel extends StatelessWidget {
     required this.onPaymentModeChanged,
     required this.prestataireAcceptsDeposit,
     required this.stripeAvailable,
+    this.loyaltyAvailable = false,
+    this.applyLoyaltyReward = false,
+    this.onApplyLoyaltyChanged,
+    this.loyaltyMaxRewardEuros = 50,
   });
 
   final BookingPricingBreakdown breakdown;
@@ -21,6 +25,10 @@ class BookingCheckoutPanel extends StatelessWidget {
   final ValueChanged<BookingPaymentModeKind> onPaymentModeChanged;
   final bool prestataireAcceptsDeposit;
   final bool stripeAvailable;
+  final bool loyaltyAvailable;
+  final bool applyLoyaltyReward;
+  final ValueChanged<bool>? onApplyLoyaltyChanged;
+  final int loyaltyMaxRewardEuros;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +38,14 @@ class BookingCheckoutPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (loyaltyAvailable && onApplyLoyaltyChanged != null) ...[
+          _LoyaltyToggle(
+            selected: applyLoyaltyReward,
+            maxEuros: loyaltyMaxRewardEuros,
+            onChanged: onApplyLoyaltyChanged!,
+          ),
+          const SizedBox(height: 14),
+        ],
         Text(
           DiscPay.paymentModeTitle,
           style: theme.textTheme.titleSmall?.copyWith(
@@ -38,24 +54,34 @@ class BookingCheckoutPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        if (stripeAvailable && prestataireAcceptsDeposit)
+        if (stripeAvailable &&
+            prestataireAcceptsDeposit &&
+            !breakdown.isFullyCoveredByLoyalty)
           _ModeTile(
             selected: paymentMode == BookingPaymentModeKind.deposit20,
             title: DiscPay.paymentModeDeposit20,
             subtitle: DiscPay.paymentModeDeposit20Hint.replaceFirst(
               '%s',
-              _formatEur(breakdown.paymentMode == BookingPaymentModeKind.deposit20
-                  ? breakdown.balanceOnSiteEur
-                  : breakdown.servicePriceEur * 0.8),
+              _formatEur(
+                breakdown.paymentMode == BookingPaymentModeKind.deposit20
+                    ? breakdown.balanceOnSiteEur
+                    : breakdown.servicePriceEur * 0.8,
+              ),
             ),
             icon: Icons.account_balance_wallet_outlined,
             onTap: () => onPaymentModeChanged(BookingPaymentModeKind.deposit20),
           ),
-        if (stripeAvailable && prestataireAcceptsDeposit) const SizedBox(height: 8),
+        if (stripeAvailable &&
+            prestataireAcceptsDeposit &&
+            !breakdown.isFullyCoveredByLoyalty)
+          const SizedBox(height: 8),
         _ModeTile(
-          selected: paymentMode == BookingPaymentModeKind.onSite,
+          selected: paymentMode == BookingPaymentModeKind.onSite ||
+              breakdown.isFullyCoveredByLoyalty,
           title: DiscPay.paymentModeOnSite,
-          subtitle: DiscPay.paymentModeOnSiteHint,
+          subtitle: breakdown.isFullyCoveredByLoyalty
+              ? DiscLoyalty.checkoutFullyFree
+              : DiscPay.paymentModeOnSiteHint,
           icon: Icons.storefront_outlined,
           onTap: () => onPaymentModeChanged(BookingPaymentModeKind.onSite),
         ),
@@ -67,6 +93,80 @@ class BookingCheckoutPanel extends StatelessWidget {
 
   static String _formatEur(double value) =>
       CurrencyFormat.eur(value, decimals: true);
+}
+
+class _LoyaltyToggle extends StatelessWidget {
+  const _LoyaltyToggle({
+    required this.selected,
+    required this.maxEuros,
+    required this.onChanged,
+  });
+
+  final bool selected;
+  final int maxEuros;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final gold = theme.colorScheme.tertiary;
+
+    return Material(
+      color: selected
+          ? gold.withValues(alpha: 0.12)
+          : theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: () => onChanged(!selected),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? gold.withValues(alpha: 0.45)
+                  : theme.colorScheme.outline.withValues(alpha: 0.15),
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.check_box_rounded
+                    : Icons.check_box_outline_blank_rounded,
+                color: selected ? gold : theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DiscLoyalty.checkoutToggleTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DiscLoyalty.checkoutToggleSubtitle(maxEuros),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.stars_rounded, color: gold.withValues(alpha: 0.85)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ModeTile extends StatelessWidget {
@@ -175,7 +275,7 @@ class _AmountCard extends StatelessWidget {
           if (breakdown.hasReferralDiscount) ...[
             _line(
               DiscPay.checkoutServiceAfterDiscount,
-              breakdown.servicePriceCents,
+              breakdown.priceAfterReferralCents,
               theme,
             ),
             _line(
@@ -184,6 +284,59 @@ class _AmountCard extends StatelessWidget {
               theme,
               muted: true,
             ),
+          ],
+          if (breakdown.hasVipDiscount) ...[
+            if (!breakdown.hasReferralDiscount &&
+                breakdown.originalServicePriceCents != null)
+              _line(
+                DiscPay.checkoutServiceAfterDiscount,
+                breakdown.originalServicePriceCents!,
+                theme,
+              ),
+            _line(
+              '${DiscPay.checkoutVipDiscount} (−${breakdown.vipDiscountPercent} %)',
+              -breakdown.vipDiscountCents,
+              theme,
+              muted: true,
+            ),
+          ] else if (!breakdown.hasReferralDiscount &&
+              breakdown.hasLoyaltyReward &&
+              breakdown.originalServicePriceCents != null) ...[
+            _line(
+              DiscPay.checkoutServiceAfterDiscount,
+              breakdown.originalServicePriceCents!,
+              theme,
+            ),
+          ],
+          if (breakdown.hasLoyaltyReward) ...[
+            _line(
+              DiscLoyalty.checkoutCoveredLine,
+              -(breakdown.loyaltyRewardCents ?? 0),
+              theme,
+              muted: true,
+            ),
+            if (breakdown.servicePriceCents > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  DiscLoyalty.checkoutPartialCover(
+                    CurrencyFormat.eur(breakdown.servicePriceEur, decimals: true),
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  DiscLoyalty.checkoutFullyFree,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
           ],
           if (breakdown.depositCents > 0)
             _line(
@@ -198,11 +351,15 @@ class _AmountCard extends StatelessWidget {
               theme,
             )
           else if (breakdown.platformFeeCents == 0 &&
-              breakdown.priorBookingCount < breakdown.platformFeeFreeBookingCount)
+              !breakdown.hasLoyaltyReward &&
+              breakdown.priorBookingCount <
+                  breakdown.platformFeeFreeBookingCount)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                DiscPay.checkoutFreePlatform(breakdown.platformFeeFreeBookingCount),
+                DiscPay.checkoutFreePlatform(
+                  breakdown.platformFeeFreeBookingCount,
+                ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

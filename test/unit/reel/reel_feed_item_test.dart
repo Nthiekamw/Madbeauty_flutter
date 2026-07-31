@@ -11,6 +11,7 @@ void main() {
       'media_url': 'https://example.com/v.mp4',
       'caption': ' Soft glam ',
       'likes_count': 3,
+      'comments_count': 2,
       'views_count': 10,
       'created_at': '2026-07-25T10:00:00Z',
       'score': 12.5,
@@ -25,6 +26,7 @@ void main() {
     expect(item.caption, 'Soft glam');
     expect(item.score, 12.5);
     expect(item.likedByMe, isTrue);
+    expect(item.commentsCount, 2);
     expect(item.salonName, 'Studio Mad');
   });
 }

@@ -1,6 +1,7 @@
 /// Sections réordonnables de l'accueil client.
 enum ClientHomeSectionId {
   nextAppointment('next_appointment'),
+  loyalty('loyalty'),
   inspiration('inspiration'),
   promo('promo'),
   offers('offers'),

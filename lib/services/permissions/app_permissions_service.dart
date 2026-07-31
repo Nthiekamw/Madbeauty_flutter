@@ -10,6 +10,9 @@ class AppPermissionsService {
 
   Future<bool> requestNotifications() => requestPlatformNotifications();
 
+  Future<bool> areNotificationsPermanentlyDenied() =>
+      arePlatformNotificationsPermanentlyDenied();
+
   Future<bool> isLocationGranted() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
     final permission = await Geolocator.checkPermission();

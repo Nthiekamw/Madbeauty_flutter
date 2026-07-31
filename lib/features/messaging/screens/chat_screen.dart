@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 
 
@@ -40,6 +40,7 @@ import '../../../services/supabase/trust/content_report_service.dart';
 import '../widgets/chat/chat_screen_app_bar.dart';
 import '../widgets/chat/chat_delete_confirmation.dart';
 import '../models/chat_inbox_key.dart';
+import '../../../router/navigation_extensions.dart';
 
 
 
@@ -421,15 +422,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
     final storageBookingId = widget.bookingId?.trim().isNotEmpty == true
         ? widget.bookingId!
-        : await messageService.resolveBookingContextForSend(thread);
+        : await messageService.resolveBookingContextForSendOptional(thread);
 
     setState(() => _attachingImage = true);
     try {
-      final imageUrl = await storage.uploadChatAttachment(
-        userId: user.id,
-        bookingId: storageBookingId,
-        file: uploadFile,
-      );
+      final imageUrl = storageBookingId != null && storageBookingId.isNotEmpty
+          ? await storage.uploadChatAttachment(
+              userId: user.id,
+              bookingId: storageBookingId,
+              file: uploadFile,
+            )
+          : await storage.uploadInquiryChatAttachment(
+              userId: user.id,
+              conversationId: conversationId,
+              file: uploadFile,
+            );
       await messageService.sendImage(
         conversationId: conversationId,
         senderId: user.id,
@@ -528,7 +535,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final headerAsync = ref.watch(chatInboxItemProvider(_routeKey));
     final messagesAsync = ref.watch(messagesProvider(conversationId));
 
-    final headerForRole = headerAsync.asData?.value ?? _lastHeader;
     final isPresta = _effectiveViewerRole == MessagingInboxRole.prestataire;
     final quickTemplates = isPresta
         ? ChatMessageTemplates.prestataire
@@ -632,6 +638,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               ),
             ),
+            if (!isPresta &&
+                header?.conversation.kind == 'inquiry') ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Material(
+                  color: AppColors.cardSurfaceFor(theme.brightness),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DiscChat.inquiryBanner,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.tonal(
+                          onPressed: () => context.pushBooking(
+                            prestataireId: header!.conversation.prestataireId,
+                          ),
+                          child: const Text(DiscChat.inquiryBookCta),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
             Expanded(
               child: messagesAsync.when(
 

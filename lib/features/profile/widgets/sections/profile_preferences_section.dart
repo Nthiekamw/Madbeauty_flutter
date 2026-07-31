@@ -140,7 +140,14 @@ class _ProfilePreferencesSectionState
       return;
     }
 
-    if (!isFirebaseConfiguredForPush()) return;
+    if (!isFirebaseConfiguredForPush()) {
+      AppSnackBar.show(
+        context,
+        message: DiscProfile.prefPushFirebaseMissing,
+        kind: AppSnackKind.warning,
+      );
+      return;
+    }
 
     AppSnackBar.show(
       context,

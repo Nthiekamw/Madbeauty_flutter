@@ -14,6 +14,7 @@ import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/prestataire/network_video_preview.dart';
 import '../../auth/guest/guest_mode_provider.dart';
 import '../providers/reel_feed_provider.dart';
+import '../widgets/reel_comments_sheet.dart';
 
 /// Fil vertical type Reel (photos + vidéos).
 class ClientReelFeedScreen extends ConsumerStatefulWidget {
@@ -103,6 +104,7 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
             item: item,
             active: index == _currentIndex,
             onLike: () => _onLike(item.id),
+            onComment: () => showReelCommentsSheet(context, reelId: item.id),
             onOpenSalon: () =>
                 context.pushPrestataireDetail(item.prestataireId),
             onBook: () =>
@@ -133,6 +135,7 @@ class _ReelPage extends StatelessWidget {
     required this.item,
     required this.active,
     required this.onLike,
+    required this.onComment,
     required this.onOpenSalon,
     required this.onBook,
   });
@@ -140,6 +143,7 @@ class _ReelPage extends StatelessWidget {
   final ReelFeedItem item;
   final bool active;
   final VoidCallback onLike;
+  final VoidCallback onComment;
   final VoidCallback onOpenSalon;
   final VoidCallback onBook;
 
@@ -286,14 +290,14 @@ class _ReelPage extends StatelessWidget {
               IconButton(
                 onPressed: onLike,
                 visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero,
                 icon: Icon(
                   item.likedByMe
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   color: item.likedByMe ? Colors.pinkAccent : AppColors.white,
-                  size: 26,
+                  size: 28,
                 ),
                 tooltip: item.likedByMe
                     ? DiscReel.unlikeTooltip
@@ -301,6 +305,26 @@ class _ReelPage extends StatelessWidget {
               ),
               Text(
                 '${item.likesCount}',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              IconButton(
+                onPressed: onComment,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: AppColors.white,
+                  size: 26,
+                ),
+                tooltip: DiscReel.commentTooltip,
+              ),
+              Text(
+                '${item.commentsCount}',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: AppColors.white,
                       fontWeight: FontWeight.w600,

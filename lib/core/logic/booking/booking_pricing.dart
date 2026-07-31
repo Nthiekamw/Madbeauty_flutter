@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:madbeauty/core/config/loyalty_config.dart';
 import 'package:madbeauty/core/config/pricing_config.dart';
 import 'package:madbeauty/core/models/domain/booking/booking_platform_fee_settings.dart';
 
@@ -38,10 +41,13 @@ class BookingPricingBreakdown {
     required this.platformFeeFreeBookingCount,
     this.originalServicePriceCents,
     this.referralDiscountPercent,
+    this.vipDiscountPercent,
+    this.loyaltyRewardCents,
   });
 
   final BookingPaymentModeKind paymentMode;
-  /// Prix prestation facturé (après remise parrainage éventuelle).
+
+  /// Prix prestation facturé (après remises + fidélité éventuels).
   final int servicePriceCents;
   final int depositCents;
   final int platformFeeCents;
@@ -51,24 +57,69 @@ class BookingPricingBreakdown {
   final bool requiresInAppPayment;
   final int priorBookingCount;
   final int platformFeeFreeBookingCount;
+
+  /// Prix catalogue brut (avant remises), si une remise/fidélité s’applique.
   final int? originalServicePriceCents;
   final int? referralDiscountPercent;
+  final int? vipDiscountPercent;
+
+  /// Montant couvert par la récompense fidélité (centimes).
+  final int? loyaltyRewardCents;
 
   bool get hasReferralDiscount =>
       referralDiscountPercent != null &&
       referralDiscountPercent! > 0 &&
-      originalServicePriceCents != null &&
-      originalServicePriceCents! > servicePriceCents;
+      originalServicePriceCents != null;
 
-  int get referralDiscountCents =>
-      hasReferralDiscount ? originalServicePriceCents! - servicePriceCents : 0;
+  bool get hasVipDiscount =>
+      vipDiscountPercent != null &&
+      vipDiscountPercent! > 0 &&
+      originalServicePriceCents != null;
+
+  int get priceAfterReferralCents {
+    final original = originalServicePriceCents;
+    if (original == null) {
+      return servicePriceCents + (loyaltyRewardCents ?? 0);
+    }
+    final percent = referralDiscountPercent;
+    if (percent != null && percent > 0) {
+      return discountedServicePriceCents(original, percent);
+    }
+    return original;
+  }
+
+  int get priceAfterVipCents {
+    final afterReferral = priceAfterReferralCents;
+    final vip = vipDiscountPercent;
+    if (vip != null && vip > 0) {
+      return discountedServicePriceCents(afterReferral, vip);
+    }
+    return afterReferral;
+  }
+
+  int get referralDiscountCents {
+    if (!hasReferralDiscount) return 0;
+    return originalServicePriceCents! - priceAfterReferralCents;
+  }
+
+  int get vipDiscountCents {
+    if (!hasVipDiscount) return 0;
+    return priceAfterReferralCents - priceAfterVipCents;
+  }
+
+  bool get hasLoyaltyReward =>
+      loyaltyRewardCents != null && loyaltyRewardCents! > 0;
 
   bool get isPlatformFeeOnly =>
       prestatairePortionCents == 0 && platformFeeCents > 0;
 
+  bool get isFullyCoveredByLoyalty =>
+      hasLoyaltyReward && servicePriceCents <= 0;
+
   double get servicePriceEur => servicePriceCents / 100;
   double get totalChargeEur => totalChargeCents / 100;
   double get balanceOnSiteEur => balanceOnSiteCents / 100;
+  double get loyaltyRewardEur => (loyaltyRewardCents ?? 0) / 100;
 }
 
 int platformFeeCentsForPriorCount(
@@ -87,7 +138,13 @@ int discountedServicePriceCents(int originalCents, int discountPercent) {
   return ((originalCents * (100 - discountPercent)) / 100).round();
 }
 
+int loyaltyCoverCents(int priceAfterDiscountsCents, {int? maxCents}) {
+  final max = maxCents ?? LoyaltyConfig.maxRewardCents;
+  return math.min(priceAfterDiscountsCents, max);
+}
+
 /// [priorBookingCount] = nombre de réservations déjà enregistrées (hors annulées).
+/// Ordre remises : catalogue → parrainage → VIP salon → fidélité.
 BookingPricingBreakdown computeBookingPricing({
   required double servicePriceEur,
   required BookingPaymentModeKind paymentMode,
@@ -96,16 +153,37 @@ BookingPricingBreakdown computeBookingPricing({
   BookingPlatformFeeSettings platformFeeSettings =
       BookingPlatformFeeSettings.defaults,
   int? referralDiscountPercent,
+  int? vipDiscountPercent,
+  bool applyLoyaltyReward = false,
 }) {
   final originalServicePriceCents = (servicePriceEur * 100).round();
-  final percent = referralDiscountPercent;
-  final servicePriceCents = percent != null && percent > 0
-      ? discountedServicePriceCents(originalServicePriceCents, percent)
+  final referralPercent = referralDiscountPercent;
+  final afterReferral = referralPercent != null && referralPercent > 0
+      ? discountedServicePriceCents(originalServicePriceCents, referralPercent)
       : originalServicePriceCents;
-  final platformFee = platformFeeCentsForPriorCount(
+
+  final vipPercent = vipDiscountPercent;
+  final afterVip = vipPercent != null && vipPercent > 0
+      ? discountedServicePriceCents(afterReferral, vipPercent)
+      : afterReferral;
+
+  final loyaltyReward = applyLoyaltyReward
+      ? loyaltyCoverCents(afterVip)
+      : 0;
+  final servicePriceCents = math.max(afterVip - loyaltyReward, 0);
+
+  final needsOriginalSnapshot = (referralPercent != null && referralPercent > 0) ||
+      (vipPercent != null && vipPercent > 0) ||
+      loyaltyReward > 0;
+
+  var platformFee = platformFeeCentsForPriorCount(
     priorBookingCount,
     platformFeeSettings,
   );
+  // Récompense fidélité : pas de frais plateforme sur cette résa.
+  if (loyaltyReward > 0) {
+    platformFee = 0;
+  }
 
   switch (paymentMode) {
     case BookingPaymentModeKind.deposit20:
@@ -127,10 +205,13 @@ BookingPricingBreakdown computeBookingPricing({
         requiresInAppPayment: total > 0,
         priorBookingCount: priorBookingCount,
         platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
-        originalServicePriceCents: percent != null && percent > 0
-            ? originalServicePriceCents
-            : null,
-        referralDiscountPercent: percent != null && percent > 0 ? percent : null,
+        originalServicePriceCents:
+            needsOriginalSnapshot ? originalServicePriceCents : null,
+        referralDiscountPercent:
+            referralPercent != null && referralPercent > 0 ? referralPercent : null,
+        vipDiscountPercent:
+            vipPercent != null && vipPercent > 0 ? vipPercent : null,
+        loyaltyRewardCents: loyaltyReward > 0 ? loyaltyReward : null,
       );
     case BookingPaymentModeKind.onSite:
       return BookingPricingBreakdown(
@@ -144,10 +225,13 @@ BookingPricingBreakdown computeBookingPricing({
         requiresInAppPayment: false,
         priorBookingCount: priorBookingCount,
         platformFeeFreeBookingCount: platformFeeSettings.freeBookingCount,
-        originalServicePriceCents: percent != null && percent > 0
-            ? originalServicePriceCents
-            : null,
-        referralDiscountPercent: percent != null && percent > 0 ? percent : null,
+        originalServicePriceCents:
+            needsOriginalSnapshot ? originalServicePriceCents : null,
+        referralDiscountPercent:
+            referralPercent != null && referralPercent > 0 ? referralPercent : null,
+        vipDiscountPercent:
+            vipPercent != null && vipPercent > 0 ? vipPercent : null,
+        loyaltyRewardCents: loyaltyReward > 0 ? loyaltyReward : null,
       );
   }
 }

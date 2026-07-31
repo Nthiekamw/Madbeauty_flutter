@@ -43,6 +43,7 @@ class PrestataireAccountHubScreen extends ConsumerWidget {
           const ProfileAccountSection(
             menuPrefix: PrestataireProfileAccountMenu(),
             showClientReviews: false,
+            showClientPrograms: false,
           ),
         ],
       ),

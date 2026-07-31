@@ -14,6 +14,8 @@ abstract class Message with _$Message {
     @JsonKey(name: 'sender_id') required String senderId,
     required String content,
     @JsonKey(name: 'image_url') String? imageUrl,
+    @Default('text') String kind,
+    @JsonKey(name: 'result_label') String? resultLabel,
     @JsonKey(name: 'is_read') @Default(false) bool isRead,
     @JsonKey(name: 'delivered_at')
     @NullableIsoDateTimeConverter()

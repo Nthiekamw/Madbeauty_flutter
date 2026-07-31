@@ -39,6 +39,8 @@ class BookingClientOps {
     int? platformFeeCents,
     int? originalServicePriceCents,
     int? referralDiscountPercent,
+    int? vipDiscountPercent,
+    int? loyaltyRewardCents,
   }) {
     return SupabaseErrorHandler.run(
       operation: 'booking.create',
@@ -91,6 +93,10 @@ class BookingClientOps {
             'original_service_price_cents': originalServicePriceCents,
           if (referralDiscountPercent != null && referralDiscountPercent > 0)
             'referral_discount_percent': referralDiscountPercent,
+          if (vipDiscountPercent != null && vipDiscountPercent > 0)
+            'vip_discount_percent': vipDiscountPercent,
+          if (loyaltyRewardCents != null && loyaltyRewardCents > 0)
+            'loyalty_reward_cents': loyaltyRewardCents,
         };
 
         try {

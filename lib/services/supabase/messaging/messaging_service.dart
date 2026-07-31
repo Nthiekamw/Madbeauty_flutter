@@ -537,7 +537,18 @@ class MessagingService {
           if (pendingId != null) {
             return ClientPrestaChatAccess.awaiting(bookingId: pendingId);
           }
-          return ClientPrestaChatAccess.noBooking();
+
+          final inquiryRow = await _client
+              .from('conversations')
+              .select('id')
+              .eq('client_id', clientProfileId)
+              .eq('prestataire_id', prestataireId)
+              .eq('kind', 'inquiry')
+              .maybeSingle();
+          final inquiryId = inquiryRow?['id'] as String?;
+          return ClientPrestaChatAccess.inquiry(
+            conversationId: inquiryId,
+          );
         },
       );
 

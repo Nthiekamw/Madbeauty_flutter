@@ -6,7 +6,9 @@
 |----------|-------------|--------|
 | `on_booking_created` | `INSERT reservations` | prestataire |
 | `on_booking_updated` | `UPDATE` / `DELETE reservations` | client (statut) + liste d'attente (créneau libéré) |
-| `on_message_created` | `INSERT messages` | autre participant |
+| `on_message_created` | `INSERT messages` | autre participant (booking ou inquiry via `conversation_id`) |
+| `on_wishlist_product_updated` | `UPDATE produits_boutique` (restock / prix) | clients wishlist |
+| `on_dispute_updated` | `INSERT/UPDATE booking_disputes` | client + prestataire |
 | `on_user_support_message_created` | `INSERT user_support_messages` | utilisateur ou admins |
 | `on_boutique_order_created` | `INSERT` / passage `paid` boutique | prestataire |
 | `on_boutique_order_updated` | `UPDATE statut` boutique | client |
@@ -17,6 +19,8 @@ Partagé : `_shared/booking_notify.ts`
 npx supabase functions deploy on_booking_created --no-verify-jwt
 npx supabase functions deploy on_booking_updated --no-verify-jwt
 npx supabase functions deploy on_message_created --no-verify-jwt
+npx supabase functions deploy on_wishlist_product_updated --no-verify-jwt
+npx supabase functions deploy on_dispute_updated --no-verify-jwt
 npx supabase functions deploy on_user_support_message_created --no-verify-jwt
 npx supabase functions deploy on_boutique_order_created --no-verify-jwt
 npx supabase functions deploy on_boutique_order_updated --no-verify-jwt

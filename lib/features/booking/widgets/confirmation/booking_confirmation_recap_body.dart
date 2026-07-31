@@ -33,6 +33,10 @@ class BookingConfirmationRecapBody extends StatelessWidget {
     required this.ctaLabel,
     required this.onPaymentModeChanged,
     required this.onConfirm,
+    this.loyaltyAvailable = false,
+    this.applyLoyaltyReward = false,
+    this.onApplyLoyaltyChanged,
+    this.loyaltyMaxRewardEuros = 50,
   });
 
   final String prestataireName;
@@ -53,6 +57,10 @@ class BookingConfirmationRecapBody extends StatelessWidget {
   final String ctaLabel;
   final ValueChanged<BookingPaymentModeKind> onPaymentModeChanged;
   final VoidCallback onConfirm;
+  final bool loyaltyAvailable;
+  final bool applyLoyaltyReward;
+  final ValueChanged<bool>? onApplyLoyaltyChanged;
+  final int loyaltyMaxRewardEuros;
 
   static String formatTime(DateTime value) {
     final hour = value.hour.toString().padLeft(2, '0');
@@ -114,15 +122,24 @@ class BookingConfirmationRecapBody extends StatelessWidget {
         const SizedBox(height: 10),
         BookingConfirmationPriceHighlight(
           label: DiscBk.recapPrice,
-          value: breakdown != null && breakdown!.hasReferralDiscount
+          value: breakdown != null &&
+                  (breakdown!.hasReferralDiscount ||
+                      breakdown!.hasVipDiscount ||
+                      breakdown!.hasLoyaltyReward)
               ? CurrencyFormat.eurCents(breakdown!.servicePriceCents)
               : CurrencyFormat.eur(price, decimals: true),
-          originalValue: breakdown != null && breakdown!.hasReferralDiscount
+          originalValue: breakdown != null &&
+                  (breakdown!.hasReferralDiscount ||
+                      breakdown!.hasVipDiscount ||
+                      breakdown!.hasLoyaltyReward)
               ? CurrencyFormat.eur(price, decimals: true)
               : null,
           meta: formatBookingServiceMeta(
             durationMinutes: durationMinutes,
-            price: breakdown != null && breakdown!.hasReferralDiscount
+            price: breakdown != null &&
+                    (breakdown!.hasReferralDiscount ||
+                        breakdown!.hasVipDiscount ||
+                        breakdown!.hasLoyaltyReward)
                 ? breakdown!.servicePriceEur
                 : price,
           ),
@@ -155,6 +172,40 @@ class BookingConfirmationRecapBody extends StatelessWidget {
                     DiscPay.recapReferralDiscountBanner,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF5B21B6),
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (breakdown != null && breakdown!.hasVipDiscount) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F766E).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF0F766E).withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.workspace_premium_outlined,
+                  size: 20,
+                  color: Color(0xFF0F766E),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    DiscPay.recapVipDiscountBanner,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF115E59),
                       height: 1.4,
                       fontWeight: FontWeight.w600,
                     ),
@@ -202,6 +253,10 @@ class BookingConfirmationRecapBody extends StatelessWidget {
             prestataireAcceptsDeposit: acceptsOnline,
             stripeAvailable: stripeAvailable,
             onPaymentModeChanged: onPaymentModeChanged,
+            loyaltyAvailable: loyaltyAvailable,
+            applyLoyaltyReward: applyLoyaltyReward,
+            onApplyLoyaltyChanged: onApplyLoyaltyChanged,
+            loyaltyMaxRewardEuros: loyaltyMaxRewardEuros,
           ),
           const SizedBox(height: 14),
         ],

@@ -76,5 +76,33 @@ void main() {
         throwsA(isA<BookingPricingException>()),
       );
     });
+
+    test('fidélité couvre jusqu’à 50 €', () {
+      final b = computeBookingPricing(
+        servicePriceEur: 40,
+        paymentMode: BookingPaymentModeKind.onSite,
+        priorBookingCount: 0,
+        prestataireAcceptsConnect: true,
+        applyLoyaltyReward: true,
+      );
+      expect(b.loyaltyRewardCents, 4000);
+      expect(b.servicePriceCents, 0);
+      expect(b.isFullyCoveredByLoyalty, isTrue);
+      expect(b.requiresInAppPayment, isFalse);
+    });
+
+    test('fidélité partielle au-delà de 50 €', () {
+      final b = computeBookingPricing(
+        servicePriceEur: 80,
+        paymentMode: BookingPaymentModeKind.deposit20,
+        priorBookingCount: 0,
+        prestataireAcceptsConnect: true,
+        applyLoyaltyReward: true,
+      );
+      expect(b.loyaltyRewardCents, 5000);
+      expect(b.servicePriceCents, 3000);
+      expect(b.depositCents, 600);
+      expect(b.platformFeeCents, 0);
+    });
   });
 }

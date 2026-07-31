@@ -62,6 +62,12 @@ class AdminSupportHubScreen extends ConsumerWidget {
                         ),
                         onTap: () => context.pushAdminUserSupport(),
                       ),
+                      AdminHubActionTile(
+                        icon: Icons.gavel_outlined,
+                        title: DiscDispute.adminHubTitle,
+                        subtitle: DiscDispute.adminHubHint,
+                        onTap: () => context.pushAdminDisputes(),
+                      ),
                     ],
                   ),
                 ],

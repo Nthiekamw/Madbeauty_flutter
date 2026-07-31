@@ -61,6 +61,16 @@ void navigateFromPushDataWithRouter(
         _openReservationDetail(router, reservationId, role: role);
       }
       return;
+    case 'aftercare':
+      if (reservationId != null) {
+        _openReservationDetail(router, reservationId, role: 'client');
+      } else {
+        _openBookingWithRouter(router, data);
+      }
+      return;
+    case 'rebook_reminder':
+      _openBookingWithRouter(router, data);
+      return;
     case 'boutique_order_created':
       router.pushNamed(AppRouteNames.prestataireBoutiqueOrders);
       return;

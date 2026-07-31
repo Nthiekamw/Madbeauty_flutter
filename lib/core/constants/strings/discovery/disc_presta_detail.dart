@@ -68,6 +68,11 @@ abstract final class DiscPrestaDetail {
   static const contactBookBody =
       'Après ta réservation, le prestataire accepte ou refuse la demande. '
       'Tu pourras ensuite lui écrire ici.';
+  static const contactInquiryTitle = 'Une question ?';
+  static const contactInquiryBody =
+      'Demande un devis ou un conseil avant de réserver. '
+      'Tu pourras booker quand tu seras prêt(e).';
+  static const contactInquiryCta = 'Demander un devis';
   static const contactPendingTitle = 'Demande en attente';
   static const contactPendingBody =
       'Ton prestataire n’a pas encore répondu. Le chat s’ouvrira '

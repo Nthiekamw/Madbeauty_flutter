@@ -17,6 +17,26 @@ abstract final class DiscReel {
   static const likeError = 'Impossible de mettre à jour le j’aime.';
   static const captionFallback = '';
 
+  static const commentTooltip = 'Commentaires';
+  static const commentsSheetTitle = 'Commentaires';
+  static const commentsEmptyTitle = 'Aucun commentaire';
+  static const commentsEmptyBody =
+      'Sois la première à commenter ce Reel.';
+  static const commentsLoadError = 'Impossible de charger les commentaires.';
+  static const commentHint = 'Ajouter un commentaire…';
+  static const commentSend = 'Publier';
+  static const commentLoginRequired =
+      'Connecte-toi pour commenter un Reel.';
+  static const commentError = 'Impossible d’envoyer le commentaire.';
+  static const commentRateLimit =
+      'Trop de commentaires aujourd’hui. Réessaie demain.';
+  static const commentInvalid =
+      'Écris un commentaire entre 1 et 500 caractères.';
+  static const commentDelete = 'Supprimer';
+  static const commentDeleteError = 'Suppression impossible.';
+  static String commentsCount(int n) =>
+      n <= 1 ? '$n commentaire' : '$n commentaires';
+
   static const menuTitle = 'Mes Reels';
   static const menuHint = 'Publie photos et vidéos pour tes clientes';
   static const manageTitle = 'Mes Reels';

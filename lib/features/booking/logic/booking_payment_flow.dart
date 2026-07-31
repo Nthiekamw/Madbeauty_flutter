@@ -45,6 +45,7 @@ class BookingPaymentFlow {
     required BookingPaymentModeKind paymentMode,
     String? serviceId,
     String? packId,
+    bool applyLoyaltyReward = false,
     void Function(BookingPaymentPhase phase)? onPhase,
   }) async {
     onPhase?.call(BookingPaymentPhase.preparing);
@@ -54,6 +55,7 @@ class BookingPaymentFlow {
       packId: packId,
       dateHeure: dateHeure,
       paymentMode: paymentMode,
+      applyLoyaltyReward: applyLoyaltyReward,
     );
 
     onPhase?.call(BookingPaymentPhase.presenting);

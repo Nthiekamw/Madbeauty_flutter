@@ -7,6 +7,9 @@ import {
 export type BookingPaymentMode = "deposit_20" | "on_site";
 
 export const DEPOSIT_PERCENT = 20;
+export const LOYALTY_MAX_REWARD_CENTS = 5000;
+export const LOYALTY_POINTS_PER_REWARD = 200;
+export const SALON_VIP_DISCOUNT_PERCENT = 5;
 
 export interface BookingPricingBreakdown {
   paymentMode: BookingPaymentMode;
@@ -21,6 +24,8 @@ export interface BookingPricingBreakdown {
   platformFeeFreeBookingCount: number;
   originalServicePriceCents?: number;
   referralDiscountPercent?: number;
+  vipDiscountPercent?: number;
+  loyaltyRewardCents?: number;
 }
 
 export function platformFeeCentsForPriorCount(
@@ -42,12 +47,21 @@ export function discountedServicePriceCents(
   return Math.round((originalCents * (100 - discountPercent)) / 100);
 }
 
+export function loyaltyCoverCents(
+  priceAfterDiscountsCents: number,
+  maxCents = LOYALTY_MAX_REWARD_CENTS,
+): number {
+  return Math.min(priceAfterDiscountsCents, maxCents);
+}
+
 export function computeBookingPricing(params: {
   servicePriceCents: number;
   paymentMode: BookingPaymentMode;
   priorBookingCount: number;
   prestataireAcceptsConnect: boolean;
   referralDiscountPercent?: number;
+  vipDiscountPercent?: number;
+  applyLoyaltyReward?: boolean;
   platformFeeSettings: PlatformFeeSettings;
 }): BookingPricingBreakdown {
   const {
@@ -56,19 +70,43 @@ export function computeBookingPricing(params: {
     priorBookingCount,
     prestataireAcceptsConnect,
     referralDiscountPercent,
+    vipDiscountPercent,
+    applyLoyaltyReward = false,
     platformFeeSettings,
   } = params;
-  const percent = referralDiscountPercent;
-  const servicePriceCents = percent != null && percent > 0
-    ? discountedServicePriceCents(originalServicePriceCents, percent)
+  const referralPercent = referralDiscountPercent;
+  const afterReferral = referralPercent != null && referralPercent > 0
+    ? discountedServicePriceCents(originalServicePriceCents, referralPercent)
     : originalServicePriceCents;
-  const platformFee = platformFeeCentsForPriorCount(
+  const vipPercent = vipDiscountPercent;
+  const afterVip = vipPercent != null && vipPercent > 0
+    ? discountedServicePriceCents(afterReferral, vipPercent)
+    : afterReferral;
+  const loyaltyReward = applyLoyaltyReward
+    ? loyaltyCoverCents(afterVip)
+    : 0;
+  const servicePriceCents = Math.max(afterVip - loyaltyReward, 0);
+
+  let platformFee = platformFeeCentsForPriorCount(
     priorBookingCount,
     platformFeeSettings,
   );
-  const discountMeta = percent != null && percent > 0
-    ? { originalServicePriceCents, referralDiscountPercent: percent }
-    : {};
+  if (loyaltyReward > 0) platformFee = 0;
+
+  const needsOriginal =
+    (referralPercent != null && referralPercent > 0) ||
+    (vipPercent != null && vipPercent > 0) ||
+    loyaltyReward > 0;
+  const discountMeta = {
+    ...(needsOriginal ? { originalServicePriceCents } : {}),
+    ...(referralPercent != null && referralPercent > 0
+      ? { referralDiscountPercent: referralPercent }
+      : {}),
+    ...(vipPercent != null && vipPercent > 0
+      ? { vipDiscountPercent: vipPercent }
+      : {}),
+    ...(loyaltyReward > 0 ? { loyaltyRewardCents: loyaltyReward } : {}),
+  };
 
   if (paymentMode === "deposit_20") {
     if (!prestataireAcceptsConnect) {
@@ -132,4 +170,36 @@ export async function countClientBookingsForPlatformFee(
     return 0;
   }
   return count ?? 0;
+}
+
+export async function clientLoyaltyPoints(
+  admin: SupabaseClient,
+  clientId: string,
+): Promise<number> {
+  const { data, error } = await admin
+    .from("client_profiles")
+    .select("loyalty_points")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (error) {
+    console.error("clientLoyaltyPoints", error);
+    return 0;
+  }
+  return Number(data?.loyalty_points ?? 0);
+}
+
+export async function isClientVipAtPrestataire(
+  admin: SupabaseClient,
+  clientId: string,
+  prestataireId: string,
+): Promise<boolean> {
+  const { data, error } = await admin.rpc("is_client_vip_at_prestataire", {
+    p_client_id: clientId,
+    p_prestataire_id: prestataireId,
+  });
+  if (error) {
+    console.error("isClientVipAtPrestataire", error);
+    return false;
+  }
+  return data === true;
 }

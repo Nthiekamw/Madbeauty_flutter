@@ -3,6 +3,10 @@ import {
   type BookingPaymentMode,
   computeBookingPricingFromSettings,
   countClientBookingsForPlatformFee,
+  clientLoyaltyPoints,
+  isClientVipAtPrestataire,
+  LOYALTY_POINTS_PER_REWARD,
+  SALON_VIP_DISCOUNT_PERCENT,
 } from "../_shared/booking_pricing.ts";
 import { fetchActiveReferralDiscount } from "../_shared/referral_discount.ts";
 import { accountCanAcceptPayments } from "../_shared/stripe_connect.ts";
@@ -22,6 +26,7 @@ interface Body {
   packId?: string;
   dateHeure?: string;
   paymentMode?: string;
+  applyLoyaltyReward?: boolean;
   /** Déprécié : le montant est recalculé côté serveur. */
   amountCents?: number;
 }
@@ -215,6 +220,18 @@ Deno.serve(async (req) => {
       clientId,
     );
 
+    const loyaltyPoints = await clientLoyaltyPoints(admin, clientId);
+    const applyLoyaltyReward = body.applyLoyaltyReward === true &&
+      !isPack &&
+      loyaltyPoints >= LOYALTY_POINTS_PER_REWARD;
+
+    const isVip = await isClientVipAtPrestataire(
+      admin,
+      clientId,
+      prestataireId,
+    );
+    const vipDiscountPercent = isVip ? SALON_VIP_DISCOUNT_PERCENT : undefined;
+
     let pricing;
     try {
       pricing = await computeBookingPricingFromSettings(admin, {
@@ -223,6 +240,8 @@ Deno.serve(async (req) => {
         priorBookingCount,
         prestataireAcceptsConnect: prestataireDepositAvailable,
         referralDiscountPercent: referralDiscount?.percent,
+        vipDiscountPercent,
+        applyLoyaltyReward,
       });
     } catch (e) {
       if (String(e).includes("deposit_requires_connect")) {
@@ -289,6 +308,19 @@ Deno.serve(async (req) => {
         pricing.originalServicePriceCents ?? originalServicePriceCents,
       );
       metadata.referral_discount_percent = String(pricing.referralDiscountPercent);
+    } else if (
+      (pricing.loyaltyRewardCents != null && pricing.loyaltyRewardCents > 0) ||
+      (pricing.vipDiscountPercent != null && pricing.vipDiscountPercent > 0)
+    ) {
+      metadata.original_service_price_cents = String(
+        pricing.originalServicePriceCents ?? originalServicePriceCents,
+      );
+    }
+    if (pricing.loyaltyRewardCents != null && pricing.loyaltyRewardCents > 0) {
+      metadata.loyalty_reward_cents = String(pricing.loyaltyRewardCents);
+    }
+    if (pricing.vipDiscountPercent != null && pricing.vipDiscountPercent > 0) {
+      metadata.vip_discount_percent = String(pricing.vipDiscountPercent);
     }
 
     const piParams: Parameters<typeof stripe.paymentIntents.create>[0] = {

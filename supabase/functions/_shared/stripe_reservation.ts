@@ -68,10 +68,18 @@ export async function ensureReservationForPaymentIntent(
   const prestataireAmountCents = Number(meta.prestataire_amount_cents ?? 0);
   const originalServicePriceCents = Number(meta.original_service_price_cents ?? 0);
   const referralDiscountPercent = Number(meta.referral_discount_percent ?? 0);
+  const vipDiscountPercent = Number(meta.vip_discount_percent ?? 0);
+  const loyaltyRewardCents = Number(meta.loyalty_reward_cents ?? 0);
   const hasReferralDiscount = Number.isFinite(referralDiscountPercent) &&
     referralDiscountPercent > 0 &&
     Number.isFinite(originalServicePriceCents) &&
     originalServicePriceCents > 0;
+  const hasVipDiscount = Number.isFinite(vipDiscountPercent) &&
+    vipDiscountPercent > 0 &&
+    Number.isFinite(originalServicePriceCents) &&
+    originalServicePriceCents > 0;
+  const hasLoyaltyReward = Number.isFinite(loyaltyRewardCents) &&
+    loyaltyRewardCents > 0;
 
   if (packId) {
     const payload: Record<string, unknown> = {
@@ -93,6 +101,14 @@ export async function ensureReservationForPaymentIntent(
     if (hasReferralDiscount) {
       payload.original_service_price_cents = originalServicePriceCents;
       payload.referral_discount_percent = referralDiscountPercent;
+    } else if (hasVipDiscount || hasLoyaltyReward) {
+      payload.original_service_price_cents = originalServicePriceCents;
+    }
+    if (hasVipDiscount) {
+      payload.vip_discount_percent = vipDiscountPercent;
+    }
+    if (hasLoyaltyReward) {
+      payload.loyalty_reward_cents = loyaltyRewardCents;
     }
 
     const { data, error } = await admin.rpc("create_pack_booking", {
@@ -149,7 +165,11 @@ export async function ensureReservationForPaymentIntent(
           original_service_price_cents: originalServicePriceCents,
           referral_discount_percent: referralDiscountPercent,
         }
+        : (hasVipDiscount || hasLoyaltyReward)
+        ? { original_service_price_cents: originalServicePriceCents }
         : {}),
+      ...(hasVipDiscount ? { vip_discount_percent: vipDiscountPercent } : {}),
+      ...(hasLoyaltyReward ? { loyalty_reward_cents: loyaltyRewardCents } : {}),
     })
     .select("id")
     .single();

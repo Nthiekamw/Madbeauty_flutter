@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/booking/screens/client_reservation_detail_screen.dart';
+import '../../features/disputes/screens/dispute_detail_screen.dart';
 import '../../features/messaging/providers/messaging_inbox_providers.dart';
 import '../../features/messaging/screens/chat_screen.dart';
 import '../../features/prestataire/models/prestataire_profile_edit_section.dart';
@@ -19,6 +20,7 @@ import '../../features/prestataire/screens/prestataire_salon_hub_screen.dart';
 import '../../features/prestataire/screens/prestataire_subscription_screen.dart';
 import '../../features/reel/screens/prestataire_reel_manage_screen.dart';
 import '../../features/support/screens/user_support_chat_screen.dart';
+import '../../services/supabase/disputes/dispute_service.dart';
 import '../app_routes.dart';
 import '../prestataire_public_route.dart';
 
@@ -72,12 +74,28 @@ List<RouteBase> buildDetailRoutes() => [
         },
       ),
       GoRoute(
+        name: AppRouteNames.clientDisputeDetail,
+        path: AppRoutes.clientDisputeDetail,
+        builder: (context, state) => DisputeDetailScreen(
+          disputeId: state.pathParameters['id']!,
+          viewerRole: DisputeSenderRole.client,
+        ),
+      ),
+      GoRoute(
         name: AppRouteNames.prestataireReservationDetail,
         path: AppRoutes.prestataireReservationDetail,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return PrestataireReservationDetailScreen(reservationId: id);
         },
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireDisputeDetail,
+        path: AppRoutes.prestataireDisputeDetail,
+        builder: (context, state) => DisputeDetailScreen(
+          disputeId: state.pathParameters['id']!,
+          viewerRole: DisputeSenderRole.prestataire,
+        ),
       ),
       GoRoute(
         name: AppRouteNames.prestataireHoraires,

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -38,6 +38,7 @@ class MessageService {
     required String clientId,
     required String prestataireId,
     String? reservationId,
+    String kind = 'booking',
   }) =>
       SupabaseErrorHandler.run(
         operation: 'message.ensureThreadForPair',
@@ -52,13 +53,31 @@ class MessageService {
             final conv = SupabaseDomainCodec.conversation(
               Map<String, dynamic>.from(existing),
             );
+            final updates = <String, dynamic>{};
             if (reservationId != null &&
                 reservationId.isNotEmpty &&
                 conv.reservationId != reservationId) {
-              await _client.from('conversations').update({
-                'reservation_id': reservationId,
-              }).eq('id', conv.id);
-              return conv.copyWith(reservationId: reservationId);
+              updates['reservation_id'] = reservationId;
+            }
+            if (kind == 'booking' && conv.kind == 'inquiry') {
+              updates['kind'] = 'booking';
+            }
+            if (kind == 'inquiry' &&
+                conv.kind != 'inquiry' &&
+                (conv.reservationId == null ||
+                    conv.reservationId!.trim().isEmpty)) {
+              updates['kind'] = 'inquiry';
+            }
+            if (updates.isNotEmpty) {
+              await _client
+                  .from('conversations')
+                  .update(updates)
+                  .eq('id', conv.id);
+              return conv.copyWith(
+                reservationId: updates['reservation_id'] as String? ??
+                    conv.reservationId,
+                kind: updates['kind'] as String? ?? conv.kind,
+              );
             }
             return conv;
           }
@@ -68,6 +87,7 @@ class MessageService {
               .insert({
                 'client_id': clientId,
                 'prestataire_id': prestataireId,
+                'kind': kind,
                 if (reservationId != null && reservationId.isNotEmpty)
                   'reservation_id': reservationId,
               })
@@ -79,6 +99,31 @@ class MessageService {
           );
         },
       );
+
+  /// Fil devis / conseil (sans réservation).
+  Future<Conversation> ensureInquiryThread({
+    required String clientId,
+    required String prestataireId,
+  }) =>
+      ensureThreadForPair(
+        clientId: clientId,
+        prestataireId: prestataireId,
+        kind: 'inquiry',
+      );
+
+  /// Retourne un booking_id si disponible, sinon null (inquiry autorisé).
+  Future<String?> resolveBookingContextForSendOptional(
+    Conversation thread,
+  ) async {
+    try {
+      return await resolveBookingContextForSend(thread);
+    } catch (_) {
+      if (thread.kind == 'inquiry' || thread.reservationId == null) {
+        return null;
+      }
+      rethrow;
+    }
+  }
 
   /// Ouvre le fil lié à une réservation (réutilise le fil paire client/prestataire).
   Future<Conversation> ensureThreadForBooking(String bookingId) =>
@@ -157,7 +202,8 @@ class MessageService {
           if (thread == null) {
             throw StateError('Conversation introuvable.');
           }
-          final bookingId = await resolveBookingContextForSend(thread);
+          final bookingId =
+              await resolveBookingContextForSendOptional(thread);
 
           final recentRows = await _client
               .from('messages')
@@ -185,7 +231,7 @@ class MessageService {
           }
 
           await _client.from('messages').insert({
-            'booking_id': bookingId,
+            if (bookingId != null) 'booking_id': bookingId,
             'conversation_id': conversationId,
             'sender_id': senderId,
             'content': text,
@@ -198,6 +244,8 @@ class MessageService {
     required String conversationId,
     required String senderId,
     required String imageUrl,
+    String kind = 'image',
+    String? resultLabel,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'message.sendImage',
@@ -210,15 +258,28 @@ class MessageService {
           if (thread == null) {
             throw StateError('Conversation introuvable.');
           }
-          final bookingId = await resolveBookingContextForSend(thread);
+          final bookingId =
+              await resolveBookingContextForSendOptional(thread);
+
+          final resolvedKind =
+              kind == 'result_media' ? 'result_media' : 'image';
+          final label = resolvedKind == 'result_media'
+              ? (resultLabel ?? 'result')
+              : null;
 
           await _client.from('messages').insert({
-            'booking_id': bookingId,
+            if (bookingId != null) 'booking_id': bookingId,
             'conversation_id': conversationId,
             'sender_id': senderId,
-            'content': DiscChat.imageMessagePreview,
-            'contenu': DiscChat.imageMessagePreview,
+            'content': resolvedKind == 'result_media'
+                ? DiscChat.resultMediaPreview
+                : DiscChat.imageMessagePreview,
+            'contenu': resolvedKind == 'result_media'
+                ? DiscChat.resultMediaPreview
+                : DiscChat.imageMessagePreview,
             'image_url': url,
+            'kind': resolvedKind,
+            if (label != null) 'result_label': label,
           });
         },
       );

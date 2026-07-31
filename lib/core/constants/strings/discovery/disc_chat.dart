@@ -7,13 +7,27 @@ abstract final class DiscChat {
   static const emptyBody =
       'Après une réservation, échange ici avec ton prestataire ou ta cliente.';
   static const emptyBodyClient =
-      'Réserve un prestataire. Une fois ta demande acceptée, le chat s’ouvre depuis tes réservations.';
+      'Demande un devis depuis une fiche, ou réserve : le chat s’ouvre aussi après acceptation.';
   static const emptyBodyPresta =
-      'Quand une cliente réserve chez toi, la conversation apparaîtra ici automatiquement.';
+      'Quand une cliente te contacte pour un devis ou réserve chez toi, la conversation apparaît ici.';
+  static const inquiryBanner =
+      'Conversation devis / conseil — sans réservation liée.';
+  static const inquiryBookCta = 'Réserver';
   static const readLabel = 'Lu';
   static const sentLabel = 'Envoyé';
   static const unreadLabel = 'Non lu';
   static const imageMessagePreview = 'Photo';
+  static const resultMediaPreview = 'Rendu';
+  static const resultLabelBefore = 'Avant';
+  static const resultLabelAfter = 'Après';
+  static const resultLabelResult = 'Rendu';
+  static const sendResultMedia = 'Envoyer un rendu';
+  static const sendResultMediaTitle = 'Envoyer un rendu';
+  static const sendResultMediaBody =
+      'Choisis le type de photo à envoyer à ta cliente.';
+  static const sendResultMediaSuccess = 'Rendu envoyé dans le chat.';
+  static const sendResultMediaError =
+      'Impossible d’envoyer le rendu. Réessaie.';
   static const attachImageTooltip = 'Ajouter une photo';
   static const imagePickError = 'Impossible d’ajouter cette photo. Réessaie.';
   static String unreadCountLabel(int count) =>
@@ -106,4 +120,11 @@ abstract final class DiscChat {
   static String presenceHoursAgo(int hours) => 'Vu il y a $hours h';
   static String presenceYesterdayAt(String time) => 'Vu hier à $time';
   static String presenceOnDate(String formatted) => 'Vu le $formatted';
+
+  static String resultLabelTitle(String? label) => switch (label) {
+        'before' => resultLabelBefore,
+        'after' => resultLabelAfter,
+        'result' => resultLabelResult,
+        _ => resultLabelResult,
+      };
 }

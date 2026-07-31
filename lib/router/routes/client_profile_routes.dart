@@ -5,6 +5,7 @@ import '../../features/booking/screens/client_reservations_screen.dart';
 import '../../features/cart/screens/client_boutique_cart_screen.dart';
 import '../../features/cart/screens/client_boutique_orders_screen.dart';
 import '../../features/favorites/screens/client_favorites_screen.dart';
+import '../../features/wishlist/screens/client_wishlist_screen.dart';
 import '../../features/bug_report/screens/bug_report_chat_screen.dart';
 import '../../features/bug_report/screens/bug_reports_hub_screen.dart';
 import '../../features/bug_report/screens/report_bug_screen.dart';
@@ -13,6 +14,7 @@ import '../../features/listing/screens/all_prestataires_screen.dart';
 import '../../features/profile/screens/client_payment_methods_screen.dart';
 import '../../features/profile/screens/edit_client_account_screen.dart';
 import '../../features/referral/screens/referral_screen.dart';
+import '../../features/loyalty/screens/loyalty_screen.dart';
 import '../../features/reviews/screens/client_reviews_screen.dart';
 import '../../services/storage/local_cache_service.dart';
 import '../app_routes.dart';
@@ -32,6 +34,11 @@ List<RouteBase> buildClientProfileRoutes() => [
         name: AppRouteNames.clientFavorites,
         path: AppRoutes.clientFavorites,
         builder: (context, state) => const ClientFavoritesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientWishlist,
+        path: AppRoutes.clientWishlist,
+        builder: (context, state) => const ClientWishlistScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientCart,
@@ -102,5 +109,10 @@ List<RouteBase> buildClientProfileRoutes() => [
           }
           return const ReferralScreen();
         },
+      ),
+      GoRoute(
+        name: AppRouteNames.clientLoyalty,
+        path: AppRoutes.clientLoyalty,
+        builder: (context, state) => const LoyaltyScreen(),
       ),
     ];

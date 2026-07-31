@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_strings.dart';
@@ -98,8 +98,16 @@ Future<void> openChatWithPrestataire(
 
     switch (access.kind) {
       case ClientPrestaChatAccessKind.noBooking:
-        AppSnackBar.show(context, message: DiscChat.contactRequiresBooking);
-        context.pushBooking(prestataireId: prestataireId);
+      case ClientPrestaChatAccessKind.inquiry:
+        final conv = await messageService.ensureInquiryThread(
+          clientId: client.id,
+          prestataireId: prestataireId,
+        );
+        refreshMessagingInbox(ref, role: MessagingInboxRole.client);
+        if (!context.mounted) return;
+        await context.pushChat(conv.id, as: 'client');
+        if (!context.mounted) return;
+        refreshMessagingInbox(ref, role: MessagingInboxRole.client);
       case ClientPrestaChatAccessKind.awaitingPrestaResponse:
         AppSnackBar.show(context, message: DiscChat.contactAwaitingPresta);
         context.goMyReservations();

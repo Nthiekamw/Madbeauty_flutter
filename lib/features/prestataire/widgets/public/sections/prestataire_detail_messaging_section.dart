@@ -50,7 +50,14 @@ class PrestataireDetailMessagingSection extends ConsumerWidget {
                 _PendingContent(
                   onViewReservations: () => context.goMyReservations(),
                 ),
-              ClientPrestaChatAccessKind.noBooking => _BookFirstContent(
+              ClientPrestaChatAccessKind.noBooking ||
+              ClientPrestaChatAccessKind.inquiry =>
+                _InquiryContent(
+                  onAsk: () => openChatWithPrestataire(
+                    context,
+                    ref,
+                    prestataireId,
+                  ),
                   onBook: () => context.pushBooking(
                     prestataireId: prestataireId,
                   ),
@@ -148,9 +155,13 @@ class _PendingContent extends StatelessWidget {
   }
 }
 
-class _BookFirstContent extends StatelessWidget {
-  const _BookFirstContent({required this.onBook});
+class _InquiryContent extends StatelessWidget {
+  const _InquiryContent({
+    required this.onAsk,
+    required this.onBook,
+  });
 
+  final VoidCallback onAsk;
   final VoidCallback onBook;
 
   @override
@@ -162,11 +173,11 @@ class _BookFirstContent extends StatelessWidget {
       children: [
         PrestataireDetailSectionHeader(
           icon: Icons.chat_bubble_outline_rounded,
-          title: DiscPrestaDetail.contactBookTitle,
+          title: DiscPrestaDetail.contactInquiryTitle,
         ),
         const SizedBox(height: 8),
         Text(
-          DiscPrestaDetail.contactBookBody,
+          DiscPrestaDetail.contactInquiryBody,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             fontSize: 11,
@@ -174,11 +185,23 @@ class _BookFirstContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        FilledButton.tonalIcon(
+        FilledButton.icon(
+          onPressed: onAsk,
+          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+          label: Text(DiscPrestaDetail.contactInquiryCta),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 42),
+            shape: RoundedRectangleBorder(
+              borderRadius: DiscoveryStyles.chipBorderRadius,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
           onPressed: onBook,
           icon: const Icon(Icons.calendar_month_rounded, size: 18),
           label: Text(DiscPrestaDetail.actionBookSvc),
-          style: FilledButton.styleFrom(
+          style: OutlinedButton.styleFrom(
             minimumSize: const Size(0, 42),
             shape: RoundedRectangleBorder(
               borderRadius: DiscoveryStyles.chipBorderRadius,

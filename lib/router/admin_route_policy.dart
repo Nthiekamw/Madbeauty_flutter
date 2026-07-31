@@ -41,6 +41,7 @@ abstract final class AdminRoutePolicy {
       AppRoutes.prestataireProfileAccount,
       AppRoutes.prestataireProfileEdit,
       '/prestataire/reservations/',
+      '/prestataire/disputes/',
     ];
     return prefixes.any((p) => location.startsWith(p));
   }

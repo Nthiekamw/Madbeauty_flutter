@@ -86,6 +86,7 @@ class ClientHomeReorderableSections extends ConsumerWidget {
     return switch (id) {
       ClientHomeSectionId.nextAppointment =>
         const ClientHomeNextAppointmentSection(),
+      ClientHomeSectionId.loyalty => const SizedBox.shrink(),
       ClientHomeSectionId.inspiration => const ClientHomeExploreRow(),
       ClientHomeSectionId.promo => const ClientHomePromoBanner(),
       ClientHomeSectionId.offers => const ClientHomeOffersSection(),

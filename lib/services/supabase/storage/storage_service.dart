@@ -227,6 +227,23 @@ class StorageService {
     );
   }
 
+  /// Pièce jointe chat devis (sans réservation) — préfixe conversation.
+  Future<String> uploadInquiryChatAttachment({
+    required String userId,
+    required String conversationId,
+    required StorageUploadFile file,
+    StorageUploadProgress? onProgress,
+  }) {
+    return _uploadImage(
+      operation: 'storage.uploadInquiryChatAttachment',
+      bucket: chatAttachmentsBucket,
+      pathPrefix: '$userId/inquiry_$conversationId',
+      baseName: 'photo',
+      file: file,
+      onProgress: onProgress,
+    );
+  }
+
   /// Chemin : `{userId}/{reportId}/screenshot_{stamp}.jpg`
   Future<String> uploadBugReportScreenshot({
     required String userId,
