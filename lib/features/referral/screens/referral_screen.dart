@@ -132,7 +132,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
                     );
                   }
                 },
-                onShare: () => shareReferralInvite(info.code),
+                onShare: () => shareReferralInvite(context, info.code),
               ),
               const SizedBox(height: 14),
               _ReferralRewardsCard(theme: theme, info: info),

@@ -1,10 +1,13 @@
-﻿import 'package:share_plus/share_plus.dart';
+﻿import 'package:flutter/material.dart';
 
+import '../../../core/config/share_link_config.dart';
 import '../../../core/config/share_link_resolver.dart';
 import '../../../core/constants/strings/discovery/disc_presta_detail.dart';
+import '../../../shared/utils/native_share.dart';
 
-/// Partage la fiche (SMS, WhatsApp, etc.) via [SharePlus].
-Future<void> sharePrestataireProfile({
+/// Partage la fiche (SMS, WhatsApp, etc.) via la feuille système.
+Future<NativeShareOutcome> sharePrestataireProfile({
+  required BuildContext context,
   required String prestataireId,
   required String displayName,
   String? publicSlug,
@@ -14,11 +17,22 @@ Future<void> sharePrestataireProfile({
     publicSlug: publicSlug,
   );
   final title = displayName.trim().isEmpty ? 'MadBeauty' : displayName.trim();
+  final storeLine = ShareLinkConfig.downloadShareFooter(
+    hint: 'Télécharge MadBeauty :',
+  );
 
-  await SharePlus.instance.share(
-    ShareParams(
-      text: '${DiscPrestaDetail.shareMessage(title)}\n$link',
-      subject: title,
-    ),
+  final buffer = StringBuffer()
+    ..writeln(DiscPrestaDetail.shareMessage(title))
+    ..writeln(link);
+  if (storeLine != null) {
+    buffer
+      ..writeln()
+      ..writeln(storeLine);
+  }
+
+  return NativeShare.shareText(
+    context: context,
+    text: buffer.toString().trim(),
+    subject: title,
   );
 }

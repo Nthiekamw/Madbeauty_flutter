@@ -17,6 +17,7 @@ import '../../auth/guest/guest_mode_provider.dart';
 import '../logic/reel_share.dart';
 import '../providers/reel_feed_provider.dart';
 import '../widgets/reel_comments_sheet.dart';
+import '../../../shared/utils/native_share.dart';
 
 /// Fil vertical type Reel (photos + vidéos), style TikTok.
 class ClientReelFeedScreen extends ConsumerStatefulWidget {
@@ -139,7 +140,7 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
             active: index == _currentIndex,
             onLike: () => _onLike(item.id),
             onFavorite: () => _onFavorite(item),
-            onShare: () => _onShare(item),
+            onShare: (shareContext) => _onShare(shareContext, item),
             onComment: () => showReelCommentsSheet(context, reelId: item.id),
             onOpenSalon: () =>
                 context.pushPrestataireDetail(item.prestataireId),
@@ -196,12 +197,19 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
     return like ? DiscReel.likeError : DiscReel.favoriteError;
   }
 
-  Future<void> _onShare(ReelFeedItem item) async {
-    try {
-      await shareReelPost(item);
-    } catch (_) {
-      if (!mounted) return;
-      AppSnackBar.error(context, DiscReel.shareError);
+  Future<void> _onShare(BuildContext shareContext, ReelFeedItem item) async {
+    final outcome = await shareReelPost(shareContext, item);
+    if (!mounted) return;
+    switch (outcome) {
+      case NativeShareOutcome.shared:
+      case NativeShareOutcome.dismissed:
+        break;
+      case NativeShareOutcome.copiedFallback:
+        AppSnackBar.success(context, DiscReel.shareCopiedFallback);
+        break;
+      case NativeShareOutcome.failed:
+        AppSnackBar.error(context, DiscReel.shareError);
+        break;
     }
   }
 }
@@ -222,7 +230,7 @@ class _ReelPage extends StatefulWidget {
   final bool active;
   final VoidCallback onLike;
   final VoidCallback onFavorite;
-  final VoidCallback onShare;
+  final void Function(BuildContext shareContext) onShare;
   final VoidCallback onComment;
   final VoidCallback onOpenSalon;
   final VoidCallback onBook;
@@ -479,7 +487,7 @@ class _ReelPageState extends State<_ReelPage> {
               ),
               const SizedBox(height: 10),
               IconButton(
-                onPressed: widget.onShare,
+                onPressed: () => widget.onShare(context),
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero,

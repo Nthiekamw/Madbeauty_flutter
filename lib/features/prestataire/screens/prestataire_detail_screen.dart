@@ -195,6 +195,7 @@ class _PrestataireDetailScreenState
                         displayTitle: displayTitle,
                         avatarUrl: data.avatarUrl,
                         onShare: () => sharePrestataireProfile(
+                          context: context,
                           prestataireId: data.profile.id,
                           displayName: displayTitle,
                           publicSlug: data.profile.publicSlug,

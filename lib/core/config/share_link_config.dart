@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'app_config.dart';
 
 /// Liens publics partagés (fiches prestataire).
@@ -13,6 +15,18 @@ class ShareLinkConfig {
 
   static const String customScheme = 'com.madbeauty.madbeauty';
 
+  /// Lien App Store MadBeauty (partage iOS).
+  static const String appStoreUrl = String.fromEnvironment(
+    'APP_STORE_URL',
+    defaultValue: 'https://apps.apple.com/app/id6786782749',
+  );
+
+  /// Lien Play Store (vide tant que l’app Android n’est pas publiée).
+  static const String playStoreUrl = String.fromEnvironment(
+    'PLAY_STORE_URL',
+    defaultValue: '',
+  );
+
   static const String _prestataireShareFunction = 'prestataire_share';
   static const String _reelShareFunction = 'reel_share';
 
@@ -23,6 +37,36 @@ class ShareLinkConfig {
 
   static String get _httpsBase =>
       httpsBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+
+  static String get _webFallback =>
+      _httpsBase.isEmpty ? 'https://madbeauty.pro' : _httpsBase;
+
+  /// Lien « télécharger / découvrir MadBeauty » selon la plateforme courante.
+  ///
+  /// - Web → [httpsBaseUrl] (`madbeauty.pro`)
+  /// - iOS → App Store
+  /// - Android → Play Store si défini, sinon `madbeauty.pro`
+  static String downloadUrlForCurrentPlatform() {
+    if (kIsWeb) return _webFallback;
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        final apple = appStoreUrl.trim();
+        return apple.isNotEmpty ? apple : _webFallback;
+      case TargetPlatform.android:
+        final play = playStoreUrl.trim();
+        return play.isNotEmpty ? play : _webFallback;
+      default:
+        return _webFallback;
+    }
+  }
+
+  /// Ligne à ajouter sous le lien partagé (téléchargement / site).
+  static String? downloadShareFooter({required String hint}) {
+    final url = downloadUrlForCurrentPlatform().trim();
+    if (url.isEmpty) return null;
+    return '$hint\n$url';
+  }
 
   /// Lien court brandé : `/@vichy`.
   static String prestataireHandlePath(String slug) =>

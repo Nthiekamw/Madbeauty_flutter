@@ -31,6 +31,9 @@ abstract final class DiscReel {
 
   static const shareTooltip = 'Partager';
   static const shareError = 'Partage impossible. Réessaie.';
+  static const shareCopiedFallback =
+      'Lien copié — colle-le où tu veux le partager.';
+  static const shareDownloadHint = 'Télécharge MadBeauty :';
   static String shareSubject(String salon) => 'Reel · $salon — MadBeauty';
   static String shareMessage(String salon, String? caption) {
     final cap = caption?.trim();
