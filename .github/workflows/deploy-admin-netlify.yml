@@ -17,6 +17,7 @@ on:
       - master
       - features/v2
       - deploy
+      - feature/boutique-packs
     paths:
       - 'web-admin/**'
       - 'scripts/generate_web_admin_config.js'

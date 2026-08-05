@@ -14,6 +14,7 @@ on:
       - master
       - features/v2
       - deploy
+      - feature/boutique-packs
     paths:
       - 'website/**'
       - '.github/workflows/deploy-website-netlify.yml'
