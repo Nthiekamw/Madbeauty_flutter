@@ -10,8 +10,12 @@ abstract final class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String bannedAccountSupport = '/support/banned-account';
   static const String role = '/role';
-  /// Fiche publique partageable : `/prestataire/:id` (UUID).
+  /// Fiche publique partageable : `/prestataire/:id` (UUID) ou `/@:slug`.
   static const String prestatairePublicProfile = '/prestataire';
+  /// Lien court brandé : `/@vichy`.
+  static const String prestatairePublicHandle = '/@';
+  /// Alias court : `/p/:slug`.
+  static const String prestatairePublicSlugAlias = '/p';
 
   /// Ancien chemin listing — redirigé vers [prestatairePublicProfile].
   static const String prestatairesLegacy = '/prestataires';
@@ -32,6 +36,7 @@ abstract final class AppRoutes {
   static const String editClientAccount = '/client/profile/edit';
   static const String clientPaymentMethods = '/client/payment-methods';
   static const String clientFavorites = '/client/favorites';
+  static const String clientReelFavorites = '/client/reel-favorites';
   static const String clientWishlist = '/client/wishlist';
   static const String clientCart = '/client/cart';
   static const String clientBoutiqueOrders = '/client/boutique-orders';
@@ -111,6 +116,8 @@ abstract final class AppRouteNames {
   static const String bannedAccountSupport = 'banned-account-support';
   static const String role = 'role';
   static const String prestataireDetail = 'prestataire-detail';
+  static const String prestataireDetailBySlug = 'prestataire-detail-slug';
+  static const String prestataireDetailByHandle = 'prestataire-detail-handle';
   static const String booking = 'booking';
   static const String bookingConfirmation = 'booking-confirmation';
   static const String asyncStateTest = 'async-state-test';
@@ -129,6 +136,7 @@ abstract final class AppRouteNames {
   static const String editClientAccount = 'edit-client-account';
   static const String clientPaymentMethods = 'client-payment-methods';
   static const String clientFavorites = 'client-favorites';
+  static const String clientReelFavorites = 'client-reel-favorites';
   static const String clientWishlist = 'client-wishlist';
   static const String clientCart = 'client-cart';
   static const String clientBoutiqueOrders = 'client-boutique-orders';

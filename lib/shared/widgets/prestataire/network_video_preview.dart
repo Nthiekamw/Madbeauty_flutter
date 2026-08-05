@@ -16,6 +16,8 @@ class NetworkVideoPreview extends StatefulWidget {
     this.loop = true,
     this.fit = BoxFit.cover,
     this.showControls = false,
+    /// Tap sur la vidéo pour play/pause (Reel).
+    this.tapToTogglePlay = false,
     this.placeholderIconSize = 36,
   }) : assert(url != null || localPath != null);
 
@@ -26,6 +28,7 @@ class NetworkVideoPreview extends StatefulWidget {
   final bool loop;
   final BoxFit fit;
   final bool showControls;
+  final bool tapToTogglePlay;
   final double placeholderIconSize;
 
   @override
@@ -52,6 +55,22 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
       _ready = false;
       _failed = false;
       _initController();
+      return;
+    }
+    final controller = _controller;
+    if (!_ready || controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    if (oldWidget.muted != widget.muted) {
+      controller.setVolume(widget.muted ? 0 : 1);
+    }
+    if (oldWidget.autoPlay != widget.autoPlay) {
+      if (widget.autoPlay) {
+        controller.play();
+      } else {
+        controller.pause();
+      }
+      if (mounted) setState(() {});
     }
   }
 
@@ -75,6 +94,8 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
       controller.setLooping(widget.loop);
       if (widget.autoPlay) {
         await controller.play();
+      } else {
+        await controller.pause();
       }
       if (mounted) setState(() => _ready = true);
     } catch (_) {
@@ -132,20 +153,22 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
       },
     );
 
-    if (!widget.showControls) {
+    final interactive = widget.showControls || widget.tapToTogglePlay;
+    if (!interactive) {
       return video;
     }
 
+    final playing = controller.value.isPlaying;
     return Stack(
       fit: StackFit.expand,
       children: [
         video,
-        Material(
-          color: AppColors.transparent,
-          child: InkWell(
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _togglePlayback,
             child: AnimatedOpacity(
-              opacity: controller.value.isPlaying ? 0 : 0.92,
+              opacity: playing ? 0 : 0.92,
               duration: const Duration(milliseconds: 180),
               child: Center(
                 child: DecoratedBox(
@@ -156,7 +179,7 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Icon(
-                      controller.value.isPlaying
+                      playing
                           ? Icons.pause_rounded
                           : Icons.play_arrow_rounded,
                       color: AppColors.white,

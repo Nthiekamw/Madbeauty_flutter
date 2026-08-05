@@ -46,24 +46,25 @@ final prestataireDetailProvider = FutureProvider.autoDispose
         return null;
       }
 
-      final profile = await prestataireService.getById(prestataireId);
+      final profile = await prestataireService.getByIdOrPublicSlug(prestataireId);
       if (profile == null) return null;
 
+      final resolvedId = profile.id;
       final userProfile = await profileService.getByUserId(profile.userId);
       final specialtyData = await prestataireService
-          .getSpecialtyDataForPrestataires([prestataireId]);
+          .getSpecialtyDataForPrestataires([resolvedId]);
       final specialtyNames = List<String>.from(
-        specialtyData.namesByPrestataire[prestataireId] ?? const [],
+        specialtyData.namesByPrestataire[resolvedId] ?? const [],
       );
-      final services = await ref.watch(servicesProvider(prestataireId).future);
+      final services = await ref.watch(servicesProvider(resolvedId).future);
       final categoryIds =
-          specialtyData.categoryIdsByPrestataire[prestataireId] ?? const {};
+          specialtyData.categoryIdsByPrestataire[resolvedId] ?? const {};
       final specialtyGroups = buildPrestataireSpecialtyGroups(
         categoryIds: categoryIds,
         services: services,
       );
       final photos = await ref.watch(
-        realisationPhotosProvider(prestataireId).future,
+        realisationPhotosProvider(resolvedId).future,
       );
       final gallerySections = groupRealisationPhotosByService(
         photos: photos,
@@ -76,7 +77,7 @@ final prestataireDetailProvider = FutureProvider.autoDispose
 
       final disponibiliteService = ref.watch(disponibiliteServiceProvider);
       final horaires = disponibiliteService != null
-          ? await disponibiliteService.getHoraires(prestataireId)
+          ? await disponibiliteService.getHoraires(resolvedId)
           : <HorairePlage>[];
 
       return PrestataireDetailData(

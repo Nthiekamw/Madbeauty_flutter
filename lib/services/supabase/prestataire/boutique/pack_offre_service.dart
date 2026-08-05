@@ -10,19 +10,27 @@ import '../../../../core/models/domain/catalog/produit_boutique.dart';
 import '../../../../core/models/domain/catalog/service_beaute.dart';
 import '../../storage/storage_service.dart';
 
-/// Pack enrichi pour le feed accueil (titre salon + ville).
+/// Pack enrichi pour le feed accueil (salon, prix catalogue, résumé items).
 class PackOffreHomeEntry {
   const PackOffreHomeEntry({
     required this.pack,
     required this.prestataireDisplayName,
     this.ville,
     this.prixCatalogue,
+    this.itemsSummary,
+    this.hasBookableServices = false,
   });
 
   final PackOffre pack;
   final String prestataireDisplayName;
   final String? ville;
   final double? prixCatalogue;
+
+  /// Ex. « Coiffure + Maquillage » pour le sous-titre carte.
+  final String? itemsSummary;
+
+  /// Au moins un service réservable dans le pack.
+  final bool hasBookableServices;
 
   double? get discountPercent {
     final catalogue = prixCatalogue;
@@ -266,6 +274,21 @@ class PackOffreService {
   }) =>
       setActif(prestataireId: prestataireId, id: id, isActif: false);
 
+  Future<void> delete({
+    required String prestataireId,
+    required String id,
+  }) =>
+      SupabaseErrorHandler.run(
+        operation: 'packOffre.delete',
+        action: () async {
+          await _client
+              .from('packs_offre')
+              .delete()
+              .eq('prestataire_id', prestataireId)
+              .eq('id', id);
+        },
+      );
+
   Future<int> countActifs(String prestataireId) => SupabaseErrorHandler.run(
         operation: 'packOffre.countActifs',
         action: () async {
@@ -293,7 +316,7 @@ class PackOffreService {
               .order('created_at', ascending: false)
               .limit(limit);
 
-          final entries = <PackOffreHomeEntry>[];
+          final base = <({PackOffre pack, String name, String? ville})>[];
           for (final raw in response as List<dynamic>) {
             final row = Map<String, dynamic>.from(raw as Map);
             final profileRaw = row.remove('prestataire_profiles');
@@ -310,15 +333,119 @@ class PackOffreService {
                   : (nomSalon.isNotEmpty ? nomSalon : displayName);
               ville = (profile['ville'] as String?)?.trim();
             }
+            base.add((
+              pack: pack,
+              name: displayName,
+              ville: (ville == null || ville.isEmpty) ? null : ville,
+            ));
+          }
+          if (base.isEmpty) return const <PackOffreHomeEntry>[];
+
+          final packIds = base.map((e) => e.pack.id).toList(growable: false);
+          final itemsByPack = await _itemsByPackIds(packIds);
+          final serviceIds = <String>{};
+          final produitIds = <String>{};
+          for (final items in itemsByPack.values) {
+            for (final item in items) {
+              final sid = item.serviceId;
+              final pid = item.produitId;
+              if (sid != null && sid.isNotEmpty) serviceIds.add(sid);
+              if (pid != null && pid.isNotEmpty) produitIds.add(pid);
+            }
+          }
+
+          final servicesById = await _servicesByIds(serviceIds.toList());
+          final produitsById = await _produitsByIds(produitIds.toList());
+
+          final entries = <PackOffreHomeEntry>[];
+          for (final row in base) {
+            final items = itemsByPack[row.pack.id] ?? const <PackItem>[];
             entries.add(
               PackOffreHomeEntry(
-                pack: pack,
-                prestataireDisplayName: displayName,
-                ville: (ville == null || ville.isEmpty) ? null : ville,
+                pack: row.pack,
+                prestataireDisplayName: row.name,
+                ville: row.ville,
+                prixCatalogue: computePackPrixCatalogue(
+                  items: items,
+                  servicesById: servicesById,
+                  produitsById: produitsById,
+                ),
+                itemsSummary: _itemsSummary(
+                  items: items,
+                  servicesById: servicesById,
+                  produitsById: produitsById,
+                ),
+                hasBookableServices: items.any(
+                  (i) => i.itemType == PackItemType.service,
+                ),
               ),
             );
           }
           return entries;
         },
       );
+
+  Future<Map<String, List<PackItem>>> _itemsByPackIds(List<String> packIds) async {
+    if (packIds.isEmpty) return const {};
+    final response = await _client
+        .from('pack_items')
+        .select()
+        .inFilter('pack_id', packIds)
+        .order('sort_order');
+    final map = <String, List<PackItem>>{};
+    for (final raw in response as List<dynamic>) {
+      final item = PackItem.fromJson(Map<String, dynamic>.from(raw as Map));
+      map.putIfAbsent(item.packId, () => <PackItem>[]).add(item);
+    }
+    return map;
+  }
+
+  Future<Map<String, ServiceBeaute>> _servicesByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final response =
+        await _client.from('services_beaute').select().inFilter('id', ids);
+    return {
+      for (final raw in response as List<dynamic>)
+        (raw as Map)['id'] as String: ServiceBeaute.fromJson(
+          Map<String, dynamic>.from(raw),
+        ),
+    };
+  }
+
+  Future<Map<String, ProduitBoutique>> _produitsByIds(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    final response =
+        await _client.from('produits_boutique').select().inFilter('id', ids);
+    return {
+      for (final raw in response as List<dynamic>)
+        (raw as Map)['id'] as String: ProduitBoutique.fromJson(
+          Map<String, dynamic>.from(raw),
+        ),
+    };
+  }
+
+  static String? _itemsSummary({
+    required List<PackItem> items,
+    required Map<String, ServiceBeaute> servicesById,
+    required Map<String, ProduitBoutique> produitsById,
+  }) {
+    final names = <String>[];
+    for (final item in items) {
+      switch (item.itemType) {
+        case PackItemType.service:
+          final s =
+              item.serviceId == null ? null : servicesById[item.serviceId];
+          final nom = s?.nom.trim() ?? '';
+          if (nom.isNotEmpty) names.add(nom);
+        case PackItemType.produit:
+          final p =
+              item.produitId == null ? null : produitsById[item.produitId];
+          final nom = p?.nom.trim() ?? '';
+          if (nom.isNotEmpty) names.add(nom);
+      }
+    }
+    if (names.isEmpty) return null;
+    if (names.length <= 3) return names.join(' + ');
+    return '${names.take(2).join(' + ')} +${names.length - 2}';
+  }
 }

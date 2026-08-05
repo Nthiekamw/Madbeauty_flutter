@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/layout/web_flow_panel.dart';
 import '../../../../shared/layout/web_flow_scaffold.dart';
-import '../../../../shared/widgets/discovery/discovery_feature_header.dart';
 import 'layout/prestataire_brand_scaffold.dart';
 
 /// Scaffold flow prestataire (AppBar + panneau centré sur web).
@@ -34,7 +33,7 @@ class PrestataireFlowScaffold extends StatelessWidget {
   }
 }
 
-/// Sous-page prestataire avec en-tête feature (mobile) ou AppBar (web).
+/// Sous-page prestataire avec AppBar simple (comme Mon panier côté client).
 class PrestataireSubpageScaffold extends StatelessWidget {
   const PrestataireSubpageScaffold({
     super.key,
@@ -45,15 +44,19 @@ class PrestataireSubpageScaffold extends StatelessWidget {
     this.wrapPanel = true,
     this.backEnabled = true,
     this.onBack,
+    this.actions,
   });
 
   final String title;
+  /// Conservé pour compatibilité API (titre AppBar uniquement).
   final String? subtitle;
+  /// Conservé pour compatibilité API (titre AppBar uniquement).
   final IconData? icon;
   final Widget body;
   final bool wrapPanel;
   final bool backEnabled;
   final VoidCallback? onBack;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -61,44 +64,22 @@ class PrestataireSubpageScaffold extends StatelessWidget {
     final content =
         wrapPanel && useWeb ? WebFlowPanel(child: body) : body;
 
+    final appBar = AppBar(
+      title: Text(title),
+      automaticallyImplyLeading: backEnabled,
+      leading: backEnabled
+          ? IconButton(
+              onPressed: onBack ?? () => context.pop(),
+              icon: const Icon(Icons.arrow_back_rounded),
+            )
+          : null,
+      actions: actions,
+    );
+
     if (useWeb) {
-      return WebFlowScaffold(
-        appBar: AppBar(
-          title: Text(title),
-          automaticallyImplyLeading: backEnabled,
-          leading: backEnabled
-              ? IconButton(
-                  onPressed: onBack ?? () => context.pop(),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                )
-              : null,
-        ),
-        body: content,
-      );
+      return WebFlowScaffold(appBar: appBar, body: content);
     }
 
-    final headerIcon = icon;
-
-    return PrestataireBrandScaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: backEnabled ? (onBack ?? () => context.pop()) : null,
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ),
-          if (headerIcon != null)
-            DiscoveryFeatureHeader(
-              title: title,
-              subtitle: subtitle,
-              icon: headerIcon,
-            ),
-          Expanded(child: body),
-        ],
-      ),
-    );
+    return Scaffold(appBar: appBar, body: content);
   }
 }

@@ -11,15 +11,15 @@ abstract final class PrestataireSubscriptionConfig {
   static const PrestataireSubscriptionTier solo = PrestataireSubscriptionTier(
     id: 'solo',
     maxServicesInclusive: 1,
-    monthlyEur: 14.99,
-    yearlyEur: 150,
+    monthlyEur: 18,
+    yearlyEur: 180,
   );
 
   static const PrestataireSubscriptionTier multi = PrestataireSubscriptionTier(
     id: 'multi',
     minServices: 2,
-    monthlyEur: 17.99,
-    yearlyEur: 180,
+    monthlyEur: 24.99,
+    yearlyEur: 250,
   );
 
   static PrestataireSubscriptionTier tierForServiceCount(int serviceCount) {

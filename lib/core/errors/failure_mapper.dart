@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -55,21 +56,42 @@ abstract final class FailureMapper {
         e.code == GoogleSignInExceptionCode.uiUnavailable;
   }
 
+  /// Vrai abandon explicite (sélecteur Google fermé par l’utilisateur).
+  static bool isGoogleSignInExplicitUserCancel(GoogleSignInException e) {
+    if (e.code != GoogleSignInExceptionCode.canceled) return false;
+    final detail = '${e.description ?? ''} ${e.details ?? ''}'.toLowerCase();
+    return detail.contains('cancelled by the user') ||
+        detail.contains('canceled by the user') ||
+        detail.contains('user canceled') ||
+        detail.contains('user cancelled') ||
+        detail.contains('activity is cancelled') ||
+        detail.contains('activity is canceled');
+  }
+
   /// `canceled` est souvent un faux positif (SHA-1 manquant, « Account reauth failed »).
   static bool isGoogleSignInFakeCancel(GoogleSignInException e) {
     if (e.code != GoogleSignInExceptionCode.canceled) return false;
+    if (isGoogleSignInExplicitUserCancel(e)) return false;
+
     final detail = '${e.description ?? ''} ${e.details ?? ''}'.toLowerCase();
-    if (detail.trim().isEmpty) return false;
+    // Android : canceled sans détail = très souvent SHA-1 / OAuth mal configuré.
+    if (detail.trim().isEmpty) {
+      return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    }
     return detail.contains('reauth') ||
         detail.contains('sha') ||
         detail.contains('10:') ||
         detail.contains('12500') ||
+        detail.contains('12501') ||
         detail.contains('developer_error') ||
         detail.contains('api_exception') ||
         detail.contains('network_error') ||
         detail.contains('sign_in_failed') ||
         detail.contains('sign in failed') ||
-        detail.contains('current activity is null');
+        detail.contains('current activity is null') ||
+        detail.contains('account reauth') ||
+        detail.contains('internal error') ||
+        detail.contains('unknown calling package');
   }
 
   static AppFailure fromGoogleSignInException(GoogleSignInException e) {

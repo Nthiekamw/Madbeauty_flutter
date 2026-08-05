@@ -155,6 +155,54 @@ class ReelFeedController extends Notifier<ReelFeedState> {
     }
   }
 
+  Future<bool> toggleFavorite(String reelId) async {
+    final index = state.items.indexWhere((e) => e.id == reelId);
+    if (index < 0) return false;
+    final current = state.items[index];
+    final optimisticSaved = !current.savedByMe;
+    final optimistic = [...state.items];
+    optimistic[index] = current.copyWith(savedByMe: optimisticSaved);
+    state = state.copyWith(items: optimistic);
+    try {
+      final saved = await _service.toggleFavorite(reelId);
+      final confirmed = [...state.items];
+      final i = confirmed.indexWhere((e) => e.id == reelId);
+      if (i >= 0) {
+        confirmed[i] = current.copyWith(savedByMe: saved);
+        state = state.copyWith(items: confirmed);
+      }
+      return saved;
+    } catch (_) {
+      final rollback = [...state.items];
+      final i = rollback.indexWhere((e) => e.id == reelId);
+      if (i >= 0) rollback[i] = current;
+      state = state.copyWith(items: rollback);
+      rethrow;
+    }
+  }
+
+  Future<void> focusReel(String reelId) async {
+    final id = reelId.trim();
+    if (id.isEmpty) return;
+    final existing = state.items.indexWhere((e) => e.id == id);
+    if (existing >= 0) {
+      if (existing > 0) {
+        final items = [...state.items];
+        final item = items.removeAt(existing);
+        state = state.copyWith(items: [item, ...items]);
+      }
+      return;
+    }
+    try {
+      final item = await _service.getFeedItem(id);
+      if (item == null) return;
+      final withoutDup = state.items.where((e) => e.id != item.id).toList();
+      state = state.copyWith(items: [item, ...withoutDup]);
+    } catch (_) {
+      // Soft : le feed reste utilisable sans le focus.
+    }
+  }
+
   void bumpCommentsCount(String reelId, int delta) {
     final index = state.items.indexWhere((e) => e.id == reelId);
     if (index < 0) return;
@@ -179,4 +227,10 @@ final prestataireReelPostsProvider =
 ) async {
   final service = ref.watch(reelServiceProvider);
   return service.listOwnPosts(prestataireId: prestataireId);
+});
+
+final clientReelFavoritesProvider =
+    FutureProvider.autoDispose<List<ReelFeedItem>>((ref) async {
+  final service = ref.watch(reelServiceProvider);
+  return service.listFavorites();
 });

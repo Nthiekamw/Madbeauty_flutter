@@ -7,8 +7,12 @@ import '../../../core/constants/strings/discovery/disc_presta_detail.dart';
 Future<void> sharePrestataireProfile({
   required String prestataireId,
   required String displayName,
+  String? publicSlug,
 }) async {
-  final link = ShareLinkResolver.prestataireProfileUrl(prestataireId);
+  final link = ShareLinkResolver.prestataireProfileUrl(
+    prestataireId,
+    publicSlug: publicSlug,
+  );
   final title = displayName.trim().isEmpty ? 'MadBeauty' : displayName.trim();
 
   await SharePlus.instance.share(
@@ -18,4 +22,3 @@ Future<void> sharePrestataireProfile({
     ),
   );
 }
-

@@ -5,15 +5,19 @@ void main() {
   test('tierForServiceCount', () {
     expect(
       PrestataireSubscriptionConfig.tierForServiceCount(1).monthlyEur,
-      14.99,
+      18,
+    );
+    expect(
+      PrestataireSubscriptionConfig.tierForServiceCount(1).yearlyEur,
+      180,
     );
     expect(
       PrestataireSubscriptionConfig.tierForServiceCount(2).monthlyEur,
-      17.99,
+      24.99,
     );
     expect(
       PrestataireSubscriptionConfig.tierForServiceCount(5).yearlyEur,
-      180,
+      250,
     );
   });
 }

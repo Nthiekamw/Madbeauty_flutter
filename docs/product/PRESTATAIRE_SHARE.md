@@ -1,66 +1,59 @@
 # Partage fiche prestataire
 
+## Liens courts (recommandé)
+
+Format partagé depuis l’app :
+
+```text
+https://madbeauty.pro/@vichy
+```
+
+Alias accepté : `https://madbeauty.pro/p/vichy`  
+Ancien format (toujours valide) : `https://madbeauty.pro/prestataire/{uuid}`
+
+Le `public_slug` est généré automatiquement depuis le nom affiché / salon
+(ex. « Beauty Glow » → `beauty-glow`), unique, et reste stable.
+
 ## Configuration prod (`.env`)
 
 ```env
 SHARE_BASE_URL=https://madbeauty.pro
 ```
 
-L’app partage alors des liens du type :
-
-`https://madbeauty.pro/prestataire/{uuid}`
-
 | `SHARE_BASE_URL` | Lien partagé |
 |------------------|--------------|
-| `https://madbeauty.pro` | `{base}/prestataire/UUID` (recommandé prod) |
-| *(vide, Supabase OK)* | Edge Function Supabase (fallback / anciens liens) |
-| `custom` | `com.madbeauty.madbeauty://prestataire/UUID` |
+| `https://madbeauty.pro` (défaut) | `{base}/@slug` si slug connu, sinon `/prestataire/UUID` |
+| `custom` | `com.madbeauty.madbeauty://@slug` |
+| *(vide)* | même défaut prod `https://madbeauty.pro` |
 
 ## Comportement visiteur
 
-- **Sans compte** : la fiche `/prestataire/:uuid` s’ouvre directement (mode invité activé pour permettre la réservation ensuite).
-- **Edge Function** `prestataire_share` : redirige vers le lien web Netlify (+ lien « Ouvrir dans l’app »).
+- **Sans compte** : `/@slug` ou `/prestataire/:uuid` s’ouvre (mode invité).
+- **Edge Function** `prestataire_share` : résout le slug et redirige vers `madbeauty.pro/@slug`.
 
-## Déployer la redirection Supabase (une fois)
+## Déployer
 
 ```powershell
+npx supabase db push
 npx supabase functions deploy prestataire_share --no-verify-jwt --project-ref vjjasrdoyguqkftfhaei
 ```
 
-`verify_jwt = false` est aussi défini dans `supabase/config.toml`.
-
-## Build & déploiement app
+Rebuild l’app avec les dart-defines (`.env`) pour que le share n’utilise plus l’URL Supabase longue :
 
 ```powershell
 flutter run --dart-define-from-file=.env
-# ou prod web :
+# web :
 powershell -File scripts/deploy_app_netlify.ps1
 ```
 
 ## Tester
 
-### 1. Partage depuis l’app
-
 1. Fiche prestataire → **Partager**.
-2. Envoie-toi le lien (SMS / WhatsApp).
-3. Le lien doit être `https://madbeauty.pro/prestataire/...`
-4. Sans compte : la fiche s’affiche.
+2. Le lien doit ressembler à `https://madbeauty.pro/@…`.
+3. Ouverture sans compte : fiche OK.
+4. Ancien lien Supabase :
+   `…/prestataire_share?prestataire_id=UUID` → redirige vers `/@slug`.
 
-### 2. Deep link app (émulateur / USB)
+## App Links Android
 
-```powershell
-adb shell am start -a android.intent.action.VIEW -d "com.madbeauty.madbeauty://prestataire/UUID"
-```
-
-### 3. Ancien lien Supabase (compatibilité)
-
-```text
-https://vjjasrdoyguqkftfhaei.supabase.co/functions/v1/prestataire_share?prestataire_id=UUID
-```
-
-Doit rediriger vers Netlify sans erreur 401.
-
-## App Links Android (Play Console)
-
-Si Play signale « Échec de la validation de domaine » : voir [../store/ANDROID_APP_LINKS.md](../store/ANDROID_APP_LINKS.md)  
-(`assetlinks.json` sur `madbeauty.pro`, pas `madbeauty.app`).
+Voir [../store/ANDROID_APP_LINKS.md](../store/ANDROID_APP_LINKS.md).

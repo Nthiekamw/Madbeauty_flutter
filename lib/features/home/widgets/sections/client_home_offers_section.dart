@@ -15,14 +15,14 @@ import '../../providers/home_featured_packs_provider.dart';
 import '../shared/client_home_section_header.dart';
 import '../catalog/prestataire_catalog_section_empty.dart';
 
-/// Section accueil « Offres spéciales » (cartes portrait).
+/// Section accueil « Offres spéciales près de vous » (cartes horizontales).
 class ClientHomeOffersSection extends ConsumerWidget {
   const ClientHomeOffersSection({super.key});
 
-  static const double _listHeight = 188;
-  static const double _listHeightWeb = 200;
-  static const double _cardWidth = 132;
-  static const double _cardWidthWeb = 144;
+  static const double _listHeight = 124;
+  static const double _listHeightWeb = 132;
+  static const double _cardWidth = 312;
+  static const double _cardWidthWeb = 360;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +37,7 @@ class ClientHomeOffersSection extends ConsumerWidget {
         ClientHomeSectionHeader(
           title: DiscHome.offersTitle,
           compact: true,
-          actionLabel: DiscHome.ctaSeeAll,
+          actionLabel: DiscHome.offersSeeAll,
           onAction: () => context.goClientSearch(),
         ),
         const SizedBox(height: 8),
@@ -63,7 +63,7 @@ class ClientHomeOffersSection extends ConsumerWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: entries.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   return _HomeOfferCard(
                     entry: entries[index],
@@ -91,6 +91,21 @@ class _HomeOfferCard extends StatelessWidget {
   final double width;
   final double height;
 
+  void _openDetail(BuildContext context) {
+    context.pushPrestataireDetail(entry.pack.prestataireId);
+  }
+
+  void _onBook(BuildContext context) {
+    if (entry.hasBookableServices) {
+      context.pushBooking(
+        prestataireId: entry.pack.prestataireId,
+        packId: entry.pack.id,
+      );
+      return;
+    }
+    _openDetail(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,7 +113,13 @@ class _HomeOfferCard extends StatelessWidget {
     final pack = entry.pack;
     final image = pack.imageUrl?.trim();
     final discount = entry.discountPercent?.round();
-    final photoH = height * 0.58;
+    final catalogue = entry.prixCatalogue;
+    final showStrike =
+        catalogue != null && catalogue > pack.prixPack + 0.009;
+    final subtitle = entry.itemsSummary?.trim();
+    final primary = theme.colorScheme.primary;
+    // Image un peu plus compacte pour laisser place au texte + CTA.
+    final thumb = (height - 28).clamp(64.0, 88.0);
 
     return SizedBox(
       width: width,
@@ -107,19 +128,21 @@ class _HomeOfferCard extends StatelessWidget {
         color: AppColors.cardSurfaceFor(theme.brightness),
         elevation: isDark ? 0 : 1,
         shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.pushPrestataireDetail(pack.prestataireId),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: photoH,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    image != null && image.isNotEmpty
+          onTap: () => _openDetail(context),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: thumb,
+                    height: thumb,
+                    child: image != null && image.isNotEmpty
                         ? AppNetworkImage(url: image, fit: BoxFit.cover)
                         : ColoredBox(
                             color: theme.colorScheme.surfaceContainerHighest,
@@ -129,77 +152,193 @@ class _HomeOfferCard extends StatelessWidget {
                               color: theme.colorScheme.outline,
                             ),
                           ),
-                    if (discount != null && discount > 0)
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            DiscBoutique.discountLabel(discount),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 10,
-                              height: 1.1,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      if (pack.isOffreDuJour) ...[
+                        _OffreDuJourBadge(primary: primary),
+                        const SizedBox(height: 4),
+                      ],
                       Text(
                         pack.titre,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontFamily: AppFonts.body,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        entry.prestataireDisplayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.15,
-                          fontSize: 10,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        CurrencyFormat.eur(pack.prixPack, decimals: true),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelLarge?.copyWith(
+                        style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.primary,
-                          height: 1.1,
+                          fontFamily: AppFonts.body,
+                          height: 1.15,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (subtitle != null && subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (showStrike) ...[
+                              Text(
+                                CurrencyFormat.eur(catalogue, decimals: true),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  decoration: TextDecoration.lineThrough,
+                                  color: theme.colorScheme.outline,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              CurrencyFormat.eur(pack.prixPack, decimals: true),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: primary,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (discount != null && discount > 0) ...[
+                        const SizedBox(height: 4),
+                        _DiscountPill(
+                          label: DiscBoutique.discountLabel(discount),
+                          primary: primary,
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 32,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              minimumSize: const Size(0, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              textStyle: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            onPressed: () => _onBook(context),
+                            child: const Text(
+                              DiscBoutique.packBookServicesShort,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OffreDuJourBadge extends StatelessWidget {
+  const _OffreDuJourBadge({required this.primary});
+
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.local_fire_department_rounded,
+                size: 12,
+                color: primary,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                DiscBoutique.badgeOffreDuJour,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                  height: 1.1,
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DiscountPill extends StatelessWidget {
+  const _DiscountPill({required this.label, required this.primary});
+
+  final String label;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: primary,
+          fontWeight: FontWeight.w800,
+          fontSize: 10,
+          height: 1.1,
         ),
       ),
     );
@@ -224,14 +363,14 @@ class _OffersSkeleton extends StatelessWidget {
         height: listHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: 3,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemCount: 2,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
           itemBuilder: (_, __) => Container(
             width: cardWidth,
             height: listHeight,
             decoration: BoxDecoration(
               color: track,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),

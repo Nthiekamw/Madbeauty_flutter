@@ -7,6 +7,7 @@ import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../cart/providers/boutique_cart_provider.dart';
 import '../../../favorites/providers/client_favorite_prestataire_ids_provider.dart';
+import '../../../reel/providers/reel_feed_provider.dart';
 import '../layout/profile_section_title.dart';
 
 /// Accès rapide « Mes favoris » depuis le profil client.
@@ -49,6 +50,29 @@ class ProfileFavoritesSection extends ConsumerWidget {
                 subtitle: subtitle,
                 iconColor: theme.colorScheme.error,
                 onTap: () => context.pushClientFavorites(),
+              ),
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.colorScheme.outline.withValues(alpha: 0.12),
+              ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final savedAsync = ref.watch(clientReelFavoritesProvider);
+                  final count = savedAsync.maybeWhen(
+                    data: (items) => items.length,
+                    orElse: () => 0,
+                  );
+                  return DiscoveryMenuTile(
+                    icon: Icons.movie_filter_outlined,
+                    title: DiscReel.savedTitle,
+                    subtitle: count == 0
+                        ? DiscReel.savedHint
+                        : DiscFavori.profileCountHint(count),
+                    onTap: () => context.pushClientReelFavorites(),
+                  );
+                },
               ),
               Divider(
                 height: 1,

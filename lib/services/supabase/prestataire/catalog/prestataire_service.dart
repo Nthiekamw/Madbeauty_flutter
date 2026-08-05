@@ -13,6 +13,11 @@ import '../../../../core/models/domain/user/prestataire_profile.dart';
 import '../../profile/profile_service.dart';
 import 'prestataire_filters.dart';
 
+final _uuidPattern = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+  caseSensitive: false,
+);
+
 class PrestataireService {
   PrestataireService(this._client, {required ProfileService profileService})
     : _profileService = profileService;
@@ -269,6 +274,28 @@ class PrestataireService {
       return visible.isEmpty ? null : visible.first;
     },
   );
+
+  /// Résout UUID **ou** slug public (`vichy`, `@vichy`).
+  Future<PrestataireProfile?> getByIdOrPublicSlug(String ref) =>
+      SupabaseErrorHandler.run(
+        operation: 'prestataire.getByIdOrPublicSlug',
+        action: () async {
+          final raw = ref.trim();
+          if (raw.isEmpty) return null;
+
+          if (_uuidPattern.hasMatch(raw)) {
+            return getById(raw);
+          }
+
+          final resolved = await _client.rpc(
+            'resolve_prestataire_public_ref',
+            params: {'p_ref': raw},
+          );
+          final id = resolved as String?;
+          if (id == null || id.isEmpty) return null;
+          return getById(id);
+        },
+      );
 
   /// Crée une ligne `prestataire_profiles` si absente (rôle + insert minimal).
   /// N’écrase jamais un profil déjà rempli (contrairement à un upsert vide).

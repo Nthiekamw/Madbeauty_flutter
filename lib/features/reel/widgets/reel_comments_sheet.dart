@@ -140,11 +140,15 @@ class _ReelCommentsSheetState extends ConsumerState<ReelCommentsSheet> {
     if (lower.contains('reel_comment_invalid_body')) {
       return DiscReel.commentInvalid;
     }
+    if (lower.contains('profil client') ||
+        lower.contains('ensure_client_profile')) {
+      return DiscReel.commentNeedClient;
+    }
     return DiscReel.commentError;
   }
 
   Future<void> _send() async {
-    final isGuest = ref.read(guestModeProvider);
+    final isGuest = ref.read(isGuestBrowsingProvider);
     if (isGuest) {
       AppSnackBar.show(context, message: DiscReel.commentLoginRequired);
       return;

@@ -21,10 +21,27 @@ import '../../features/prestataire/screens/prestataire_subscription_screen.dart'
 import '../../features/reel/screens/prestataire_reel_manage_screen.dart';
 import '../../features/support/screens/user_support_chat_screen.dart';
 import '../../services/supabase/disputes/dispute_service.dart';
+import '../../core/models/domain/user/prestataire_public_slug.dart';
 import '../app_routes.dart';
 import '../prestataire_public_route.dart';
 
 List<RouteBase> buildDetailRoutes() => [
+      GoRoute(
+        name: AppRouteNames.prestataireDetailByHandle,
+        path: '/@:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug']?.trim() ?? '';
+          return PrestataireDetailScreen(prestataireId: slug);
+        },
+      ),
+      GoRoute(
+        name: AppRouteNames.prestataireDetailBySlug,
+        path: '${AppRoutes.prestatairePublicSlugAlias}/:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug']?.trim() ?? '';
+          return PrestataireDetailScreen(prestataireId: slug);
+        },
+      ),
       GoRoute(
         name: AppRouteNames.chatFromBooking,
         path: '${AppRoutes.chat}/booking/:bookingId',
@@ -173,6 +190,7 @@ List<RouteBase> buildDetailRoutes() => [
         redirect: (context, state) {
           final id = state.pathParameters['id']?.trim() ?? '';
           if (isPublicPrestataireId(id)) return null;
+          if (PrestatairePublicSlug.normalize(id) != null) return null;
           return switch (id) {
             'subscription' => AppRoutes.prestataireSubscription,
             'payment-methods' => AppRoutes.prestatairePaymentMethods,

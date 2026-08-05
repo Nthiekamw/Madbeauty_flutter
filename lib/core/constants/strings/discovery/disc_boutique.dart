@@ -92,6 +92,15 @@ abstract final class DiscBoutique {
   static const packsActionEdit = 'Modifier';
   static const packsActionPublish = 'Publier';
   static const packsActionUnpublish = 'Dépublier';
+  static const packsActionDelete = 'Supprimer';
+  static const packsDeleteConfirmTitle = 'Supprimer ce pack ?';
+  static const packsDeleteConfirmBody =
+      'Cette action est définitive. Les clientes ne le verront plus.';
+  static const packsDeleted = 'Pack supprimé.';
+  static const packsDeleteErr =
+      'Impossible de supprimer le pack. Réessaie.';
+  static const packsDeleteInUseErr =
+      'Ce pack est lié à des réservations. Dépublie-le plutôt.';
   static const packsSaved = 'Pack enregistré.';
   static const packsDeactivated = 'Pack désactivé.';
   static const packsActivated = 'Pack publié.';

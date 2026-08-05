@@ -23,7 +23,46 @@ Tout ce que tu crées dans Stripe avec le mode test activé aura des identifiant
 
 MadBeauty attend **4 prix récurrents** (abonnements), pas 4 produits obligatoirement séparés — tu peux regrouper en 2 produits (solo / multi) ou 1 seul produit avec 4 prix.
 
-### Option recommandée : 2 produits, 4 prix
+### Option recommandée : script automatique
+
+Depuis la racine du dépôt (Node 18+) :
+
+```powershell
+$env:STRIPE_SECRET_KEY = "sk_test_..."   # ou sk_live_...
+.\scripts\stripe_sync_subscription_prices.ps1 -ApplySecrets
+```
+
+Le script :
+
+1. trouve ou crée les produits `MadBeauty Pro — 1 service` / `2+ services`
+2. crée (ou réutilise) les 4 prix cibles
+3. pousse les secrets Supabase `STRIPE_PRICE_*` (`-ApplySecrets`)
+
+Options :
+
+| Flag | Effet |
+|------|--------|
+| `-ApplySecrets` | `npx supabase secrets set STRIPE_PRICE_…` |
+| `-ArchiveOld` | désactive les anciens prix du même produit |
+| `-MigrateSubscribers -Yes` | bascule les abonnements **actifs** vers les nouveaux prix (prorata) |
+| `-DryRun` | simulation sans écriture |
+
+Équivalent Node :
+
+```bash
+node scripts/stripe_sync_subscription_prices.mjs --apply-secrets
+```
+
+> Mode **live** : le script exige `--yes` (ou `-Yes`). Les abonnés déjà facturés ne changent **pas** tant que tu n’ajoutes pas `-MigrateSubscribers`.
+
+Montants cibles (alignés sur `prestataire_subscription_config.dart`) :
+
+| Palier | Mensuel | Annuel |
+|--------|---------|--------|
+| 1 service | **18,00** EUR | **180,00** EUR |
+| 2+ services | **24,99** EUR | **250,00** EUR |
+
+### Option manuelle (Dashboard)
 
 #### Produit 1 — Palier « 1 service »
 
@@ -36,7 +75,7 @@ MadBeauty attend **4 prix récurrents** (abonnements), pas 4 produits obligatoir
 | Champ | Prix mensuel | Prix annuel |
 |-------|--------------|-------------|
 | **Pricing model** | Standard pricing | Standard pricing |
-| **Price** | `14,99` EUR | `150,00` EUR |
+| **Price** | `18,00` EUR | `180,00` EUR |
 | **Billing period** | Monthly | Yearly |
 | **Type** | Recurring | Recurring |
 
@@ -53,7 +92,7 @@ MadBeauty attend **4 prix récurrents** (abonnements), pas 4 produits obligatoir
 
 | | Mensuel | Annuel |
 |---|---------|--------|
-| Montant | `17,99` EUR | `180,00` EUR |
+| Montant | `24,99` EUR | `250,00` EUR |
 | Période | Monthly | Yearly |
 
 4. Copie les API ID :
@@ -62,10 +101,9 @@ MadBeauty attend **4 prix récurrents** (abonnements), pas 4 produits obligatoir
 
 ### Vérification dans Stripe
 
-**Product catalog → Prices** : tu dois voir 4 lignes en **Recurring**, devise **EUR**, avec les bons montants.
+**Product catalog → Prices** : tu dois voir 4 lignes **actives** en **Recurring**, devise **EUR**, avec les bons montants.
 
-> Les montants affichés dans l’app (`14,99 €`, `150 €`, etc.) viennent du code (`prestataire_subscription_config.dart`). Stripe facture ce que tu as saisi dans le Dashboard — garde les mêmes chiffres pour éviter la confusion en test.
-
+> Les montants affichés dans l’app (`18 €`, `180 €`, etc.) viennent du code (`prestataire_subscription_config.dart`). Stripe facture les `price_…` des secrets — garde les mêmes chiffres.
 ---
 
 ## Partie 2 — Customer portal (gestion / résiliation)
@@ -193,7 +231,7 @@ flutter run --dart-define-from-file=.env
 
 ### Scénario 3 — Annuel
 
-Même flux avec l’onglet **Annuel** → **S’abonner (annuel)**. Checkout affiche le montant annuel (150 € ou 180 € selon palier).
+Même flux avec l’onglet **Annuel** → **S’abonner (annuel)**. Checkout affiche le montant annuel (180 € ou 250 € selon palier).
 
 ### Scénario 4 — Gérer / résilier
 
@@ -215,7 +253,7 @@ Même règles que [TEST_FLOW.md](./TEST_FLOW.md) § cartes.
 
 **Mode test** → **Customers** : un client `cus_...` avec metadata `prestataire_id`.
 
-**Subscriptions** : abonnement `sub_...` **Active**, bon prix (14,99 €/mois ou autre).
+**Subscriptions** : abonnement `sub_...` **Active**, bon prix (18 €/mois ou autre).
 
 **Developers → Webhooks** → ton endpoint → **Recent deliveries** : événements `checkout.session.completed` et `customer.subscription.updated` en **200**.
 

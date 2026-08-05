@@ -24,7 +24,9 @@ Synthèse de ce qui est **en place** sur la branche de travail actuelle vs **pro
 
 - [x] Découverte / listing (filtres, carte)
 - [x] Fiche prestataire + services + créneaux
-- [x] Feed Reel (photos/vidéos) + likes + commentaires style TikTok
+- [x] Feed Reel (photos/vidéos, galerie multi-photos) + likes + commentaires + favoris + partage style TikTok
+- [x] Publication Reels prestataire (galerie photos ou 1 vidéo)
+- [x] Reels enregistrés dans le profil client
 - [x] Réservation (création, liste, détail, statuts)
 - [x] Export calendrier (.ics + deep links Google / Apple) depuis succès et détail
 - [x] Messagerie liée aux réservations + Realtime

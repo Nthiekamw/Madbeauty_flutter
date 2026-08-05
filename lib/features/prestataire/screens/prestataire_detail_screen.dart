@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/utils/text_normalizer.dart';
@@ -14,6 +15,7 @@ import '../../trust/widgets/report_content_sheet.dart';
 import '../../../services/supabase/likes/prestataire_like_providers.dart';
 import '../../../services/supabase/trust/content_report_service.dart';
 import '../logic/prestataire_share.dart';
+import '../providers/boutique/boutique_providers.dart';
 import '../providers/catalog/prestataire_detail_provider.dart';
 import '../widgets/profile/overview/sections/prestataire_client_experience_section.dart';
 import '../widgets/public/detail/prestataire_client_engagement_row.dart';
@@ -128,6 +130,37 @@ class _PrestataireDetailScreenState
                   .map((s) => s.prix)
                   .reduce((a, b) => a < b ? a : b);
 
+          final produitsAsync =
+              ref.watch(publicProduitsBoutiqueProvider(data.profile.id));
+          final packsAsync =
+              ref.watch(publicPacksOffreDetailProvider(data.profile.id));
+          final hasBoutique = produitsAsync.maybeWhen(
+            data: (list) => list.isNotEmpty,
+            orElse: () => false,
+          );
+          final hasOffres = packsAsync.maybeWhen(
+            data: (list) => list.isNotEmpty,
+            orElse: () => false,
+          );
+          final visibleSections = <PrestataireDetailSection>[
+            PrestataireDetailSection.services,
+            PrestataireDetailSection.gallery,
+            if (hasBoutique) PrestataireDetailSection.boutique,
+            if (hasOffres) PrestataireDetailSection.offres,
+            PrestataireDetailSection.about,
+            PrestataireDetailSection.reviews,
+          ];
+          final selectedSection =
+              visibleSections.contains(_selectedSection)
+                  ? _selectedSection
+                  : PrestataireDetailSection.services;
+          if (selectedSection != _selectedSection) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() => _selectedSection = selectedSection);
+            });
+          }
+
           final chatAccess = !isOwnProfile
               ? ref.watch(clientPrestaChatAccessProvider(data.profile.id))
               : null;
@@ -164,6 +197,7 @@ class _PrestataireDetailScreenState
                         onShare: () => sharePrestataireProfile(
                           prestataireId: data.profile.id,
                           displayName: displayTitle,
+                          publicSlug: data.profile.publicSlug,
                         ),
                         onReport: isOwnProfile
                             ? null
@@ -200,8 +234,9 @@ class _PrestataireDetailScreenState
                       SliverPersistentHeader(
                         pinned: true,
                         delegate: PrestataireDetailSectionNavDelegate(
-                          selected: _selectedSection,
+                          selected: selectedSection,
                           onSelected: _selectSection,
+                          visibleSections: visibleSections,
                           height: PrestataireDetailSectionNavDelegate.heightFor(
                             context,
                           ),
@@ -215,11 +250,17 @@ class _PrestataireDetailScreenState
                             switchInCurve: Curves.easeOut,
                             switchOutCurve: Curves.easeIn,
                             child: KeyedSubtree(
-                              key: ValueKey(_selectedSection),
+                              key: ValueKey(selectedSection),
                               child: _DetailSectionBody(
-                                section: _selectedSection,
+                                section: selectedSection,
                                 data: data,
                                 isOwnProfile: isOwnProfile,
+                                onOpenGallery: () => _selectSection(
+                                  PrestataireDetailSection.gallery,
+                                ),
+                                onOpenServices: () => _selectSection(
+                                  PrestataireDetailSection.services,
+                                ),
                               ),
                             ),
                           ),
@@ -277,11 +318,15 @@ class _DetailSectionBody extends StatelessWidget {
     required this.section,
     required this.data,
     required this.isOwnProfile,
+    this.onOpenGallery,
+    this.onOpenServices,
   });
 
   final PrestataireDetailSection section;
   final PrestataireDetailData data;
   final bool isOwnProfile;
+  final VoidCallback? onOpenGallery;
+  final VoidCallback? onOpenServices;
 
   bool get _hasAboutContent {
     final p = data.profile;
@@ -313,16 +358,28 @@ class _DetailSectionBody extends StatelessWidget {
                   title: DiscPrestaDetail.noSvcsTitle,
                   body: DiscPrestaDetail.noSvcsBody,
                 )
-              : PrestataireDetailServicesGrouped(
-                  groups: groupServicesByMain(
-                    data.services,
-                    otherGroupTitle: DiscPrestaDetail.servicesOtherGroup,
-                  ),
-                  canBook: !isOwnProfile,
-                  onBook: (serviceId) => context.pushBooking(
-                    prestataireId: data.profile.id,
-                    serviceId: serviceId,
-                  ),
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    PrestataireDetailServicesGrouped(
+                      groups: groupServicesByMain(
+                        data.services,
+                        otherGroupTitle: DiscPrestaDetail.servicesOtherGroup,
+                      ),
+                      canBook: !isOwnProfile,
+                      onBook: (serviceId) => context.pushBooking(
+                        prestataireId: data.profile.id,
+                        serviceId: serviceId,
+                      ),
+                    ),
+                    if (data.photos.isNotEmpty && onOpenGallery != null) ...[
+                      const SizedBox(height: 16),
+                      _ServicesGalleryTeaser(
+                        photos: data.photos,
+                        onOpenGallery: onOpenGallery!,
+                      ),
+                    ],
+                  ],
                 ),
         ),
       PrestataireDetailSection.boutique => PrestataireDetailBoutiqueBlock(
@@ -340,6 +397,18 @@ class _DetailSectionBody extends StatelessWidget {
       PrestataireDetailSection.gallery => PrestataireDetailSectionCard(
           icon: Icons.photo_library_outlined,
           title: DiscPrestaDetail.galleryTitle,
+          trailing: data.services.isNotEmpty && onOpenServices != null
+              ? TextButton(
+                  onPressed: onOpenServices,
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(DiscPrestaDetail.gallerySeeServices),
+                )
+              : null,
           child: data.photos.isEmpty
               ? const PrestataireDetailEmptyState(
                   icon: Icons.photo_library_outlined,
@@ -402,6 +471,70 @@ class _DetailSectionBody extends StatelessWidget {
           ),
         ),
     };
+  }
+}
+
+class _ServicesGalleryTeaser extends StatelessWidget {
+  const _ServicesGalleryTeaser({
+    required this.photos,
+    required this.onOpenGallery,
+  });
+
+  final List<PhotoRealisation> photos;
+  final VoidCallback onOpenGallery;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final preview = photos.take(8).toList(growable: false);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.photo_library_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    DiscPrestaDetail.servicesGalleryLinkTitle,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onOpenGallery,
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(DiscPrestaDetail.servicesSeeGallery),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            PrestataireDetailGalleryStrip(photos: preview),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -53,6 +53,9 @@ abstract final class DiscPrestaDetail {
   static const statResponse = 'Réponse';
   static const navServices = 'Services';
   static const navGallery = 'Galerie';
+  static const servicesGalleryLinkTitle = 'Réalisations liées';
+  static const servicesSeeGallery = 'Voir la galerie';
+  static const gallerySeeServices = 'Voir les services';
   static const navAbout = 'Infos';
   static const navReviews = 'Avis';
   static const aboutTitle = 'À propos';

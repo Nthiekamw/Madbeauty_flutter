@@ -1,4 +1,5 @@
 ﻿import '../core/config/share_link_config.dart';
+import '../core/models/domain/user/prestataire_public_slug.dart';
 import '../services/auth/auth_deep_link_handler.dart';
 import 'app_router.dart';
 import 'prestataire_public_route.dart';
@@ -22,7 +23,7 @@ abstract final class AppDeepLinks {
     return AppRoutes.prestataireSubscription;
   }
 
-  /// Chemin go_router (`/prestataire/:id`) ou `null` si non géré ici.
+  /// Chemin go_router (`/prestataire/:id`, `/@slug`, …) ou `null` si non géré.
   static String? routePathFromUri(Uri uri) {
     if (_authHosts.contains(uri.host)) return null;
     if (uri.scheme == ShareLinkConfig.customScheme) {
@@ -50,12 +51,43 @@ abstract final class AppDeepLinks {
       if (isPublicPrestataireId(id)) {
         return '${AppRoutes.prestatairePublicProfile}/$id';
       }
+      final slug = PrestatairePublicSlug.normalize(id);
+      if (slug != null) return '/@$slug';
+    }
+    // com.madbeauty.madbeauty://@vichy  → host peut être vide / path @vichy
+    if (uri.host.startsWith('@')) {
+      final slug = PrestatairePublicSlug.normalize(uri.host);
+      if (slug != null) return '/@$slug';
+    }
+    if (uri.host == 'reel') {
+      final id = uri.pathSegments.isNotEmpty
+          ? uri.pathSegments.first
+          : uri.path.replaceFirst('/', '');
+      if (isPublicPrestataireId(id)) {
+        return '${AppRoutes.clientReel}?reelId=$id';
+      }
     }
     if (uri.pathSegments.length >= 2 &&
         uri.pathSegments.first == 'prestataire') {
       final id = uri.pathSegments[1];
       if (isPublicPrestataireId(id)) {
         return '${AppRoutes.prestatairePublicProfile}/$id';
+      }
+    }
+    if (uri.pathSegments.length >= 2 && uri.pathSegments.first == 'reel') {
+      final id = uri.pathSegments[1];
+      if (isPublicPrestataireId(id)) {
+        return '${AppRoutes.clientReel}?reelId=$id';
+      }
+    }
+    if (uri.pathSegments.isNotEmpty) {
+      final first = uri.pathSegments.first;
+      final slug = PrestatairePublicSlug.normalize(first);
+      if (slug != null && first.startsWith('@')) return '/@$slug';
+      if (uri.pathSegments.length >= 2 &&
+          uri.pathSegments.first == 'p') {
+        final slug2 = PrestatairePublicSlug.normalize(uri.pathSegments[1]);
+        if (slug2 != null) return '/@$slug2';
       }
     }
     return null;
@@ -67,11 +99,44 @@ abstract final class AppDeepLinks {
       return '${AppRoutes.prestatairePublicProfile}/$queryId';
     }
 
+    final querySlug = PrestatairePublicSlug.normalize(
+      uri.queryParameters['slug'],
+    );
+    if (querySlug != null) return '/@$querySlug';
+
+    final reelId = uri.queryParameters['reel_id'];
+    if (isPublicPrestataireId(reelId)) {
+      return '${AppRoutes.clientReel}?reelId=$reelId';
+    }
+
     final segments = uri.pathSegments;
+    if (segments.isNotEmpty) {
+      final first = segments.first;
+      // /@vichy
+      final handle = PrestatairePublicSlug.normalize(first);
+      if (handle != null && (first.startsWith('@') || uri.path.startsWith('/@'))) {
+        return '/@$handle';
+      }
+      // path "/@vichy" sometimes yields segment "@vichy"
+      if (first.startsWith('@')) {
+        final s = PrestatairePublicSlug.normalize(first);
+        if (s != null) return '/@$s';
+      }
+    }
+    if (segments.length >= 2 &&
+        segments[0] == 'p') {
+      final slug = PrestatairePublicSlug.normalize(segments[1]);
+      if (slug != null) return '/@$slug';
+    }
     if (segments.length >= 2 &&
         segments[0] == 'prestataire' &&
         isPublicPrestataireId(segments[1])) {
       return '/prestataire/${segments[1]}';
+    }
+    if (segments.length >= 2 &&
+        segments[0] == 'reel' &&
+        isPublicPrestataireId(segments[1])) {
+      return '${AppRoutes.clientReel}?reelId=${segments[1]}';
     }
     return null;
   }

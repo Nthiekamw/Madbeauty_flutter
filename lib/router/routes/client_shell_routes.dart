@@ -48,7 +48,9 @@ RouteBase buildClientShellRoute() {
             path: AppRoutes.clientReel,
             pageBuilder: (context, state) => shellTabPage(
               key: state.pageKey,
-              child: const ClientReelFeedScreen(),
+              child: ClientReelFeedScreen(
+                focusReelId: state.uri.queryParameters['reelId'],
+              ),
             ),
           ),
         ],

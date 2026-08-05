@@ -107,6 +107,7 @@ Historique des mouvements de points (+2 earn / −200 redeem).
 | `latitude` | `double precision` | nullable |
 | `longitude` | `double precision` | nullable |
 | `note_moyenne` | `double precision` | nullable — recalculée automatiquement depuis `avis` (trigger) |
+| `public_slug` | `text` | unique — lien court `https://madbeauty.pro/@slug` |
 | `is_verified` | `boolean` | NOT NULL, default `false` |
 | `stripe_connect_account_id` | `text` | nullable — compte Connect Express (`acct_...`) |
 | `stripe_connect_onboarding_status` | `text` | NOT NULL, default `'not_started'` — `not_started`, `pending`, `complete`, `restricted` |
@@ -123,7 +124,9 @@ Historique des mouvements de points (+2 earn / −200 redeem).
 | `subscription_updated_at` | `timestamptz` | nullable |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 
-**Index** : `idx_prestataire_profiles_ville` sur `ville` ; unique partiel sur `stripe_subscription_id`.
+**Index** : `idx_prestataire_profiles_ville` sur `ville` ; unique partiel sur `stripe_subscription_id` ; unique sur `public_slug`.
+
+**Partage** : liens courts `madbeauty.pro/@{public_slug}` — voir [../product/PRESTATAIRE_SHARE.md](../product/PRESTATAIRE_SHARE.md). RPC `resolve_prestataire_public_ref`.
 
 **Paiements** : le prestataire doit avoir `stripe_connect_account_id` renseigné et `stripe_connect_charges_enabled = true` pour accepter les réservations payantes (voir [../payments/CONNECT.md](../payments/CONNECT.md)). Abonnement : [../payments/SUBSCRIPTION.md](../payments/SUBSCRIPTION.md).
 
@@ -444,22 +447,49 @@ Un avis par réservation (`reservation_id` unique). Réservé aux réservations 
 
 ### `public.reel_posts`
 
-Feed **Reel** (photos/vidéos scrollables).
+Feed **Reel** (photos/vidéos scrollables, style TikTok).
 
 | Colonne | Type | Notes |
 |---------|------|--------|
 | `id` | `uuid` | PK |
 | `prestataire_id` | `uuid` | FK → `prestataire_profiles` CASCADE |
-| `media_type` | `text` | `image` \| `video` |
-| `media_url` | `text` | URL Storage `reel-media` |
+| `media_type` | `text` | `image` \| `video` — **cover** (1er média) |
+| `media_url` | `text` | URL Storage `reel-media` — **cover** |
 | `caption` | `text` | nullable ≤ 500 |
 | `status` | `text` | `draft` \| `published` \| `hidden` |
 | `likes_count` / `comments_count` / `views_count` | `integer` | dénormalisés |
 | `created_at` / `updated_at` | `timestamptz` | |
 
-Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_catalog_visible`). Tables liées : `reel_likes`, `reel_views`, `reel_comments`.
+Publication réservée aux prestataires **catalogue-visibles** (`prestataire_is_catalog_visible`). Tables liées : `reel_post_media`, `reel_likes`, `reel_favorites`, `reel_views`, `reel_comments`.
 
-**RPC** : `list_reel_feed` (score = réservations + ville + catégories + likes/commentaires/vues + fraîcheur), `toggle_reel_like`, `record_reel_view`, `list_reel_comments`, `add_reel_comment`, `delete_reel_comment`.
+**RPC** : `list_reel_feed` (… + `saved_by_me`), `get_reel_feed_item`, `list_reel_favorites`, `toggle_reel_like`, `toggle_reel_favorite`, `record_reel_view`, `list_reel_comments`, `add_reel_comment`, `delete_reel_comment`.
+
+### `public.reel_post_media`
+
+Galerie d’un Reel (swipe horizontal dans le feed vertical). Max **10** médias / post.
+
+| Colonne | Type | Notes |
+|---------|------|--------|
+| `id` | `uuid` | PK |
+| `reel_id` | `uuid` | FK → `reel_posts` CASCADE |
+| `media_type` | `text` | `image` \| `video` |
+| `media_url` | `text` | URL Storage `reel-media` |
+| `sort_order` | `integer` | ordre d’affichage (≥ 0, unique par reel) |
+| `created_at` | `timestamptz` | |
+
+Triggers : limite 10 ; sync du cover `reel_posts.media_url` / `media_type` depuis le 1er média.
+
+### `public.reel_favorites`
+
+Bookmarks client sur les Reels (distinct des likes).
+
+| Colonne | Type | Notes |
+|---------|------|--------|
+| `reel_id` | `uuid` | PK composite, FK → `reel_posts` CASCADE |
+| `client_id` | `uuid` | PK composite, FK → `client_profiles` CASCADE |
+| `created_at` | `timestamptz` | |
+
+**RPC** : `toggle_reel_favorite`, `list_reel_favorites`.
 
 ### `public.reel_comments`
 

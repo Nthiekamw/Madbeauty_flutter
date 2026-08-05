@@ -32,6 +32,8 @@ abstract class PrestataireProfile with _$PrestataireProfile {
     /// Code ISO 3166-1 alpha-2 (ex. FR, BE).
     String? pays,
     @JsonKey(name: 'nom_affiche') String? nomAffiche,
+    /// Lien court public (ex. `vichy` → madbeauty.pro/@vichy).
+    @JsonKey(name: 'public_slug') String? publicSlug,
     @JsonKey(name: 'lieu_travail')
     @LieuTravailConverter()
     LieuTravail? lieuTravail,

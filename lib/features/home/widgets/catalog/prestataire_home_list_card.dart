@@ -56,14 +56,11 @@ class PrestataireHomeListCard extends StatelessWidget {
     final radius = HomeStyles.cardBorderRadius;
     final w = cardWidth ?? layout.homeListCardWidth;
     final h = cardHeight ?? layout.homeListCardHeight;
-    final photoH =
-        photoHeight ?? layout.homeListPhotoHeightFor(h);
-    final textPadV = dense ? 4.0 : 6.0;
+    final rawPhotoH = photoHeight ?? layout.homeListPhotoHeightFor(h);
+    // Garde au moins 1 px pour la zone texte (évite overflow / Expanded négatif).
+    final photoH = rawPhotoH.clamp(0.0, (h - 1).clamp(0.0, h));
+    final textZoneH = (h - photoH).clamp(0.0, h);
     final textPadH = dense ? 6.0 : 8.0;
-    final textZoneH = (h - photoH - textPadV).clamp(
-      layout.homeListMinTextZoneHeight,
-      h * 0.45,
-    );
     final titleSize = layout.homeListTitleFontSize(w);
     final bodySize = layout.homeListBodyFontSize(w);
 
@@ -103,31 +100,32 @@ class PrestataireHomeListCard extends StatelessWidget {
                   rating: rating,
                   height: photoH,
                 ),
-                SizedBox(
-                  height: textZoneH,
+                Expanded(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
                       textPadH,
-                      dense ? 2 : 4,
+                      dense ? 2 : 3,
                       textPadH,
-                      dense ? 3 : 4,
+                      dense ? 2 : 3,
                     ),
-                    child: _CardTextBody(
-                      theme: theme,
-                      isDark: isDark,
-                      safeTitle: safeTitle,
-                      isVerified: profile.isVerified,
-                      specialty: specialty,
-                      rating: rating,
-                      reviewCount: entry.reviewCount,
-                      ville: ville,
-                      km: km,
-                      dense: dense,
-                      titleSize: titleSize,
-                      bodySize: bodySize,
-                      textZoneHeight: textZoneH,
-                      showDistanceOnPhoto: showDistanceOnPhoto,
-                      showRatingOnPhoto: showRatingOnPhoto,
+                    child: ClipRect(
+                      child: _CardTextBody(
+                        theme: theme,
+                        isDark: isDark,
+                        safeTitle: safeTitle,
+                        isVerified: profile.isVerified,
+                        specialty: specialty,
+                        rating: rating,
+                        reviewCount: entry.reviewCount,
+                        ville: ville,
+                        km: km,
+                        dense: dense,
+                        titleSize: titleSize,
+                        bodySize: bodySize,
+                        textZoneHeight: textZoneH,
+                        showDistanceOnPhoto: showDistanceOnPhoto,
+                        showRatingOnPhoto: showRatingOnPhoto,
+                      ),
                     ),
                   ),
                 ),
@@ -264,12 +262,11 @@ class _CardTextBody extends StatelessWidget {
     final showRating = !showRatingOnPhoto && rating != null;
     final tightText = textZoneHeight < 52;
     final showRatingLine = showRating && !(tightText && showSpecialty);
-    final specialtyMaxLines = tightText ? 2 : 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,13 +274,13 @@ class _CardTextBody extends StatelessWidget {
             Expanded(
               child: Text(
                 safeTitle,
-                maxLines: dense ? 1 : 2,
+                maxLines: dense || tightText ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontFamily: AppFonts.display,
                   fontWeight: FontWeight.w800,
                   color: _titleColor,
-                  height: 1.15,
+                  height: 1.1,
                   fontSize: titleSize,
                 ),
               ),
@@ -303,19 +300,19 @@ class _CardTextBody extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             specialty!,
-            maxLines: specialtyMaxLines,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: _bodyColor,
               fontSize: bodySize,
-              height: 1.2,
+              height: 1.1,
             ),
           ),
         ],
         if (showRatingLine) ...[
           const SizedBox(height: 1),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 Icons.star_rounded,
@@ -332,7 +329,7 @@ class _CardTextBody extends StatelessWidget {
                     fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w700,
                     color: _titleColor,
-                    height: 1.15,
+                    height: 1.1,
                     fontSize: bodySize,
                   ),
                 ),
@@ -343,7 +340,7 @@ class _CardTextBody extends StatelessWidget {
         if (locationLine != null && !tightText) ...[
           const SizedBox(height: 1),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 Icons.location_on_outlined,
@@ -359,7 +356,7 @@ class _CardTextBody extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: _bodyColor,
                     fontSize: bodySize,
-                    height: 1.15,
+                    height: 1.1,
                   ),
                 ),
               ),

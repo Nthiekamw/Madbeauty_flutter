@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/constants/app_strings.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/supabase_error_handler.dart';
 import '../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../../core/models/domain/reel/reel_feed_item.dart';
@@ -12,6 +14,9 @@ class ReelService {
 
   final SupabaseClient _client;
   final StorageService _storage;
+
+  /// Limite prod : galerie d’un Reel (alignée sur le trigger SQL).
+  static const maxMediaPerPost = 10;
 
   factory ReelService.fromEnv() => ReelService(SupabaseService.client);
 
@@ -63,6 +68,48 @@ class ReelService {
             params: {'p_reel_id': reelId},
           );
           return liked as bool? ?? false;
+        },
+      );
+
+  Future<bool> toggleFavorite(String reelId) => SupabaseErrorHandler.run(
+        operation: 'reel.toggleFavorite',
+        action: () async {
+          final saved = await _client.rpc(
+            'toggle_reel_favorite',
+            params: {'p_reel_id': reelId},
+          );
+          return saved as bool? ?? false;
+        },
+      );
+
+  Future<ReelFeedItem?> getFeedItem(String reelId) => SupabaseErrorHandler.run(
+        operation: 'reel.getFeedItem',
+        action: () async {
+          final rows = await _client.rpc(
+            'get_reel_feed_item',
+            params: {'p_reel_id': reelId},
+          );
+          final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+          if (list.isEmpty) return null;
+          final item = ReelFeedItem.fromJson(list.first);
+          if (item.id.isEmpty || item.mediaUrl.isEmpty) return null;
+          return item;
+        },
+      );
+
+  Future<List<ReelFeedItem>> listFavorites({int limit = 40}) =>
+      SupabaseErrorHandler.run(
+        operation: 'reel.listFavorites',
+        action: () async {
+          final rows = await _client.rpc(
+            'list_reel_favorites',
+            params: {'p_limit': limit},
+          );
+          final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+          return list
+              .map(ReelFeedItem.fromJson)
+              .where((e) => e.id.isNotEmpty && e.mediaUrl.isNotEmpty)
+              .toList();
         },
       );
 
@@ -137,47 +184,104 @@ class ReelService {
         action: () async {
           final rows = await _client
               .from('reel_posts')
-              .select()
+              .select('*, reel_post_media(*)')
               .eq('prestataire_id', prestataireId)
               .order('created_at', ascending: false)
+              .order('sort_order', ascending: true, referencedTable: 'reel_post_media')
               .limit(100);
           final list = (rows as List<dynamic>).cast<Map<String, dynamic>>();
           return list.map(ReelPostOwned.fromJson).toList();
         },
       );
 
+  /// Publie un Reel avec 1 à [maxMediaPerPost] médias (photos et/ou 1 vidéo).
   Future<ReelPostOwned> publish({
     required String prestataireId,
-    required StorageUploadFile file,
+    required List<StorageUploadFile> files,
     String? caption,
     StorageUploadProgress? onProgress,
   }) =>
       SupabaseErrorHandler.run(
         operation: 'reel.publish',
         action: () async {
-          final url = await _storage.uploadReelMedia(
-            prestataireId: prestataireId,
-            file: file,
-            onProgress: onProgress,
-          );
-          final mediaType = file.isVideo
+          if (files.isEmpty) {
+            throw const AppFailure(DiscReel.publishNeedMedia);
+          }
+          if (files.length > maxMediaPerPost) {
+            throw AppFailure(DiscReel.publishMediaLimit(maxMediaPerPost));
+          }
+          final videoCount = files.where(StorageService.isVideoFile).length;
+          if (videoCount > 1) {
+            throw const AppFailure(DiscReel.publishSingleVideoOnly);
+          }
+          if (videoCount == 1 && files.length > 1) {
+            throw const AppFailure(DiscReel.publishNoMixVideoPhotos);
+          }
+
+          final urls = <String>[];
+          for (var i = 0; i < files.length; i++) {
+            final file = files[i];
+            final url = await _storage.uploadReelMedia(
+              prestataireId: prestataireId,
+              file: file,
+              onProgress: onProgress == null
+                  ? null
+                  : (p) => onProgress((i + p) / files.length),
+            );
+            urls.add(url);
+          }
+
+          final coverType = StorageService.isVideoFile(files.first)
               ? RealisationMediaType.video
               : RealisationMediaType.image;
           final trimmed = caption?.trim();
-          final row = await _client
-              .from('reel_posts')
-              .insert({
-                'prestataire_id': prestataireId,
-                'media_type': mediaType == RealisationMediaType.video
-                    ? 'video'
-                    : 'image',
-                'media_url': url,
-                if (trimmed != null && trimmed.isNotEmpty) 'caption': trimmed,
-                'status': 'published',
-              })
-              .select()
-              .single();
-          return ReelPostOwned.fromJson(row);
+          String? reelId;
+          try {
+            final row = await _client
+                .from('reel_posts')
+                .insert({
+                  'prestataire_id': prestataireId,
+                  'media_type': coverType == RealisationMediaType.video
+                      ? 'video'
+                      : 'image',
+                  'media_url': urls.first,
+                  if (trimmed != null && trimmed.isNotEmpty) 'caption': trimmed,
+                  'status': 'published',
+                })
+                .select()
+                .single();
+            reelId = row['id'] as String?;
+            if (reelId == null || reelId.isEmpty) {
+              throw StateError('Reel non créé.');
+            }
+
+            final mediaRows = <Map<String, dynamic>>[
+              for (var i = 0; i < urls.length; i++)
+                {
+                  'reel_id': reelId,
+                  'media_type': StorageService.isVideoFile(files[i])
+                      ? 'video'
+                      : 'image',
+                  'media_url': urls[i],
+                  'sort_order': i,
+                },
+            ];
+            await _client.from('reel_post_media').insert(mediaRows);
+
+            final owned = await _client
+                .from('reel_posts')
+                .select('*, reel_post_media(*)')
+                .eq('id', reelId)
+                .single();
+            return ReelPostOwned.fromJson(owned);
+          } catch (e) {
+            if (reelId != null && reelId.isNotEmpty) {
+              try {
+                await _client.from('reel_posts').delete().eq('id', reelId);
+              } catch (_) {}
+            }
+            rethrow;
+          }
         },
       );
 

@@ -6,8 +6,10 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/models/domain/catalog/realisation_media_type.dart';
 import '../../../core/models/domain/reel/reel_feed_item.dart';
+import '../../../services/supabase/reel/reel_service.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -30,10 +32,46 @@ class _PrestataireReelManageScreenState
   bool _publishing = false;
 
   Future<void> _publish(String prestataireId) async {
-    final picker = ImagePicker();
-    final file = await picker.pickMedia(imageQuality: 85);
-    if (file == null || !mounted) return;
+    final choice = await showModalBottomSheet<_PublishKind>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text(DiscReel.publishPickPhotos),
+                onTap: () => Navigator.pop(ctx, _PublishKind.photos),
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam_outlined),
+                title: const Text(DiscReel.publishPickVideo),
+                onTap: () => Navigator.pop(ctx, _PublishKind.video),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (choice == null || !mounted) return;
 
+    final picker = ImagePicker();
+    final List<XFile> picked;
+    if (choice == _PublishKind.photos) {
+      picked = await picker.pickMultiImage(
+        maxWidth: 1600,
+        imageQuality: 85,
+        limit: ReelService.maxMediaPerPost,
+      );
+    } else {
+      final video = await picker.pickVideo(source: ImageSource.gallery);
+      picked = video == null ? const [] : [video];
+    }
+    if (picked.isEmpty || !mounted) return;
+
+    final limited = picked.take(ReelService.maxMediaPerPost).toList();
     final captionCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
@@ -41,8 +79,15 @@ class _PrestataireReelManageScreenState
         title: const Text(DiscReel.publishTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(file.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              choice == _PublishKind.photos
+                  ? DiscReel.publishPhotosCount(limited.length)
+                  : limited.first.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: captionCtrl,
@@ -74,10 +119,13 @@ class _PrestataireReelManageScreenState
 
     setState(() => _publishing = true);
     try {
-      final upload = await StorageUploadFile.fromXFile(file);
+      final uploads = <StorageUploadFile>[];
+      for (final file in limited) {
+        uploads.add(await StorageUploadFile.fromXFile(file));
+      }
       await ref.read(reelServiceProvider).publish(
             prestataireId: prestataireId,
-            file: upload,
+            files: uploads,
             caption: captionCtrl.text,
           );
       captionCtrl.dispose();
@@ -205,13 +253,58 @@ class _PrestataireReelManageScreenState
                           children: [
                             AspectRatio(
                               aspectRatio: 3 / 4,
-                              child: RealisationMediaCover(
-                                mediaType: post.mediaType,
-                                imageUrl: post.mediaUrl,
-                                playVideoPreview:
-                                    post.mediaType == RealisationMediaType.video,
-                                showPlayBadge:
-                                    post.mediaType == RealisationMediaType.video,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  RealisationMediaCover(
+                                    mediaType: post.mediaType,
+                                    imageUrl: post.mediaUrl,
+                                    playVideoPreview: post.mediaType ==
+                                        RealisationMediaType.video,
+                                    showPlayBadge: post.mediaType ==
+                                        RealisationMediaType.video,
+                                  ),
+                                  if (post.hasMultipleMedia)
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.scrimDark54,
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.collections_outlined,
+                                                size: 14,
+                                                color: AppColors.white,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${post.media.length}',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      color: AppColors.white,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                             ListTile(
@@ -246,3 +339,5 @@ class _PrestataireReelManageScreenState
     );
   }
 }
+
+enum _PublishKind { photos, video }

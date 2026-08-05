@@ -1,12 +1,50 @@
 import '../catalog/realisation_media_type.dart';
 
+/// Un slide média d’un Reel (photo ou vidéo).
+class ReelMediaItem {
+  const ReelMediaItem({
+    required this.mediaType,
+    required this.mediaUrl,
+    this.sortOrder = 0,
+  });
+
+  final RealisationMediaType mediaType;
+  final String mediaUrl;
+  final int sortOrder;
+
+  bool get isVideo => mediaType == RealisationMediaType.video;
+
+  factory ReelMediaItem.fromJson(Map<String, dynamic> row) {
+    final mediaRaw = (row['media_type'] as String?)?.trim() ?? 'image';
+    return ReelMediaItem(
+      mediaType: mediaRaw == 'video'
+          ? RealisationMediaType.video
+          : RealisationMediaType.image,
+      mediaUrl: (row['media_url'] as String?)?.trim() ?? '',
+      sortOrder: (row['sort_order'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  static List<ReelMediaItem> listFromJson(dynamic raw) {
+    if (raw is! List) return const [];
+    final items = <ReelMediaItem>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final item = ReelMediaItem.fromJson(Map<String, dynamic>.from(entry));
+      if (item.mediaUrl.isEmpty) continue;
+      items.add(item);
+    }
+    items.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return items;
+  }
+}
+
 /// Post Reel renvoyé par `list_reel_feed` (feed client).
 class ReelFeedItem {
   const ReelFeedItem({
     required this.id,
     required this.prestataireId,
-    required this.mediaType,
-    required this.mediaUrl,
+    required this.media,
     required this.likesCount,
     required this.commentsCount,
     required this.viewsCount,
@@ -14,6 +52,7 @@ class ReelFeedItem {
     required this.score,
     required this.likedByMe,
     required this.salonName,
+    this.savedByMe = false,
     this.caption,
     this.avatarUrl,
     this.ville,
@@ -21,8 +60,7 @@ class ReelFeedItem {
 
   final String id;
   final String prestataireId;
-  final RealisationMediaType mediaType;
-  final String mediaUrl;
+  final List<ReelMediaItem> media;
   final String? caption;
   final int likesCount;
   final int commentsCount;
@@ -30,20 +68,31 @@ class ReelFeedItem {
   final DateTime createdAt;
   final double score;
   final bool likedByMe;
+  final bool savedByMe;
   final String salonName;
   final String? avatarUrl;
   final String? ville;
+
+  /// Cover (1er média) — compat UI mono-média.
+  ReelMediaItem? get cover => media.isEmpty ? null : media.first;
+
+  RealisationMediaType get mediaType =>
+      cover?.mediaType ?? RealisationMediaType.image;
+
+  String get mediaUrl => cover?.mediaUrl ?? '';
+
+  bool get hasMultipleMedia => media.length > 1;
 
   ReelFeedItem copyWith({
     int? likesCount,
     int? commentsCount,
     bool? likedByMe,
+    bool? savedByMe,
   }) {
     return ReelFeedItem(
       id: id,
       prestataireId: prestataireId,
-      mediaType: mediaType,
-      mediaUrl: mediaUrl,
+      media: media,
       caption: caption,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
@@ -51,6 +100,7 @@ class ReelFeedItem {
       createdAt: createdAt,
       score: score,
       likedByMe: likedByMe ?? this.likedByMe,
+      savedByMe: savedByMe ?? this.savedByMe,
       salonName: salonName,
       avatarUrl: avatarUrl,
       ville: ville,
@@ -58,14 +108,25 @@ class ReelFeedItem {
   }
 
   factory ReelFeedItem.fromJson(Map<String, dynamic> row) {
-    final mediaRaw = (row['media_type'] as String?)?.trim() ?? 'image';
+    var media = ReelMediaItem.listFromJson(row['media']);
+    if (media.isEmpty) {
+      final url = (row['media_url'] as String?)?.trim() ?? '';
+      if (url.isNotEmpty) {
+        final mediaRaw = (row['media_type'] as String?)?.trim() ?? 'image';
+        media = [
+          ReelMediaItem(
+            mediaType: mediaRaw == 'video'
+                ? RealisationMediaType.video
+                : RealisationMediaType.image,
+            mediaUrl: url,
+          ),
+        ];
+      }
+    }
     return ReelFeedItem(
       id: row['id'] as String? ?? '',
       prestataireId: row['prestataire_id'] as String? ?? '',
-      mediaType: mediaRaw == 'video'
-          ? RealisationMediaType.video
-          : RealisationMediaType.image,
-      mediaUrl: row['media_url'] as String? ?? '',
+      media: media,
       caption: (row['caption'] as String?)?.trim(),
       likesCount: (row['likes_count'] as num?)?.toInt() ?? 0,
       commentsCount: (row['comments_count'] as num?)?.toInt() ?? 0,
@@ -74,6 +135,7 @@ class ReelFeedItem {
           DateTime.fromMillisecondsSinceEpoch(0),
       score: (row['score'] as num?)?.toDouble() ?? 0,
       likedByMe: row['liked_by_me'] as bool? ?? false,
+      savedByMe: row['saved_by_me'] as bool? ?? false,
       salonName: (row['salon_name'] as String?)?.trim().isNotEmpty == true
           ? (row['salon_name'] as String).trim()
           : 'Salon',
@@ -139,13 +201,12 @@ class ReelCommentsPage {
       nextCursorId != null;
 }
 
-/// Post Reel côté gestion prestataire (table `reel_posts`).
+/// Post Reel côté gestion prestataire (table `reel_posts` + galerie).
 class ReelPostOwned {
   const ReelPostOwned({
     required this.id,
     required this.prestataireId,
-    required this.mediaType,
-    required this.mediaUrl,
+    required this.media,
     required this.status,
     required this.likesCount,
     required this.commentsCount,
@@ -156,8 +217,7 @@ class ReelPostOwned {
 
   final String id;
   final String prestataireId;
-  final RealisationMediaType mediaType;
-  final String mediaUrl;
+  final List<ReelMediaItem> media;
   final String? caption;
   final String status;
   final int likesCount;
@@ -165,15 +225,38 @@ class ReelPostOwned {
   final int viewsCount;
   final DateTime createdAt;
 
+  ReelMediaItem? get cover => media.isEmpty ? null : media.first;
+
+  RealisationMediaType get mediaType =>
+      cover?.mediaType ?? RealisationMediaType.image;
+
+  String get mediaUrl => cover?.mediaUrl ?? '';
+
+  bool get hasMultipleMedia => media.length > 1;
+
   factory ReelPostOwned.fromJson(Map<String, dynamic> row) {
-    final mediaRaw = (row['media_type'] as String?)?.trim() ?? 'image';
+    var media = ReelMediaItem.listFromJson(row['reel_post_media']);
+    if (media.isEmpty) {
+      media = ReelMediaItem.listFromJson(row['media']);
+    }
+    if (media.isEmpty) {
+      final url = (row['media_url'] as String?)?.trim() ?? '';
+      if (url.isNotEmpty) {
+        final mediaRaw = (row['media_type'] as String?)?.trim() ?? 'image';
+        media = [
+          ReelMediaItem(
+            mediaType: mediaRaw == 'video'
+                ? RealisationMediaType.video
+                : RealisationMediaType.image,
+            mediaUrl: url,
+          ),
+        ];
+      }
+    }
     return ReelPostOwned(
       id: row['id'] as String? ?? '',
       prestataireId: row['prestataire_id'] as String? ?? '',
-      mediaType: mediaRaw == 'video'
-          ? RealisationMediaType.video
-          : RealisationMediaType.image,
-      mediaUrl: row['media_url'] as String? ?? '',
+      media: media,
       caption: (row['caption'] as String?)?.trim(),
       status: row['status'] as String? ?? 'published',
       likesCount: (row['likes_count'] as num?)?.toInt() ?? 0,

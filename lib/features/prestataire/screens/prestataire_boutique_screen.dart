@@ -51,9 +51,9 @@ class PrestataireBoutiqueScreen extends ConsumerWidget {
                 )
               else
                 ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
                   itemCount: actifs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final p = actifs[index];
                     return _ProduitTile(
@@ -136,15 +136,15 @@ class _ProduitTile extends StatelessWidget {
     final image = produit.imageUrl?.trim();
 
     return DiscoverySurfaceCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: SizedBox(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               child: image != null && image.isNotEmpty
                   ? AppNetworkImage(url: image, fit: BoxFit.cover)
                   : ColoredBox(
@@ -156,7 +156,7 @@ class _ProduitTile extends StatelessWidget {
                     ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,6 +167,7 @@ class _ProduitTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    height: 1.2,
                   ),
                 ),
                 if (produit.conditionnement?.trim().isNotEmpty == true)
@@ -176,11 +177,12 @@ class _ProduitTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.outline,
+                      height: 1.2,
                     ),
                   ),
                 const SizedBox(height: 4),
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
@@ -196,7 +198,6 @@ class _ProduitTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 4),
           PopupMenuButton<_ProduitTileAction>(
             tooltip: DiscBoutique.boutiqueEdit,
             onSelected: (action) {

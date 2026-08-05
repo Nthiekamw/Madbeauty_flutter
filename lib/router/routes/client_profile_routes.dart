@@ -6,6 +6,7 @@ import '../../features/cart/screens/client_boutique_cart_screen.dart';
 import '../../features/cart/screens/client_boutique_orders_screen.dart';
 import '../../features/favorites/screens/client_favorites_screen.dart';
 import '../../features/wishlist/screens/client_wishlist_screen.dart';
+import '../../features/reel/screens/client_reel_favorites_screen.dart';
 import '../../features/bug_report/screens/bug_report_chat_screen.dart';
 import '../../features/bug_report/screens/bug_reports_hub_screen.dart';
 import '../../features/bug_report/screens/report_bug_screen.dart';
@@ -34,6 +35,11 @@ List<RouteBase> buildClientProfileRoutes() => [
         name: AppRouteNames.clientFavorites,
         path: AppRoutes.clientFavorites,
         builder: (context, state) => const ClientFavoritesScreen(),
+      ),
+      GoRoute(
+        name: AppRouteNames.clientReelFavorites,
+        path: AppRoutes.clientReelFavorites,
+        builder: (context, state) => const ClientReelFavoritesScreen(),
       ),
       GoRoute(
         name: AppRouteNames.clientWishlist,

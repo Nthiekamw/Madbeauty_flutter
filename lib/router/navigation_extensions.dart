@@ -97,6 +97,8 @@ extension AppNavigationX on BuildContext {
   void pushClientPaymentMethods() =>
       pushNamed(AppRouteNames.clientPaymentMethods);
   void pushClientFavorites() => pushNamed(AppRouteNames.clientFavorites);
+  void pushClientReelFavorites() =>
+      pushNamed(AppRouteNames.clientReelFavorites);
   void pushClientWishlist() => pushNamed(AppRouteNames.clientWishlist);
   void pushClientCart() => pushNamed(AppRouteNames.clientCart);
   void pushClientBoutiqueOrders() =>
@@ -192,7 +194,15 @@ extension AppNavigationX on BuildContext {
       );
   void goMyReservations() => pushNamed(AppRouteNames.clientReservations);
   void pushMyReservations() => pushNamed(AppRouteNames.clientReservations);
-  void goClientReel() => goNamed(AppRouteNames.clientReel);
+  void goClientReel({String? reelId}) {
+    final id = reelId?.trim();
+    goNamed(
+      AppRouteNames.clientReel,
+      queryParameters: {
+        if (id != null && id.isNotEmpty) 'reelId': id,
+      },
+    );
+  }
   void pushPrestataireReel() => pushNamed(AppRouteNames.prestataireReel);
   void pushPrestataireProfileSalon() =>
       pushNamed(AppRouteNames.prestataireProfileSalon);

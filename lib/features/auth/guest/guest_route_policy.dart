@@ -28,6 +28,7 @@ abstract final class GuestRoutePolicy {
     if (location == AppRoutes.bookingConfirmation) return true;
     if (location == AppRoutes.editClientAccount) return true;
     if (location == AppRoutes.clientFavorites) return true;
+    if (location == AppRoutes.clientReelFavorites) return true;
     if (location == AppRoutes.clientWishlist) return true;
     if (isPrestataireSpacePath(location)) return true;
     return false;

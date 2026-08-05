@@ -24,8 +24,9 @@ bool isPublicPrestataireId(String? value) {
 
 bool isPublicPrestataireProfilePath(String location) {
   const prefix = '/prestataire/';
+  if (location.startsWith('/@')) return true;
+  if (location.startsWith('/p/')) return true;
   if (!location.startsWith(prefix)) return false;
   final id = location.substring(prefix.length).split('/').first;
   return isPublicPrestataireId(id);
 }
-

@@ -37,8 +37,8 @@ Snapshot : `reservations.referral_discount_percent`, `vip_discount_percent`, `lo
 
 | Profil | Mensuel | Annuel |
 |--------|---------|--------|
-| **1 service** publié | 14,99 € | 150 € |
-| **2 services ou plus** | 17,99 € | 180 € |
+| **1 service** publié | 18 € | 180 € |
+| **2 services ou plus** | 24,99 € | 250 € |
 
 Constantes : `lib/core/config/prestataire_subscription_config.dart`.  
 Paiement : Stripe Checkout (abonnement) + webhooks — voir [../payments/SUBSCRIPTION.md](../payments/SUBSCRIPTION.md).

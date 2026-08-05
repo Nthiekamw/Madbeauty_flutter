@@ -21,7 +21,7 @@ class PrestataireBoutiqueHubScreen extends StatelessWidget {
         title: const Text(DiscPrestaProfile.hubBoutiqueScreenTitle),
       ),
       body: ListView(
-        padding: padding.copyWith(bottom: 32),
+        padding: padding.copyWith(bottom: 20),
         children: [
           PrestataireSectionHeader(
             icon: Icons.shopping_bag_outlined,
@@ -29,8 +29,9 @@ class PrestataireBoutiqueHubScreen extends StatelessWidget {
             subtitle: DiscPrestaProfile.hubBoutiqueScreenSubtitle,
             iconColor: theme.colorScheme.primary,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           DiscoverySurfaceCard(
+            padding: const EdgeInsets.symmetric(vertical: 2),
             child: Column(
               children: [
                 DiscoveryMenuTile(

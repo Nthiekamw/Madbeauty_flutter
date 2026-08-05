@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const APP_SCHEME = "com.madbeauty.madbeauty";
@@ -10,9 +11,10 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const prestataireId = url.searchParams.get("prestataire_id")?.trim() ?? "";
+  const slugParam = url.searchParams.get("slug")?.trim() ?? "";
 
-  if (!prestataireId) {
-    return new Response("Paramètre prestataire_id manquant.", {
+  if (!prestataireId && !slugParam) {
+    return new Response("Paramètre prestataire_id ou slug manquant.", {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "text/plain; charset=utf-8" },
     });
@@ -20,8 +22,42 @@ Deno.serve(async (req) => {
 
   const webBase = (Deno.env.get("SHARE_WEB_BASE_URL")?.trim() ||
     DEFAULT_WEB_SHARE_BASE).replace(/\/+$/, "");
-  const webUrl = `${webBase}/prestataire/${prestataireId}`;
-  const deepLink = `${APP_SCHEME}://prestataire/${prestataireId}`;
+
+  let slug = slugParam.replace(/^@/, "").toLowerCase();
+  let resolvedId = prestataireId;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  if (supabaseUrl && supabaseAnon) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseAnon);
+      if (prestataireId) {
+        const { data } = await supabase
+          .from("prestataire_profiles")
+          .select("id, public_slug")
+          .eq("id", prestataireId)
+          .maybeSingle();
+        if (data?.public_slug) slug = String(data.public_slug);
+        if (data?.id) resolvedId = String(data.id);
+      } else if (slug) {
+        const { data } = await supabase.rpc("resolve_prestataire_public_ref", {
+          p_ref: slug,
+        });
+        if (typeof data === "string" && data.length > 0) {
+          resolvedId = data;
+        }
+      }
+    } catch (_) {
+      // Soft : on garde le fallback UUID / slug fourni.
+    }
+  }
+
+  const webUrl = slug
+    ? `${webBase}/@${slug}`
+    : `${webBase}/prestataire/${resolvedId}`;
+  const deepLink = slug
+    ? `${APP_SCHEME}://@${slug}`
+    : `${APP_SCHEME}://prestataire/${resolvedId}`;
 
   const html = `<!DOCTYPE html>
 <html lang="fr">

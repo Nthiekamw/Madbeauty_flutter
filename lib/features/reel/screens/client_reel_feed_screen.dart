@@ -8,17 +8,22 @@ import '../../../core/models/domain/reel/reel_feed_item.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_network_image.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/prestataire/network_video_preview.dart';
 import '../../auth/guest/guest_mode_provider.dart';
+import '../logic/reel_share.dart';
 import '../providers/reel_feed_provider.dart';
 import '../widgets/reel_comments_sheet.dart';
 
-/// Fil vertical type Reel (photos + vidéos).
+/// Fil vertical type Reel (photos + vidéos), style TikTok.
 class ClientReelFeedScreen extends ConsumerStatefulWidget {
-  const ClientReelFeedScreen({super.key});
+  const ClientReelFeedScreen({super.key, this.focusReelId});
+
+  /// Deep link / partage : place ce Reel en tête du feed.
+  final String? focusReelId;
 
   @override
   ConsumerState<ClientReelFeedScreen> createState() =>
@@ -28,6 +33,35 @@ class ClientReelFeedScreen extends ConsumerStatefulWidget {
 class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
   final _pageController = PageController();
   int _currentIndex = 0;
+  String? _focusedReelId;
+
+  @override
+  void initState() {
+    super.initState();
+    final focus = widget.focusReelId?.trim();
+    if (focus != null && focus.isNotEmpty) {
+      _focusedReelId = focus;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(reelFeedControllerProvider.notifier).focusReel(focus);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ClientReelFeedScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final focus = widget.focusReelId?.trim();
+    if (focus != null &&
+        focus.isNotEmpty &&
+        focus != _focusedReelId) {
+      _focusedReelId = focus;
+      ref.read(reelFeedControllerProvider.notifier).focusReel(focus);
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(0);
+      }
+      setState(() => _currentIndex = 0);
+    }
+  }
 
   @override
   void dispose() {
@@ -104,6 +138,8 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
             item: item,
             active: index == _currentIndex,
             onLike: () => _onLike(item.id),
+            onFavorite: () => _onFavorite(item),
+            onShare: () => _onShare(item),
             onComment: () => showReelCommentsSheet(context, reelId: item.id),
             onOpenSalon: () =>
                 context.pushPrestataireDetail(item.prestataireId),
@@ -116,25 +152,67 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
   }
 
   Future<void> _onLike(String reelId) async {
-    final isGuest = ref.read(guestModeProvider);
+    final isGuest = ref.read(isGuestBrowsingProvider);
     if (isGuest) {
       AppSnackBar.show(context, message: DiscReel.likeLoginRequired);
       return;
     }
     try {
       await ref.read(reelFeedControllerProvider.notifier).toggleLike(reelId);
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.error(context, _mapReelActionError(e, like: true));
+    }
+  }
+
+  Future<void> _onFavorite(ReelFeedItem item) async {
+    final isGuest = ref.read(isGuestBrowsingProvider);
+    if (isGuest) {
+      AppSnackBar.show(context, message: DiscReel.favoriteLoginRequired);
+      return;
+    }
+    try {
+      final saved = await ref
+          .read(reelFeedControllerProvider.notifier)
+          .toggleFavorite(item.id);
+      ref.invalidate(clientReelFavoritesProvider);
+      if (!mounted) return;
+      AppSnackBar.success(
+        context,
+        saved ? DiscReel.favoriteAdded : DiscReel.favoriteRemoved,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackBar.error(context, _mapReelActionError(e, like: false));
+    }
+  }
+
+  String _mapReelActionError(Object error, {required bool like}) {
+    final raw = error.toString().toLowerCase();
+    if (raw.contains('profil client') ||
+        raw.contains('ensure_client_profile')) {
+      return like ? DiscReel.likeNeedClient : DiscReel.favoriteNeedClient;
+    }
+    return like ? DiscReel.likeError : DiscReel.favoriteError;
+  }
+
+  Future<void> _onShare(ReelFeedItem item) async {
+    try {
+      await shareReelPost(item);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.error(context, DiscReel.likeError);
+      AppSnackBar.error(context, DiscReel.shareError);
     }
   }
 }
 
-class _ReelPage extends StatelessWidget {
+class _ReelPage extends StatefulWidget {
   const _ReelPage({
     required this.item,
     required this.active,
     required this.onLike,
+    required this.onFavorite,
+    required this.onShare,
     required this.onComment,
     required this.onOpenSalon,
     required this.onBook,
@@ -143,47 +221,108 @@ class _ReelPage extends StatelessWidget {
   final ReelFeedItem item;
   final bool active;
   final VoidCallback onLike;
+  final VoidCallback onFavorite;
+  final VoidCallback onShare;
   final VoidCallback onComment;
   final VoidCallback onOpenSalon;
   final VoidCallback onBook;
 
   @override
+  State<_ReelPage> createState() => _ReelPageState();
+}
+
+class _ReelPageState extends State<_ReelPage> {
+  late final PageController _mediaController;
+  int _mediaIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _mediaController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _mediaController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isVideo = item.mediaType == RealisationMediaType.video;
+    final item = widget.item;
+    final media = item.media;
     final caption = item.caption?.trim();
     final avatar = item.avatarUrl?.trim();
+    final multi = media.length > 1;
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (isVideo)
-          NetworkVideoPreview(
-            url: item.mediaUrl,
-            autoPlay: active,
-            muted: false,
-            loop: true,
-            fit: BoxFit.cover,
+        if (media.isEmpty)
+          const ColoredBox(color: AppColors.black)
+        else if (!multi)
+          _ReelMediaSlide(
+            media: media.first,
+            active: widget.active,
           )
         else
-          AppNetworkImage(
-            url: item.mediaUrl,
-            fit: BoxFit.cover,
+          PageView.builder(
+            controller: _mediaController,
+            itemCount: media.length,
+            onPageChanged: (i) => setState(() => _mediaIndex = i),
+            physics: const PageScrollPhysics(parent: ClampingScrollPhysics()),
+            itemBuilder: (context, index) {
+              return _ReelMediaSlide(
+                media: media[index],
+                active: widget.active && index == _mediaIndex,
+              );
+            },
           ),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0x66000000),
-                Color(0x00000000),
-                Color(0x99000000),
-              ],
-              stops: [0, 0.35, 1],
+        // Ne doit pas bloquer le swipe horizontal du carrousel.
+        const IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x66000000),
+                  Color(0x00000000),
+                  Color(0x99000000),
+                ],
+                stops: [0, 0.35, 1],
+              ),
             ),
           ),
         ),
+        if (multi)
+          Positioned(
+            left: 16,
+            right: 72,
+            bottom: 132,
+            child: IgnorePointer(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < media.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 5),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: i == _mediaIndex ? 7 : 5,
+                      height: i == _mediaIndex ? 7 : 5,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == _mediaIndex
+                            ? AppColors.white
+                            : AppColors.white.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         Positioned(
           left: 16,
           right: 72,
@@ -193,23 +332,13 @@ class _ReelPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               InkWell(
-                onTap: onOpenSalon,
+                onTap: widget.onOpenSalon,
                 child: Row(
                   children: [
-                    CircleAvatar(
+                    AppAvatar(
+                      displayName: item.salonName,
+                      imageUrl: avatar,
                       radius: 18,
-                      backgroundColor: AppColors.scrimDark54,
-                      backgroundImage:
-                          avatar != null && avatar.isNotEmpty
-                              ? NetworkImage(avatar)
-                              : null,
-                      child: avatar == null || avatar.isEmpty
-                          ? const Icon(
-                              Icons.storefront,
-                              color: AppColors.white,
-                              size: 18,
-                            )
-                          : null,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -217,11 +346,10 @@ class _ReelPage extends StatelessWidget {
                         item.salonName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
@@ -233,9 +361,9 @@ class _ReelPage extends StatelessWidget {
                   caption,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.white,
-                      ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
               ],
               const SizedBox(height: 10),
@@ -244,7 +372,7 @@ class _ReelPage extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   FilledButton(
-                    onPressed: onBook,
+                    onPressed: widget.onBook,
                     style: FilledButton.styleFrom(
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(
@@ -260,7 +388,7 @@ class _ReelPage extends StatelessWidget {
                     child: const Text(DiscReel.bookCta),
                   ),
                   OutlinedButton(
-                    onPressed: onOpenSalon,
+                    onPressed: widget.onOpenSalon,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.white,
                       side: const BorderSide(color: AppColors.white, width: 1),
@@ -288,7 +416,7 @@ class _ReelPage extends StatelessWidget {
           child: Column(
             children: [
               IconButton(
-                onPressed: onLike,
+                onPressed: widget.onLike,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero,
@@ -296,7 +424,9 @@ class _ReelPage extends StatelessWidget {
                   item.likedByMe
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  color: item.likedByMe ? Colors.pinkAccent : AppColors.white,
+                  color: item.likedByMe
+                      ? AppColors.notificationDot
+                      : AppColors.white,
                   size: 28,
                 ),
                 tooltip: item.likedByMe
@@ -305,14 +435,14 @@ class _ReelPage extends StatelessWidget {
               ),
               Text(
                 '${item.likesCount}',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 10),
               IconButton(
-                onPressed: onComment,
+                onPressed: widget.onComment,
                 visualDensity: VisualDensity.compact,
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero,
@@ -325,10 +455,40 @@ class _ReelPage extends StatelessWidget {
               ),
               Text(
                 '${item.commentsCount}',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              IconButton(
+                onPressed: widget.onFavorite,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  item.savedByMe
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  color: AppColors.white,
+                  size: 28,
+                ),
+                tooltip: item.savedByMe
+                    ? DiscReel.unfavoriteTooltip
+                    : DiscReel.favoriteTooltip,
+              ),
+              const SizedBox(height: 10),
+              IconButton(
+                onPressed: widget.onShare,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.share_rounded,
+                  color: AppColors.white,
+                  size: 26,
+                ),
+                tooltip: DiscReel.shareTooltip,
               ),
             ],
           ),
@@ -337,3 +497,34 @@ class _ReelPage extends StatelessWidget {
     );
   }
 }
+
+class _ReelMediaSlide extends StatelessWidget {
+  const _ReelMediaSlide({
+    required this.media,
+    required this.active,
+  });
+
+  final ReelMediaItem media;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    if (media.mediaType == RealisationMediaType.video) {
+      return NetworkVideoPreview(
+        url: media.mediaUrl,
+        autoPlay: active,
+        muted: false,
+        loop: true,
+        fit: BoxFit.cover,
+        tapToTogglePlay: true,
+        placeholderIconSize: 48,
+      );
+    }
+    return AppNetworkImage(
+      url: media.mediaUrl,
+      fit: BoxFit.cover,
+    );
+  }
+}
+
+
