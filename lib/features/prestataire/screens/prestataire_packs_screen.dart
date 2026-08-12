@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/supabase_service_exception.dart';
 import '../../../core/models/domain/catalog/pack_offre.dart';
 import '../../../core/models/domain/catalog/produit_boutique.dart';
@@ -469,9 +470,10 @@ class _PackEditorSheetState extends ConsumerState<_PackEditorSheet> {
       if (!mounted) return;
       AppSnackBar.success(context, DiscBoutique.packsSaved);
       Navigator.of(context).pop(true);
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        AppSnackBar.error(context, DiscBoutique.packsSaveErr);
+        final message = e is AppFailure ? e.message : DiscBoutique.packsSaveErr;
+        AppSnackBar.error(context, message);
       }
     } finally {
       if (mounted) setState(() => _saving = false);
