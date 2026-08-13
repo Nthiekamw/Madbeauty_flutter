@@ -6,6 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../firebase_runtime_helpers.dart';
 
+bool isIosPwaNotInstalled() => false;
+
 /// iOS : Firebase Messaging (APNs) — `permission_handler` sans macro Podfile
 /// renvoie toujours « denied » et bloque le toggle.
 /// Android : `permission_handler` (POST_NOTIFICATIONS).

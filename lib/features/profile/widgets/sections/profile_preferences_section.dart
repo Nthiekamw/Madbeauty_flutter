@@ -149,6 +149,17 @@ class _ProfilePreferencesSectionState
       return;
     }
 
+    if (ref
+        .read(appPermissionsServiceProvider)
+        .isNotificationRequestBlockedByPwaInstall()) {
+      AppSnackBar.show(
+        context,
+        message: DiscProfile.prefPushIosInstallRequired,
+        kind: AppSnackKind.warning,
+      );
+      return;
+    }
+
     AppSnackBar.show(
       context,
       message: DiscProfile.prefPushDenied,

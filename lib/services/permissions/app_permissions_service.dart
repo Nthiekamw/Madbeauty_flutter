@@ -13,6 +13,10 @@ class AppPermissionsService {
   Future<bool> areNotificationsPermanentlyDenied() =>
       arePlatformNotificationsPermanentlyDenied();
 
+  /// True sur iOS Safari quand la PWA n'est pas installée sur l'écran
+  /// d'accueil : les notifications ne peuvent alors jamais être autorisées.
+  bool isNotificationRequestBlockedByPwaInstall() => isIosPwaNotInstalled();
+
   Future<bool> isLocationGranted() async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
     final permission = await Geolocator.checkPermission();

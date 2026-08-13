@@ -543,6 +543,10 @@ abstract final class DiscProfile {
   static const prefPushDisabled = 'Notifications désactivées.';
   static const prefPushDenied =
       'Notifications non autorisées pour le moment.';
+  static const prefPushIosInstallRequired =
+      'Ajoute d’abord l’app à ton écran d’accueil (Partager → Sur l’écran '
+      'd’accueil), puis ouvre-la depuis l’icône pour activer les '
+      'notifications.';
   static const prefPushFirebaseMissing =
       'Notifications push indisponibles sur cet appareil (Firebase non configuré).';
   static const prefLocationEnabled = 'Géolocalisation activée.';
