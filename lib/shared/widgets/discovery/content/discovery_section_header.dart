@@ -33,8 +33,6 @@ class DiscoverySectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = iconColor ?? theme.colorScheme.primary;
-    final iconSize = compact ? 32.0 : 36.0;
-    final glyphSize = compact ? 17.0 : 19.0;
     final showSubtitle = subtitle != null &&
         subtitle!.isNotEmpty &&
         (!compact || showSubtitleWhenCompact);
@@ -45,15 +43,7 @@ class DiscoverySectionHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (icon != null) ...[
-            Container(
-              width: iconSize,
-              height: iconSize,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(compact ? 10 : 12),
-              ),
-              child: Icon(icon, color: accent, size: glyphSize),
-            ),
+            Icon(icon, size: compact ? 18 : 20, color: accent),
             SizedBox(width: compact ? 8 : 10),
           ],
           Expanded(
@@ -65,10 +55,10 @@ class DiscoverySectionHeader extends StatelessWidget {
                   maxLines: compact ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
-                    fontSize: compact ? 13 : 14,
-                    letterSpacing: -0.2,
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w600,
+                    fontSize: compact ? 13 : 15,
+                    letterSpacing: 0,
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
@@ -78,9 +68,9 @@ class DiscoverySectionHeader extends StatelessWidget {
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontFamily: AppFonts.body,
-                      fontSize: 11,
+                      fontSize: 12,
                       color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.3,
+                      height: 1.35,
                     ),
                   ),
                 ],

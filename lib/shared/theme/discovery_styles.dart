@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 abstract final class DiscoveryStyles {
   DiscoveryStyles._();
 
-  static const double heroRadius = 24;
-  static const double cardRadius = 20;
-  static const double chipRadius = 14;
+  static const double heroRadius = 6;
+  static const double cardRadius = 6;
+  static const double chipRadius = 4;
   static const double listCardWidth = 176;
   static const double listCardHeight = 232;
   static const double horizontalSectionHeight = 232;
   static const double listCardPhotoHeight = 100;
   static const double catalogCardPhotoHeight = 168;
-  static const double catalogListCardRadius = 20;
+  static const double catalogListCardRadius = 6;
 
   static BorderRadius get heroBorderRadius =>
       BorderRadius.circular(heroRadius);

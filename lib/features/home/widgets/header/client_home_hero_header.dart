@@ -128,9 +128,9 @@ class _ClientHomeHeroHeaderState extends ConsumerState<ClientHomeHeroHeader> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontFamily: AppFonts.display,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
                         color: theme.colorScheme.onSurface,
                         height: 1.2,
                       ),

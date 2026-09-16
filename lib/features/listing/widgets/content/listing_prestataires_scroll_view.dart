@@ -33,6 +33,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final responsive = DiscoveryResponsive.of(context);
     final hPad = responsive.useWebSiteLayout ? 16.0 : responsive.horizontalPadding;
+    final gridInset = hPad * 2;
     final gridGap = responsive.catalogGridGap;
     final origin = ref.watch(discoveryOriginProvider);
     final expandedId = ref.watch(listingExpandedCardIdProvider);
@@ -72,15 +73,26 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                       crossAxisCount: responsive.catalogGridColumns,
                       mainAxisSpacing: gridGap,
                       crossAxisSpacing: gridGap,
-                      childAspectRatio: responsive.catalogGridCellWidth() /
-                          responsive.catalogGridTileHeight(),
+                      childAspectRatio:
+                          responsive.catalogGridCellWidth(
+                                horizontalInset: gridInset,
+                              ) /
+                          responsive.catalogGridTileHeight(
+                            horizontalInset: gridInset,
+                          ),
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final entry = entries[index];
-                        final cellW = responsive.catalogGridCellWidth();
-                        final cardH = responsive.catalogGridTileHeight();
-                        final photoH = responsive.catalogGridPhotoHeight();
+                        final cellW = responsive.catalogGridCellWidth(
+                          horizontalInset: gridInset,
+                        );
+                        final cardH = responsive.catalogGridTileHeight(
+                          horizontalInset: gridInset,
+                        );
+                        final photoH = responsive.catalogGridPhotoHeight(
+                          horizontalInset: gridInset,
+                        );
                         return PrestataireHomeListCard(
                           key: ValueKey('catalog-grid-${entry.profile.id}'),
                           entry: entry,
@@ -109,6 +121,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                           expandedId: expandedId,
                           origin: origin,
                           responsive: responsive,
+                          gridInset: gridInset,
                         );
                       },
                       childCount: _gridRowCount(entries, expandedId),
@@ -158,6 +171,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
     required String? expandedId,
     required GeoPoint origin,
     required DiscoveryResponsive responsive,
+    required double gridInset,
   }) {
     var row = 0;
     var i = 0;
@@ -190,9 +204,15 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
       if (row == rowIndex) {
         final left = entries[i];
         final right = hasPair ? entries[i + 1] : null;
-        final cellW = responsive.catalogGridCellWidth();
-        final cardH = responsive.catalogGridTileHeight();
-        final photoH = responsive.catalogGridPhotoHeight();
+        final cellW = responsive.catalogGridCellWidth(
+          horizontalInset: gridInset,
+        );
+        final cardH = responsive.catalogGridTileHeight(
+          horizontalInset: gridInset,
+        );
+        final photoH = responsive.catalogGridPhotoHeight(
+          horizontalInset: gridInset,
+        );
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),

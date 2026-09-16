@@ -8,10 +8,10 @@ abstract final class WebReadability {
   static double textScaleFactor(double width) {
     if (!kIsWeb) return 1;
     return switch (width) {
-      >= 1200 => 1.24,
-      >= 900 => 1.2,
-      >= 600 => 1.16,
-      _ => 1.12,
+      >= 1200 => 1.04,
+      >= 900 => 1.03,
+      >= 600 => 1.02,
+      _ => 1,
     };
   }
 
@@ -19,9 +19,9 @@ abstract final class WebReadability {
   static double iconScaleFactor(double width) {
     if (!kIsWeb) return 1;
     return switch (width) {
-      >= 900 => 1.15,
-      >= 600 => 1.1,
-      _ => 1.08,
+      >= 900 => 1.04,
+      >= 600 => 1.02,
+      _ => 1,
     };
   }
 

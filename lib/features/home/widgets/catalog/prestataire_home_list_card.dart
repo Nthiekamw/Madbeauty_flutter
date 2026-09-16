@@ -69,7 +69,7 @@ class PrestataireHomeListCard extends StatelessWidget {
       height: h,
       child: Material(
         color: AppColors.cardSurfaceFor(theme.brightness),
-        elevation: isDark ? 0 : 1,
+        elevation: 0,
         shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
         borderRadius: radius,
         clipBehavior: Clip.antiAlias,

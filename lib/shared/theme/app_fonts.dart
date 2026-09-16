@@ -5,8 +5,8 @@ abstract final class AppFonts {
   /// Texte courant, boutons, formulaires.
   static const String body = 'Poppins';
 
-  /// Titres et en-têtes.
-  static const String display = 'Exo';
+  /// Titres et en-têtes (même famille que le corps — évite le duo Exo/Poppins « template »).
+  static const String display = 'Poppins';
 
   /// Accroches / logo wordmark (usage ponctuel).
   static const String brand = 'Bungee';

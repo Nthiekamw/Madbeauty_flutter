@@ -86,10 +86,10 @@ class _ServiceFilterChip extends StatelessWidget {
 
     return Material(
       color: fill,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(4),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(

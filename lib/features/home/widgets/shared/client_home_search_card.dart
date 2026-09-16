@@ -35,7 +35,7 @@ class ClientHomeSearchCard extends StatelessWidget {
               color: theme.colorScheme.surface.withValues(
                 alpha: isDark ? 0.94 : 0.98,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: theme.colorScheme.outline.withValues(alpha: 0.12),
               ),
@@ -79,10 +79,10 @@ class ClientHomeSearchCard extends StatelessWidget {
           const SizedBox(width: 8),
           Material(
             color: theme.colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(4),
             child: InkWell(
               onTap: onFilter,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(4),
               child: SizedBox(
                 width: 42,
                 height: 42,

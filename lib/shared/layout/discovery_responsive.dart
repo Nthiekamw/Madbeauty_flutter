@@ -3,12 +3,24 @@ import 'package:flutter/material.dart';
 
 /// Métriques responsive pour accueil, recherche et cartes prestataires.
 class DiscoveryResponsive {
-  DiscoveryResponsive._(this.width);
+  DiscoveryResponsive._({
+    required this.width,
+    required this.viewportWidth,
+  });
 
+  /// Largeur du parent (colonne contenu si le shell web la borne).
   final double width;
 
+  /// Largeur de la fenêtre (rail, mode site) — indépendante de la colonne.
+  final double viewportWidth;
+
   static DiscoveryResponsive of(BuildContext context) {
-    return DiscoveryResponsive._(MediaQuery.sizeOf(context).width);
+    final view = View.of(context);
+    final viewportWidth = view.physicalSize.width / view.devicePixelRatio;
+    return DiscoveryResponsive._(
+      width: MediaQuery.sizeOf(context).width,
+      viewportWidth: viewportWidth,
+    );
   }
 
   static const double compactBreakpoint = 360;
@@ -17,15 +29,16 @@ class DiscoveryResponsive {
   static const double desktopBreakpoint = 1200;
 
   bool get isCompact => width < compactBreakpoint;
-  bool get isTablet => width >= tabletBreakpoint;
-  bool get isWide => width >= wideBreakpoint;
-  bool get isDesktop => width >= desktopBreakpoint;
+  bool get isTablet => viewportWidth >= tabletBreakpoint;
+  bool get isWide => viewportWidth >= wideBreakpoint;
+  bool get isDesktop => viewportWidth >= desktopBreakpoint;
 
   /// Web tablette / desktop (≥ 600 px) : navigation et auth type « site ».
-  bool get useWebSiteLayout => kIsWeb && width >= tabletBreakpoint;
+  bool get useWebSiteLayout => kIsWeb && viewportWidth >= tabletBreakpoint;
 
   /// Web téléphone ou app native : même expérience que l'app mobile.
-  bool get useNativeMobileExperience => !kIsWeb || width < tabletBreakpoint;
+  bool get useNativeMobileExperience =>
+      !kIsWeb || viewportWidth < tabletBreakpoint;
 
   /// Navigation latérale (Flutter Web tablette+).
   bool get useSidebarNavigation => useWebSiteLayout;
@@ -40,7 +53,7 @@ class DiscoveryResponsive {
 
   /// Largeur utile du contenu (centré sur grands écrans).
   double get contentMaxWidth {
-    if (kIsWeb && isDesktop) return 1280;
+    if (useWebSiteLayout) return webShellContentMaxWidth;
     if (isWide) return 1080;
     if (isTablet) return 720;
     return width;
@@ -50,7 +63,10 @@ class DiscoveryResponsive {
 
   /// Cartes horizontales accueil : 3 cartes visibles sur téléphone.
   double get homeListCardWidth {
-    final inner = width - horizontalPadding * 2;
+    final pad = useSidebarNavigation
+        ? webShellHorizontalPadding
+        : horizontalPadding;
+    final inner = width - pad * 2;
     if (kIsWeb && isDesktop) {
       return (inner / 4.8).clamp(148.0, 220.0);
     }
@@ -92,7 +108,10 @@ class DiscoveryResponsive {
   /// Cartes portrait « Tendances cette semaine » (plus grandes que la grille accueil).
   double get homeTrendingCardWidth {
     const gap = 12.0;
-    final inner = width - horizontalPadding * 2;
+    final pad = useSidebarNavigation
+        ? webShellHorizontalPadding
+        : horizontalPadding;
+    final inner = width - pad * 2;
     if (useWebSiteLayout) {
       if (isDesktop) return ((inner - gap * 3) / 4.2).clamp(168.0, 260.0);
       if (isWide) return ((inner - gap * 2) / 3.5).clamp(164.0, 230.0);
@@ -122,6 +141,7 @@ class DiscoveryResponsive {
   static const double homePromoBannerAspectHeight = 682;
 
   /// Marge souhaitée entre la bannière promo et le bord de l’écran.
+  @Deprecated('La bannière suit la largeur du parent (colonne).')
   double get homePromoBannerOuterMargin {
     if (useSidebarNavigation) return 20;
     if (isCompact) return 10;
@@ -134,7 +154,7 @@ class DiscoveryResponsive {
     double parentWidth, {
     required double horizontalPadding,
   }) {
-    final width = parentWidth + horizontalPadding * 2;
+    final width = parentWidth;
     var height = width *
         homePromoBannerAspectHeight /
         homePromoBannerAspectWidth;
@@ -142,9 +162,9 @@ class DiscoveryResponsive {
     if (useNativeMobileExperience) {
       height = height.clamp(220, 288);
     } else if (isDesktop) {
-      height = height.clamp(280, 400);
+      height = height.clamp(220, 268);
     } else {
-      height = height.clamp(250, 360);
+      height = height.clamp(210, 248);
     }
 
     return (width: width, height: height);
@@ -177,22 +197,23 @@ class DiscoveryResponsive {
       useWebSiteLayout ? 16 : catalogGridSpacing;
 
   /// Largeur d'une cellule grille catalogue (colonnes adaptatives).
-  double catalogGridCellWidth() {
+  double catalogGridCellWidth({double horizontalInset = 0}) {
     final cols = catalogGridColumns;
     final innerWidth = useWebSiteLayout
         ? width
         : (contentMaxWidth < width ? contentMaxWidth : width);
-    final hInset = useWebSiteLayout ? webShellHorizontalPadding * 2 : horizontalPadding * 2;
-    final inner = innerWidth - hInset;
+    final inner = (innerWidth - horizontalInset).clamp(80.0, innerWidth);
     final gap = catalogGridGap;
     return (inner - gap * (cols - 1)) / cols;
   }
 
   /// Hauteur d'une tuile grille catalogue (ratio carte / largeur).
-  double catalogGridTileHeight() => catalogGridCellWidth() * 1.68;
+  double catalogGridTileHeight({double horizontalInset = 0}) =>
+      catalogGridCellWidth(horizontalInset: horizontalInset) * 1.68;
 
   /// Photo grille : ~78 % de la hauteur carte (texte compact en bas).
-  double catalogGridPhotoHeight() => catalogGridTileHeight() * 0.78;
+  double catalogGridPhotoHeight({double horizontalInset = 0}) =>
+      catalogGridTileHeight(horizontalInset: horizontalInset) * 0.78;
 
   /// Filtres rapides recherche (puces compactes).
   double get quickFiltersStripHeight => 34;
@@ -230,9 +251,9 @@ class DiscoveryResponsive {
 
   /// Largeur max contenu shell web (Accueil, Catalogue, etc.).
   double get webShellContentMaxWidth {
-    if (isDesktop) return 1200;
-    if (isWide) return 1080;
-    return 960;
+    if (isDesktop) return 1080;
+    if (isWide) return 960;
+    return 840;
   }
 
   /// Padding horizontal contenu shell web.
@@ -246,7 +267,7 @@ class DiscoveryResponsive {
   double get webShellTopPadding => isDesktop ? 28 : 22;
 
   /// Rayons cartes shell web.
-  double get webShellCardRadius => isDesktop ? 20 : 18;
+  double get webShellCardRadius => 4;
 
   /// Colonne max parcours web (fiche prestataire, réservation).
   double get webFlowContentMaxWidth {

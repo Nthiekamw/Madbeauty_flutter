@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_fonts.dart';
-import '../../../theme/discovery_styles.dart';
 
 /// État vide ou message centré (recherche, réservations, invité).
 class DiscoveryEmptyState extends StatelessWidget {
@@ -33,33 +32,17 @@ class DiscoveryEmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     final isCompact =
         compact ?? MediaQuery.sizeOf(context).height < 640;
-    final outerPadding = isCompact ? 12.0 : 28.0;
-    final cardPadding = isCompact
-        ? const EdgeInsets.fromLTRB(16, 16, 16, 14)
-        : const EdgeInsets.fromLTRB(24, 28, 24, 24);
-    final iconSize = isCompact ? 40.0 : 52.0;
+    final outerPadding = isCompact ? 12.0 : 24.0;
 
-    final card = DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.85 : 0.95,
-        ),
-        borderRadius: DiscoveryStyles.cardBorderRadius,
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.16),
-        ),
-      ),
-      child: Padding(
-        padding: cardPadding,
-        child: Column(
+    final content = Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: iconSize,
+              size: isCompact ? 28 : 32,
               color: iconColor ?? theme.colorScheme.onSurfaceVariant,
             ),
-            SizedBox(height: isCompact ? 10 : 16),
+            SizedBox(height: isCompact ? 10 : 12),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -69,8 +52,8 @@ class DiscoveryEmptyState extends StatelessWidget {
                       ? theme.textTheme.titleSmall
                       : theme.textTheme.titleMedium)
                   ?.copyWith(
-                fontFamily: AppFonts.display,
-                fontWeight: FontWeight.w700,
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: isCompact ? 6 : 8),
@@ -89,7 +72,7 @@ class DiscoveryEmptyState extends StatelessWidget {
               ),
             ),
             if (actionLabel != null && onAction != null) ...[
-              SizedBox(height: isCompact ? 14 : 20),
+              SizedBox(height: isCompact ? 14 : 16),
               FilledButton(
                 onPressed: onAction,
                 child: Text(actionLabel!),
@@ -100,15 +83,12 @@ class DiscoveryEmptyState extends StatelessWidget {
               ...extraActions!,
             ],
           ],
-        ),
-      ),
-    );
+        );
 
-    // Pas de LayoutBuilder : incompatible avec SliverFillRemaining (intrinsics).
     return Center(
       child: SingleChildScrollView(
         padding: EdgeInsets.all(outerPadding),
-        child: card,
+        child: content,
       ),
     );
   }

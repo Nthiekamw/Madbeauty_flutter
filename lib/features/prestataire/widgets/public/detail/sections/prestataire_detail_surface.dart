@@ -23,17 +23,6 @@ abstract final class PrestataireDetailSurface {
           alpha: isDark ? 0.28 : 0.08,
         ),
       ),
-      boxShadow: isDark
-          ? null
-          : [
-              BoxShadow(
-                color: AppColors.brandBrown.withValues(
-                  alpha: layout.useWebSiteLayout ? 0.07 : 0.08,
-                ),
-                blurRadius: layout.useWebSiteLayout ? 18 : 10,
-                offset: Offset(0, layout.useWebSiteLayout ? 6 : 3),
-              ),
-            ],
     );
   }
 
@@ -66,7 +55,7 @@ abstract final class PrestataireDetailSurface {
 
     return Material(
       color: AppColors.transparent,
-      elevation: theme.brightness == Brightness.dark ? 0 : 1,
+      elevation: 0,
       shadowColor: AppColors.brandBrown.withValues(alpha: 0.08),
       borderRadius: radius,
       clipBehavior: Clip.antiAlias,

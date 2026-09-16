@@ -69,49 +69,54 @@ class ClientHomePromoBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final layout = DiscoveryResponsive.of(context);
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final outerMargin = layout.homePromoBannerOuterMargin;
-    final bannerWidth = screenWidth - outerMargin * 2;
-    final dims = layout.homePromoBannerDimensions(
-      bannerWidth,
-      horizontalPadding: 0,
-    );
 
-    return SizedBox(
-      height: dims.height,
-      child: Center(
-        child: Material(
-          color: AppColors.transparent,
-          clipBehavior: Clip.antiAlias,
-          borderRadius: BorderRadius.circular(_bannerRadius),
-          elevation: isDark ? 0 : 2,
-          shadowColor: AppColors.black.withValues(alpha: 0.08),
-          child: InkWell(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final parentWidth = constraints.maxWidth.isFinite &&
+                constraints.maxWidth > 0
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final dims = layout.homePromoBannerDimensions(
+          parentWidth,
+          horizontalPadding: 0,
+        );
+
+        return SizedBox(
+          width: parentWidth,
+          height: dims.height,
+          child: Material(
+            color: AppColors.transparent,
+            clipBehavior: Clip.antiAlias,
             borderRadius: BorderRadius.circular(_bannerRadius),
-            onTap: () => context.goClientSearch(),
-            child: Ink(
-              width: dims.width,
-              height: dims.height,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_bannerRadius),
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : _bannerSurfaceLight,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(_bannerRadius),
-                child: _HomePromoBannerHorizontalLayout(
-                  width: dims.width,
-                  height: dims.height,
-                  layout: layout,
-                  isDark: isDark,
-                  gap: _mosaicGap,
+            elevation: isDark ? 0 : 2,
+            shadowColor: AppColors.black.withValues(alpha: 0.08),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(_bannerRadius),
+              onTap: () => context.goClientSearch(),
+              child: Ink(
+                width: dims.width,
+                height: dims.height,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(_bannerRadius),
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : _bannerSurfaceLight,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_bannerRadius),
+                  child: _HomePromoBannerHorizontalLayout(
+                    width: dims.width,
+                    height: dims.height,
+                    layout: layout,
+                    isDark: isDark,
+                    gap: _mosaicGap,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -137,8 +142,6 @@ class _HomePromoBannerHorizontalLayout extends StatelessWidget {
     final copyFraction = layout.isCompact ? 0.52 : 0.46;
     final mosaicLeft = width * (copyFraction - 0.06);
     final copyWidth = width * copyFraction;
-    final diagonalInset = height * 0.08;
-    final mosaicSkew = layout.isCompact ? 0.09 : 0.11;
 
     return Stack(
       fit: StackFit.expand,
@@ -153,15 +156,11 @@ class _HomePromoBannerHorizontalLayout extends StatelessWidget {
           top: 0,
           right: 0,
           bottom: 0,
-          child: ClipPath(
-            clipper: _DiagonalPanelClipper(bottomInset: diagonalInset),
-            child: _HomePromoMosaicGrid(
+          child: _HomePromoMosaicGrid(
               tiles: _kHomePromoMosaicTiles,
               isDark: isDark,
               gap: gap,
-              skewFactor: mosaicSkew,
             ),
-          ),
         ),
         Positioned(
           left: 0,
@@ -377,13 +376,11 @@ class _HomePromoMosaicGrid extends StatelessWidget {
     required this.tiles,
     required this.isDark,
     required this.gap,
-    required this.skewFactor,
   });
 
   final List<_HomePromoMosaicTile> tiles;
   final bool isDark;
   final double gap;
-  final double skewFactor;
 
   @override
   Widget build(BuildContext context) {
@@ -395,19 +392,12 @@ class _HomePromoMosaicGrid extends StatelessWidget {
           final h = constraints.maxHeight;
           if (w <= 0 || h <= 0) return const SizedBox.shrink();
 
-          return ClipRect(
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..setEntry(0, 1, -skewFactor),
-              child: SizedBox(
-                width: w * 1.08,
-                height: h,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: gap,
-                    vertical: gap,
-                  ),
-                  child: Column(
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: gap,
+              vertical: gap,
+            ),
+            child: Column(
                     children: [
                       Expanded(
                         child: Row(
@@ -447,9 +437,6 @@ class _HomePromoMosaicGrid extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
             ),
           );
         },
@@ -497,26 +484,5 @@ class _HomePromoMosaicCell extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _DiagonalPanelClipper extends CustomClipper<Path> {
-  const _DiagonalPanelClipper({required this.bottomInset});
-
-  final double bottomInset;
-
-  @override
-  Path getClip(Size size) {
-    return Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(bottomInset, size.height)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant _DiagonalPanelClipper oldClipper) {
-    return oldClipper.bottomInset != bottomInset;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'discovery_responsive.dart';
+import 'web_shell_content_frame.dart';
 
 /// Colonne centrée pour parcours (fiche prestataire, réservation) sur web.
 class WebFlowPageFrame extends StatelessWidget {
@@ -19,12 +20,9 @@ class WebFlowPageFrame extends StatelessWidget {
     if (!layout.useWebSiteLayout) return child;
 
     final theme = Theme.of(context);
-    final framed = Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: layout.webFlowContentMaxWidth),
-        child: child,
-      ),
+    final framed = WebCenteredContent(
+      maxWidth: layout.webFlowContentMaxWidth,
+      child: child,
     );
 
     if (!applyBackground) return framed;

@@ -2,12 +2,15 @@
 
 import '../../../layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../theme/discovery_styles.dart';
 
 /// Rayons, bordures et ombres cohérents pour cartes liste / tuiles.
 abstract final class DiscoveryCardChrome {
   static double radius(BuildContext context) {
     final layout = DiscoveryResponsive.of(context);
-    return layout.useWebSiteLayout ? layout.webShellCardRadius : 14;
+    return layout.useWebSiteLayout
+        ? layout.webShellCardRadius
+        : DiscoveryStyles.cardRadius;
   }
 
   static BorderSide borderSide(ThemeData theme, {bool emphasized = false}) {
@@ -20,27 +23,7 @@ abstract final class DiscoveryCardChrome {
   }
 
   static List<BoxShadow>? elevationShadow(BuildContext context) {
-    final layout = DiscoveryResponsive.of(context);
-    final theme = Theme.of(context);
-    if (theme.brightness == Brightness.dark) return null;
-
-    if (layout.useWebSiteLayout) {
-      return [
-        BoxShadow(
-          color: AppColors.brandBrown.withValues(alpha: 0.06),
-          blurRadius: 18,
-          offset: const Offset(0, 6),
-        ),
-      ];
-    }
-
-    return [
-      BoxShadow(
-        color: theme.colorScheme.primary.withValues(alpha: 0.04),
-        blurRadius: 10,
-        offset: const Offset(0, 3),
-      ),
-    ];
+    return null;
   }
 }
 
@@ -65,7 +48,9 @@ class DiscoverySurfaceCard extends StatelessWidget {
 
     final surfaceColor = AppColors.cardSurfaceFor(theme.brightness);
     final borderRadius = BorderRadius.circular(
-      layout.useWebSiteLayout ? layout.webShellCardRadius : 14,
+      layout.useWebSiteLayout
+          ? layout.webShellCardRadius
+          : DiscoveryStyles.cardRadius,
     );
     final borderSide = BorderSide(
       color: theme.colorScheme.outline.withValues(
@@ -90,23 +75,7 @@ class DiscoverySurfaceCard extends StatelessWidget {
 
     final hPad = DiscoveryResponsive.of(context).horizontalPadding;
 
-    final cardWithShadow = isDark
-        ? card
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: borderRadius,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(
-                    alpha: layout.useWebSiteLayout ? 0.07 : 0.04,
-                  ),
-                  blurRadius: layout.useWebSiteLayout ? 18 : 10,
-                  offset: Offset(0, layout.useWebSiteLayout ? 6 : 3),
-                ),
-              ],
-            ),
-            child: card,
-          );
+    final cardWithShadow = card;
 
     if (!includeHorizontalMargin) return cardWithShadow;
 

@@ -51,7 +51,7 @@ class ClientWorkspaceShell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.workspacePanelFor(theme.brightness),
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+                  top: Radius.circular(12),
                 ),
                 border: Border.all(
                   color: theme.colorScheme.outline.withValues(
@@ -72,7 +72,7 @@ class ClientWorkspaceShell extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+                  top: Radius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,9 +105,7 @@ class _WebClientWorkspaceShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final layout = DiscoveryResponsive.of(context);
-    final radius = layout.webShellCardRadius;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -117,39 +115,16 @@ class _WebClientWorkspaceShell extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               layout.webShellHorizontalPadding,
-              16,
+              8,
               layout.webShellHorizontalPadding,
-              20,
+              12,
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.workspacePanelFor(theme.brightness),
-                borderRadius: BorderRadius.circular(radius),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.2 : 0.1,
-                  ),
-                ),
-                boxShadow: theme.brightness == Brightness.light
-                    ? [
-                        BoxShadow(
-                          color: AppColors.brandBrown.withValues(alpha: 0.06),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(radius),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (top != null) top!,
-                    Expanded(child: child),
-                  ],
-                ),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (top != null) top!,
+                Expanded(child: child),
+              ],
             ),
           ),
         ),

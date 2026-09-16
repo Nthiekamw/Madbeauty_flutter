@@ -14,9 +14,6 @@ class AppTheme {
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );
-    TextStyle? exo(TextStyle? s) =>
-        s?.copyWith(fontFamily: AppFonts.display);
-
     final primaryText = base.primaryTextTheme.apply(
       fontFamily: AppFonts.body,
       bodyColor: scheme.onPrimary,
@@ -24,25 +21,16 @@ class AppTheme {
     );
 
     return base.copyWith(
-      textTheme: text.copyWith(
-        displayLarge: exo(text.displayLarge),
-        displayMedium: exo(text.displayMedium),
-        displaySmall: exo(text.displaySmall),
-        headlineLarge: exo(text.headlineLarge),
-        headlineMedium: exo(text.headlineMedium),
-        headlineSmall: exo(text.headlineSmall),
-        titleLarge: exo(text.titleLarge),
-      ),
+      textTheme: text,
       primaryTextTheme: primaryText,
       iconTheme: base.iconTheme.copyWith(color: scheme.onSurface),
       appBarTheme: base.appBarTheme.copyWith(
-        titleTextStyle: exo(
-          base.appBarTheme.titleTextStyle ??
-              text.titleLarge?.copyWith(
-                color: base.appBarTheme.foregroundColor,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
+        titleTextStyle:
+            base.appBarTheme.titleTextStyle ??
+            text.titleLarge?.copyWith(
+              color: base.appBarTheme.foregroundColor,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

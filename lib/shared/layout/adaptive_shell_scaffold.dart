@@ -41,7 +41,7 @@ class AdaptiveShellScaffold extends StatelessWidget {
     }
 
     final theme = Theme.of(context);
-    final extended = layout.width >= DiscoveryResponsive.desktopBreakpoint;
+    final extended = layout.viewportWidth >= DiscoveryResponsive.desktopBreakpoint;
     final railWidth = extended ? 248.0 : 80.0;
 
     return Scaffold(
