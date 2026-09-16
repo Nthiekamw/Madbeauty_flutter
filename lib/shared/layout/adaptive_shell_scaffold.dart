@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_fonts.dart';
 import 'discovery_responsive.dart';
 import 'shell_nav_destination.dart';
 import 'web_shell_content_frame.dart';
@@ -62,7 +63,7 @@ class AdaptiveShellScaffold extends StatelessWidget {
                 useIndicator: true,
                 indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.14),
                 indicatorShape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 selectedIconTheme: IconThemeData(
                   color: theme.colorScheme.primary,
@@ -166,7 +167,7 @@ class _WebRailBrand extends StatelessWidget {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(6),
           child: Image.asset(
             'assets/images/logo.png',
             width: 48,
@@ -182,8 +183,9 @@ class _WebRailBrand extends StatelessWidget {
               Text(
                 'MadBeauty',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
                 ),
               ),
               Text(

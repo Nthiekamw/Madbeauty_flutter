@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
@@ -56,16 +54,14 @@ const _kHomePromoMosaicTiles = [
   ),
 ];
 
-const _kPlantAccentUrl = DiscoveryPromoImages.plantAccentHome;
-
-/// Bannière hero accueil : texte à gauche + mosaïque inclinée à droite.
+/// Bannière hero accueil : texte à gauche + mosaïque à droite.
 class ClientHomePromoBanner extends StatelessWidget {
   const ClientHomePromoBanner({super.key});
 
   static const _bannerSurfaceLight = Color(0xFFF9F7F2);
   static const _titleDark = Color(0xFF1A1A1A);
   static const _accentBrown = Color(0xFFA67147);
-  static const _bannerRadius = 16.0;
+  static const _bannerRadius = 8.0;
   static const _mosaicGap = 3.0;
 
   @override
@@ -214,109 +210,79 @@ class _HomePromoBannerCopy extends StatelessWidget {
         ? AppColors.brandBrownMid
         : ClientHomePromoBanner._accentBrown;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          left: typo.horizontalPad - 10,
-          bottom: 0,
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-            child: Opacity(
-              opacity: isDark ? 0.2 : 0.45,
-              child: SizedBox(
-                width: typo.plantSize,
-                height: typo.plantSize,
-                child: AppNetworkImage(
-                  url: _kPlantAccentUrl,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomLeft,
-                  error: Icon(
-                    Icons.eco_outlined,
-                    size: typo.plantSize * 0.55,
-                    color: const Color(0xFF6B8F5E).withValues(alpha: 0.35),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        typo.horizontalPad,
+        typo.verticalPad,
+        6,
+        typo.verticalPad,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w700,
+                height: 1.16,
+                fontSize: typo.titleSize,
+                color: leadColor,
+                letterSpacing: -0.2,
+              ),
+              children: [
+                TextSpan(text: '${DiscHome.heroBannerLead}\n'),
+                TextSpan(
+                  text: DiscHome.heroBannerAccent,
+                  style: TextStyle(
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w700,
+                    fontSize: typo.accentSize,
+                    color: accentColor,
+                    height: 1.1,
                   ),
-                  placeholder: const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: typo.gapAfterTitle),
+          Text(
+            DiscHome.heroBannerSub,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w400,
+              fontSize: typo.subSize,
+              height: 1.32,
+              color: subColor,
+            ),
+            maxLines: typo.subMaxLines,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: typo.gapBeforeCta),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: ctaBg,
+              borderRadius: BorderRadius.circular(typo.ctaRadius),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: typo.ctaHPadding,
+                vertical: typo.ctaVPadding,
+              ),
+              child: Text(
+                DiscHome.heroBannerCta,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                  fontSize: typo.ctaSize,
                 ),
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            typo.horizontalPad,
-            typo.verticalPad,
-            6,
-            typo.verticalPad,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontFamily: AppFonts.body,
-                    fontWeight: FontWeight.w700,
-                    height: 1.16,
-                    fontSize: typo.titleSize,
-                    color: leadColor,
-                    letterSpacing: -0.2,
-                  ),
-                  children: [
-                    TextSpan(text: '${DiscHome.heroBannerLead}\n'),
-                    TextSpan(
-                      text: DiscHome.heroBannerAccent,
-                      style: TextStyle(
-                        fontFamily: AppFonts.body,
-                        fontWeight: FontWeight.w800,
-                        fontSize: typo.accentSize,
-                        color: accentColor,
-                        height: 1.1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: typo.gapAfterTitle),
-              Text(
-                DiscHome.heroBannerSub,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontFamily: AppFonts.body,
-                  fontWeight: FontWeight.w400,
-                  fontSize: typo.subSize,
-                  height: 1.32,
-                  color: subColor,
-                ),
-                maxLines: typo.subMaxLines,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: typo.gapBeforeCta),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: ctaBg,
-                  borderRadius: BorderRadius.circular(typo.ctaRadius),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: typo.ctaHPadding,
-                    vertical: typo.ctaVPadding,
-                  ),
-                  child: Text(
-                    DiscHome.heroBannerCta,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontFamily: AppFonts.body,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                      fontSize: typo.ctaSize,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -333,7 +299,6 @@ class _PromoCopyTypography {
     required this.ctaHPadding,
     required this.ctaVPadding,
     required this.ctaRadius,
-    required this.plantSize,
     required this.subMaxLines,
     required this.gapAfterTitle,
     required this.gapBeforeCta,
@@ -348,7 +313,6 @@ class _PromoCopyTypography {
   final double ctaHPadding;
   final double ctaVPadding;
   final double ctaRadius;
-  final double plantSize;
   final int subMaxLines;
   final double gapAfterTitle;
   final double gapBeforeCta;
@@ -400,8 +364,7 @@ class _PromoCopyTypography {
       verticalPad: verticalPad,
       ctaHPadding: screenWidth < 420 ? 14.0 : screenWidth < 600 ? 16.0 : 26.0,
       ctaVPadding: screenWidth < 420 ? 6.0 : screenWidth < 600 ? 7.0 : 11.0,
-      ctaRadius: screenWidth < 420 ? 18.0 : 24.0,
-      plantSize: screenWidth < 420 ? 56.0 : screenWidth < 600 ? 72.0 : 110.0,
+      ctaRadius: 6,
       subMaxLines: 3,
       gapAfterTitle: screenWidth < 420 ? 4.0 : screenWidth < 600 ? 6.0 : 12.0,
       gapBeforeCta: screenWidth < 420 ? 8.0 : screenWidth < 600 ? 10.0 : 16.0,

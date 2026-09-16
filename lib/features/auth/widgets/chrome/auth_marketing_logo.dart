@@ -18,7 +18,7 @@ class AuthMarketingLogo extends StatelessWidget {
     return BrandLogo(
       width: width,
       showTagline: showTagline,
-      showGlow: true,
+      showGlow: false,
     );
   }
 }

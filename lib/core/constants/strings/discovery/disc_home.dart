@@ -5,10 +5,10 @@ abstract final class DiscHome {
   static const hintSearch =
       'Rechercher un style, un service, un salon…';
   static const greetingSubtitle =
-      'Que souhaitez-vous réserver aujourd\'hui ?';
+      'Un créneau près de toi, ou une idée de style.';
   static const actionSearch = 'Rechercher';
   static const taglineDiscovery =
-      'Découvre des pros près de chez toi et réserve en quelques gestes.';
+      'Prestataires autour de toi, avec leurs réalisations.';
   static const inspireTitle = 'Inspirations';
   static const inspireSub =
       'Filtrez par service pour afficher des prestataires.';
@@ -16,7 +16,7 @@ abstract final class DiscHome {
 
   static const feedAllTitle = 'À découvrir';
   static const feedAllSub =
-      'Des professionnels passionnés, prêts à vous accueillir.';
+      'Profils avec photos, avis et créneaux à jour.';
 
   static const nextAppointmentTitle = 'Vos prochains rendez-vous';
   static const nextAppointmentSub = 'Ta prochaine visite chez un·e pro';
@@ -55,11 +55,11 @@ abstract final class DiscHome {
       'Dès qu’un prestataire publie un pack, il apparaîtra ici.';
   static const offersLoadFail =
       'Impossible de charger les offres. Réessaie.';
-  static const heroBannerLead = 'Trouvez le professionnel idéal pour';
-  static const heroBannerAccent = 'toute la famille';
+  static const heroBannerLead = 'Tresses, locks, coiffure afro';
+  static const heroBannerAccent = 'près de chez toi';
   static const heroBannerSub =
-      'Coiffure, maquillage, manucure, pédicure et bien plus.';
-  static const heroBannerCta = 'Explorer';
+      'Compare les styles, les avis et les horaires, puis réserve.';
+  static const heroBannerCta = 'Voir les prestataires';
 
   static const feedSearchSub =
       'Prestataires correspondant à votre recherche.';
@@ -80,7 +80,7 @@ abstract final class DiscHome {
 
   static String feedInspirationTitle(String topic) => 'En $topic';
 
-  static const nearbyTitle = '📍 Proches de vous';
+  static const nearbyTitle = 'Autour de toi';
   static const nearbySubWithLocation =
       'Triés par distance depuis ta position (rayon 50 km).';
   static const nearbySubNoLocation =
@@ -92,8 +92,8 @@ abstract final class DiscHome {
   static const nearbyLoadFail =
       'Impossible de charger les prestataires. Réessaie.';
 
-  static const topRatedTitle = '⭐ Les mieux notés';
-  static const trendingTitle = '🔥 Tendances cette semaine';
+  static const topRatedTitle = 'Les mieux notés';
+  static const trendingTitle = 'Demandés cette semaine';
   static const topRatedSub =
       'Triés par note moyenne (les profils sans note encore en bas de liste).';
   static const topRatedEmptyTitle = 'Pas encore de classement';
@@ -121,8 +121,8 @@ abstract final class DiscHome {
 
   static String clientHomeGreeting(String firstName) {
     final name = firstName.trim();
-    if (name.isEmpty) return 'Bonjour 👋';
-    return 'Bonjour $name 👋';
+    if (name.isEmpty) return 'Bonjour';
+    return 'Bonjour $name';
   }
 
   static String trendingBookings(int count) {

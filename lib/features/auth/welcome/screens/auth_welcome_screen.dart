@@ -58,33 +58,33 @@ class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
         Text(
           AuthStrings.welcomeTitle,
           textAlign: TextAlign.center,
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontFamily: AppFonts.display,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-            height: 1.1,
-            fontSize: useWebLayout ? 32 : null,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+            height: 1.2,
+            fontSize: useWebLayout ? 28 : 26,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
           AuthStrings.welcomeSubtitle,
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge?.copyWith(
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontFamily: AppFonts.body,
+            color: onSurfaceVariant,
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          AuthStrings.welcomePitch,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
             fontFamily: AppFonts.body,
             color: onSurfaceVariant,
             height: 1.4,
           ),
-        ),
-        const SizedBox(height: 28),
-        const _WelcomeFeatureRow(
-          icon: Icons.person_outline,
-          label: AuthStrings.welcomeFeatureDualRole,
-        ),
-        const SizedBox(height: 10),
-        const _WelcomeFeatureRow(
-          icon: Icons.lock_outline,
-          label: AuthStrings.welcomeFeatureSecure,
         ),
         if (!useWebLayout) const Spacer(flex: 3),
         if (useWebLayout) const SizedBox(height: 32),
@@ -147,17 +147,15 @@ class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
                         ),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(
-                              alpha: 0.94,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: theme.colorScheme.outline
-                                  .withValues(alpha: 0.15),
+                                  .withValues(alpha: 0.22),
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+                            padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
                             child: content,
                           ),
                         ),
@@ -168,44 +166,6 @@ class _AuthWelcomeScreenState extends ConsumerState<AuthWelcomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: content,
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WelcomeFeatureRow extends StatelessWidget {
-  const _WelcomeFeatureRow({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontFamily: AppFonts.body,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
           ),
         ],
       ),

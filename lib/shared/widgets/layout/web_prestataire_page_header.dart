@@ -80,15 +80,6 @@ class WebPrestatairePageHeader extends ConsumerWidget {
               color: theme.colorScheme.outline.withValues(alpha: 0.1),
             ),
           ),
-          boxShadow: theme.brightness == Brightness.light
-              ? [
-                  BoxShadow(
-                    color: AppColors.brandBrown.withValues(alpha: 0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
         ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(hPad, topPad, hPad, compact ? 14 : 18),
@@ -103,9 +94,9 @@ class WebPrestatairePageHeader extends ConsumerWidget {
                     title,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontFamily: AppFonts.display,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.35,
-                      height: 1.1,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                      height: 1.15,
                     ),
                   ),
                   if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
@@ -199,7 +190,7 @@ class _WebPrestaProfileChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.12),
         ),
@@ -326,9 +317,9 @@ class _WebIconButton extends StatelessWidget {
                         badge > 9 ? '9+' : '$badge',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 9,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           height: 1.1,
                         ),
                       ),

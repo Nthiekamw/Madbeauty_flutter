@@ -9,7 +9,7 @@ abstract final class CoreStrings {
   static const String appStoreListingName = 'MadBeauty';
 
   static const String tagline =
-      'Trouve ton pro, prends rendez-vous ou développe ton activité beauté.';
+      'Tresses, locks, manucure : un créneau, un avis, une vraie photo.';
 
   static const String actionCancel = 'Annuler';
   static const String actionConfirm = 'Confirmer';

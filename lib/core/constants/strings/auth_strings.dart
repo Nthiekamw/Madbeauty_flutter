@@ -163,9 +163,9 @@ abstract final class AuthStrings {
   static const String onboardingStatsDisclaimer =
       'Chiffres indicatifs de la plateforme.';
 
-  static const String welcomeTitle = 'Bienvenue';
+  static const String welcomeTitle = 'MadBeauty';
   static const String welcomeSubtitle =
-      'Connecte-toi, crée un compte, ou explore sans inscription.';
+      'Réserve un créneau, ou gère ton salon. Tu peux aussi juste regarder.';
   static const String welcomeRegister = 'Inscription';
   static const String welcomeLogin = 'Connexion';
   static const String welcomeContinueGuest = 'Continuer sans compte';
@@ -174,7 +174,7 @@ abstract final class AuthStrings {
 
   static const String guestHomeGreeting = 'Bienvenue sur MadBeauty';
   static const String guestHomeSubtitle =
-      'Découvre les prestataires près de chez toi.';
+      'Parcours les profils. Pour réserver, il faudra un compte.';
   static const String guestHomeSignIn = 'Se connecter';
   static const String guestProfileTitle = 'Ton espace compte';
   static const String guestProfileBody =
@@ -189,8 +189,8 @@ abstract final class AuthStrings {
       'Profil client présélectionné pour finaliser ta réservation.';
   static const String guestCtaLogin = 'Connexion';
   static const String guestCtaRegister = 'Créer un compte';
-  static const String welcomeFeatureDualRole = 'Client ou prestataire';
-  static const String welcomeFeatureSecure = 'Compte sécurisé';
+  static const String welcomePitch =
+      'Tu réserves un créneau, ou tu publies tes services.';
 
   static const String registerStepIdentityTitle = 'Tes informations';
   static const String registerStepIdentitySubtitle =

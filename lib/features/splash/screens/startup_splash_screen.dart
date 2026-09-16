@@ -374,10 +374,10 @@ class _SplashBrandMark extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: BrandLogo(
         width: logoWidth,
-        showGlow: true,
+        showGlow: !kIsWeb,
         glowColor: style.glowColor,
-        glowBlurRadius: style.isDark ? 56 : 44,
-        glowSpreadRadius: style.isDark ? 14 : 10,
+        glowBlurRadius: style.isDark ? 28 : 20,
+        glowSpreadRadius: style.isDark ? 4 : 2,
       ),
     );
   }

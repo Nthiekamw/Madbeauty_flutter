@@ -129,14 +129,14 @@ class AuthFormScaffold extends StatelessWidget {
     if (useWebCard) {
       formColumn = DecoratedBox(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(24),
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            color: theme.colorScheme.outline.withValues(alpha: 0.22),
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(12),
           child: formColumn,
         ),
       );

@@ -2,8 +2,8 @@
 abstract final class DiscPrestaWorkspace {
   DiscPrestaWorkspace._();
 
-  static String greeting(String name) => 'Bonjour $name ! 👋';
-  static const spaceLabel = 'Espace prestataire 💇';
+  static String greeting(String name) => 'Bonjour $name';
+  static const spaceLabel = 'Espace prestataire';
   static const railSpaceLabel = 'Espace prestataire';
   static const dashboardWebSubtitle =
       'Vue d’ensemble de ton activité et de tes demandes';

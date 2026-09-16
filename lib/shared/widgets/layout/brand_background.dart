@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 
-/// Variante de fond : app (crème / marron) ou premium (noir / or, logo).
+/// Variante de fond : app (crème / marron) ou premium (splash / auth).
 enum BrandBackgroundVariant {
   app,
   premium,
@@ -26,8 +27,7 @@ class BrandBackground extends StatelessWidget {
     }
 
     final accent = isDark ? AppColors.brandBrownDark : AppColors.brandBrown;
-    final wash = accent.withValues(alpha: isDark ? 0.12 : 0.08);
-    final washSoft = accent.withValues(alpha: isDark ? 0.06 : 0.04);
+    final wash = accent.withValues(alpha: isDark ? 0.10 : 0.06);
 
     return Stack(
       fit: StackFit.expand,
@@ -35,32 +35,18 @@ class BrandBackground extends StatelessWidget {
         ColoredBox(
           color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         ),
-        Positioned(
-          top: -120,
-          right: -80,
-          child: _Blob(size: 280, color: wash),
-        ),
-        Positioned(
-          top: 140,
-          left: -100,
-          child: _Blob(size: 220, color: washSoft),
-        ),
-        Positioned(
-          bottom: -60,
-          left: -40,
-          child: _Blob(size: 200, color: wash),
-        ),
-        Positioned(
-          bottom: 120,
-          right: -30,
-          child: _Blob(size: 140, color: washSoft),
-        ),
+        if (!kIsWeb)
+          Positioned(
+            top: -140,
+            right: -90,
+            child: _Blob(size: 240, color: wash),
+          ),
       ],
     );
   }
 }
 
-/// Fond splash / auth marketing : noir + or (sombre) ou crème + or (clair).
+/// Fond splash / auth : plat, sans orbes décoratives.
 class _PremiumBrandBackground extends StatelessWidget {
   const _PremiumBrandBackground({required this.isDark});
 
@@ -68,72 +54,10 @@ class _PremiumBrandBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isDark) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          const ColoredBox(color: AppColors.lightSurface),
-          Positioned(
-            top: -100,
-            right: -60,
-            child: _Blob(
-              size: 260,
-              color: AppColors.brandGold.withValues(alpha: 0.14),
-            ),
-          ),
-          Positioned(
-            top: 160,
-            left: -90,
-            child: _Blob(
-              size: 200,
-              color: AppColors.brandBrown.withValues(alpha: 0.1),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -50,
-            child: _Blob(
-              size: 180,
-              color: AppColors.brandGold.withValues(alpha: 0.12),
-            ),
-          ),
-          Positioned(
-            bottom: 100,
-            right: -20,
-            child: _Blob(
-              size: 120,
-              color: AppColors.brownSecondaryLight.withValues(alpha: 0.12),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const ColoredBox(color: AppColors.brandSplashBackground),
-        Positioned(
-          top: -100,
-          right: -60,
-          child: _Blob(size: 260, color: AppColors.brandGoldGlow12),
-        ),
-        Positioned(
-          top: 160,
-          left: -90,
-          child: _Blob(size: 200, color: AppColors.brandGoldGlow20),
-        ),
-        Positioned(
-          bottom: -40,
-          left: -50,
-          child: _Blob(size: 180, color: AppColors.brandGoldGlow12),
-        ),
-        Positioned(
-          bottom: 100,
-          right: -20,
-          child: _Blob(size: 120, color: AppColors.brandGoldGlow20),
-        ),
-      ],
+    return ColoredBox(
+      color: isDark
+          ? AppColors.brandSplashBackground
+          : AppColors.lightSurface,
     );
   }
 }

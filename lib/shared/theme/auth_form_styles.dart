@@ -4,11 +4,11 @@
 abstract final class AuthFormStyles {
   AuthFormStyles._();
 
-  static const double cardRadius = 24;
-  static const double fieldRadius = 16;
-  static const double buttonRadius = 16;
-  static const double bannerRadius = 16;
-  static const double chipRadius = 18;
+  static const double cardRadius = 12;
+  static const double fieldRadius = 10;
+  static const double buttonRadius = 8;
+  static const double bannerRadius = 10;
+  static const double chipRadius = 8;
 
   static BorderRadius get cardBorderRadius =>
       BorderRadius.circular(cardRadius);

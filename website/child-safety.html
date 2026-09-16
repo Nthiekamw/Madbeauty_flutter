@@ -6,23 +6,26 @@
   <meta name="description" content="Standards de sécurité des enfants MadBeauty — protection des mineurs, modération, signalement.">
   <title>Sécurité des enfants — MadBeauty</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
   <header class="site-header">
     <div class="site-header__inner">
       <a class="brand" href="index.html">
-        <img src="assets/logo.png" width="36" height="36" alt="">
+        <img src="assets/logo.png" width="40" height="40" alt="">
         MadBeauty
       </a>
-      <nav class="site-nav" aria-label="Navigation principale">
-        <a href="index.html">Accueil</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Confidentialité</a>
-        <a href="child-safety.html" class="is-active">Enfants</a>
-        <a href="cgu.html">CGU</a>
-        <a href="mentions-legales.html">Mentions légales</a>
-      </nav>
+      <details class="nav-panel">
+        <summary class="nav-panel__toggle">Menu</summary>
+        <nav class="site-nav" aria-label="Navigation principale">
+          <a href="index.html">Accueil</a>
+          <a href="index.html#pros">Prestataires</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </details>
       <a class="btn btn-primary" href="https://madbeauty.pro" rel="noopener noreferrer">Ouvrir l’app</a>
     </div>
   </header>

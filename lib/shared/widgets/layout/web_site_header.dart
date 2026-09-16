@@ -52,9 +52,9 @@ class WebSiteHeader extends StatelessWidget {
                 Text(
                   CoreStrings.appName,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.25,
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
                   ),
                 ),
                 if (title != null && title.isNotEmpty) ...[
