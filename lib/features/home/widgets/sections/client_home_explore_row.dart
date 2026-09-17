@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/prestataire/prestataire_service_catalog.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/app/app_network_image.dart';
 import '../../providers/home_feed_provider.dart';
 
@@ -31,7 +32,7 @@ class ClientHomeExploreRow extends ConsumerWidget {
             return _ServiceFilterChip(
               label: DiscHome.filterAll,
               imageUrl: null,
-              icon: Icons.grid_view_rounded,
+              icon: AppIcons.hub,
               selected: selectedAll,
               onTap: () => ref
                   .read(homeFeedSelectionProvider.notifier)

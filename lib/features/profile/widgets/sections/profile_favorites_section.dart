@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../cart/providers/boutique_cart_provider.dart';
@@ -27,13 +28,13 @@ class ProfileFavoritesSection extends ConsumerWidget {
       children: [
         const ProfileSectionTitle(
           title: DiscFavori.profileSectionTitle,
-          icon: Icons.bookmark_rounded,
+          icon: AppIcons.bookmark,
         ),
         DiscoverySurfaceCard(
           child: Column(
             children: [
               DiscoveryMenuTile(
-                icon: Icons.event_outlined,
+                icon: AppIcons.reservations,
                 title: DiscReel.profileReservationsTitle,
                 subtitle: DiscReel.profileReservationsHint,
                 onTap: () => context.pushMyReservations(),
@@ -45,7 +46,7 @@ class ProfileFavoritesSection extends ConsumerWidget {
                 color: theme.colorScheme.outline.withValues(alpha: 0.12),
               ),
               DiscoveryMenuTile(
-                icon: Icons.bookmark_rounded,
+                icon: AppIcons.bookmark,
                 title: DiscProfile.actionFavorites,
                 subtitle: subtitle,
                 iconColor: theme.colorScheme.error,
@@ -65,7 +66,7 @@ class ProfileFavoritesSection extends ConsumerWidget {
                     orElse: () => 0,
                   );
                   return DiscoveryMenuTile(
-                    icon: Icons.movie_filter_outlined,
+                    icon: AppIcons.reels,
                     title: DiscReel.savedTitle,
                     subtitle: count == 0
                         ? DiscReel.savedHint
@@ -84,7 +85,7 @@ class ProfileFavoritesSection extends ConsumerWidget {
                 builder: (context, ref, _) {
                   final cartCount = ref.watch(boutiqueCartItemCountProvider);
                   return DiscoveryMenuTile(
-                    icon: Icons.shopping_bag_outlined,
+                    icon: AppIcons.cart,
                     title: DiscBoutique.menuCart,
                     subtitle: cartCount > 0
                         ? DiscBoutique.produitsCount(cartCount)
@@ -100,7 +101,7 @@ class ProfileFavoritesSection extends ConsumerWidget {
                 color: theme.colorScheme.outline.withValues(alpha: 0.12),
               ),
               DiscoveryMenuTile(
-                icon: Icons.receipt_long_outlined,
+                icon: AppIcons.orders,
                 title: DiscBoutique.menuClientOrders,
                 subtitle: DiscBoutique.menuClientOrdersHint,
                 onTap: () => context.pushClientBoutiqueOrders(),

@@ -5,6 +5,7 @@ import '../../../../core/config/market_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/providers/app_appearance_provider.dart';
 import '../../../../core/providers/market_country_provider.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../appearance/appearance_settings_sheet.dart';
@@ -25,11 +26,11 @@ class ProfileAppearanceSection extends ConsumerWidget {
       children: [
         ProfileSectionTitle(
           title: DiscAppearance.sectionTitle(locale),
-          icon: Icons.palette_outlined,
+          icon: AppIcons.palette,
         ),
         DiscoverySurfaceCard(
           child: DiscoveryMenuTile(
-            icon: Icons.palette_outlined,
+            icon: AppIcons.palette,
             title: DiscAppearance.tileTitle(locale),
             subtitle: DiscAppearance.tileSubtitle(
               locale,

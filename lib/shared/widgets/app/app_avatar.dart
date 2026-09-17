@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar rond : image réseau optionnelle, sinon initiales dérivées du nom ou de l'e-mail.
@@ -74,19 +75,29 @@ class AppAvatar extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.cover,
-          width: size,
-          height: size,
-          memCacheWidth: memCacheSize,
-          memCacheHeight: memCacheSize,
-          placeholder: (_, __) => ColoredBox(
-            color: colorScheme.surfaceContainerHighest,
-          ),
-          errorWidget: (_, __, ___) =>
-              _initialsAvatar(context, colorScheme),
-        ),
+        child: kIsWeb
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                width: size,
+                height: size,
+                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                errorBuilder: (_, __, ___) =>
+                    _initialsAvatar(context, colorScheme),
+              )
+            : CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                width: size,
+                height: size,
+                memCacheWidth: memCacheSize,
+                memCacheHeight: memCacheSize,
+                placeholder: (_, __) => ColoredBox(
+                  color: colorScheme.surfaceContainerHighest,
+                ),
+                errorWidget: (_, __, ___) =>
+                    _initialsAvatar(context, colorScheme),
+              ),
       ),
     );
   }

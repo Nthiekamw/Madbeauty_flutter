@@ -14,6 +14,7 @@ import '../../../services/offline/offline_actions.dart';
 import '../../../services/supabase/profile/profile_providers.dart';
 import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/theme/app_icons.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_constrained_body.dart';
 import '../../client/widgets/workspace/client_workspace_shell.dart';
@@ -34,6 +35,7 @@ import '../../../services/supabase/referral/referral_providers.dart';
 import '../widgets/account/profile_account_header.dart';
 import '../widgets/account/profile_account_section.dart';
 import '../widgets/sections/profile_admin_section.dart';
+import '../widgets/layout/profile_content_layout.dart';
 import '../widgets/layout/profile_footer_actions.dart';
 import '../widgets/sections/profile_my_info_section.dart';
 import '../widgets/layout/profile_page_insets.dart';
@@ -213,7 +215,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           title: ShellStrings.navClientProfile,
           subtitle: DiscProfile.webPageSubtitle,
           child: GuestAccountPrompt(
-            icon: Icons.person_outline,
+            icon: AppIcons.profile,
             title: AuthStrings.guestProfileTitle,
             message: AuthStrings.guestProfileBody,
           ),
@@ -224,7 +226,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Expanded(
               child: GuestAccountPrompt(
-                icon: Icons.person_outline,
+                icon: AppIcons.profile,
                 title: AuthStrings.guestProfileTitle,
                 message: AuthStrings.guestProfileBody,
               ),
@@ -265,7 +267,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ? const EdgeInsets.fromLTRB(20, 20, 20, 0)
         : ProfilePageInsets.page(context);
 
-    final profileSections = Column(
+    final identity = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (loadingProfile)
@@ -331,23 +333,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 8),
           const LinearProgressIndicator(minHeight: 2),
         ],
-        const SizedBox(height: ProfilePageInsets.sectionGap),
+      ],
+    );
+
+    final sidebar = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         const ProfileRoleSpaceSection(),
-        if (!loadingProfile) ...[
-          const SizedBox(height: ProfilePageInsets.sectionGap),
-          ProfileMyInfoSection(email: email, phone: phone),
-        ],
-        const SizedBox(height: ProfilePageInsets.sectionGap),
-        const ProfileFavoritesSection(),
-        const SizedBox(height: ProfilePageInsets.sectionGap),
-        const ProfileAppearanceSection(),
-        const SizedBox(height: ProfilePageInsets.sectionGap),
-        const ProfilePreferencesSection(),
-        const SizedBox(height: ProfilePageInsets.sectionGap),
-        const ProfilePwaInstallSection(),
-        const SizedBox(height: ProfilePageInsets.sectionGap),
-        const ProfileAdminSection(),
-        const ProfileAccountSection(),
         const SizedBox(height: ProfilePageInsets.sectionGap),
         ProfileFooterActions(
           onSupportUser: () => openUserSupportChat(context, ref),
@@ -367,6 +359,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           error: (_, __) => const SizedBox(height: 8),
         ),
       ],
+    );
+
+    final mainCards = <Widget>[
+      if (!loadingProfile) ProfileMyInfoSection(email: email, phone: phone),
+      const ProfileFavoritesSection(),
+      const ProfileAppearanceSection(),
+      const ProfilePreferencesSection(),
+      if (!useWebLayout) const ProfilePwaInstallSection(),
+      const ProfileAdminSection(),
+      const ProfileAccountSection(),
+    ];
+
+    final profileSections = ProfileContentLayout(
+      identity: identity,
+      sidebar: sidebar,
+      main: ProfileCardsGrid(children: mainCards),
     );
 
     final profileBody = ListView(

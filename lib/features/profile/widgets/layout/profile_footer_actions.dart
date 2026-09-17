@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../services/supabase/support/user_support_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_icons.dart';
 
 class ProfileFooterActions extends ConsumerWidget {
   const ProfileFooterActions({
@@ -37,7 +38,7 @@ class ProfileFooterActions extends ConsumerWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            child: const Icon(Icons.support_agent_rounded, size: 20),
+            child: const Icon(AppIcons.support, size: 20),
           ),
           label: const Text(DiscProfile.supportUser),
           style: OutlinedButton.styleFrom(
@@ -62,7 +63,7 @@ class ProfileFooterActions extends ConsumerWidget {
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: onSignOut,
-          icon: const Icon(Icons.logout_rounded, size: 20),
+          icon: const Icon(AppIcons.signOut, size: 20),
           label: const Text(DiscProfile.signOut),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 14),

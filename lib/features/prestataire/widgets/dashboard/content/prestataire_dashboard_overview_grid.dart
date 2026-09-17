@@ -8,6 +8,7 @@ import '../../../../../shared/widgets/discovery/content/discovery_section_error.
 import '../../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/theme/app_fonts.dart';
+import '../../../../../../shared/theme/app_icons.dart';
 import '../../../providers/dashboard/prestataire_dashboard_overview_provider.dart';
 import '../layout/prestataire_dashboard_insets.dart';
 import '../layout/prestataire_dashboard_layout_sheet.dart';
@@ -30,7 +31,7 @@ class PrestataireDashboardOverviewGrid extends ConsumerWidget {
         children: [
           DiscoverySectionHeader(
             title: DiscPrestaDash.overviewTitle,
-            icon: Icons.insights_rounded,
+            icon: AppIcons.dashboard,
             compact: true,
             actionLabel: DiscPrestaDash.layoutOrganizeAction,
             onAction: () => showPrestataireDashboardLayoutSheet(context, ref),

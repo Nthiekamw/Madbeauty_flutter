@@ -9,6 +9,7 @@ import '../../../../services/auth/biometric_auth_providers.dart';
 import '../../../../services/auth/biometric_auth_service.dart';
 import '../../../../services/permissions/permissions_providers.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../providers/profile_preferences_provider.dart';
@@ -53,13 +54,13 @@ class _ProfilePreferencesSectionState
       children: [
         const ProfileSectionTitle(
           title: DiscProfile.sectionPreferences,
-          icon: Icons.tune_rounded,
+          icon: AppIcons.prefs,
         ),
         DiscoverySurfaceCard(
           child: Column(
             children: [
               _PreferenceToggle(
-                icon: Icons.notifications_active_outlined,
+                icon: AppIcons.notifications,
                 title: DiscProfile.prefPush,
                 subtitle: pushSubtitle,
                 value: prefs.pushNotificationsEnabled,
@@ -105,7 +106,7 @@ class _ProfilePreferencesSectionState
                 error: (_, __) => const SizedBox.shrink(),
               ),
               _PreferenceToggle(
-                icon: Icons.my_location_rounded,
+                icon: AppIcons.location,
                 title: DiscProfile.prefLocation,
                 subtitle: DiscProfile.prefLocationHint,
                 value: prefs.geolocationEnabled,
@@ -255,9 +256,9 @@ class _ProfilePreferencesSectionState
 
   IconData _biometricIcon(BiometricAvailability availability) {
     if (availability.label == DiscProfile.prefBiometricFaceIdLabel) {
-      return Icons.face_rounded;
+      return AppIcons.faceId;
     }
-    return Icons.fingerprint_rounded;
+    return AppIcons.fingerprint;
   }
 }
 

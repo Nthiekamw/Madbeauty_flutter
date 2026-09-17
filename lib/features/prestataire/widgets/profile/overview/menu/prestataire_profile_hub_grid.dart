@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/constants/app_strings.dart';
 import '../../../../../../router/navigation_extensions.dart';
+import '../../../../../../shared/layout/discovery_responsive.dart';
+import '../../../../../../shared/theme/app_colors.dart';
+import '../../../../../../shared/theme/app_fonts.dart';
+import '../../../../../../shared/theme/app_icons.dart';
 import '../../../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../../../shared/widgets/discovery/discovery_surface_card.dart';
 
-/// Raccourcis cockpit : liste verticale, boutons pleine largeur.
+/// Raccourcis cockpit : liste sur mobile, grille sur web.
 class PrestataireProfileHubGrid extends StatelessWidget {
   const PrestataireProfileHubGrid({super.key});
 
@@ -14,36 +18,57 @@ class PrestataireProfileHubGrid extends StatelessWidget {
     final theme = Theme.of(context);
     final tiles = <_HubTileData>[
       _HubTileData(
-        icon: Icons.storefront_rounded,
+        icon: AppIcons.storefront,
         title: DiscPrestaProfile.hubSalonTitle,
         hint: DiscPrestaProfile.hubSalonHint,
         onTap: () => context.pushPrestataireProfileSalon(),
       ),
       _HubTileData(
-        icon: Icons.shopping_bag_outlined,
+        icon: AppIcons.boutique,
         title: DiscPrestaProfile.hubBoutiqueTitle,
         hint: DiscPrestaProfile.hubBoutiqueHint,
         onTap: () => context.pushPrestataireProfileBoutique(),
       ),
       _HubTileData(
-        icon: Icons.movie_filter_outlined,
+        icon: AppIcons.reels,
         title: DiscPrestaProfile.hubReelsTitle,
         hint: DiscPrestaProfile.hubReelsHint,
         onTap: () => context.pushPrestataireReel(),
       ),
       _HubTileData(
-        icon: Icons.rate_review_outlined,
+        icon: AppIcons.reviews,
         title: DiscPrestaProfile.hubAvisTitle,
         hint: DiscPrestaProfile.hubAvisHint,
         onTap: () => context.pushPrestataireReceivedReviews(),
       ),
       _HubTileData(
-        icon: Icons.manage_accounts_outlined,
+        icon: AppIcons.account,
         title: DiscPrestaProfile.hubCompteTitle,
         hint: DiscPrestaProfile.hubCompteHint,
         onTap: () => context.pushPrestataireProfileAccount(),
       ),
     ];
+
+    final layout = DiscoveryResponsive.of(context);
+    if (layout.useWebTwoPane) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final cols = constraints.maxWidth >= 720 ? 3 : 2;
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: tiles.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.28,
+            ),
+            itemBuilder: (context, i) => _HubCard(data: tiles[i]),
+          );
+        },
+      );
+    }
 
     return DiscoverySurfaceCard(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -66,6 +91,57 @@ class PrestataireProfileHubGrid extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _HubCard extends StatelessWidget {
+  const _HubCard({required this.data});
+
+  final _HubTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    return DiscoverySurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: data.onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(data.icon, size: 22, color: primary),
+                const Spacer(),
+                Text(
+                  data.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: AppFonts.display,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data.hint,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

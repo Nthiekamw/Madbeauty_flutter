@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../services/supabase/messaging/messaging_providers.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -26,7 +27,7 @@ class ProfileMessagesSection extends ConsumerWidget {
         const ProfileSectionTitle(title: DiscChat.profileSectionTitle),
         DiscoverySurfaceCard(
           child: DiscoveryMenuTile(
-            icon: Icons.chat_bubble_rounded,
+            icon: AppIcons.messages,
             title: DiscChat.profileShortcut,
             subtitle: subtitle,
             onTap: () => context.goClientMessages(),

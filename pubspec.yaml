@@ -217,3 +217,24 @@ flutter:
     - family: Bungee
       fonts:
         - asset: fonts/Bungee-Regular.ttf
+    - family: Fraunces
+      fonts:
+        - asset: fonts/Fraunces-Regular.ttf
+          weight: 400
+        - asset: fonts/Fraunces-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: fonts/Fraunces-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Fraunces-Bold.ttf
+          weight: 700
+    - family: Commissioner
+      fonts:
+        - asset: fonts/Commissioner-Regular.ttf
+          weight: 400
+        - asset: fonts/Commissioner-Medium.ttf
+          weight: 500
+        - asset: fonts/Commissioner-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Commissioner-Bold.ttf
+          weight: 700

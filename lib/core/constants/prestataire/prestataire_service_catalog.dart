@@ -127,10 +127,10 @@ abstract final class PrestataireServiceCatalog {
       };
 
   static IconData icon(PrestaMainService service) => switch (service) {
-        PrestaMainService.coiffure => Icons.content_cut_rounded,
-        PrestaMainService.manucure => Icons.back_hand_outlined,
-        PrestaMainService.maquillage => Icons.face_retouching_natural_outlined,
-        PrestaMainService.pedicure => Icons.spa_outlined,
+        PrestaMainService.coiffure => Icons.content_cut,
+        PrestaMainService.manucure => Icons.front_hand_outlined,
+        PrestaMainService.maquillage => Icons.auto_fix_high_outlined,
+        PrestaMainService.pedicure => Icons.water_drop_outlined,
       };
 
   /// Vignette catégorie (accueil client).

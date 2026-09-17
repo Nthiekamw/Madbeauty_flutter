@@ -8,6 +8,7 @@ import '../../../../router/navigation_extensions.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/discovery_styles.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 
 class ProfileAdminSection extends ConsumerWidget {
@@ -38,7 +39,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   border: Border.all(color: AppColors.adminBorder30),
                 ),
                 child: const Icon(
-                  Icons.shield_rounded,
+                  AppIcons.admin,
                   size: 16,
                   color: AppColors.adminAccentMid,
                 ),
@@ -97,7 +98,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   ),
                 ),
                 DiscoveryMenuTile(
-                  icon: Icons.verified_user_outlined,
+                  icon: AppIcons.shield,
                   title: DiscProfile.actionAdminVerifications,
                   subtitle: DiscProfile.actionAdminVerificationsHint,
                   iconColor: AppColors.adminAccentMid,
@@ -110,7 +111,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   color: AppColors.adminBorder30.withValues(alpha: 0.5),
                 ),
                 DiscoveryMenuTile(
-                  icon: Icons.flag_outlined,
+                  icon: AppIcons.flag,
                   title: DiscProfile.actionAdminReports,
                   subtitle: DiscProfile.actionAdminReportsHint,
                   iconColor: AppColors.adminAccentMid,
@@ -123,7 +124,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   color: AppColors.adminBorder30.withValues(alpha: 0.5),
                 ),
                 DiscoveryMenuTile(
-                  icon: Icons.bug_report_outlined,
+                  icon: AppIcons.bug,
                   title: DiscProfile.actionAdminBugReports,
                   subtitle: DiscProfile.actionAdminBugReportsHint,
                   iconColor: AppColors.adminAccentMid,

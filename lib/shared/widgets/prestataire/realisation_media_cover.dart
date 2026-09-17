@@ -50,12 +50,7 @@ class RealisationMediaCover extends StatelessWidget {
               fit: fit,
             )
           else
-            ColoredBox(
-              color: Colors.black.withValues(alpha: 0.78),
-              child: imageUrl != null
-                  ? AppNetworkImage(url: imageUrl!, fit: fit)
-                  : const SizedBox.shrink(),
-            ),
+            ColoredBox(color: Colors.black.withValues(alpha: 0.78)),
           if (showPlayBadge)
             Center(
               child: DecoratedBox(

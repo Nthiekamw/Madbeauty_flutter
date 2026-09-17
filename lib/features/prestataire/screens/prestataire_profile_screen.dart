@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_icons.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../auth/providers/auth_notifier.dart';
 import '../../profile/logic/account_deletion_flow.dart';
 import '../../profile/providers/app_version_provider.dart';
+import '../../profile/widgets/layout/profile_content_layout.dart';
 import '../../profile/widgets/layout/profile_footer_actions.dart';
 import '../../profile/widgets/sections/profile_role_space_section.dart';
 import '../../support/navigation/user_support_navigation.dart';
@@ -92,69 +94,76 @@ class PrestataireProfileScreen extends ConsumerWidget {
                   bottom: PrestataireProfileInsets.listBottom(context),
                 ),
                 children: [
-                  // 1. Identité salon
-                  PrestataireProfileSummaryCard(
-                    title: title,
-                    subtitle: profession,
-                    avatarUrl: data.avatarUrl,
-                    trailingBadge: prestataireFreePlanBadge(context),
-                    onTap: () => context.pushPrestataireProfileSalon(),
-                  ),
-                  // 2. Progression profil (si incomplet)
-                  const PrestataireProfileCompletionCard(),
-                  // 3. Stats activité
-                  if (complete)
-                    PrestataireProfileStatsStrip(
-                      servicesCount: data.services.length,
-                      specialtiesCount: data.selectedCategoryIds.length,
-                      photosCount: data.realisationPhotos.length,
-                    ),
-                  // 4. Navigation métier
-                  PrestataireProfileSection(
-                    title: DiscPrestaProfile.hubSectionTitle,
-                    icon: Icons.apps_rounded,
-                    children: const [
-                      PrestataireProfileHubGrid(),
-                    ],
-                  ),
-                  // 5. Basculer d’espace
-                  PrestataireProfileSection(
-                    title: DiscProfile.roleSpaceTitle,
-                    icon: Icons.swap_horiz_rounded,
-                    children: const [
-                      ProfileRoleSpaceSection(showHeader: false),
-                    ],
-                  ),
-                  // 6. Support / session
-                  PrestataireProfileSection(
-                    title: DiscProfile.sectionAccount,
-                    icon: Icons.manage_accounts_outlined,
-                    children: [
-                      ProfileFooterActions(
-                        onSupportUser: () =>
-                            openUserSupportChat(context, ref),
-                        onSignOut: () => _signOut(context, ref),
-                        onDeleteAccount: () => runAccountDeletionRequestFlow(
-                          context: context,
-                          ref: ref,
+                  ProfileContentLayout(
+                    identity: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        PrestataireProfileSummaryCard(
+                          title: title,
+                          subtitle: profession,
+                          avatarUrl: data.avatarUrl,
+                          trailingBadge: prestataireFreePlanBadge(context),
+                          onTap: () => context.pushPrestataireProfileSalon(),
                         ),
-                      ),
-                    ],
-                  ),
-                  versionAsync.when(
-                    data: (version) => Padding(
-                      padding: PrestataireProfileInsets.page(context)
-                          .copyWith(top: 12),
-                      child: Text(
-                        '${ShellStrings.profileVersionLabel} $version',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                        const PrestataireProfileCompletionCard(),
+                        if (complete)
+                          PrestataireProfileStatsStrip(
+                            servicesCount: data.services.length,
+                            specialtiesCount: data.selectedCategoryIds.length,
+                            photosCount: data.realisationPhotos.length,
+                          ),
+                      ],
                     ),
-                    loading: () => const SizedBox(height: 24),
-                    error: (_, __) => const SizedBox(height: 24),
+                    sidebar: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        PrestataireProfileSection(
+                          title: DiscProfile.roleSpaceTitle,
+                          icon: AppIcons.swapSpace,
+                          children: const [
+                            ProfileRoleSpaceSection(showHeader: false),
+                          ],
+                        ),
+                        PrestataireProfileSection(
+                          title: DiscProfile.sectionAccount,
+                          icon: AppIcons.account,
+                          children: [
+                            ProfileFooterActions(
+                              onSupportUser: () =>
+                                  openUserSupportChat(context, ref),
+                              onSignOut: () => _signOut(context, ref),
+                              onDeleteAccount: () =>
+                                  runAccountDeletionRequestFlow(
+                                context: context,
+                                ref: ref,
+                              ),
+                            ),
+                          ],
+                        ),
+                        versionAsync.when(
+                          data: (version) => Padding(
+                            padding: PrestataireProfileInsets.page(context)
+                                .copyWith(top: 12),
+                            child: Text(
+                              '${ShellStrings.profileVersionLabel} $version',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          loading: () => const SizedBox(height: 24),
+                          error: (_, __) => const SizedBox(height: 24),
+                        ),
+                      ],
+                    ),
+                    main: PrestataireProfileSection(
+                      title: DiscPrestaProfile.hubSectionTitle,
+                      icon: AppIcons.hub,
+                      children: const [
+                        PrestataireProfileHubGrid(),
+                      ],
+                    ),
                   ),
                 ],
               ),

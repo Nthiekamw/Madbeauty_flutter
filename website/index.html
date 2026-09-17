@@ -6,6 +6,9 @@
   <meta name="description" content="MadBeauty — réserve ta coiffeuse, ta manucure ou ton maquillage afro. Prestataires : gère ton agenda et ta visibilité.">
   <title>MadBeauty — Beauté afro &amp; réservation</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
@@ -15,21 +18,35 @@
         <img src="assets/logo.png" width="36" height="36" alt="">
         MadBeauty
       </a>
-      <nav class="site-nav" aria-label="Navigation principale">
+      <nav class="site-nav site-nav--bar" aria-label="Navigation principale">
         <a href="index.html" class="is-active">Accueil</a>
+        <a href="#apercu">Aperçu</a>
         <a href="contact.html">Contact</a>
         <a href="privacy.html">Confidentialité</a>
         <a href="child-safety.html">Enfants</a>
         <a href="cgu.html">CGU</a>
         <a href="mentions-legales.html">Mentions légales</a>
       </nav>
+      <details class="nav-panel">
+        <summary class="nav-panel__toggle">Menu</summary>
+        <nav class="site-nav" aria-label="Navigation mobile">
+          <a href="index.html" class="is-active">Accueil</a>
+          <a href="#apercu">Aperçu</a>
+          <a href="contact.html">Contact</a>
+          <a href="privacy.html">Confidentialité</a>
+          <a href="child-safety.html">Enfants</a>
+          <a href="cgu.html">CGU</a>
+          <a href="mentions-legales.html">Mentions légales</a>
+        </nav>
+      </details>
       <a class="btn btn-primary" href="https://madbeauty.pro" rel="noopener noreferrer">Ouvrir l’app</a>
     </div>
   </header>
 
   <section class="hero">
     <div class="hero__inner">
-      <div>
+      <div class="hero__copy">
+        <p class="eyebrow">Application web &amp; mobile</p>
         <h1>Ta beauté, tes racines, ton rendez-vous.</h1>
         <p>
           MadBeauty connecte les clientes aux professionnelles de la beauté afro :
@@ -39,15 +56,120 @@
           <a class="btn btn-primary" href="https://madbeauty.pro" rel="noopener noreferrer">Découvrir l’application</a>
           <a class="btn btn-secondary" href="#prestataires">Espace pro</a>
         </div>
-      </div>
-      <aside class="hero__card" aria-label="Points clés">
-        <ul>
+        <ul class="hero__points">
           <li>Réservation en quelques étapes</li>
           <li>Profils, avis et photos de réalisations</li>
           <li>Chat après confirmation</li>
           <li>Agenda et visibilité pour les pros</li>
         </ul>
-      </aside>
+      </div>
+      <div class="hero__visual" aria-hidden="false">
+        <figure class="browser-frame">
+          <div class="browser-frame__bar">
+            <span></span><span></span><span></span>
+            <p class="browser-frame__url">madbeauty.pro</p>
+          </div>
+          <img
+            src="assets/screenshots/web-home.png"
+            width="1656"
+            height="1035"
+            alt="Accueil client MadBeauty dans le navigateur, avec le catalogue de prestataires."
+            fetchpriority="high"
+          >
+        </figure>
+        <figure class="phone-frame">
+          <img
+            src="assets/screenshots/web-hub-mobile.png"
+            width="780"
+            height="1688"
+            alt="Écran d’accueil MadBeauty : inscription, connexion ou exploration sans compte."
+          >
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="apercu">
+    <h2>L’app, telle qu’elle est sur le web</h2>
+    <p class="section__lead">
+      Captures réelles de madbeauty.pro : accueil, catalogue, connexion et inscription.
+    </p>
+    <div class="shots">
+      <figure class="shot shot--wide">
+        <div class="shot__frame">
+          <img
+            src="assets/screenshots/web-catalog.png"
+            width="1656"
+            height="1035"
+            alt="Catalogue MadBeauty : recherche, villes et fiches prestataires."
+            loading="lazy"
+          >
+        </div>
+        <figcaption>
+          <strong>Catalogue</strong>
+          Filtre par ville, service et disponibilité, puis ouvre le profil.
+        </figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="shot__frame">
+          <img
+            src="assets/screenshots/web-hub.png"
+            width="1656"
+            height="1035"
+            alt="Hub MadBeauty : inscription, connexion ou exploration sans compte."
+            loading="lazy"
+          >
+        </div>
+        <figcaption>
+          <strong>Entrée</strong>
+          Inscription, connexion, ou simple visite du catalogue.
+        </figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="shot__frame">
+          <img
+            src="assets/screenshots/web-onboarding.png"
+            width="1656"
+            height="1035"
+            alt="Onboarding MadBeauty dans le navigateur."
+            loading="lazy"
+          >
+        </div>
+        <figcaption>
+          <strong>Premiers pas</strong>
+          Un tour guidé avant de réserver ou de publier tes services.
+        </figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="shot__frame">
+          <img
+            src="assets/screenshots/web-login.png"
+            width="1656"
+            height="1035"
+            alt="Page de connexion MadBeauty."
+            loading="lazy"
+          >
+        </div>
+        <figcaption>
+          <strong>Connexion</strong>
+          E-mail, mot de passe ou Google, sur le même fond crème que l’app.
+        </figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="shot__frame">
+          <img
+            src="assets/screenshots/web-register.png"
+            width="1656"
+            height="1035"
+            alt="Formulaire d’inscription MadBeauty."
+            loading="lazy"
+          >
+        </div>
+        <figcaption>
+          <strong>Inscription</strong>
+          Compte cliente ou prestataire en quelques informations.
+        </figcaption>
+      </figure>
     </div>
   </section>
 
@@ -102,8 +224,8 @@
   <section class="cta-band">
     <div class="cta-band__inner">
       <div>
-        <strong style="font-size:1.15rem;color:var(--brand-deep);">Prête à réserver ?</strong>
-        <p style="margin:0.35rem 0 0;color:var(--muted);">Application disponible sur mobile et navigateur web.</p>
+        <strong>Prête à réserver ?</strong>
+        <p>Application disponible sur mobile et navigateur web.</p>
       </div>
       <a class="btn btn-primary" href="https://madbeauty.pro" rel="noopener noreferrer">Accéder à MadBeauty</a>
     </div>

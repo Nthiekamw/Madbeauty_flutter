@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../discovery/content/discovery_shimmer.dart';
@@ -65,18 +66,34 @@ class AppNetworkImage extends StatelessWidget {
     final memCache = _memCacheDimensions(context);
     final child = !_hasUrl
         ? _errorWidget(theme)
-        : CachedNetworkImage(
-            imageUrl: url,
-            fit: fit,
-            alignment: alignment,
-            width: _finiteWidth,
-            height: _finiteHeight,
-            memCacheWidth: memCache.width,
-            memCacheHeight: memCache.height,
-            filterQuality: filterQuality,
-            placeholder: (_, __) => _placeholderWidget(context, theme),
-            errorWidget: (_, __, ___) => _errorWidget(theme),
-          );
+        : kIsWeb
+            ? Image.network(
+                url.trim(),
+                fit: fit,
+                alignment: alignment,
+                width: _finiteWidth,
+                height: _finiteHeight,
+                filterQuality: filterQuality,
+                // <img> HTML : pas de fetch CanvasKit → CORS Unsplash/Storage OK.
+                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return _placeholderWidget(context, theme);
+                },
+                errorBuilder: (_, __, ___) => _errorWidget(theme),
+              )
+            : CachedNetworkImage(
+                imageUrl: url.trim(),
+                fit: fit,
+                alignment: alignment,
+                width: _finiteWidth,
+                height: _finiteHeight,
+                memCacheWidth: memCache.width,
+                memCacheHeight: memCache.height,
+                filterQuality: filterQuality,
+                placeholder: (_, __) => _placeholderWidget(context, theme),
+                errorWidget: (_, __, ___) => _errorWidget(theme),
+              );
 
     if (borderRadius == null) return child;
 

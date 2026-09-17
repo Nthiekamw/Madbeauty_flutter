@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
+import '../../shared/theme/app_icons.dart';
 import '../../shared/theme/app_colors.dart';
 
 /// Barre d'onglets prestataire (pilule active style maquette).
@@ -26,19 +27,19 @@ class PrestataireShellNavBar extends StatelessWidget {
   ];
 
   static const _icons = [
-    Icons.dashboard_outlined,
-    Icons.calendar_month_outlined,
-    Icons.groups_outlined,
-    Icons.chat_bubble_outline_rounded,
-    Icons.person_outline,
+    AppIcons.dashboard,
+    AppIcons.agenda,
+    AppIcons.clients,
+    AppIcons.messages,
+    AppIcons.profile,
   ];
 
   static const _selectedIcons = [
-    Icons.dashboard,
-    Icons.calendar_month,
-    Icons.groups,
-    Icons.chat_bubble_rounded,
-    Icons.person,
+    AppIcons.dashboardFilled,
+    AppIcons.agendaFilled,
+    AppIcons.clientsFilled,
+    AppIcons.messagesFilled,
+    AppIcons.profileFilled,
   ];
 
   @override

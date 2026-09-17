@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../../shared/theme/app_icons.dart';
 import '../../../../../../../shared/widgets/discovery/content/discovery_section_header.dart';
 import '../layout/prestataire_profile_insets.dart';
 
@@ -27,7 +28,7 @@ class PrestataireProfileSection extends StatelessWidget {
         children: [
           DiscoverySectionHeader(
             title: title,
-            icon: icon ?? Icons.work_outline_rounded,
+            icon: icon ?? AppIcons.hub,
             compact: true,
             padding: const EdgeInsets.only(bottom: 8),
           ),

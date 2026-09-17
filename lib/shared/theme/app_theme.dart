@@ -20,14 +20,32 @@ class AppTheme {
       displayColor: scheme.onPrimary,
     );
 
+    TextStyle? displayOf(TextStyle? style, {FontWeight? weight}) {
+      return style?.copyWith(
+        fontFamily: AppFonts.display,
+        fontWeight: weight ?? FontWeight.w600,
+        letterSpacing: -0.25,
+        height: 1.15,
+      );
+    }
+
     return base.copyWith(
-      textTheme: text,
+      textTheme: text.copyWith(
+        displayLarge: displayOf(text.displayLarge),
+        displayMedium: displayOf(text.displayMedium),
+        displaySmall: displayOf(text.displaySmall),
+        headlineLarge: displayOf(text.headlineLarge),
+        headlineMedium: displayOf(text.headlineMedium),
+        headlineSmall: displayOf(text.headlineSmall),
+        titleLarge: displayOf(text.titleLarge, weight: FontWeight.w600),
+      ),
       primaryTextTheme: primaryText,
       iconTheme: base.iconTheme.copyWith(color: scheme.onSurface),
       appBarTheme: base.appBarTheme.copyWith(
         titleTextStyle:
             base.appBarTheme.titleTextStyle ??
             text.titleLarge?.copyWith(
+              fontFamily: AppFonts.display,
               color: base.appBarTheme.foregroundColor,
               fontWeight: FontWeight.w600,
             ),

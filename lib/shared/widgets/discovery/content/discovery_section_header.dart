@@ -55,9 +55,8 @@ class DiscoverySectionHeader extends StatelessWidget {
                   maxLines: compact ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: AppFonts.body,
+                    fontFamily: AppFonts.display,
                     fontWeight: FontWeight.w600,
-                    fontSize: compact ? 13 : 15,
                     letterSpacing: 0,
                     color: theme.colorScheme.onSurface,
                   ),

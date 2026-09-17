@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../../shared/utils/phone_number_utils.dart';
 import '../../providers/profile_city_provider.dart';
@@ -31,13 +32,13 @@ class ProfileMyInfoSection extends ConsumerWidget {
       children: [
         const ProfileSectionTitle(
           title: DiscProfile.sectionMyInfo,
-          icon: Icons.person_outline_rounded,
+          icon: AppIcons.profile,
         ),
         DiscoverySurfaceCard(
           child: Column(
             children: [
               ProfileInfoRow(
-                icon: Icons.mail_outline_rounded,
+                icon: AppIcons.mail,
                 label: DiscProfile.labelEmail,
                 value: email.isNotEmpty ? email : '—',
               ),
@@ -50,7 +51,7 @@ class ProfileMyInfoSection extends ConsumerWidget {
                 ),
               ),
               ProfileInfoRow(
-                icon: Icons.phone_outlined,
+                icon: AppIcons.phone,
                 label: DiscProfile.labelPhone,
                 value: phone.isNotEmpty
                     ? PhoneNumberUtils.formatForDisplay(phone)
@@ -65,7 +66,7 @@ class ProfileMyInfoSection extends ConsumerWidget {
                 ),
               ),
               ProfileInfoRow(
-                icon: Icons.location_city_outlined,
+                icon: AppIcons.city,
                 label: DiscProfile.labelCity,
                 value: city,
               ),

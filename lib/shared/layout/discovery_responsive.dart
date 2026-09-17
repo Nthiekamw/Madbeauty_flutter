@@ -249,11 +249,14 @@ class DiscoveryResponsive {
   /// Connexion / inscription centrés : web tablette+ uniquement.
   bool get useWebAuthFormLayout => useWebSiteLayout;
 
+  /// Deux colonnes (profil, cockpit) : occupe l’écran sans étirer une liste.
+  bool get useWebTwoPane => useWebSiteLayout && width >= 840;
+
   /// Largeur max contenu shell web (Accueil, Catalogue, etc.).
   double get webShellContentMaxWidth {
-    if (isDesktop) return 1080;
-    if (isWide) return 960;
-    return 840;
+    if (isDesktop) return 1320;
+    if (isWide) return 1140;
+    return 960;
   }
 
   /// Padding horizontal contenu shell web.
@@ -272,9 +275,9 @@ class DiscoveryResponsive {
   /// Colonne max parcours web (fiche prestataire, réservation).
   double get webFlowContentMaxWidth {
     if (!useWebSiteLayout) return width;
-    if (isDesktop) return 880;
-    if (isWide) return 780;
-    return 680;
+    if (isDesktop) return 1120;
+    if (isWide) return 960;
+    return 820;
   }
 
   /// Padding horizontal parcours web (fiche, réservation).

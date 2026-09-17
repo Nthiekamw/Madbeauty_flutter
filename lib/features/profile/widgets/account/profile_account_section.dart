@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/stripe_platform_policy.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../auth/guest/guest_mode_provider.dart';
@@ -39,7 +40,7 @@ class ProfileAccountSection extends ConsumerWidget {
       children: [
         const ProfileSectionTitle(
           title: DiscProfile.sectionAccount,
-          icon: Icons.manage_accounts_outlined,
+          icon: AppIcons.account,
         ),
         if (topSection != null) ...[
           topSection!,
@@ -53,14 +54,14 @@ class ProfileAccountSection extends ConsumerWidget {
                 _divider(context),
               ],
               DiscoveryMenuTile(
-                icon: Icons.person_outline_rounded,
+                icon: AppIcons.profile,
                 title: DiscProfile.actionEditAccount,
                 onTap: () => context.pushEditClientAccount(),
               ),
               if (showClientPrograms && StripePlatformPolicy.isEnabled) ...[
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.credit_card_rounded,
+                  icon: AppIcons.creditCard,
                   title: DiscPaymentMethods.sectionTitle,
                   subtitle: DiscPaymentMethods.clientSectionSubtitle,
                   onTap: () => context.pushClientPaymentMethods(),
@@ -69,7 +70,7 @@ class ProfileAccountSection extends ConsumerWidget {
               if (showClientReviews) ...[
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.rate_review_outlined,
+                  icon: AppIcons.reviews,
                   title: DiscProfile.actionReviews,
                   subtitle: DiscReview.myReviewsSubtitle,
                   onTap: () => context.pushClientReviews(),
@@ -78,27 +79,27 @@ class ProfileAccountSection extends ConsumerWidget {
               if (showClientPrograms) ...[
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.history_rounded,
+                  icon: AppIcons.history,
                   title: DiscProfile.actionHistory,
                   onTap: () => context.pushClientHistory(),
                 ),
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.stars_rounded,
+                  icon: AppIcons.loyalty,
                   title: DiscProfile.actionLoyalty,
                   subtitle: DiscProfile.actionLoyaltyHint,
                   onTap: isGuest ? null : () => context.pushClientLoyalty(),
                 ),
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.favorite_border_rounded,
+                  icon: AppIcons.wishlist,
                   title: DiscWishlist.profileSectionTitle,
                   subtitle: DiscWishlist.profileSectionHint,
                   onTap: isGuest ? null : () => context.pushClientWishlist(),
                 ),
                 _divider(context),
                 DiscoveryMenuTile(
-                  icon: Icons.card_giftcard_rounded,
+                  icon: AppIcons.referral,
                   title: DiscProfile.actionReferral,
                   subtitle: DiscProfile.actionReferralHint,
                   onTap: isGuest ? null : () => context.pushClientReferral(),
@@ -106,14 +107,14 @@ class ProfileAccountSection extends ConsumerWidget {
               ],
               _divider(context),
               DiscoveryMenuTile(
-                icon: Icons.bug_report_outlined,
+                icon: AppIcons.bug,
                 title: DiscBug.actionReport,
                 subtitle: DiscBug.actionReportHint,
                 onTap: isGuest ? null : () => context.pushReportBug(),
               ),
               _divider(context),
               DiscoveryMenuTile(
-                icon: Icons.help_outline_rounded,
+                icon: AppIcons.help,
                 title: DiscProfile.actionHelp,
                 onTap: () => context.pushClientHelp(),
               ),

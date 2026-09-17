@@ -2,6 +2,7 @@
 
 import '../../core/constants/app_strings.dart';
 import '../../shared/theme/app_fonts.dart';
+import '../../shared/theme/app_icons.dart';
 import 'shell_nav_badge_icon.dart';
 import '../../shared/theme/app_colors.dart';
 
@@ -13,18 +14,18 @@ const _kNavLabels = [
   ShellStrings.navClientProfile,
 ];
 const _kNavOutlined = [
-  Icons.home_outlined,
-  Icons.search_outlined,
-  Icons.movie_filter_outlined,
-  Icons.chat_bubble_outline_rounded,
-  Icons.person_outline_rounded,
+  AppIcons.home,
+  AppIcons.search,
+  AppIcons.reels,
+  AppIcons.messages,
+  AppIcons.profile,
 ];
 const _kNavFilled = [
-  Icons.home_rounded,
-  Icons.search_rounded,
-  Icons.movie_filter_rounded,
-  Icons.chat_bubble_rounded,
-  Icons.person_rounded,
+  AppIcons.homeFilled,
+  AppIcons.searchFilled,
+  AppIcons.reelsFilled,
+  AppIcons.messagesFilled,
+  AppIcons.profileFilled,
 ];
 
 class ClientShellBottomNav extends StatelessWidget {

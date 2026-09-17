@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-
 import '../../core/constants/app_strings.dart';
 import '../../shared/layout/shell_nav_destination.dart';
+import '../../shared/theme/app_icons.dart';
 
 abstract final class PrestataireShellDestinations {
   PrestataireShellDestinations._();
@@ -14,18 +13,18 @@ abstract final class PrestataireShellDestinations {
     ShellStrings.navPrestataireProfile,
   ];
   static const _outlined = [
-    Icons.dashboard_outlined,
-    Icons.calendar_month_outlined,
-    Icons.groups_outlined,
-    Icons.chat_bubble_outline_rounded,
-    Icons.person_outline,
+    AppIcons.dashboard,
+    AppIcons.agenda,
+    AppIcons.clients,
+    AppIcons.messages,
+    AppIcons.profile,
   ];
   static const _filled = [
-    Icons.dashboard,
-    Icons.calendar_month,
-    Icons.groups,
-    Icons.chat_bubble_rounded,
-    Icons.person,
+    AppIcons.dashboardFilled,
+    AppIcons.agendaFilled,
+    AppIcons.clientsFilled,
+    AppIcons.messagesFilled,
+    AppIcons.profileFilled,
   ];
 
   static List<ShellNavDestination> build({int messagesBadge = 0}) {

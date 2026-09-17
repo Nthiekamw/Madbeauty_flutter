@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/user/user_profile.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/discovery_styles.dart';
 import '../../../../shared/utils/text_normalizer.dart';
 import '../../../../shared/widgets/app/app_avatar.dart';
 import '../stats/profile_stats_row.dart';
-import '../../../../shared/theme/app_colors.dart';
 
-/// En-tête profil : photo, nom, statistiques en bas de la carte.
+/// En-tête profil : photo, nom, statistiques.
 class ProfileAccountHeader extends StatelessWidget {
   const ProfileAccountHeader({
     super.key,
@@ -40,150 +41,209 @@ class ProfileAccountHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
-    final tertiary = theme.colorScheme.tertiary;
     final normalizedDisplayName = normalizeSingleLineText(displayName);
 
     return DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: DiscoveryStyles.heroBorderRadius,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            stops: const [0.0, 0.6, 1.0],
-            colors: [
-              primary.withValues(alpha: isDark ? 0.4 : 0.65),
-              theme.colorScheme.primaryContainer.withValues(
-                alpha: isDark ? 0.6 : 0.88,
+      decoration: BoxDecoration(
+        borderRadius: DiscoveryStyles.heroBorderRadius,
+        color: theme.colorScheme.surfaceContainerLow,
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.22 : 0.14),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final sideBySide = constraints.maxWidth >= 420;
+            final identity = _ProfileIdentityBlock(
+              radius: sideBySide ? 44 : 40,
+              profile: profile,
+              displayName: displayName,
+              normalizedDisplayName: normalizedDisplayName,
+              email: email,
+              avatarBytes: avatarBytes,
+              photoLoading: photoLoading,
+              onEditPhoto: onEditPhoto,
+              onEditName: onEditName,
+              showAdminBadge: showAdminBadge,
+              showAmbassadorBadge: showAmbassadorBadge,
+              alignStart: sideBySide,
+            );
+            final stats = DecoratedBox(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(
+                  alpha: isDark ? 0.22 : 0.72,
+                ),
+                borderRadius: BorderRadius.circular(8),
               ),
-              tertiary.withValues(alpha: isDark ? 0.2 : 0.3),
-            ],
-          ),
-          border: Border.all(
-            color: primary.withValues(alpha: isDark ? 0.3 : 0.18),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withValues(alpha: isDark ? 0.15 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: ProfileStatsRow(compact: true),
+              ),
+            );
+
+            if (!sideBySide) {
+              return Column(
+                children: [
+                  identity,
+                  const SizedBox(height: 10),
+                  stats,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                identity,
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: stats,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileIdentityBlock extends StatelessWidget {
+  const _ProfileIdentityBlock({
+    required this.radius,
+    required this.displayName,
+    required this.normalizedDisplayName,
+    required this.email,
+    required this.photoLoading,
+    required this.showAdminBadge,
+    required this.showAmbassadorBadge,
+    required this.alignStart,
+    this.profile,
+    this.avatarBytes,
+    this.onEditPhoto,
+    this.onEditName,
+  });
+
+  final double radius;
+  final String displayName;
+  final String normalizedDisplayName;
+  final String email;
+  final UserProfile? profile;
+  final Uint8List? avatarBytes;
+  final bool photoLoading;
+  final VoidCallback? onEditPhoto;
+  final VoidCallback? onEditName;
+  final bool showAdminBadge;
+  final bool showAmbassadorBadge;
+  final bool alignStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final cross = alignStart
+        ? CrossAxisAlignment.start
+        : CrossAxisAlignment.center;
+
+    return Column(
+      crossAxisAlignment: cross,
+      children: [
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: primary.withValues(alpha: 0.28),
+                  width: 2,
+                ),
+              ),
+              child: _ProfileAvatar(
+                radius: radius,
+                imageUrl: profile?.avatarUrl,
+                displayName: normalizedDisplayName,
+                email: email,
+                avatarBytes: avatarBytes,
+              ),
             ),
+            if (photoLoading)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+              ),
+            if (!photoLoading && onEditPhoto != null)
+              Material(
+                color: primary,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: onEditPhoto,
+                  customBorder: const CircleBorder(),
+                  child: const Padding(
+                    padding: EdgeInsets.all(7),
+                    child: Icon(
+                      AppIcons.photo,
+                      size: 16,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: primary.withValues(alpha: 0.28),
-                        width: 2,
-                      ),
-                    ),
-                    child: _ProfileAvatar(
-                      radius: 40,
-                      imageUrl: profile?.avatarUrl,
-                      displayName: normalizedDisplayName,
-                      email: email,
-                      avatarBytes: avatarBytes,
-                    ),
-                  ),
-                  if (photoLoading)
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withValues(
-                            alpha: 0.6,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (!photoLoading && onEditPhoto != null)
-                    Material(
-                      color: primary,
-                      shape: const CircleBorder(),
-                      elevation: 2,
-                      shadowColor: AppColors.scrimDark26,
-                      child: InkWell(
-                        onTap: onEditPhoto,
-                        customBorder: const CircleBorder(),
-                        child: const Padding(
-                          padding: EdgeInsets.all(7),
-                          child: Icon(
-                            Icons.camera_alt_rounded,
-                            size: 16,
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                normalizedDisplayName.isEmpty ? displayName : normalizedDisplayName,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: AppFonts.display,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              if (showAdminBadge || showAmbassadorBadge) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (showAdminBadge) const _AdminRoleBadge(),
-                    if (showAmbassadorBadge) const _AmbassadorRoleBadge(),
-                  ],
-                ),
-              ],
-              if (onEditName != null) ...[
-                const SizedBox(height: 8),
-                _EditChip(
-                  icon: Icons.edit_rounded,
-                  label: ShellStrings.profileEditName,
-                  onTap: onEditName!,
-                ),
-              ],
-              const SizedBox(height: 10),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(
-                    alpha: isDark ? 0.22 : 0.72,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: ProfileStatsRow(compact: true),
-                ),
-              ),
-            ],
+        const SizedBox(height: 10),
+        Text(
+          normalizedDisplayName.isEmpty ? displayName : normalizedDisplayName,
+          textAlign: alignStart ? TextAlign.start : TextAlign.center,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontFamily: AppFonts.display,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            fontStyle: FontStyle.italic,
+            letterSpacing: -0.2,
           ),
         ),
-      );
+        if (showAdminBadge || showAmbassadorBadge) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: alignStart ? WrapAlignment.start : WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (showAdminBadge) const _AdminRoleBadge(),
+              if (showAmbassadorBadge) const _AmbassadorRoleBadge(),
+            ],
+          ),
+        ],
+        if (onEditName != null) ...[
+          const SizedBox(height: 8),
+          _EditChip(
+            icon: AppIcons.edit,
+            label: ShellStrings.profileEditName,
+            onTap: onEditName!,
+          ),
+        ],
+      ],
+    );
   }
 }
 
@@ -231,22 +291,22 @@ class _AdminRoleBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.adminBg12,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.adminBorder30),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
-            Icons.shield_rounded,
-            size: 18,
+            AppIcons.shield,
+            size: 16,
             color: AppColors.adminAccentMid,
           ),
           const SizedBox(width: 6),
           Text(
             DiscProfile.adminBadgeLabel,
             style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.adminAccentDark,
             ),
           ),
@@ -267,22 +327,22 @@ class _AmbassadorRoleBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.purpleAccentBg15,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.purpleAccentBorder35),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
-            Icons.military_tech_rounded,
-            size: 18,
+            Icons.workspace_premium_outlined,
+            size: 16,
             color: AppColors.ambassador,
           ),
           const SizedBox(width: 6),
           Text(
             DiscProfile.ambassadorBadgeLabel,
             style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.ambassadorMid,
             ),
           ),
@@ -311,12 +371,12 @@ class _EditChip extends StatelessWidget {
     return Material(
       color: primary.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: primary.withValues(alpha: 0.22)),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           child: Row(
@@ -339,5 +399,3 @@ class _EditChip extends StatelessWidget {
     );
   }
 }
-
-

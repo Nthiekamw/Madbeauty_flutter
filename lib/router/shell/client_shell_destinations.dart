@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-
 import '../../core/constants/app_strings.dart';
 import '../../shared/layout/shell_nav_destination.dart';
+import '../../shared/theme/app_icons.dart';
 
 /// Onglets shell client (partagés barre bas + rail web).
 abstract final class ClientShellDestinations {
@@ -15,18 +14,18 @@ abstract final class ClientShellDestinations {
     ShellStrings.navClientProfile,
   ];
   static const _outlined = [
-    Icons.home_outlined,
-    Icons.search_outlined,
-    Icons.movie_filter_outlined,
-    Icons.chat_bubble_outline_rounded,
-    Icons.person_outline_rounded,
+    AppIcons.home,
+    AppIcons.search,
+    AppIcons.reels,
+    AppIcons.messages,
+    AppIcons.profile,
   ];
   static const _filled = [
-    Icons.home_rounded,
-    Icons.search_rounded,
-    Icons.movie_filter_rounded,
-    Icons.chat_bubble_rounded,
-    Icons.person_rounded,
+    AppIcons.homeFilled,
+    AppIcons.searchFilled,
+    AppIcons.reelsFilled,
+    AppIcons.messagesFilled,
+    AppIcons.profileFilled,
   ];
 
   static List<ShellNavDestination> build({

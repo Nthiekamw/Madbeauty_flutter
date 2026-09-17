@@ -2,13 +2,12 @@
 abstract final class AppFonts {
   AppFonts._();
 
-  /// Texte courant, boutons, formulaires.
-  static const String body = 'Poppins';
+  /// Texte courant, boutons, formulaires (Commissioner — pas Inter/Poppins).
+  static const String body = 'Commissioner';
 
-  /// Titres et en-têtes (même famille que le corps — évite le duo Exo/Poppins « template »).
-  static const String display = 'Poppins';
+  /// Titres (Fraunces — serif optique, pas Playfair/Exo).
+  static const String display = 'Fraunces';
 
   /// Accroches / logo wordmark (usage ponctuel).
   static const String brand = 'Bungee';
 }
-
