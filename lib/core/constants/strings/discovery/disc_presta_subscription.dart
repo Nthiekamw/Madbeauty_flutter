@@ -87,6 +87,8 @@ abstract final class DiscPrestaSub {
   static const profileRequired =
       'Impossible de préparer ton profil prestataire. Reconnecte-toi puis réessaie.';
   static const checkoutErr = 'Impossible d’ouvrir le paiement';
+  static const errStripeModeMismatch =
+      'Le compte de facturation n’est pas à jour (test / live Stripe). Réessaie : un nouveau profil va être créé.';
   static const testModeBannerTitle = 'Paiement en mode test';
   static const testModeBannerBody =
       'Sur la page Stripe, utilise cette carte de test :';

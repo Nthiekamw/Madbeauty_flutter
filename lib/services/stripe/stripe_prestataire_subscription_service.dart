@@ -220,13 +220,39 @@ class StripePrestaSubscriptionService {
     }
 
     if (error != null && error.trim().isNotEmpty) {
+      if (_isStripeModeMismatch(error)) {
+        return StripePrestaSubscriptionException(
+          DiscPrestaSub.errStripeModeMismatch,
+          code: code,
+        );
+      }
+      if (_isRawStripeDump(error)) {
+        return StripePrestaSubscriptionException(
+          DiscPrestaSub.checkoutErr,
+          code: code,
+        );
+      }
       return StripePrestaSubscriptionException(error.trim(), code: code);
     }
     if (status == 401 || status == 403) {
       return const StripePrestaSubscriptionException('Session expirée');
     }
     return const StripePrestaSubscriptionException(
-      'Impossible de démarrer le paiement',
+      DiscPrestaSub.checkoutErr,
     );
+  }
+
+  static bool _isStripeModeMismatch(String error) {
+    final lower = error.toLowerCase();
+    return lower.contains('similar object exists in test mode') ||
+        lower.contains('similar object exists in live mode') ||
+        lower.contains('no such customer');
+  }
+
+  static bool _isRawStripeDump(String error) {
+    final trimmed = error.trim();
+    return trimmed.startsWith('Error:') ||
+        trimmed.startsWith('StripeError') ||
+        trimmed.contains('resource_missing');
   }
 }

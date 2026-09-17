@@ -7,6 +7,32 @@ export function stripeClient(): Stripe {
   return new Stripe(key, { apiVersion: "2024-11-20.acacia" });
 }
 
+/** Customer / sub créé dans l’autre mode Stripe (test vs live). */
+export function isStripeMissingInCurrentMode(err: unknown): boolean {
+  const e = err as { code?: string; message?: string };
+  if (e?.code === "resource_missing") return true;
+  const msg = `${e?.message ?? err}`;
+  return (
+    msg.includes("similar object exists in test mode") ||
+    msg.includes("similar object exists in live mode") ||
+    /No such (customer|subscription)\b/i.test(msg)
+  );
+}
+
+export async function retrieveCustomerIfInCurrentMode(
+  stripe: Stripe,
+  customerId: string,
+): Promise<Stripe.Customer | null> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer || customer.deleted) return null;
+    return customer as Stripe.Customer;
+  } catch (e) {
+    if (isStripeMissingInCurrentMode(e)) return null;
+    throw e;
+  }
+}
+
 export function serviceClient(): SupabaseClient {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -215,7 +241,10 @@ export async function ensureStripeCustomer(
     .maybeSingle();
 
   const existing = profile?.stripe_customer_id as string | undefined;
-  if (existing) return existing;
+  if (existing?.startsWith("cus_")) {
+    const current = await retrieveCustomerIfInCurrentMode(stripe, existing);
+    if (current) return current.id;
+  }
 
   const customer = await stripe.customers.create({
     email: email ?? undefined,

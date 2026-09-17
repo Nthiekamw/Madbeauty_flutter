@@ -1,5 +1,6 @@
 import type Stripe from "npm:stripe@17.7.0";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { retrieveCustomerIfInCurrentMode } from "./stripe_booking.ts";
 
 export type SubscriptionTier = "solo" | "multi";
 export type SubscriptionInterval = "month" | "year";
@@ -178,6 +179,27 @@ export function intervalFromPriceId(priceId: string): SubscriptionInterval | nul
   return null;
 }
 
+const STALE_TEST_BILLING_RESET = {
+  stripe_subscription_id: null,
+  subscription_status: "none",
+  subscription_tier: null,
+  subscription_interval: null,
+  subscription_current_period_end: null,
+} as const;
+
+export async function resetStaleStripeSubscriptionRow(
+  admin: SupabaseClient,
+  prestataireId: string,
+): Promise<void> {
+  await admin
+    .from("prestataire_profiles")
+    .update({
+      ...STALE_TEST_BILLING_RESET,
+      subscription_updated_at: new Date().toISOString(),
+    })
+    .eq("id", prestataireId);
+}
+
 export async function ensurePrestataireBillingCustomer(
   admin: SupabaseClient,
   stripe: Stripe,
@@ -186,7 +208,13 @@ export async function ensurePrestataireBillingCustomer(
   email?: string | null,
   existingCustomerId?: string | null,
 ): Promise<string> {
-  if (existingCustomerId?.startsWith("cus_")) return existingCustomerId;
+  const existing = existingCustomerId?.startsWith("cus_")
+    ? existingCustomerId
+    : null;
+  if (existing) {
+    const current = await retrieveCustomerIfInCurrentMode(stripe, existing);
+    if (current) return current.id;
+  }
 
   const customer = await stripe.customers.create({
     email: email ?? undefined,
@@ -196,9 +224,18 @@ export async function ensurePrestataireBillingCustomer(
     },
   });
 
+  const patch: Record<string, unknown> = {
+    stripe_billing_customer_id: customer.id,
+    subscription_updated_at: new Date().toISOString(),
+  };
+  // Customer test collé en live (ou l’inverse) : l’abonnement Stripe n’existe pas non plus.
+  if (existing && existing !== customer.id) {
+    Object.assign(patch, STALE_TEST_BILLING_RESET);
+  }
+
   await admin
     .from("prestataire_profiles")
-    .update({ stripe_billing_customer_id: customer.id })
+    .update(patch)
     .eq("id", prestataireId);
 
   return customer.id;

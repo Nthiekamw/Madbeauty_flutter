@@ -1,9 +1,11 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   findPrestataireIdForSubscription,
+  resetStaleStripeSubscriptionRow,
   syncPrestataireSubscriptionRow,
 } from "../_shared/prestataire_subscription.ts";
 import {
+  isStripeMissingInCurrentMode,
   requireAuthUser,
   serviceClient,
   stripeClient,
@@ -46,23 +48,36 @@ Deno.serve(async (req) => {
       return jsonResponse({ subscription: row, synced: false });
     }
 
-    const subscription = await stripe.subscriptions.retrieve(subId);
-    await syncPrestataireSubscriptionRow(admin, prestataireId, subscription);
+    try {
+      const subscription = await stripe.subscriptions.retrieve(subId);
+      await syncPrestataireSubscriptionRow(admin, prestataireId, subscription);
 
-    const resolvedId = await findPrestataireIdForSubscription(admin, subscription);
-    if (resolvedId && resolvedId !== prestataireId) {
-      console.warn("subscription prestataire_id mismatch", resolvedId, prestataireId);
+      const resolvedId = await findPrestataireIdForSubscription(admin, subscription);
+      if (resolvedId && resolvedId !== prestataireId) {
+        console.warn("subscription prestataire_id mismatch", resolvedId, prestataireId);
+      }
+
+      const { data: row } = await admin
+        .from("prestataire_profiles")
+        .select(
+          "subscription_status, subscription_tier, subscription_interval, subscription_current_period_end, stripe_subscription_id",
+        )
+        .eq("id", prestataireId)
+        .single();
+
+      return jsonResponse({ subscription: row, synced: true });
+    } catch (e) {
+      if (!isStripeMissingInCurrentMode(e)) throw e;
+      await resetStaleStripeSubscriptionRow(admin, prestataireId);
+      const { data: cleared } = await admin
+        .from("prestataire_profiles")
+        .select(
+          "subscription_status, subscription_tier, subscription_interval, subscription_current_period_end, stripe_subscription_id",
+        )
+        .eq("id", prestataireId)
+        .single();
+      return jsonResponse({ subscription: cleared, synced: false });
     }
-
-    const { data: row } = await admin
-      .from("prestataire_profiles")
-      .select(
-        "subscription_status, subscription_tier, subscription_interval, subscription_current_period_end, stripe_subscription_id",
-      )
-      .eq("id", prestataireId)
-      .single();
-
-    return jsonResponse({ subscription: row, synced: true });
   } catch (e) {
     if (e instanceof Response) return e;
     console.error(e);

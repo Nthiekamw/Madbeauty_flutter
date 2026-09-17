@@ -56,7 +56,23 @@ Deno.serve(async (req) => {
 
     const prestataire = await ensurePrestataireProfileRow(admin, user.id);
     const prestataireId = prestataire.id;
-    const currentStatus = String(prestataire.subscription_status ?? "none");
+    const customerId = await ensurePrestataireBillingCustomer(
+      admin,
+      stripe,
+      prestataireId,
+      user.id,
+      user.email,
+      prestataire.stripe_billing_customer_id as string | undefined,
+    );
+
+    const { data: billingRow } = await admin
+      .from("prestataire_profiles")
+      .select("subscription_status")
+      .eq("id", prestataireId)
+      .maybeSingle();
+    const currentStatus = String(
+      billingRow?.subscription_status ?? prestataire.subscription_status ?? "none",
+    );
     if (ACTIVE_STATUSES.has(currentStatus)) {
       return jsonResponse({
         code: "subscription_already_active",
@@ -88,16 +104,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: String(e), code: "stripe_not_configured" }, 503);
     }
 
-    const customerId = await ensurePrestataireBillingCustomer(
-      admin,
-      stripe,
-      prestataireId,
-      user.id,
-      user.email,
-      prestataire.stripe_billing_customer_id as string | undefined,
-    );
-
-    const eligibleForTrial = qualifiesForStripeSubscriptionTrial(prestataire);
+    const eligibleForTrial = qualifiesForStripeSubscriptionTrial({
+      ...prestataire,
+      stripe_billing_customer_id: customerId,
+      subscription_status: currentStatus,
+    });
     const trialDays = eligibleForTrial ? await getCatalogTrialDays(admin) : 0;
 
     const session = await stripe.checkout.sessions.create({
