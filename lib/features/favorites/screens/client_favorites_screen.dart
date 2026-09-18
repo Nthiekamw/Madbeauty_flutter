@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../auth/guest/guest_mode_provider.dart';
@@ -82,10 +83,9 @@ class ClientFavoritesScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
+          return WebPairedList(
             padding: listPadding,
             itemCount: entries.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               return PrestataireCatalogListCard(entry: entries[index]);
             },

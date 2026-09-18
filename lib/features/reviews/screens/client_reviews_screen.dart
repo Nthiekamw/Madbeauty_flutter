@@ -5,6 +5,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -91,11 +92,10 @@ class ClientReviewsScreen extends ConsumerWidget {
               ref.invalidate(clientReviewsForCurrentClientProvider);
               await ref.read(clientReviewsForCurrentClientProvider.future);
             },
-            child: ListView.separated(
+            child: WebPairedList(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: listPadding,
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 return _ClientReviewCard(
                   item: items[index],

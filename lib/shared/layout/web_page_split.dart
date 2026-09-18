@@ -44,3 +44,64 @@ class WebPageSplit extends StatelessWidget {
     );
   }
 }
+
+/// Liste 1 colonne (mobile) / 2 colonnes (web large) pour remplir la page.
+class WebPairedList extends StatelessWidget {
+  const WebPairedList({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.padding = EdgeInsets.zero,
+    this.gap = 12,
+    this.physics,
+    this.controller,
+  });
+
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final EdgeInsetsGeometry padding;
+  final double gap;
+  final ScrollPhysics? physics;
+  final ScrollController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!DiscoveryResponsive.of(context).useWebTwoPane || itemCount == 0) {
+      return ListView.separated(
+        controller: controller,
+        physics: physics,
+        padding: padding,
+        itemCount: itemCount,
+        separatorBuilder: (_, __) => SizedBox(height: gap),
+        itemBuilder: itemBuilder,
+      );
+    }
+
+    final rows = (itemCount / 2).ceil();
+    return ListView.separated(
+      controller: controller,
+      physics: physics,
+      padding: padding,
+      itemCount: rows,
+      separatorBuilder: (_, __) => SizedBox(height: gap),
+      itemBuilder: (context, row) {
+        final left = row * 2;
+        final right = left + 1;
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: itemBuilder(context, left)),
+              SizedBox(width: gap),
+              Expanded(
+                child: right < itemCount
+                    ? itemBuilder(context, right)
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

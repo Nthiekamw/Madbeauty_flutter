@@ -32,7 +32,9 @@ class ClientReelFavoritesScreen extends ConsumerWidget {
     final padding = useWeb
         ? const EdgeInsets.fromLTRB(20, 12, 20, 28)
         : const EdgeInsets.fromLTRB(16, 8, 16, 28);
-    final cols = useWeb ? 3 : 2;
+    final cols = DiscoveryResponsive.of(context).useWebTwoPane
+        ? 4
+        : (useWeb ? 3 : 2);
 
     if (user == null || isGuest) {
       return ProfileFlowScaffold(

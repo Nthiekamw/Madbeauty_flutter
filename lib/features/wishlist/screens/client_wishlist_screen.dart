@@ -8,6 +8,7 @@ import '../../../services/supabase/profile/client_profile_providers.dart';
 import '../../../services/supabase/wishlist/wishlist_providers.dart';
 import '../../../services/supabase/wishlist/wishlist_service.dart';import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_network_image.dart';
@@ -88,10 +89,9 @@ class ClientWishlistScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
+          return WebPairedList(
             padding: listPadding,
             itemCount: entries.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               return _WishlistProductCard(entry: entries[index]);
             },

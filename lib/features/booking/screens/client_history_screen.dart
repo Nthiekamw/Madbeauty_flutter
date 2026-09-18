@@ -6,6 +6,7 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../auth/guest/guest_mode_provider.dart';
@@ -124,11 +125,10 @@ class _HistoryList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView.separated(
+      child: WebPairedList(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: listPadding,
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final item = items[index];
           return ClientReservationCard(
