@@ -198,21 +198,46 @@ class _ConversationsInboxScreenState
             return [
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 24),
-                sliver: SliverList.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ConversationListTile(
-                      item: item,
-                      onTap: () =>
-                          _openChat(item.conversation.id),
-                      onLongPress: () => _confirmDeleteChat(
-                        item.conversation.id,
+                sliver: DiscoveryResponsive.of(context).useWebTwoPane
+                    ? SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 3.4,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = items[index];
+                            return ConversationListTile(
+                              item: item,
+                              onTap: () =>
+                                  _openChat(item.conversation.id),
+                              onLongPress: () => _confirmDeleteChat(
+                                item.conversation.id,
+                              ),
+                            );
+                          },
+                          childCount: items.length,
+                        ),
+                      )
+                    : SliverList.separated(
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return ConversationListTile(
+                            item: item,
+                            onTap: () =>
+                                _openChat(item.conversation.id),
+                            onLongPress: () => _confirmDeleteChat(
+                              item.conversation.id,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ];
           },

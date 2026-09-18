@@ -23,6 +23,8 @@ import '../../../services/supabase/storage/storage_providers.dart';
 import '../../../services/supabase/storage/storage_service.dart';
 import '../providers/message_provider.dart';
 
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
@@ -569,29 +571,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
 
 
-    return Scaffold(
-
-      backgroundColor: isDark ? scaffoldBg : AppColors.lightSurface,
-
-      appBar: ChatScreenAppBar(
-        displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
-        peerPrenom: header?.peerPrenom,
-        peerNom: header?.peerNom,
-        avatarUrl: header?.peerAvatarUrl,
-        subtitle: _headerSubtitle(header),
-        peerLastSeenAt: header?.peerLastSeenAt,
-        useSalonName: header?.showSalonName ?? false,
-        onReport: header == null
-            ? null
-            : () => showReportContentSheet(
-                  context,
-                  targetType: ContentReportTargetType.conversation,
-                  targetId: header.conversation.id,
-                ),
-        onDeleteChat: () => _confirmDeleteChat(conversationId),
-      ),
-
-      body: ColoredBox(
+    final chatBody = ColoredBox(
         color: isDark ? scaffoldBg : AppColors.lightSurface,
         child: Column(
           children: [
@@ -725,12 +705,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ),
           ],
         ),
-      ),
+      );
 
+    final appBar = ChatScreenAppBar(
+      displayName: header?.peerDisplayName ?? DiscChat.inboxTitle,
+      peerPrenom: header?.peerPrenom,
+      peerNom: header?.peerNom,
+      avatarUrl: header?.peerAvatarUrl,
+      subtitle: _headerSubtitle(header),
+      peerLastSeenAt: header?.peerLastSeenAt,
+      useSalonName: header?.showSalonName ?? false,
+      onReport: header == null
+          ? null
+          : () => showReportContentSheet(
+                context,
+                targetType: ContentReportTargetType.conversation,
+                targetId: header.conversation.id,
+              ),
+      onDeleteChat: () => _confirmDeleteChat(conversationId),
     );
 
-  }
+    if (DiscoveryResponsive.of(context).useWebSiteLayout) {
+      return WebFlowScaffold(
+        appBar: appBar,
+        backgroundColor: isDark ? scaffoldBg : AppColors.lightSurface,
+        body: chatBody,
+      );
+    }
 
+    return Scaffold(
+      backgroundColor: isDark ? scaffoldBg : AppColors.lightSurface,
+      appBar: appBar,
+      body: chatBody,
+    );
+  }
 }
 
 

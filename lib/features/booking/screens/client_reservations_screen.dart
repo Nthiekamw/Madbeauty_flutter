@@ -280,6 +280,37 @@ class _ClientReservationsScreenState
       );
     }
 
+    if (DiscoveryResponsive.of(context).useWebTwoPane) {
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 24),
+          itemCount: (items.length / 2).ceil(),
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, row) {
+            final left = items[row * 2];
+            final hasRight = row * 2 + 1 < items.length;
+            final right = hasRight ? items[row * 2 + 1] : null;
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _cardFor(left)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: right == null
+                        ? const SizedBox.shrink()
+                        : _cardFor(right),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView.separated(
@@ -287,23 +318,24 @@ class _ClientReservationsScreenState
         padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 24),
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final ui = clientReservationUiStatusFromStatut(item.statut);
-          final canCancel = clientReservationCanCancel(ui);
-          return ClientReservationCard(
-            item: item,
-            onTap: () => context.pushClientReservationDetail(item.id),
-            cancelLoading: _cancellingId == item.id,
-            onCancel: canCancel ? () => _confirmCancel(item) : null,
-            onMessage: () => openChatForReservation(
-                  context,
-                  ref,
-                  item.id,
-                  viewerRole: MessagingInboxRole.client,
-                ),
-          );
-        },
+        itemBuilder: (context, index) => _cardFor(items[index]),
+      ),
+    );
+  }
+
+  Widget _cardFor(ClientReservationSummary item) {
+    final ui = clientReservationUiStatusFromStatut(item.statut);
+    final canCancel = clientReservationCanCancel(ui);
+    return ClientReservationCard(
+      item: item,
+      onTap: () => context.pushClientReservationDetail(item.id),
+      cancelLoading: _cancellingId == item.id,
+      onCancel: canCancel ? () => _confirmCancel(item) : null,
+      onMessage: () => openChatForReservation(
+        context,
+        ref,
+        item.id,
+        viewerRole: MessagingInboxRole.client,
       ),
     );
   }

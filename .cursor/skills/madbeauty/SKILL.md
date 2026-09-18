@@ -165,6 +165,16 @@ Périmètre produit : `docs/product/FEATURES.md`.
 - **Polish UX** (shimmer, vide/erreur/retry, snackbars, placeholders) → skill `madbeauty-ux-states`
 - **Perf & stabilité** (cache images, uploads, timeout Supabase, autoDispose, release) → skill `madbeauty-performance`
 
+## Vérification visuelle (obligatoire)
+
+Toute modification d’UI (layout, design, navigation, états vides) doit être **vue** avant d’être considérée comme terminée.
+
+1. Capturer l’écran concerné : viewport **desktop (~1280)** et **mobile (~390)** si le layout change.
+2. **Ouvrir / lire la capture** et corriger si le rendu est cassé, vide, étiré, mal cadré ou incohérent avec le reste de l’app.
+3. Flutter Web : lancer l’app (`.\scripts\run_flutter_web.ps1` ou session `flutter run -d chrome`) puis capture navigateur ; en session `flutter run`, `flutter screenshot` est aussi valable.
+4. Ne pas se fier au seul code ni à un test mental. Une capture lue > une description.
+5. Ne pas commiter de dumps temporaires `_preview*` / `tmp-*`. Les visuels marketing vont dans `website/assets/screenshots/` uniquement si le brief le demande.
+
 ## Références détaillées
 
 - Architecture : [reference.md](reference.md) ou `docs/ARCHITECTURE.md` (index : `docs/README.md`)

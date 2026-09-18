@@ -115,6 +115,7 @@ Réserver `MediaQuery` aux cas où `DiscoveryResponsive` ne suffit pas (chat, bo
 ```
 - [ ] Mobile : test mental 320 px, 360 px, 390 px, 600 px, 900 px+
 - [ ] Web : test mental 375 px, 600 px, 900 px, 1280 px (Chrome)
+- [ ] **Captures lues** des écrans touchés (desktop ~1280 et mobile ~390 si le layout change)
 - [ ] Web : pas de bottom nav ; shell adaptatif (top nav ou rail)
 - [ ] Pas de débordement horizontal (overflow) sur petit écran
 - [ ] Texte : maxLines / ellipsis sur titres et previews

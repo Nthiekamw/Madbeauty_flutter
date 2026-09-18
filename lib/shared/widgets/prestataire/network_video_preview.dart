@@ -35,7 +35,8 @@ class NetworkVideoPreview extends StatefulWidget {
   State<NetworkVideoPreview> createState() => _NetworkVideoPreviewState();
 }
 
-class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
+class _NetworkVideoPreviewState extends State<NetworkVideoPreview>
+    with WidgetsBindingObserver {
   VideoPlayerController? _controller;
   bool _ready = false;
   bool _failed = false;
@@ -43,7 +44,19 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncPlayback();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _syncPlayback();
   }
 
   @override
@@ -64,13 +77,30 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
     if (oldWidget.muted != widget.muted) {
       controller.setVolume(widget.muted ? 0 : 1);
     }
-    if (oldWidget.autoPlay != widget.autoPlay) {
-      if (widget.autoPlay) {
-        controller.play();
-      } else {
-        controller.pause();
-      }
-      if (mounted) setState(() {});
+    _syncPlayback();
+    if (mounted) setState(() {});
+  }
+
+  bool get _shouldPlay {
+    if (!widget.autoPlay) return false;
+    if (!TickerMode.of(context)) return false;
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return false;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+      return false;
+    }
+    return true;
+  }
+
+  void _syncPlayback() {
+    final controller = _controller;
+    if (!_ready || controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    if (_shouldPlay) {
+      if (!controller.value.isPlaying) controller.play();
+    } else if (controller.value.isPlaying) {
+      controller.pause();
     }
   }
 
@@ -92,7 +122,7 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
       await controller.initialize();
       await controller.setVolume(widget.muted ? 0 : 1);
       controller.setLooping(widget.loop);
-      if (widget.autoPlay) {
+      if (widget.autoPlay && _shouldPlay) {
         await controller.play();
       } else {
         await controller.pause();
@@ -110,6 +140,7 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _disposeController();
     super.dispose();
   }
@@ -127,6 +158,7 @@ class _NetworkVideoPreviewState extends State<NetworkVideoPreview> {
 
   @override
   Widget build(BuildContext context) {
+    _syncPlayback();
     if (_failed) {
       return _VideoPlaceholder(iconSize: widget.placeholderIconSize);
     }

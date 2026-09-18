@@ -16,6 +16,7 @@ abstract final class DiscPay {
 
   static const errNotConfigured =
       'Paiement indisponible : clé Stripe manquante dans la configuration.';
+  static const unavailableTitle = 'Paiement indisponible';
   static const errWebUnsupported =
       'Le paiement en ligne est disponible sur le site MadBeauty (navigateur).';
   static const errPrestaNotPayable =

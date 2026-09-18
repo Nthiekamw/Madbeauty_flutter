@@ -24,6 +24,7 @@ abstract final class DiscBk {
   static const bookedSlotTooltip = 'Créneau déjà réservé';
 
   static const recapTitle = 'Récapitulatif';
+  static const recapDetailsTitle = 'Détails de la réservation';
   static const recapPresta = 'Prestataire';
   static const recapSvc = 'Service';
   static const recapDate = 'Date';

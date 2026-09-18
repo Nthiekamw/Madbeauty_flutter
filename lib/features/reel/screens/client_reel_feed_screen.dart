@@ -73,7 +73,11 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(reelFeedControllerProvider);
-    final maxW = DiscoveryResponsive.of(context).contentMaxWidth;
+    final layout = DiscoveryResponsive.of(context);
+    final maxW = layout.useWebTwoPane
+        ? 720.0
+        : layout.contentMaxWidth.clamp(320.0, 560.0);
+    final routeVisible = ModalRoute.of(context)?.isCurrent ?? true;
 
     return ColoredBox(
       color: AppColors.black,
@@ -82,15 +86,15 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
         bottom: false,
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxW.clamp(320, 560)),
-            child: _buildBody(state),
+            constraints: BoxConstraints(maxWidth: maxW),
+            child: _buildBody(state, playbackAllowed: routeVisible),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBody(ReelFeedState state) {
+  Widget _buildBody(ReelFeedState state, {required bool playbackAllowed}) {
     if (state.isLoading && state.items.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.white),
@@ -137,7 +141,7 @@ class _ClientReelFeedScreenState extends ConsumerState<ClientReelFeedScreen> {
           final item = state.items[index];
           return _ReelPage(
             item: item,
-            active: index == _currentIndex,
+            active: playbackAllowed && index == _currentIndex,
             onLike: () => _onLike(item.id),
             onFavorite: () => _onFavorite(item),
             onShare: (shareContext) => _onShare(shareContext, item),

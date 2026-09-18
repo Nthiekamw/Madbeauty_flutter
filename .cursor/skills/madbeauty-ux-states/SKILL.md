@@ -160,6 +160,7 @@ Ajuster la profondeur relative selon le fichier.
 - [ ] images → AppNetworkImage / AppAvatar
 - [ ] textes dans disc_*.dart / CoreStrings
 - [ ] dart analyze OK
+- [ ] captures lues des écrans async touchés (voir skill `madbeauty`)
 ```
 
 ## Références écrans déjà polis

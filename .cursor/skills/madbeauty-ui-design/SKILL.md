@@ -104,6 +104,7 @@ Tout écran Riverpod qui charge des données doit suivre **`madbeauty-ux-states`
 - [ ] Réutilisation d’un composant existant quand possible
 - [ ] Contraste lisible, CTA visible au premier coup d’œil
 - [ ] `dart analyze` OK sur les fichiers modifiés
+- [ ] **Captures d’écran lues** (desktop + mobile si le layout change) — voir skill `madbeauty`
 
 ## Anti-patterns
 

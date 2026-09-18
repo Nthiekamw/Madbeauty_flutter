@@ -3,6 +3,8 @@
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/models/domain/catalog/service_beaute.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../../shared/layout/web_flow_panel.dart';
+import '../../../../shared/layout/web_page_split.dart';
 import '../../../../shared/widgets/discovery/content/discovery_shimmer.dart';
 import '../../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../logic/booking_formatters.dart';
@@ -15,7 +17,6 @@ import '../shared/booking_section_title.dart';
 import 'selected_service_header.dart';
 import 'service_choice_card.dart';
 import 'booking_waitlist_card.dart';
-import '../../../../shared/layout/web_flow_panel.dart';
 import 'slot_choice_wrap.dart';
 
 class BookingStepOneContent extends StatelessWidget {
@@ -67,61 +68,111 @@ class BookingStepOneContent extends StatelessWidget {
     final pad = layout.pageHorizontalPadding(flow: true);
     final innerPad = useWeb ? 20.0 : pad;
     final slots = daySlots;
+    final slotsCard = DiscoverySurfaceCard(
+      includeHorizontalMargin: false,
+      padding: const EdgeInsets.all(12),
+      child: _SlotsBody(
+        daySlotsLoading: daySlotsLoading,
+        slots: slots,
+        bookedSlots: bookedSlots,
+        bookedSlotsLoading: bookedSlotsLoading,
+        selection: selection,
+        prestataireId: prestataireId,
+        selectedService: selectedService,
+        selectedDay: selection.selectedDay,
+        onSlotSelected: onSlotSelected,
+      ),
+    );
+    final calendarCard = DiscoverySurfaceCard(
+      includeHorizontalMargin: false,
+      padding: const EdgeInsets.all(12),
+      child: AvailabilityCalendar(
+        rules: availabilityRules,
+        focusedDay: selection.focusedDay,
+        selectedDay: selection.selectedDay,
+        onDaySelected: (selectedDay, focusedDay) {
+          if (!availabilityRules.isAvailableDay(selectedDay)) return;
+          onDaySelected(selectedDay, focusedDay);
+        },
+        onPageChanged: onPageChanged,
+      ),
+    );
+    final continueBtn = BookingContinueButton(
+      enabled: canConfirm,
+      selectedSlot: selection.selectedSlot,
+      onPressed: onContinue,
+    );
 
-    final listView = ListView(
-      padding: EdgeInsets.fromLTRB(innerPad, 12, innerPad, 24),
-      children: [
-        SelectedServiceHeader(
-          service: selectedService,
-          overrideLabel: packHeaderLabel,
-          overrideTitle: packHeaderTitle,
-        ),
-        if (!hideServicePicker) ...[
-          const SizedBox(height: 16),
-          BookingSectionTitle(
-            icon: Icons.content_cut_rounded,
-            title: DiscBk.stepService,
-            subtitle: DiscBk.svcCountLabel(services.length),
-          ),
-          const SizedBox(height: 8),
-          DiscoverySurfaceCard(
-            includeHorizontalMargin: false,
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              children: [
-                for (var i = 0; i < services.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 8),
-                  ServiceChoiceCard(
-                    service: services[i],
-                    selected: services[i].id == selectedService.id,
-                    onTap: () => onServiceSelected(services[i].id),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+    final stacked = <Widget>[
+      SelectedServiceHeader(
+        service: selectedService,
+        overrideLabel: packHeaderLabel,
+        overrideTitle: packHeaderTitle,
+      ),
+      if (!hideServicePicker) ...[
         const SizedBox(height: 16),
+        BookingSectionTitle(
+          icon: Icons.content_cut_rounded,
+          title: DiscBk.stepService,
+          subtitle: DiscBk.svcCountLabel(services.length),
+        ),
+        const SizedBox(height: 8),
+        DiscoverySurfaceCard(
+          includeHorizontalMargin: false,
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+              for (var i = 0; i < services.length; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                ServiceChoiceCard(
+                  service: services[i],
+                  selected: services[i].id == selectedService.id,
+                  onTap: () => onServiceSelected(services[i].id),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+      const SizedBox(height: 16),
+      if (layout.useWebTwoPane)
+        WebPageSplit(
+          leadingWidth: 420,
+          leading: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const BookingSectionTitle(
+                icon: Icons.calendar_month_rounded,
+                title: DiscBk.stepDate,
+                subtitle: DiscBk.stepDateSub,
+              ),
+              const SizedBox(height: 8),
+              calendarCard,
+            ],
+          ),
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BookingSectionTitle(
+                icon: Icons.schedule_rounded,
+                title: DiscBk.stepSlots,
+                subtitle: formatBookingDate(selection.selectedDay),
+              ),
+              const SizedBox(height: 8),
+              slotsCard,
+              const SizedBox(height: 20),
+              continueBtn,
+            ],
+          ),
+        )
+      else ...[
         const BookingSectionTitle(
           icon: Icons.calendar_month_rounded,
           title: DiscBk.stepDate,
           subtitle: DiscBk.stepDateSub,
         ),
         const SizedBox(height: 8),
-        DiscoverySurfaceCard(
-          includeHorizontalMargin: false,
-          padding: const EdgeInsets.all(12),
-          child: AvailabilityCalendar(
-            rules: availabilityRules,
-            focusedDay: selection.focusedDay,
-            selectedDay: selection.selectedDay,
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!availabilityRules.isAvailableDay(selectedDay)) return;
-              onDaySelected(selectedDay, focusedDay);
-            },
-            onPageChanged: onPageChanged,
-          ),
-        ),
+        calendarCard,
         const SizedBox(height: 16),
         BookingSectionTitle(
           icon: Icons.schedule_rounded,
@@ -129,28 +180,15 @@ class BookingStepOneContent extends StatelessWidget {
           subtitle: formatBookingDate(selection.selectedDay),
         ),
         const SizedBox(height: 8),
-        DiscoverySurfaceCard(
-          includeHorizontalMargin: false,
-          padding: const EdgeInsets.all(12),
-          child: _SlotsBody(
-            daySlotsLoading: daySlotsLoading,
-            slots: slots,
-            bookedSlots: bookedSlots,
-            bookedSlotsLoading: bookedSlotsLoading,
-            selection: selection,
-            prestataireId: prestataireId,
-            selectedService: selectedService,
-            selectedDay: selection.selectedDay,
-            onSlotSelected: onSlotSelected,
-          ),
-        ),
+        slotsCard,
         const SizedBox(height: 20),
-        BookingContinueButton(
-          enabled: canConfirm,
-          selectedSlot: selection.selectedSlot,
-          onPressed: onContinue,
-        ),
+        continueBtn,
       ],
+    ];
+
+    final listView = ListView(
+      padding: EdgeInsets.fromLTRB(innerPad, 12, innerPad, 24),
+      children: stacked,
     );
 
     return WebFlowPanel(child: listView);
