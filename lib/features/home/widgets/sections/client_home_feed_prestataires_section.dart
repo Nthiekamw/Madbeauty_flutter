@@ -18,6 +18,11 @@ class ClientHomeFeedPrestatairesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(homeFeedPrestataireEntriesProvider);
 
+    final web = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final emptyOnWeb = web &&
+        async.maybeWhen(data: (value) => value.isEmpty, orElse: () => false);
+    if (emptyOnWeb) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

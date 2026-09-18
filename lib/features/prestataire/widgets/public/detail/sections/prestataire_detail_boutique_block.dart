@@ -32,12 +32,14 @@ class PrestataireDetailBoutiqueBlock extends ConsumerWidget {
     required this.mode,
     this.prestataireName,
     this.canShop = true,
+    this.highlightPackId,
   });
 
   final String prestataireId;
   final PrestataireDetailBoutiqueMode mode;
   final String? prestataireName;
   final bool canShop;
+  final String? highlightPackId;
 
   static ButtonStyle _compactBtn(ThemeData theme) {
     return ButtonStyle(
@@ -73,6 +75,7 @@ class PrestataireDetailBoutiqueBlock extends ConsumerWidget {
           prestataireName: prestataireName,
           canShop: canShop,
           buttonStyle: btn,
+          highlightPackId: highlightPackId,
         ),
     };
   }
@@ -151,26 +154,44 @@ class _ProduitsSection extends ConsumerWidget {
   }
 }
 
-class _PacksSection extends ConsumerWidget {
+class _PacksSection extends ConsumerStatefulWidget {
   const _PacksSection({
     required this.prestataireId,
     required this.buttonStyle,
     this.prestataireName,
     this.canShop = true,
+    this.highlightPackId,
   });
 
   final String prestataireId;
   final String? prestataireName;
   final bool canShop;
   final ButtonStyle buttonStyle;
+  final String? highlightPackId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PacksSection> createState() => _PacksSectionState();
+}
+
+class _PacksSectionState extends ConsumerState<_PacksSection> {
+  var _openedHighlight = false;
+
+  @override
+  void didUpdateWidget(_PacksSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.highlightPackId != widget.highlightPackId ||
+        oldWidget.prestataireId != widget.prestataireId) {
+      _openedHighlight = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final packsAsync =
-        ref.watch(publicPacksOffreDetailProvider(prestataireId));
+        ref.watch(publicPacksOffreDetailProvider(widget.prestataireId));
     final produitsAsync =
-        ref.watch(publicProduitsBoutiqueProvider(prestataireId));
-    final servicesAsync = ref.watch(servicesProvider(prestataireId));
+        ref.watch(publicProduitsBoutiqueProvider(widget.prestataireId));
+    final servicesAsync = ref.watch(servicesProvider(widget.prestataireId));
     final services = servicesAsync.asData?.value ?? const <ServiceBeaute>[];
 
     return PrestataireDetailSectionCard(
@@ -181,7 +202,7 @@ class _PacksSection extends ConsumerWidget {
         error: (_, __) => DiscoverySectionError(
           message: DiscBoutique.packsLoadErr,
           onRetry: () => ref.invalidate(
-            publicPacksOffreDetailProvider(prestataireId),
+            publicPacksOffreDetailProvider(widget.prestataireId),
           ),
         ),
         data: (packs) {
@@ -193,16 +214,44 @@ class _PacksSection extends ConsumerWidget {
             );
           }
           final produits = produitsAsync.asData?.value ?? const [];
+          final highlight = widget.highlightPackId?.trim();
+          if (!_openedHighlight &&
+              highlight != null &&
+              highlight.isNotEmpty) {
+            PackOffreDetail? match;
+            for (final pack in packs) {
+              if (pack.pack.id == highlight) {
+                match = pack;
+                break;
+              }
+            }
+            if (match != null) {
+              _openedHighlight = true;
+              final opened = match;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                showPrestatairePackDetailSheet(
+                  context,
+                  detail: opened,
+                  services: services,
+                  produits: produits,
+                  prestataireName: widget.prestataireName,
+                  canShop: widget.canShop,
+                );
+              });
+            }
+          }
           return _BoutiqueHorizontalStrip(
             itemCount: packs.length,
             itemBuilder: (context, i) => _PublicPackCard(
               detail: packs[i],
               services: services,
               produits: produits,
-              prestataireName: prestataireName,
-              canShop: canShop,
-              buttonStyle: buttonStyle,
+              prestataireName: widget.prestataireName,
+              canShop: widget.canShop,
+              buttonStyle: widget.buttonStyle,
               compact: packs.length > 1,
+              highlighted: highlight != null && packs[i].pack.id == highlight,
             ),
           );
         },
@@ -523,6 +572,7 @@ class _PublicPackCard extends ConsumerWidget {
     this.prestataireName,
     this.canShop = true,
     this.compact = false,
+    this.highlighted = false,
   });
 
   final PackOffreDetail detail;
@@ -532,6 +582,7 @@ class _PublicPackCard extends ConsumerWidget {
   final String? prestataireName;
   final bool canShop;
   final bool compact;
+  final bool highlighted;
 
   Future<void> _openDetail(BuildContext context) {
     return showPrestatairePackDetailSheet(
@@ -613,7 +664,10 @@ class _PublicPackCard extends ConsumerWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.14),
+                color: highlighted
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.outline.withValues(alpha: 0.14),
+                width: highlighted ? 1.6 : 1,
               ),
             ),
             child: Padding(

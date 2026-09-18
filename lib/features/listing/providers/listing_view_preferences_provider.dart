@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/listing_catalog_layout.dart';
@@ -26,7 +27,11 @@ class ListingViewPreferences {
 
 class ListingViewPreferencesNotifier extends Notifier<ListingViewPreferences> {
   @override
-  ListingViewPreferences build() => const ListingViewPreferences();
+  ListingViewPreferences build() => ListingViewPreferences(
+        catalogLayout: kIsWeb
+            ? ListingCatalogLayout.grid
+            : ListingCatalogLayout.expanded,
+      );
 
   void setViewMode(ListingViewMode mode) {
     if (state.viewMode == mode) return;

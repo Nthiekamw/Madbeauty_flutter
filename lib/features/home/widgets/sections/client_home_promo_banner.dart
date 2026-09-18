@@ -139,7 +139,11 @@ class _HomePromoBannerHorizontalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final copyFraction = layout.isCompact ? 0.52 : 0.46;
+    final copyFraction = layout.isCompact
+        ? 0.52
+        : width >= 720
+            ? 0.34
+            : 0.42;
     final mosaicLeft = width * (copyFraction - 0.06);
     final copyWidth = width * copyFraction;
 

@@ -18,11 +18,13 @@ class ListingFiltersPanel extends ConsumerStatefulWidget {
     required this.categories,
     required this.viewMode,
     required this.onViewModeChanged,
+    this.sidebar = false,
   });
 
   final List<ServiceCategory> categories;
   final ListingViewMode viewMode;
   final ValueChanged<ListingViewMode> onViewModeChanged;
+  final bool sidebar;
 
   @override
   ConsumerState<ListingFiltersPanel> createState() =>
@@ -30,7 +32,7 @@ class ListingFiltersPanel extends ConsumerStatefulWidget {
 }
 
 class _ListingFiltersPanelState extends ConsumerState<ListingFiltersPanel> {
-  bool _expanded = false;
+  late bool _expanded = widget.sidebar;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,9 @@ class _ListingFiltersPanelState extends ConsumerState<ListingFiltersPanel> {
     final hasCategory = filters.categoryId != null;
     final advancedActive = hasCategory || _expanded;
 
-    final hPad = DiscoveryResponsive.of(context).horizontalPadding;
+    final hPad = widget.sidebar
+        ? 0.0
+        : DiscoveryResponsive.of(context).horizontalPadding;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 2),

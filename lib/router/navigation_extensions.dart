@@ -239,8 +239,22 @@ extension AppNavigationX on BuildContext {
   void pushLogin() => pushNamed(AppRouteNames.login);
   void pushRegister() => pushNamed(AppRouteNames.register);
   void pushForgotPassword() => pushNamed(AppRouteNames.forgotPassword);
-  void pushPrestataireDetail(String id) =>
-      pushNamed(AppRouteNames.prestataireDetail, pathParameters: {'id': id});
+  void pushPrestataireDetail(
+    String id, {
+    String? section,
+    String? packId,
+  }) {
+    final pack = packId?.trim();
+    final tab = section?.trim();
+    pushNamed(
+      AppRouteNames.prestataireDetail,
+      pathParameters: {'id': id},
+      queryParameters: {
+        if (tab != null && tab.isNotEmpty) 'section': tab,
+        if (pack != null && pack.isNotEmpty) 'packId': pack,
+      },
+    );
+  }
   void pushPrestataire() => pushNamed(AppRouteNames.prestataireProfile);
   void pushBooking({
     String? prestataireId,

@@ -28,6 +28,40 @@ class PrestataireHomeTrendingList extends StatelessWidget {
         ? entries
         : entries.sublist(0, limit);
 
+    if (layout.useWebSiteLayout) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final gap = DiscoveryResponsive.homeTrendingCardGap;
+          final cols = width >= 1100
+              ? 5
+              : width >= 880
+                  ? 4
+                  : 3;
+          final cardW = (width - gap * (cols - 1)) / cols;
+          final cardH = cardW * 1.42;
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: visible.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              crossAxisSpacing: gap,
+              mainAxisSpacing: gap,
+              childAspectRatio: cardW / cardH,
+            ),
+            itemBuilder: (context, index) {
+              return _TrendingCard(
+                entry: visible[index],
+                cardWidth: cardW,
+                cardHeight: cardH,
+              );
+            },
+          );
+        },
+      );
+    }
+
     return SizedBox(
       height: cardHeight,
       child: ListView.separated(

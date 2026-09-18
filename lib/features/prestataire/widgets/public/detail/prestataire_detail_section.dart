@@ -4,5 +4,14 @@ enum PrestataireDetailSection {
   offres,
   gallery,
   about,
-  reviews,
+  reviews;
+
+  static PrestataireDetailSection? tryParse(String? raw) {
+    final value = raw?.trim().toLowerCase();
+    if (value == null || value.isEmpty) return null;
+    for (final section in values) {
+      if (section.name == value) return section;
+    }
+    return null;
+  }
 }

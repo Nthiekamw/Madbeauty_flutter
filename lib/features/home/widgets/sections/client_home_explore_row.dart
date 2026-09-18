@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/prestataire/prestataire_service_catalog.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../../../shared/theme/app_icons.dart';
@@ -21,35 +22,49 @@ class ClientHomeExploreRow extends ConsumerWidget {
     final selectedAll = selection?.allServices ?? true;
     final selectedMain = selection?.mainService;
 
+    final chips = <Widget>[
+      _ServiceFilterChip(
+        label: DiscHome.filterAll,
+        imageUrl: null,
+        icon: AppIcons.hub,
+        selected: selectedAll,
+        onTap: () => ref
+            .read(homeFeedSelectionProvider.notifier)
+            .setMainServiceFilter(allServices: true),
+      ),
+      for (final service in PrestaMainService.values)
+        _ServiceFilterChip(
+          label: PrestataireServiceCatalog.label(service),
+          imageUrl: PrestataireServiceCatalog.coverImageUrl(service),
+          icon: PrestataireServiceCatalog.icon(service),
+          selected: !selectedAll && selectedMain == service,
+          onTap: () => ref
+              .read(homeFeedSelectionProvider.notifier)
+              .setMainServiceFilter(mainService: service),
+        ),
+    ];
+
+    if (DiscoveryResponsive.of(context).useWebSiteLayout) {
+      return SizedBox(
+        height: 40,
+        child: Row(
+          children: [
+            for (var i = 0; i < chips.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(child: chips[i]),
+            ],
+          ],
+        ),
+      );
+    }
+
     return SizedBox(
       height: _chipHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: 1 + PrestaMainService.values.length,
+        itemCount: chips.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _ServiceFilterChip(
-              label: DiscHome.filterAll,
-              imageUrl: null,
-              icon: AppIcons.hub,
-              selected: selectedAll,
-              onTap: () => ref
-                  .read(homeFeedSelectionProvider.notifier)
-                  .setMainServiceFilter(allServices: true),
-            );
-          }
-          final service = PrestaMainService.values[index - 1];
-          return _ServiceFilterChip(
-            label: PrestataireServiceCatalog.label(service),
-            imageUrl: PrestataireServiceCatalog.coverImageUrl(service),
-            icon: PrestataireServiceCatalog.icon(service),
-            selected: !selectedAll && selectedMain == service,
-            onTap: () => ref
-                .read(homeFeedSelectionProvider.notifier)
-                .setMainServiceFilter(mainService: service),
-          );
-        },
+        itemBuilder: (context, index) => chips[index],
       ),
     );
   }
@@ -94,7 +109,7 @@ class _ServiceFilterChip extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (imageUrl != null && !selected)
                 ClipOval(

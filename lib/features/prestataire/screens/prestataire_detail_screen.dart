@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/models/domain/catalog/photo_realisation.dart';
 import '../../../core/models/domain/user/prestataire_profile.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/utils/text_normalizer.dart';
 import '../../booking/providers/is_own_prestataire_profile_provider.dart';
 import '../../messaging/messaging_navigation.dart';
@@ -28,13 +29,35 @@ import '../widgets/public/prestataire_public_horaires_section.dart';
 import '../../reviews/models/client_review_list_item.dart';
 import '../../reviews/widgets/edit_review_sheet.dart';
 import '../widgets/public/prestataire_public_reviews_live_section.dart';
+import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/web_flow_page_frame.dart';
+import '../widgets/public/media/prestataire_realisation_carousel_scope.dart';
 import '../widgets/workspace/prestataire_brand_scaffold.dart';
 
 class PrestataireDetailScreen extends ConsumerStatefulWidget {
-  const PrestataireDetailScreen({super.key, required this.prestataireId});
+  const PrestataireDetailScreen({
+    super.key,
+    required this.prestataireId,
+    this.initialSection,
+    this.highlightPackId,
+  });
 
   final String prestataireId;
+  final PrestataireDetailSection? initialSection;
+  final String? highlightPackId;
+
+  factory PrestataireDetailScreen.fromRoute({
+    required String prestataireId,
+    required GoRouterState state,
+  }) {
+    return PrestataireDetailScreen(
+      prestataireId: prestataireId,
+      initialSection: PrestataireDetailSection.tryParse(
+        state.uri.queryParameters['section'],
+      ),
+      highlightPackId: state.uri.queryParameters['packId']?.trim(),
+    );
+  }
 
   @override
   ConsumerState<PrestataireDetailScreen> createState() =>
@@ -45,8 +68,23 @@ class _PrestataireDetailScreenState
     extends ConsumerState<PrestataireDetailScreen> {
   final _scrollController = ScrollController();
   final _sectionBodyKey = GlobalKey();
-  PrestataireDetailSection _selectedSection =
-      PrestataireDetailSection.services;
+  late PrestataireDetailSection _selectedSection =
+      widget.initialSection ?? PrestataireDetailSection.services;
+
+  @override
+  void didUpdateWidget(PrestataireDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextSection = widget.initialSection;
+    final nextPack = widget.highlightPackId?.trim();
+    final packChanged = oldWidget.highlightPackId?.trim() != nextPack;
+    if (nextPack != null && nextPack.isNotEmpty && packChanged) {
+      _selectedSection = PrestataireDetailSection.offres;
+      return;
+    }
+    if (nextSection != null && nextSection != oldWidget.initialSection) {
+      _selectedSection = nextSection;
+    }
+  }
 
   @override
   void dispose() {
@@ -142,18 +180,33 @@ class _PrestataireDetailScreenState
             data: (list) => list.isNotEmpty,
             orElse: () => false,
           );
+          final highlightPack = widget.highlightPackId?.trim();
+          final wantsOffres = widget.initialSection ==
+                  PrestataireDetailSection.offres ||
+              (highlightPack != null && highlightPack.isNotEmpty);
+          final packsLoading = packsAsync.isLoading;
           final visibleSections = <PrestataireDetailSection>[
             PrestataireDetailSection.services,
             PrestataireDetailSection.gallery,
             if (hasBoutique) PrestataireDetailSection.boutique,
-            if (hasOffres) PrestataireDetailSection.offres,
+            if (hasOffres || (wantsOffres && packsLoading))
+              PrestataireDetailSection.offres,
             PrestataireDetailSection.about,
             PrestataireDetailSection.reviews,
           ];
-          final selectedSection =
-              visibleSections.contains(_selectedSection)
-                  ? _selectedSection
-                  : PrestataireDetailSection.services;
+          var selectedSection = _selectedSection;
+          if (wantsOffres &&
+              (hasOffres || packsLoading) &&
+              selectedSection != PrestataireDetailSection.offres) {
+            selectedSection = PrestataireDetailSection.offres;
+          }
+          if (!visibleSections.contains(selectedSection)) {
+            if (wantsOffres && (hasOffres || packsLoading)) {
+              selectedSection = PrestataireDetailSection.offres;
+            } else {
+              selectedSection = PrestataireDetailSection.services;
+            }
+          }
           if (selectedSection != _selectedSection) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
@@ -169,6 +222,129 @@ class _PrestataireDetailScreenState
                 orElse: () => false,
               ) ??
               false;
+
+          final sectionBody = KeyedSubtree(
+            key: _sectionBodyKey,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: KeyedSubtree(
+                key: ValueKey(selectedSection),
+                child: _DetailSectionBody(
+                  section: selectedSection,
+                  data: data,
+                  isOwnProfile: isOwnProfile,
+                  highlightPackId: highlightPack,
+                  onOpenGallery: () => _selectSection(
+                    PrestataireDetailSection.gallery,
+                  ),
+                  onOpenServices: () => _selectSection(
+                    PrestataireDetailSection.services,
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          final identity = PrestataireDetailIdentityCard(
+            profile: data.profile,
+            servicesCount: data.services.length,
+            isOwnProfile: isOwnProfile,
+            onBook: () => context.pushBooking(
+              prestataireId: data.profile.id,
+            ),
+            onMessage: canMessage
+                ? () => openChatWithPrestataire(
+                      context,
+                      ref,
+                      data.profile.id,
+                    )
+                : null,
+          );
+
+          if (DiscoveryResponsive.of(context).useWebTwoPane) {
+            return WebFlowPageFrame(
+              child: Column(
+                children: [
+                  Material(
+                    color: theme.colorScheme.surface,
+                    child: Row(
+                      children: [
+                        _publicProfileBackLeading(context),
+                        Expanded(
+                          child: Text(
+                            displayTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontFamily: AppFonts.display,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: 360,
+                          child: ListView(
+                            children: [
+                              PrestataireRealisationCarouselScope(
+                                prestataireId: data.profile.id,
+                                height: 240,
+                                fallbackDisplayName: displayTitle,
+                                fallbackAvatarUrl: data.avatarUrl,
+                              ),
+                              identity,
+                              if (!isOwnProfile)
+                                PrestataireClientEngagementRow(
+                                  prestataireId: data.profile.id,
+                                ),
+                            ],
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.12,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              PrestataireDetailSectionNav(
+                                selected: selectedSection,
+                                onSelected: _selectSection,
+                                visibleSections: visibleSections,
+                              ),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.only(bottom: 24),
+                                  child: sectionBody,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isOwnProfile)
+                    PrestataireDetailBottomBar(
+                      minPrice: minPrice,
+                      onBook: () => context.pushBooking(
+                        prestataireId: data.profile.id,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }
 
           return WebFlowPageFrame(
             child: Column(
@@ -210,21 +386,7 @@ class _PrestataireDetailScreenState
                                 ),
                       ),
                       SliverToBoxAdapter(
-                        child: PrestataireDetailIdentityCard(
-                          profile: data.profile,
-                          servicesCount: data.services.length,
-                          isOwnProfile: isOwnProfile,
-                          onBook: () => context.pushBooking(
-                            prestataireId: data.profile.id,
-                          ),
-                          onMessage: canMessage
-                              ? () => openChatWithPrestataire(
-                                    context,
-                                    ref,
-                                    data.profile.id,
-                                  )
-                              : null,
-                        ),
+                        child: identity,
                       ),
                       if (!isOwnProfile)
                         SliverToBoxAdapter(
@@ -243,30 +405,7 @@ class _PrestataireDetailScreenState
                           ),
                         ),
                       ),
-                      SliverToBoxAdapter(
-                        child: KeyedSubtree(
-                          key: _sectionBodyKey,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            switchInCurve: Curves.easeOut,
-                            switchOutCurve: Curves.easeIn,
-                            child: KeyedSubtree(
-                              key: ValueKey(selectedSection),
-                              child: _DetailSectionBody(
-                                section: selectedSection,
-                                data: data,
-                                isOwnProfile: isOwnProfile,
-                                onOpenGallery: () => _selectSection(
-                                  PrestataireDetailSection.gallery,
-                                ),
-                                onOpenServices: () => _selectSection(
-                                  PrestataireDetailSection.services,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      SliverToBoxAdapter(child: sectionBody),
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
                     ],
                   ),
@@ -319,6 +458,7 @@ class _DetailSectionBody extends StatelessWidget {
     required this.section,
     required this.data,
     required this.isOwnProfile,
+    this.highlightPackId,
     this.onOpenGallery,
     this.onOpenServices,
   });
@@ -326,6 +466,7 @@ class _DetailSectionBody extends StatelessWidget {
   final PrestataireDetailSection section;
   final PrestataireDetailData data;
   final bool isOwnProfile;
+  final String? highlightPackId;
   final VoidCallback? onOpenGallery;
   final VoidCallback? onOpenServices;
 
@@ -394,6 +535,7 @@ class _DetailSectionBody extends StatelessWidget {
           prestataireName: _profileDisplayTitle(data.profile),
           canShop: !isOwnProfile,
           mode: PrestataireDetailBoutiqueMode.packs,
+          highlightPackId: highlightPackId,
         ),
       PrestataireDetailSection.gallery => PrestataireDetailSectionCard(
           icon: Icons.photo_library_outlined,

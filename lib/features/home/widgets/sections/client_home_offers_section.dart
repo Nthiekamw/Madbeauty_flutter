@@ -31,51 +31,96 @@ class ClientHomeOffersSection extends ConsumerWidget {
     final listHeight = web ? _listHeightWeb : _listHeight;
     final cardWidth = web ? _cardWidthWeb : _cardWidth;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClientHomeSectionHeader(
-          title: DiscHome.offersTitle,
-          compact: true,
-          actionLabel: DiscHome.offersSeeAll,
-          onAction: () => context.goClientSearch(),
-        ),
-        const SizedBox(height: 8),
-        async.when(
-          loading: () => _OffersSkeleton(
+    return async.when(
+      loading: () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _header(context),
+          const SizedBox(height: 8),
+          _OffersSkeleton(
             listHeight: listHeight,
             cardWidth: cardWidth,
           ),
-          error: (_, __) => DiscoverySectionError(
+        ],
+      ),
+      error: (_, __) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _header(context),
+          const SizedBox(height: 8),
+          DiscoverySectionError(
             message: DiscHome.offersLoadFail,
             onRetry: () => ref.invalidate(homeFeaturedPacksProvider),
           ),
-          data: (entries) {
-            if (entries.isEmpty) {
-              return PrestataireCatalogSectionEmpty(
+        ],
+      ),
+      data: (entries) {
+        if (entries.isEmpty) {
+          if (web) return const SizedBox.shrink();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _header(context),
+              const SizedBox(height: 8),
+              PrestataireCatalogSectionEmpty(
                 compact: true,
                 title: DiscHome.offersEmptyTitle,
                 body: DiscHome.offersEmptyBody,
-              );
-            }
-            return SizedBox(
-              height: listHeight,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: entries.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  return _HomeOfferCard(
-                    entry: entries[index],
-                    width: cardWidth,
-                    height: listHeight,
+              ),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(context),
+            const SizedBox(height: 8),
+            if (web)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  return Column(
+                    children: [
+                      for (var i = 0; i < entries.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 10),
+                        _HomeOfferCard(
+                          entry: entries[i],
+                          width: w,
+                          height: listHeight,
+                        ),
+                      ],
+                    ],
                   );
                 },
+              )
+            else
+              SizedBox(
+                height: listHeight,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: entries.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    return _HomeOfferCard(
+                      entry: entries[index],
+                      width: cardWidth,
+                      height: listHeight,
+                    );
+                  },
+                ),
               ),
-            );
-          },
-        ),
-      ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    return ClientHomeSectionHeader(
+      title: DiscHome.offersTitle,
+      compact: true,
+      actionLabel: DiscHome.offersSeeAll,
+      onAction: () => context.goClientSearch(),
     );
   }
 }
@@ -92,7 +137,11 @@ class _HomeOfferCard extends StatelessWidget {
   final double height;
 
   void _openDetail(BuildContext context) {
-    context.pushPrestataireDetail(entry.pack.prestataireId);
+    context.pushPrestataireDetail(
+      entry.pack.prestataireId,
+      section: 'offres',
+      packId: entry.pack.id,
+    );
   }
 
   void _onBook(BuildContext context) {

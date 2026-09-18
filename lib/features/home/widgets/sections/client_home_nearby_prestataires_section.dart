@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../listing/providers/discovery_origin_provider.dart' show discoveryOriginProvider;
 import '../../providers/home_prestataire_entries_provider.dart';
 import '../../../../router/navigation_extensions.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../shared/client_home_section_header.dart';
 import '../../../../shared/widgets/discovery/content/discovery_section_error.dart';
 import '../catalog/prestataire_catalog_section_empty.dart';
@@ -18,6 +19,11 @@ class ClientHomeNearbyPrestatairesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(nearbyPrestataireEntriesProvider);
     final origin = ref.watch(discoveryOriginProvider);
+
+    final web = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final emptyOnWeb = web &&
+        async.maybeWhen(data: (value) => value.isEmpty, orElse: () => false);
+    if (emptyOnWeb) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

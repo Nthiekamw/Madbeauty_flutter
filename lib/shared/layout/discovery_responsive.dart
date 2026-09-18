@@ -275,9 +275,7 @@ class DiscoveryResponsive {
   /// Colonne max parcours web (fiche prestataire, réservation).
   double get webFlowContentMaxWidth {
     if (!useWebSiteLayout) return width;
-    if (isDesktop) return 1120;
-    if (isWide) return 960;
-    return 820;
+    return webShellContentMaxWidth;
   }
 
   /// Padding horizontal parcours web (fiche, réservation).

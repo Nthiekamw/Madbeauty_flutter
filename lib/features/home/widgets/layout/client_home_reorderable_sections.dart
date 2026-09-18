@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../shared/layout/discovery_responsive.dart';
+import '../../../../shared/layout/web_page_split.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/app_fonts.dart';
 import '../../models/client_home_section_id.dart';
@@ -54,10 +55,7 @@ class ClientHomeReorderableSections extends ConsumerWidget {
         28,
       ),
       children: [
-        for (var i = 0; i < visible.length; i++) ...[
-          _sectionFor(visible[i]),
-          if (i < visible.length - 1) const SizedBox(height: 18),
-        ],
+        ..._webOrStackedChildren(visible, layoutMetrics.useWebTwoPane),
         if (!hasSupabase) ...[
           const SizedBox(height: 28),
           _SupabaseConfigCard(theme: Theme.of(context)),
@@ -80,6 +78,76 @@ class ClientHomeReorderableSections extends ConsumerWidget {
       color: isDark ? theme.colorScheme.surface : AppColors.lightSurface,
       child: listView,
     );
+  }
+
+  List<Widget> _webOrStackedChildren(
+    List<ClientHomeSectionId> visible,
+    bool twoPane,
+  ) {
+    if (!twoPane) {
+      return [
+        for (var i = 0; i < visible.length; i++) ...[
+          _sectionFor(visible[i]),
+          if (i < visible.length - 1) const SizedBox(height: 18),
+        ],
+      ];
+    }
+
+    Widget? explore;
+    Widget? appointment;
+    Widget? offers;
+    Widget? promo;
+    final rest = <Widget>[];
+    for (final id in visible) {
+      switch (id) {
+        case ClientHomeSectionId.inspiration:
+          explore = _sectionFor(id);
+        case ClientHomeSectionId.nextAppointment:
+          appointment = _sectionFor(id);
+        case ClientHomeSectionId.offers:
+          offers = _sectionFor(id);
+        case ClientHomeSectionId.promo:
+          promo = _sectionFor(id);
+        case ClientHomeSectionId.loyalty:
+          break;
+        default:
+          rest.add(_sectionFor(id));
+      }
+    }
+
+    final leadingChildren = <Widget>[
+      if (appointment != null) appointment,
+      if (appointment != null && offers != null) const SizedBox(height: 16),
+      if (offers != null) offers,
+    ];
+
+    return [
+      if (explore != null) ...[
+        explore,
+        const SizedBox(height: 16),
+      ],
+      if (leadingChildren.isNotEmpty && promo != null)
+        WebPageSplit(
+          leadingWidth: 360,
+          leading: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: leadingChildren,
+          ),
+          trailing: promo,
+        )
+      else ...[
+        if (leadingChildren.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: leadingChildren,
+          ),
+        if (promo != null) promo,
+      ],
+      for (final child in rest) ...[
+        const SizedBox(height: 20),
+        child,
+      ],
+    ];
   }
 
   Widget _sectionFor(ClientHomeSectionId id) {

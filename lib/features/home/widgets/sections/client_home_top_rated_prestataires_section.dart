@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../shared/layout/discovery_responsive.dart';
 import '../../../../router/navigation_extensions.dart';
 import '../../providers/home_prestataire_entries_provider.dart';
 import '../shared/client_home_section_header.dart';
@@ -16,6 +17,11 @@ class ClientHomeTopRatedPrestatairesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(topRatedPrestataireEntriesProvider);
+
+    final web = DiscoveryResponsive.of(context).useWebSiteLayout;
+    final emptyOnWeb = web &&
+        async.maybeWhen(data: (value) => value.isEmpty, orElse: () => false);
+    if (emptyOnWeb) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

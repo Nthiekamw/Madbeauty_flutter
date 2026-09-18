@@ -33,6 +33,46 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
         ? entries
         : entries.sublist(0, maxItems);
 
+    if (layout.useWebSiteLayout) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final gap = DiscoveryResponsive.homeListCardGap;
+          final cols = width >= 1100
+              ? 5
+              : width >= 880
+                  ? 4
+                  : 3;
+          final cardW = (width - gap * (cols - 1)) / cols;
+          final cardH = layout.homeListCardHeight *
+              (cardW / layout.homeListCardWidth).clamp(0.85, 1.35);
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: visible.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              crossAxisSpacing: gap,
+              mainAxisSpacing: gap,
+              childAspectRatio: cardW / cardH,
+            ),
+            itemBuilder: (context, index) {
+              return PrestataireHomeListCard(
+                entry: visible[index],
+                distanceOrigin: distanceOrigin,
+                cardWidth: cardW,
+                cardHeight: cardH,
+                photoHeight: layout.homeListPhotoHeightFor(cardH),
+                showDistanceOnPhoto: showDistanceOnPhoto,
+                showRatingOnPhoto: showRatingOnPhoto,
+                dense: dense,
+              );
+            },
+          );
+        },
+      );
+    }
+
     return SizedBox(
       height: layout.homeListCardHeight,
       child: ListView.separated(

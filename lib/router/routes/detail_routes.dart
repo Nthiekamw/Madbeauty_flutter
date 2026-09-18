@@ -31,7 +31,10 @@ List<RouteBase> buildDetailRoutes() => [
         path: '/@:slug',
         builder: (context, state) {
           final slug = state.pathParameters['slug']?.trim() ?? '';
-          return PrestataireDetailScreen(prestataireId: slug);
+          return PrestataireDetailScreen.fromRoute(
+            prestataireId: slug,
+            state: state,
+          );
         },
       ),
       GoRoute(
@@ -39,7 +42,10 @@ List<RouteBase> buildDetailRoutes() => [
         path: '${AppRoutes.prestatairePublicSlugAlias}/:slug',
         builder: (context, state) {
           final slug = state.pathParameters['slug']?.trim() ?? '';
-          return PrestataireDetailScreen(prestataireId: slug);
+          return PrestataireDetailScreen.fromRoute(
+            prestataireId: slug,
+            state: state,
+          );
         },
       ),
       GoRoute(
@@ -207,7 +213,10 @@ List<RouteBase> buildDetailRoutes() => [
         },
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return PrestataireDetailScreen(prestataireId: id);
+          return PrestataireDetailScreen.fromRoute(
+            prestataireId: id,
+            state: state,
+          );
         },
       ),
     ];

@@ -247,22 +247,27 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
     final mapMode =
         ref.watch(listingViewPreferencesProvider).viewMode ==
         ListingViewMode.map;
+    final twoPane = DiscoveryResponsive.of(context).useWebTwoPane;
+
+    final search = ClientWorkspaceSearchRow(
+      controller: _searchController,
+      onChanged: _onSearchChanged,
+      onClear: _clearSearch,
+      onFilterTap: () => _openFiltersSheet(
+        ref.read(listingCatalogNotifierProvider),
+      ),
+      onSubmitted: _onSearchChanged,
+      filtersActive:
+          ref.watch(prestatairesFilterProvider).hasActiveFilters,
+      compact: true,
+    );
+
+    if (twoPane) return search;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClientWorkspaceSearchRow(
-          controller: _searchController,
-          onChanged: _onSearchChanged,
-          onClear: _clearSearch,
-          onFilterTap: () => _openFiltersSheet(
-            ref.read(listingCatalogNotifierProvider),
-          ),
-          onSubmitted: _onSearchChanged,
-          filtersActive:
-              ref.watch(prestatairesFilterProvider).hasActiveFilters,
-          compact: true,
-        ),
+        search,
         if (!mapMode) ...[
           const ListingMainServicesStrip(),
           const SizedBox(height: 8),
@@ -306,6 +311,18 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
   }
 
   Widget _catalogScrollHeader(ListingCatalogViewState state) {
+    final twoPane = DiscoveryResponsive.of(context).useWebTwoPane;
+    if (twoPane) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const ListingPromoBanner(),
+          const SizedBox(height: 12),
+          _catalogChrome(state),
+        ],
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -446,7 +463,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
 
     final filteredAsync = ref.watch(prestatairesFilteredProvider);
 
-    return filteredAsync.when(
+    final body = filteredAsync.when(
       loading: () => const ListingVerticalSkeleton(),
       error: (_, __) => _refreshableScrollable(
         state: state,
@@ -498,6 +515,64 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
           footer: showFooter ? _loadMoreFooter(theme, state) : null,
         );
       },
+    );
+    return _withCatalogSplit(body, state);
+  }
+
+  Widget _withCatalogSplit(Widget child, ListingCatalogViewState state) {
+    final layout = DiscoveryResponsive.of(context);
+    final prefs = ref.watch(listingViewPreferencesProvider);
+    if (!layout.useWebTwoPane || prefs.viewMode == ListingViewMode.map) {
+      return child;
+    }
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 360,
+          child: ColoredBox(
+            color: theme.colorScheme.surface,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(12, 8, 16, 24),
+              children: [
+                ListingFiltersPanel(
+                  sidebar: true,
+                  categories: state.categories,
+                  viewMode: prefs.viewMode,
+                  onViewModeChanged: (mode) => ref
+                      .read(listingViewPreferencesProvider.notifier)
+                      .setViewMode(mode),
+                ),
+                const SizedBox(height: 12),
+                const ListingCitiesStrip(outlined: true),
+                const SizedBox(height: 8),
+                ListingQuickFiltersStrip(
+                  showTitle: true,
+                  outlined: true,
+                  filters: ListingQuickFilter.catalogTop,
+                  onClearSearchField: _clearSearchFieldOnly,
+                  onStyleQuerySelected: (query) {
+                    if (_searchController.text != query) {
+                      _searchController.text = query;
+                    }
+                    if (query.trim().isNotEmpty) {
+                      _onSearchChanged(query);
+                    } else {
+                      setState(() {});
+                    }
+                  },
+                ),
+                ListingActiveFiltersBar(
+                  categories: state.categories,
+                  onClearSearch: _clearSearch,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(child: child),
+      ],
     );
   }
 
