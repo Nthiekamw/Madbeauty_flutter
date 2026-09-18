@@ -38,7 +38,24 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
     final origin = ref.watch(discoveryOriginProvider);
     final expandedId = ref.watch(listingExpandedCardIdProvider);
 
-    final scrollView = CustomScrollView(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final paneWidth = constraints.maxWidth;
+        final cols = responsive.catalogGridColumnsFor(paneWidth);
+        final cellW = responsive.catalogGridCellWidth(
+          horizontalInset: gridInset,
+          paneWidth: paneWidth,
+        );
+        final cardH = responsive.catalogGridTileHeight(
+          horizontalInset: gridInset,
+          paneWidth: paneWidth,
+        );
+        final photoH = responsive.catalogGridPhotoHeight(
+          horizontalInset: gridInset,
+          paneWidth: paneWidth,
+        );
+
+        final scrollView = CustomScrollView(
             controller: controller,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -65,34 +82,19 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                     },
                   ),
                 )
-              else if (responsive.catalogGridColumns > 2)
+              else if (cols > 2)
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 16),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: responsive.catalogGridColumns,
+                      crossAxisCount: cols,
                       mainAxisSpacing: gridGap,
                       crossAxisSpacing: gridGap,
-                      childAspectRatio:
-                          responsive.catalogGridCellWidth(
-                                horizontalInset: gridInset,
-                              ) /
-                          responsive.catalogGridTileHeight(
-                            horizontalInset: gridInset,
-                          ),
+                      childAspectRatio: cellW / cardH,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final entry = entries[index];
-                        final cellW = responsive.catalogGridCellWidth(
-                          horizontalInset: gridInset,
-                        );
-                        final cardH = responsive.catalogGridTileHeight(
-                          horizontalInset: gridInset,
-                        );
-                        final photoH = responsive.catalogGridPhotoHeight(
-                          horizontalInset: gridInset,
-                        );
                         return PrestataireHomeListCard(
                           key: ValueKey('catalog-grid-${entry.profile.id}'),
                           entry: entry,
@@ -122,6 +124,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
                           origin: origin,
                           responsive: responsive,
                           gridInset: gridInset,
+                          paneWidth: paneWidth,
                         );
                       },
                       childCount: _gridRowCount(entries, expandedId),
@@ -136,9 +139,11 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
             ],
           );
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: scrollView,
+        return RefreshIndicator(
+          onRefresh: onRefresh,
+          child: scrollView,
+        );
+      },
     );
   }
 
@@ -172,6 +177,7 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
     required GeoPoint origin,
     required DiscoveryResponsive responsive,
     required double gridInset,
+    required double paneWidth,
   }) {
     var row = 0;
     var i = 0;
@@ -206,12 +212,15 @@ class ListingPrestatairesScrollView extends ConsumerWidget {
         final right = hasPair ? entries[i + 1] : null;
         final cellW = responsive.catalogGridCellWidth(
           horizontalInset: gridInset,
+          paneWidth: paneWidth,
         );
         final cardH = responsive.catalogGridTileHeight(
           horizontalInset: gridInset,
+          paneWidth: paneWidth,
         );
         final photoH = responsive.catalogGridPhotoHeight(
           horizontalInset: gridInset,
+          paneWidth: paneWidth,
         );
 
         return Padding(

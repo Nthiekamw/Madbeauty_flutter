@@ -45,16 +45,10 @@ class ClientHomeExploreRow extends ConsumerWidget {
     ];
 
     if (DiscoveryResponsive.of(context).useWebSiteLayout) {
-      return SizedBox(
-        height: 40,
-        child: Row(
-          children: [
-            for (var i = 0; i < chips.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(child: chips[i]),
-            ],
-          ],
-        ),
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
       );
     }
 
@@ -109,7 +103,7 @@ class _ServiceFilterChip extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (imageUrl != null && !selected)
                 ClipOval(

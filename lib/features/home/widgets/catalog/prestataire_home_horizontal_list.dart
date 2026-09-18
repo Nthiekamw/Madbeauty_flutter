@@ -38,36 +38,34 @@ class PrestataireHomeHorizontalList extends StatelessWidget {
         builder: (context, constraints) {
           final width = constraints.maxWidth;
           final gap = DiscoveryResponsive.homeListCardGap;
-          final cols = width >= 1100
-              ? 5
+          final visibleCount = width >= 1100
+              ? 4.25
               : width >= 880
-                  ? 4
-                  : 3;
-          final cardW = (width - gap * (cols - 1)) / cols;
-          final cardH = layout.homeListCardHeight *
-              (cardW / layout.homeListCardWidth).clamp(0.85, 1.35);
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: visible.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: cols,
-              crossAxisSpacing: gap,
-              mainAxisSpacing: gap,
-              childAspectRatio: cardW / cardH,
+                  ? 3.35
+                  : 2.55;
+          final gaps = visibleCount.floor();
+          final cardW =
+              ((width - gap * gaps) / visibleCount).clamp(148.0, 280.0);
+          final cardH = cardW * 1.52;
+          return SizedBox(
+            height: cardH,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: visible.length,
+              separatorBuilder: (_, __) => SizedBox(width: gap),
+              itemBuilder: (context, index) {
+                return PrestataireHomeListCard(
+                  entry: visible[index],
+                  distanceOrigin: distanceOrigin,
+                  cardWidth: cardW,
+                  cardHeight: cardH,
+                  photoHeight: layout.homeListPhotoHeightFor(cardH),
+                  showDistanceOnPhoto: showDistanceOnPhoto,
+                  showRatingOnPhoto: showRatingOnPhoto,
+                  dense: dense,
+                );
+              },
             ),
-            itemBuilder: (context, index) {
-              return PrestataireHomeListCard(
-                entry: visible[index],
-                distanceOrigin: distanceOrigin,
-                cardWidth: cardW,
-                cardHeight: cardH,
-                photoHeight: layout.homeListPhotoHeightFor(cardH),
-                showDistanceOnPhoto: showDistanceOnPhoto,
-                showRatingOnPhoto: showRatingOnPhoto,
-                dense: dense,
-              );
-            },
           );
         },
       );

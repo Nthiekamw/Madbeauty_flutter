@@ -24,11 +24,18 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final reservationsAsync = ref.watch(clientReservationsProvider);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final expand = constraints.maxHeight.isFinite &&
-            constraints.maxHeight > 140;
-        final body = reservationsAsync.when(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClientHomeSectionHeader(
+          title: DiscHome.nextAppointmentTitle,
+          icon: Icons.upcoming_rounded,
+          compact: true,
+          actionLabel: DiscHome.nextAppointmentSeeAll,
+          onAction: () => context.goMyReservations(),
+        ),
+        const SizedBox(height: 8),
+        reservationsAsync.when(
           loading: () => DiscoveryShimmer.wrap(
             context: context,
             child: Container(
@@ -139,25 +146,8 @@ class ClientHomeNextAppointmentSection extends ConsumerWidget {
               ),
             );
           },
-        );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ClientHomeSectionHeader(
-              title: DiscHome.nextAppointmentTitle,
-              icon: Icons.upcoming_rounded,
-              compact: true,
-              actionLabel: DiscHome.nextAppointmentSeeAll,
-              onAction: () => context.goMyReservations(),
-            ),
-            const SizedBox(height: 8),
-            if (expand)
-              Expanded(child: SizedBox.expand(child: body))
-            else
-              body,
-          ],
-        );
-      },
+        ),
+      ],
     );
   }
 

@@ -530,7 +530,7 @@ class _ListingScreenState extends ConsumerState<ListingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          width: 360,
+          width: 280,
           child: ColoredBox(
             color: theme.colorScheme.surface,
             child: ListView(

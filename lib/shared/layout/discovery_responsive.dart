@@ -181,12 +181,17 @@ class DiscoveryResponsive {
 
   /// Colonnes catalogue en mode grille.
   int get catalogGridColumns {
+    return catalogGridColumnsFor(width);
+  }
+
+  /// Colonnes grille selon la largeur **utile** (colonne résultats, pas le viewport).
+  int catalogGridColumnsFor(double paneWidth) {
     if (useWebSiteLayout) {
-      if (isDesktop) return 4;
-      if (isWide || width >= 720) return 3;
+      if (paneWidth >= 1080) return 4;
+      if (paneWidth >= 720) return 3;
       return 2;
     }
-    if (isWide) return 3;
+    if (paneWidth >= wideBreakpoint) return 3;
     return 2;
   }
 
@@ -196,24 +201,39 @@ class DiscoveryResponsive {
   double get catalogGridGap =>
       useWebSiteLayout ? 16 : catalogGridSpacing;
 
-  /// Largeur d'une cellule grille catalogue (colonnes adaptatives).
-  double catalogGridCellWidth({double horizontalInset = 0}) {
-    final cols = catalogGridColumns;
-    final innerWidth = useWebSiteLayout
-        ? width
-        : (contentMaxWidth < width ? contentMaxWidth : width);
+  double catalogGridCellWidth({
+    double horizontalInset = 0,
+    double? paneWidth,
+  }) {
+    final cols = catalogGridColumnsFor(paneWidth ?? width);
+    final innerWidth = paneWidth ??
+        (useWebSiteLayout
+            ? width
+            : (contentMaxWidth < width ? contentMaxWidth : width));
     final inner = (innerWidth - horizontalInset).clamp(80.0, innerWidth);
     final gap = catalogGridGap;
     return (inner - gap * (cols - 1)) / cols;
   }
 
-  /// Hauteur d'une tuile grille catalogue (ratio carte / largeur).
-  double catalogGridTileHeight({double horizontalInset = 0}) =>
-      catalogGridCellWidth(horizontalInset: horizontalInset) * 1.68;
+  double catalogGridTileHeight({
+    double horizontalInset = 0,
+    double? paneWidth,
+  }) =>
+      catalogGridCellWidth(
+        horizontalInset: horizontalInset,
+        paneWidth: paneWidth,
+      ) *
+      1.68;
 
-  /// Photo grille : ~78 % de la hauteur carte (texte compact en bas).
-  double catalogGridPhotoHeight({double horizontalInset = 0}) =>
-      catalogGridTileHeight(horizontalInset: horizontalInset) * 0.78;
+  double catalogGridPhotoHeight({
+    double horizontalInset = 0,
+    double? paneWidth,
+  }) =>
+      catalogGridTileHeight(
+        horizontalInset: horizontalInset,
+        paneWidth: paneWidth,
+      ) *
+      0.78;
 
   /// Filtres rapides recherche (puces compactes).
   double get quickFiltersStripHeight => 34;

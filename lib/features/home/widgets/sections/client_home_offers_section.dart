@@ -56,7 +56,6 @@ class ClientHomeOffersSection extends ConsumerWidget {
       ),
       data: (entries) {
         if (entries.isEmpty) {
-          if (web) return const SizedBox.shrink();
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

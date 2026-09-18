@@ -31,18 +31,16 @@ class WebPageSplit extends StatelessWidget {
       );
     }
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: leadingWidth,
-            child: leading,
-          ),
-          SizedBox(width: gap),
-          Expanded(child: trailing),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: leadingWidth,
+          child: leading,
+        ),
+        SizedBox(width: gap),
+        Expanded(child: trailing),
+      ],
     );
   }
 }
