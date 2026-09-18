@@ -8,6 +8,8 @@ import '../../../router/navigation_extensions.dart';
 import '../../../services/stripe/stripe_payment_exception.dart';
 import '../../../services/stripe/stripe_payment_providers.dart';
 import '../../../services/supabase/prestataire/boutique/boutique_providers.dart';
+import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_flow_scaffold.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_network_image.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
@@ -18,6 +20,7 @@ import '../../auth/providers/auth_notifier.dart';
 import '../../booking/widgets/confirmation/booking_web_payment_dialog.dart';
 import '../../prestataire/providers/boutique/boutique_providers.dart'
     show publicProduitsBoutiqueProvider;
+import '../models/boutique_cart_state.dart';
 import '../providers/boutique_cart_provider.dart';
 import '../providers/client_boutique_commandes_provider.dart';
 
@@ -134,7 +137,18 @@ class _ClientBoutiqueCartScreenState
       }
     }
 
-    return Scaffold(
+    final twoPane = DiscoveryResponsive.of(context).useWebTwoPane;
+    final checkout = cart.isEmpty
+        ? null
+        : _CartCheckoutBar(
+            theme: theme,
+            total: cart.totalAmount,
+            canPayOnline: canPayOnline,
+            submitting: _submitting,
+            onCheckout: _checkout,
+          );
+
+    return WebFlowScaffold(
       appBar: AppBar(
         title: const Text(DiscBoutique.cartTitle),
         actions: [
@@ -153,204 +167,253 @@ class _ClientBoutiqueCartScreenState
               actionLabel: DiscHome.ctaBrowseCatalog,
               onAction: () => context.goClientSearch(),
             )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-              children: [
-                if (cart.prestataireName?.trim().isNotEmpty == true)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      cart.prestataireName!,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+          : twoPane
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _CartLinesList(
+                        cart: cart,
+                        canPayOnline: canPayOnline,
+                        submitting: _submitting,
+                        stockByProduitId: stockByProduitId,
+                        bottomPadding: 28,
                       ),
                     ),
-                  ),
-                for (final line in cart.lines) ...[
-                  DiscoverySurfaceCard(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: SizedBox(
-                            width: 56,
-                            height: 56,
-                            child: line.imageUrl?.trim().isNotEmpty == true
-                                ? AppNetworkImage(
-                                    url: line.imageUrl!,
-                                    fit: BoxFit.cover,
-                                  )
-                                : ColoredBox(
-                                    color: theme
-                                        .colorScheme.surfaceContainerHighest,
-                                    child: const Icon(
-                                      Icons.shopping_bag_outlined,
-                                    ),
-                                  ),
-                          ),
+                    const SizedBox(width: 24),
+                    SizedBox(
+                      width: 360,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: DiscoverySurfaceCard(
+                          includeHorizontalMargin: false,
+                          padding: const EdgeInsets.all(16),
+                          child: checkout!,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                line.nom,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              if (line.conditionnement?.trim().isNotEmpty ==
-                                  true)
-                                Text(
-                                  line.conditionnement!,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                CurrencyFormat.eur(
-                                  line.lineTotal,
-                                  decimals: true,
-                                ),
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () => ref
-                                            .read(boutiqueCartProvider.notifier)
-                                            .setQuantity(
-                                              line.produitId,
-                                              line.quantite - 1,
-                                              maxOrderableQty:
-                                                  stockByProduitId[
-                                                      line.produitId],
-                                            ),
-                                    icon: const Icon(Icons.remove_circle_outline),
-                                  ),
-                                  Text('${line.quantite}'),
-                                  IconButton(
-                                    onPressed: _submitting
-                                        ? null
-                                        : () async {
-                                            final r = await ref
-                                                .read(
-                                                  boutiqueCartProvider.notifier,
-                                                )
-                                                .setQuantity(
-                                                  line.produitId,
-                                                  line.quantite + 1,
-                                                  maxOrderableQty:
-                                                      stockByProduitId[
-                                                          line.produitId],
-                                                );
-                                            if (!context.mounted) return;
-                                            if (r ==
-                                                    BoutiqueCartAddResult
-                                                        .clampedToStock ||
-                                                r ==
-                                                    BoutiqueCartAddResult
-                                                        .outOfStock) {
-                                              AppSnackBar.info(
-                                                context,
-                                                DiscBoutique.cartStockMaxReached,
-                                              );
-                                            }
-                                          },
-                                    icon: const Icon(Icons.add_circle_outline),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                if (!canPayOnline)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      DiscBoutique.cartPayWebOnly,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  ),
-              ],
-            ),
-      bottomNavigationBar: cart.isEmpty
+                  ],
+                )
+              : _CartLinesList(
+                  cart: cart,
+                  canPayOnline: canPayOnline,
+                  submitting: _submitting,
+                  stockByProduitId: stockByProduitId,
+                  bottomPadding: 120,
+                ),
+      bottomNavigationBar: cart.isEmpty || twoPane
           ? null
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          DiscBoutique.cartTotal,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          CurrencyFormat.eur(cart.totalAmount, decimals: true),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (canPayOnline)
-                      FilledButton(
-                        onPressed: _submitting
-                            ? null
-                            : () => _checkout(payOnSite: false),
-                        child: _submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(DiscBoutique.cartCheckoutWebPay),
-                      )
-                    else
-                      FilledButton(
-                        onPressed: _submitting
-                            ? null
-                            : () => _checkout(payOnSite: true),
-                        child: _submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(DiscBoutique.cartCheckoutOnSite),
-                      ),
-                  ],
-                ),
+                child: checkout,
               ),
             ),
+    );
+  }
+}
+
+class _CartLinesList extends ConsumerWidget {
+  const _CartLinesList({
+    required this.cart,
+    required this.canPayOnline,
+    required this.submitting,
+    required this.stockByProduitId,
+    required this.bottomPadding,
+  });
+
+  final BoutiqueCartState cart;
+  final bool canPayOnline;
+  final bool submitting;
+  final Map<String, int?> stockByProduitId;
+  final double bottomPadding;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding),
+      children: [
+        if (cart.prestataireName?.trim().isNotEmpty == true)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              cart.prestataireName!,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        for (final line in cart.lines) ...[
+          DiscoverySurfaceCard(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: line.imageUrl?.trim().isNotEmpty == true
+                        ? AppNetworkImage(
+                            url: line.imageUrl!,
+                            fit: BoxFit.cover,
+                          )
+                        : ColoredBox(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Icon(Icons.shopping_bag_outlined),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        line.nom,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (line.conditionnement?.trim().isNotEmpty == true)
+                        Text(
+                          line.conditionnement!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormat.eur(line.lineTotal, decimals: true),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: submitting
+                                ? null
+                                : () => ref
+                                    .read(boutiqueCartProvider.notifier)
+                                    .setQuantity(
+                                      line.produitId,
+                                      line.quantite - 1,
+                                      maxOrderableQty:
+                                          stockByProduitId[line.produitId],
+                                    ),
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text('${line.quantite}'),
+                          IconButton(
+                            onPressed: submitting
+                                ? null
+                                : () async {
+                                    final r = await ref
+                                        .read(boutiqueCartProvider.notifier)
+                                        .setQuantity(
+                                          line.produitId,
+                                          line.quantite + 1,
+                                          maxOrderableQty:
+                                              stockByProduitId[line.produitId],
+                                        );
+                                    if (!context.mounted) return;
+                                    if (r ==
+                                            BoutiqueCartAddResult
+                                                .clampedToStock ||
+                                        r == BoutiqueCartAddResult.outOfStock) {
+                                      AppSnackBar.info(
+                                        context,
+                                        DiscBoutique.cartStockMaxReached,
+                                      );
+                                    }
+                                  },
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (!canPayOnline)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              DiscBoutique.cartPayWebOnly,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CartCheckoutBar extends StatelessWidget {
+  const _CartCheckoutBar({
+    required this.theme,
+    required this.total,
+    required this.canPayOnline,
+    required this.submitting,
+    required this.onCheckout,
+  });
+
+  final ThemeData theme;
+  final double total;
+  final bool canPayOnline;
+  final bool submitting;
+  final Future<void> Function({required bool payOnSite}) onCheckout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              DiscBoutique.cartTotal,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              CurrencyFormat.eur(total, decimals: true),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        FilledButton(
+          onPressed: submitting
+              ? null
+              : () => onCheckout(payOnSite: !canPayOnline),
+          child: submitting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(
+                  canPayOnline
+                      ? DiscBoutique.cartCheckoutWebPay
+                      : DiscBoutique.cartCheckoutOnSite,
+                ),
+        ),
+      ],
     );
   }
 }

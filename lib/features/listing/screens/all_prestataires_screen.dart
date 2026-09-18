@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/discovery_brand_scaffold.dart';
 import '../../../shared/widgets/discovery/content/discovery_shimmer.dart';
@@ -100,7 +101,7 @@ class _AllPrestatairesScreenState extends ConsumerState<AllPrestatairesScreen> {
                               )
                             : RefreshIndicator(
                                 onRefresh: _onRefresh,
-                                child: ListView.separated(
+                                child: WebPairedList(
                                   controller: _scrollController,
                                   padding: EdgeInsets.fromLTRB(
                                     hPad,
@@ -108,10 +109,9 @@ class _AllPrestatairesScreenState extends ConsumerState<AllPrestatairesScreen> {
                                     hPad,
                                     28,
                                   ),
+                                  gap: 14,
                                   itemCount: state.entries.length +
                                       (state.hasMore ? 1 : 0),
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 14),
                                   itemBuilder: (context, index) {
                                     if (index >= state.entries.length) {
                                       return Center(

@@ -105,3 +105,41 @@ class WebPairedList extends StatelessWidget {
     );
   }
 }
+
+/// Deux colonnes de largeur égale (web) ou empilées (mobile).
+/// À utiliser dans un [ListView] : pas d’[Expanded] vertical.
+class WebEqualSplit extends StatelessWidget {
+  const WebEqualSplit({
+    super.key,
+    required this.left,
+    required this.right,
+    this.gap = 24,
+  });
+
+  final Widget left;
+  final Widget right;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!DiscoveryResponsive.of(context).useWebTwoPane) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          left,
+          SizedBox(height: gap),
+          right,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        SizedBox(width: gap),
+        Expanded(child: right),
+      ],
+    );
+  }
+}

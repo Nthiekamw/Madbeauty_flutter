@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../profile/widgets/account/profile_account_section.dart';
 import '../../profile/widgets/sections/profile_appearance_section.dart';
 import '../../profile/widgets/sections/profile_preferences_section.dart';
@@ -20,8 +22,8 @@ class PrestataireAccountHubScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final padding = PrestataireProfileInsets.page(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscPrestaProfile.hubCompteScreenTitle)),
+    return ProfileFlowScaffold(
+      title: DiscPrestaProfile.hubCompteScreenTitle,
       body: ListView(
         padding: padding.copyWith(bottom: 32),
         children: [
@@ -32,18 +34,29 @@ class PrestataireAccountHubScreen extends ConsumerWidget {
             iconColor: theme.colorScheme.primary,
           ),
           const SizedBox(height: 16),
-          const PrestataireVerificationRequestCard(),
-          const SizedBox(height: PrestataireProfileInsets.sectionTop),
-          const ProfileAppearanceSection(),
-          const SizedBox(height: PrestataireProfileInsets.sectionTop),
-          const ProfilePreferencesSection(),
-          const SizedBox(height: PrestataireProfileInsets.sectionTop),
-          const ProfilePwaInstallSection(),
-          const SizedBox(height: PrestataireProfileInsets.sectionTop),
-          const ProfileAccountSection(
-            menuPrefix: PrestataireProfileAccountMenu(),
-            showClientReviews: false,
-            showClientPrograms: false,
+          WebEqualSplit(
+            left: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: const [
+                PrestataireVerificationRequestCard(),
+                SizedBox(height: PrestataireProfileInsets.sectionTop),
+                ProfileAppearanceSection(),
+              ],
+            ),
+            right: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: const [
+                ProfilePreferencesSection(),
+                SizedBox(height: PrestataireProfileInsets.sectionTop),
+                ProfilePwaInstallSection(),
+                SizedBox(height: PrestataireProfileInsets.sectionTop),
+                ProfileAccountSection(
+                  menuPrefix: PrestataireProfileAccountMenu(),
+                  showClientReviews: false,
+                  showClientPrograms: false,
+                ),
+              ],
+            ),
           ),
         ],
       ),

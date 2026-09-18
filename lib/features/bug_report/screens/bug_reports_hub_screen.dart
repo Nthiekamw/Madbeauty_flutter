@@ -9,6 +9,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../widgets/bug_report_list_tile.dart';
@@ -45,47 +46,52 @@ class BugReportsHubScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: listPadding,
               children: [
-                BugReportNewCtaCard(
-                  onTap: () => context.pushNewBugReport(),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  DiscBug.myReportsSectionTitle,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: AppFonts.display,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.15,
+                WebEqualSplit(
+                  left: BugReportNewCtaCard(
+                    onTap: () => context.pushNewBugReport(),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  items.isEmpty
-                      ? DiscBug.myReportsEmpty
-                      : DiscBug.myReportsCountLabel(items.length),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: AppFonts.body,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (items.isEmpty)
-                  DiscoveryEmptyState(
-                    icon: Icons.inbox_outlined,
-                    title: DiscBug.myReportsEmpty,
-                    body: DiscBug.myReportsEmptyBody,
-                    iconColor: AppColors.brandBrownMid,
-                  )
-                else
-                  ...[
-                    for (var i = 0; i < items.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 10),
-                      BugReportListTile(
-                        item: items[i],
-                        dateFormat: dateFormat,
-                        onTap: () => context.pushBugReportChat(items[i].id),
+                  right: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        DiscBug.myReportsSectionTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontFamily: AppFonts.display,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.15,
+                        ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        items.isEmpty
+                            ? DiscBug.myReportsEmpty
+                            : DiscBug.myReportsCountLabel(items.length),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: AppFonts.body,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (items.isEmpty)
+                        DiscoveryEmptyState(
+                          icon: Icons.inbox_outlined,
+                          title: DiscBug.myReportsEmpty,
+                          body: DiscBug.myReportsEmptyBody,
+                          iconColor: AppColors.brandBrownMid,
+                        )
+                      else
+                        for (var i = 0; i < items.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 10),
+                          BugReportListTile(
+                            item: items[i],
+                            dateFormat: dateFormat,
+                            onTap: () =>
+                                context.pushBugReportChat(items[i].id),
+                          ),
+                        ],
                     ],
-                  ],
+                  ),
+                ),
               ],
             ),
           );

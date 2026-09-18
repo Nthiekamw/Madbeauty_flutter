@@ -11,6 +11,7 @@ import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
@@ -118,41 +119,52 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
           return ListView(
             padding: listPadding,
             children: [
-              _ReferralHeroBanner(theme: theme),
-              const SizedBox(height: 18),
-              _ReferralCodeCard(
-                theme: theme,
-                code: info.code,
-                onCopy: () async {
-                  await copyReferralCode(info.code);
-                  if (context.mounted) {
-                    AppSnackBar.success(
-                      context,
-                      DiscReferral.copied,
-                    );
-                  }
-                },
-                onShare: () => shareReferralInvite(context, info.code),
-              ),
-              const SizedBox(height: 14),
-              _ReferralRewardsCard(theme: theme, info: info),
-              const SizedBox(height: 14),
-              _ReferralStatsCard(
-                theme: theme,
-                count: info.invitationsCount,
-              ),
-              if (!info.hasReferrer) ...[
-                const SizedBox(height: 22),
-                _ReferralEnterCodeSection(
-                  theme: theme,
-                  controller: _codeController,
-                  applying: _applying,
-                  onApply: _applyManualCode,
+              WebEqualSplit(
+                left: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ReferralHeroBanner(theme: theme),
+                    const SizedBox(height: 18),
+                    _ReferralCodeCard(
+                      theme: theme,
+                      code: info.code,
+                      onCopy: () async {
+                        await copyReferralCode(info.code);
+                        if (context.mounted) {
+                          AppSnackBar.success(
+                            context,
+                            DiscReferral.copied,
+                          );
+                        }
+                      },
+                      onShare: () => shareReferralInvite(context, info.code),
+                    ),
+                  ],
                 ),
-              ] else ...[
-                const SizedBox(height: 18),
-                _ReferralAlreadyReferredCard(theme: theme),
-              ],
+                right: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ReferralRewardsCard(theme: theme, info: info),
+                    const SizedBox(height: 14),
+                    _ReferralStatsCard(
+                      theme: theme,
+                      count: info.invitationsCount,
+                    ),
+                    if (!info.hasReferrer) ...[
+                      const SizedBox(height: 22),
+                      _ReferralEnterCodeSection(
+                        theme: theme,
+                        controller: _codeController,
+                        applying: _applying,
+                        onApply: _applyManualCode,
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 18),
+                      _ReferralAlreadyReferredCard(theme: theme),
+                    ],
+                  ],
+                ),
+              ),
             ],
           );
         },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../widgets/profile/overview/layout/prestataire_profile_insets.dart';
@@ -16,10 +17,8 @@ class PrestataireBoutiqueHubScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final padding = PrestataireProfileInsets.page(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(DiscPrestaProfile.hubBoutiqueScreenTitle),
-      ),
+    return ProfileFlowScaffold(
+      title: DiscPrestaProfile.hubBoutiqueScreenTitle,
       body: ListView(
         padding: padding.copyWith(bottom: 20),
         children: [

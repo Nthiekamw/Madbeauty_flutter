@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../router/navigation_extensions.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
 import '../../../shared/widgets/discovery/discovery_surface_card.dart';
 import '../../../services/supabase/prestataire/subscription/prestataire_subscription_providers.dart';
@@ -30,8 +32,8 @@ class PrestataireSalonHubScreen extends ConsumerWidget {
       error: (_, __) => DiscPrestaSub.accountPlansHint,
     );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(DiscPrestaProfile.hubSalonScreenTitle)),
+    return ProfileFlowScaffold(
+      title: DiscPrestaProfile.hubSalonScreenTitle,
       body: ListView(
         padding: padding.copyWith(bottom: 32),
         children: [
@@ -42,9 +44,9 @@ class PrestataireSalonHubScreen extends ConsumerWidget {
             iconColor: theme.colorScheme.primary,
           ),
           const SizedBox(height: 16),
-          const PrestataireProfileManageMenu(showHeader: false),
-          const SizedBox(height: 12),
-          DiscoverySurfaceCard(
+          WebEqualSplit(
+            left: const PrestataireProfileManageMenu(showHeader: false),
+            right: DiscoverySurfaceCard(
             child: Column(
               children: [
                 DiscoveryMenuTile(
@@ -93,6 +95,7 @@ class PrestataireSalonHubScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
           ),
         ],
       ),

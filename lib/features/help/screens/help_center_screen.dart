@@ -4,6 +4,7 @@ import '../../../core/config/legal_urls_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/utils/app_url_launcher.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/discovery_menu_tile.dart';
@@ -26,87 +27,98 @@ class HelpCenterScreen extends StatelessWidget {
       body: ListView(
         padding: padding,
         children: [
-          _Section(
-            title: DiscHelp.sectionBooking,
-            children: [
-              _Tile(
-                title: DiscHelp.bookingFlowTitle,
-                body: DiscHelp.bookingFlowBody,
-              ),
-              _Tile(
-                title: DiscHelp.cancelPolicyTitle,
-                body: DiscHelp.cancelPolicyBody,
-              ),
-              _Tile(
-                title: DiscHelp.waitlistTitle,
-                body: DiscHelp.waitlistBody,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _Section(
-            title: DiscHelp.sectionChat,
-            children: [
-              _Tile(
-                title: DiscHelp.chatPolicyTitle,
-                body: DiscHelp.chatPolicyBody,
-              ),
-              _Tile(
-                title: DiscHelp.reportTitle,
-                body: DiscHelp.reportBody,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _Section(
-            title: DiscHelp.sectionReferral,
-            children: [
-              _Tile(
-                title: DiscHelp.referralTitle,
-                body: DiscHelp.referralBody,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _Section(
-            title: DiscHelp.sectionPayment,
-            children: [
-              _Tile(
-                title: DiscHelp.paymentTitle,
-                body: DiscHelp.paymentBody,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _Section(
-            title: DiscHelp.sectionLegal,
-            children: [
-              DiscoverySurfaceCard(
-                child: DiscoveryMenuTile(
-                  icon: Icons.privacy_tip_outlined,
-                  title: DiscHelp.privacyPolicyTitle,
-                  subtitle: DiscHelp.privacyPolicyHint,
-                  onTap: () => _openLegalUrl(
-                    context,
-                    LegalUrlsConfig.privacyPolicyUrl,
-                    DiscHelp.openPrivacyPolicyErr,
-                  ),
+          WebEqualSplit(
+            left: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Section(
+                  title: DiscHelp.sectionBooking,
+                  children: [
+                    _Tile(
+                      title: DiscHelp.bookingFlowTitle,
+                      body: DiscHelp.bookingFlowBody,
+                    ),
+                    _Tile(
+                      title: DiscHelp.cancelPolicyTitle,
+                      body: DiscHelp.cancelPolicyBody,
+                    ),
+                    _Tile(
+                      title: DiscHelp.waitlistTitle,
+                      body: DiscHelp.waitlistBody,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              DiscoverySurfaceCard(
-                child: DiscoveryMenuTile(
-                  icon: Icons.child_care_outlined,
-                  title: DiscHelp.childSafetyTitle,
-                  subtitle: DiscHelp.childSafetyHint,
-                  onTap: () => _openLegalUrl(
-                    context,
-                    LegalUrlsConfig.childSafetyUrl,
-                    DiscHelp.openChildSafetyErr,
-                  ),
+                const SizedBox(height: 16),
+                _Section(
+                  title: DiscHelp.sectionChat,
+                  children: [
+                    _Tile(
+                      title: DiscHelp.chatPolicyTitle,
+                      body: DiscHelp.chatPolicyBody,
+                    ),
+                    _Tile(
+                      title: DiscHelp.reportTitle,
+                      body: DiscHelp.reportBody,
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
+            right: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Section(
+                  title: DiscHelp.sectionReferral,
+                  children: [
+                    _Tile(
+                      title: DiscHelp.referralTitle,
+                      body: DiscHelp.referralBody,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _Section(
+                  title: DiscHelp.sectionPayment,
+                  children: [
+                    _Tile(
+                      title: DiscHelp.paymentTitle,
+                      body: DiscHelp.paymentBody,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _Section(
+                  title: DiscHelp.sectionLegal,
+                  children: [
+                    DiscoverySurfaceCard(
+                      child: DiscoveryMenuTile(
+                        icon: Icons.privacy_tip_outlined,
+                        title: DiscHelp.privacyPolicyTitle,
+                        subtitle: DiscHelp.privacyPolicyHint,
+                        onTap: () => _openLegalUrl(
+                          context,
+                          LegalUrlsConfig.privacyPolicyUrl,
+                          DiscHelp.openPrivacyPolicyErr,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DiscoverySurfaceCard(
+                      child: DiscoveryMenuTile(
+                        icon: Icons.child_care_outlined,
+                        title: DiscHelp.childSafetyTitle,
+                        subtitle: DiscHelp.childSafetyHint,
+                        onTap: () => _openLegalUrl(
+                          context,
+                          LegalUrlsConfig.childSafetyUrl,
+                          DiscHelp.openChildSafetyErr,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           Text(

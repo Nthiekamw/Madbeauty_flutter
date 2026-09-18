@@ -8,6 +8,8 @@ import '../../../core/models/domain/catalog/boutique_commande.dart';
 import '../../../router/navigation_extensions.dart';
 import '../../../services/supabase/prestataire/boutique/boutique_providers.dart';
 import '../../../shared/layout/discovery_responsive.dart';
+import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/utils/currency_format.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
@@ -36,8 +38,8 @@ class ClientBoutiqueOrdersScreen extends ConsumerWidget {
         : const EdgeInsets.fromLTRB(16, 12, 16, 24);
 
     if (user == null || isGuest) {
-      return Scaffold(
-        appBar: AppBar(title: const Text(DiscBoutique.clientOrdersTitle)),
+      return ProfileFlowScaffold(
+        title: DiscBoutique.clientOrdersTitle,
         body: GuestAccountPrompt(
           icon: Icons.receipt_long_outlined,
           title: DiscBoutique.clientOrdersTitle,
@@ -48,59 +50,49 @@ class ClientBoutiqueOrdersScreen extends ConsumerWidget {
 
     final async = ref.watch(clientBoutiqueCommandesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(DiscBoutique.clientOrdersTitle),
-        actions: [
-          IconButton(
-            tooltip: DiscBoutique.menuCart,
-            onPressed: () => context.pushClientCart(),
-            icon: const Icon(Icons.shopping_bag_outlined),
-          ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: useWeb ? 720 : double.infinity,
-          ),
-          child: async.when(
-            loading: () =>
-                const DiscoveryListSkeleton(rowCount: 4, rowHeight: 110),
-            error: (_, __) => DiscoveryEmptyState(
-              icon: Icons.cloud_off_outlined,
-              title: DiscBoutique.clientOrdersLoadErr,
-              body: CoreStrings.networkErrorBody,
-              actionLabel: DiscList.retry,
-              onAction: () => ref.invalidate(clientBoutiqueCommandesProvider),
-            ),
-            data: (commandes) {
-              if (commandes.isEmpty) {
-                return DiscoveryEmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: DiscBoutique.clientOrdersEmptyTitle,
-                  body: DiscBoutique.clientOrdersEmptyBody,
-                  actionLabel: DiscHome.ctaBrowseCatalog,
-                  onAction: () => context.goClientSearch(),
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(clientBoutiqueCommandesProvider);
-                  await ref.read(clientBoutiqueCommandesProvider.future);
-                },
-                child: ListView.separated(
-                  padding: listPadding,
-                  itemCount: commandes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    return _ClientOrderCard(commande: commandes[index]);
-                  },
-                ),
-              );
-            },
-          ),
+    return ProfileFlowScaffold(
+      title: DiscBoutique.clientOrdersTitle,
+      actions: [
+        IconButton(
+          tooltip: DiscBoutique.menuCart,
+          onPressed: () => context.pushClientCart(),
+          icon: const Icon(Icons.shopping_bag_outlined),
         ),
+      ],
+      body: async.when(
+        loading: () =>
+            const DiscoveryListSkeleton(rowCount: 4, rowHeight: 110),
+        error: (_, __) => DiscoveryEmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: DiscBoutique.clientOrdersLoadErr,
+          body: CoreStrings.networkErrorBody,
+          actionLabel: DiscList.retry,
+          onAction: () => ref.invalidate(clientBoutiqueCommandesProvider),
+        ),
+        data: (commandes) {
+          if (commandes.isEmpty) {
+            return DiscoveryEmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: DiscBoutique.clientOrdersEmptyTitle,
+              body: DiscBoutique.clientOrdersEmptyBody,
+              actionLabel: DiscHome.ctaBrowseCatalog,
+              onAction: () => context.goClientSearch(),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(clientBoutiqueCommandesProvider);
+              await ref.read(clientBoutiqueCommandesProvider.future);
+            },
+            child: WebPairedList(
+              padding: listPadding,
+              itemCount: commandes.length,
+              itemBuilder: (context, index) {
+                return _ClientOrderCard(commande: commandes[index]);
+              },
+            ),
+          );
+        },
       ),
     );
   }

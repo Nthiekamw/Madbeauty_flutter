@@ -9,6 +9,7 @@ import '../../../services/supabase/loyalty/loyalty_providers.dart';
 import '../../../services/supabase/loyalty/loyalty_service.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/discovery/content/discovery_detail_skeleton.dart';
@@ -54,17 +55,28 @@ class LoyaltyScreen extends ConsumerWidget {
           return ListView(
             padding: listPadding,
             children: [
-              _LoyaltyHero(theme: theme, info: info),
-              const SizedBox(height: 18),
-              _LoyaltyProgressCard(theme: theme, info: info),
-              const SizedBox(height: 14),
-              _LoyaltyHowCard(theme: theme),
-              const SizedBox(height: 14),
-              _LoyaltyBadgesCard(theme: theme, info: info),
-              if (info.canRedeem) ...[
-                const SizedBox(height: 18),
-                _LoyaltyRedeemBanner(theme: theme, info: info),
-              ],
+              WebEqualSplit(
+                left: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _LoyaltyHero(theme: theme, info: info),
+                    const SizedBox(height: 18),
+                    _LoyaltyProgressCard(theme: theme, info: info),
+                  ],
+                ),
+                right: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _LoyaltyHowCard(theme: theme),
+                    const SizedBox(height: 14),
+                    _LoyaltyBadgesCard(theme: theme, info: info),
+                    if (info.canRedeem) ...[
+                      const SizedBox(height: 18),
+                      _LoyaltyRedeemBanner(theme: theme, info: info),
+                    ],
+                  ],
+                ),
+              ),
             ],
           );
         },

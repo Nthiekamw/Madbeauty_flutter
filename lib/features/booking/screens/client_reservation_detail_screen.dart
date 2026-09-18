@@ -9,6 +9,7 @@ import '../../../services/supabase/disputes/dispute_service.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/web_flow_panel.dart';
 import '../../../shared/layout/web_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/theme/app_fonts.dart';
 import '../../../shared/widgets/app/app_avatar.dart';
 import '../../../shared/widgets/app/app_button.dart';
@@ -200,267 +201,284 @@ class _ClientReservationDetailScreenState
               ReservationRejectReasonBox(reason: item.notesPrestataire!),
             ],
             const SizedBox(height: 12),
-            DiscoverySurfaceCard(
-              padding: const EdgeInsets.all(16),
-              includeHorizontalMargin: !useWeb,
-                child: Row(
-                  children: [
-                    AppAvatar(
-                      imageUrl: item.prestataireAvatarUrl,
-                      displayName: prestataireLabel,
-                      radius: 32,
+            WebPageSplit(
+              leading: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DiscoverySurfaceCard(
+                    padding: const EdgeInsets.all(16),
+                    includeHorizontalMargin: !useWeb,
+                    child: Row(
+                      children: [
+                        AppAvatar(
+                          imageUrl: item.prestataireAvatarUrl,
+                          displayName: prestataireLabel,
+                          radius: 32,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                prestataireLabel,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontFamily: AppFonts.display,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              if (isVipAtSalon) ...[
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0F766E)
+                                        .withValues(alpha: 0.14),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    DiscPay.vipBadgeClient,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: const Color(0xFF115E59),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 4),
+                              Text(
+                                serviceLabel,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: chip.backgroundColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            clientReservationStatusLabel(ui),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: chip.foregroundColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
+                  ),
+                  const SizedBox(height: 12),
+                  DiscoverySurfaceCard(
+                    padding: const EdgeInsets.all(16),
+                    includeHorizontalMargin: !useWeb,
+                    child: Column(
+                      children: [
+                        _DetailRow(
+                          icon: Icons.calendar_today_outlined,
+                          label: DiscBk.recapDate,
+                          value: formatBookingDate(item.dateHeure),
+                        ),
+                        const SizedBox(height: 12),
+                        _DetailRow(
+                          icon: Icons.schedule_rounded,
+                          label: DiscBk.recapTime,
+                          value: formatBookingTime(item.dateHeure),
+                        ),
+                        if (item.servicePriceCents != null &&
+                            item.servicePriceCents! > 0) ...[
+                          const SizedBox(height: 12),
+                          _DetailRow(
+                            icon: Icons.euro_rounded,
+                            label: DiscBk.recapPrice,
+                            value: formatCentsEur(item.servicePriceCents!),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (item.paymentDisplay.shouldShow) ...[
+                    const SizedBox(height: 12),
+                    ReservationPaymentSummaryCard(
+                      display: item.paymentDisplay,
+                      lines: item.paymentDisplay.clientLines(),
+                    ),
+                  ] else if (item.hasPaymentReceipt) ...[
+                    const SizedBox(height: 12),
+                    DiscoverySurfaceCard(
+                      padding: const EdgeInsets.all(16),
+                      includeHorizontalMargin: !useWeb,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            prestataireLabel,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontFamily: AppFonts.display,
-                              fontWeight: FontWeight.w800,
+                            DiscPay.receiptLabel,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                          if (isVipAtSalon) ...[
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F766E)
-                                    .withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                DiscPay.vipBadgeClient,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: const Color(0xFF115E59),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
-                            serviceLabel,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            '${DiscPay.receiptAmount} : ${item.formattedPaidAmount}',
                           ),
+                          if (item.paidAt != null)
+                            Text(
+                              '${DiscPay.receiptPaidOn} ${formatBookingDate(item.paidAt!)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: chip.backgroundColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        clientReservationStatusLabel(ui),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: chip.foregroundColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              DiscoverySurfaceCard(
-                padding: const EdgeInsets.all(16),
-                includeHorizontalMargin: !useWeb,
-                child: Column(
-                  children: [
-                    _DetailRow(
-                      icon: Icons.calendar_today_outlined,
-                      label: DiscBk.recapDate,
-                      value: formatBookingDate(item.dateHeure),
-                    ),
-                    const SizedBox(height: 12),
-                    _DetailRow(
-                      icon: Icons.schedule_rounded,
-                      label: DiscBk.recapTime,
-                      value: formatBookingTime(item.dateHeure),
-                    ),
-                    if (item.servicePriceCents != null &&
-                        item.servicePriceCents! > 0) ...[
-                      const SizedBox(height: 12),
-                      _DetailRow(
-                        icon: Icons.euro_rounded,
-                        label: DiscBk.recapPrice,
-                        value: formatCentsEur(item.servicePriceCents!),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (item.paymentDisplay.shouldShow) ...[
-                const SizedBox(height: 12),
-                ReservationPaymentSummaryCard(
-                  display: item.paymentDisplay,
-                  lines: item.paymentDisplay.clientLines(),
-                ),
-              ] else if (item.hasPaymentReceipt) ...[
-                const SizedBox(height: 12),
-                DiscoverySurfaceCard(
-                  padding: const EdgeInsets.all(16),
-                  includeHorizontalMargin: !useWeb,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        DiscPay.receiptLabel,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('${DiscPay.receiptAmount} : ${item.formattedPaidAmount}'),
-                      if (item.paidAt != null)
-                        Text(
-                          '${DiscPay.receiptPaidOn} ${formatBookingDate(item.paidAt!)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 20),
-              if (canMessage)
-                AppButton(
-                  onPressed: _cancelling
-                      ? null
-                      : () => openChatForReservation(
-                            context,
-                            ref,
-                            item.id,
-                            viewerRole: MessagingInboxRole.client,
-                          ),
-                  child: const Text(DiscChat.openChat),
-                ),
-              if (canCancel) ...[
-                const SizedBox(height: 10),
-                OutlinedButton(
-                  onPressed: _cancelling ? null : () => _confirmCancel(item),
-                  child: _cancelling
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(DiscBk.revokeLabel),
-                ),
-              ],
-              if (ui == ClientReservationUiStatus.done) ...[
-                const SizedBox(height: 10),
-                ClientReservationReviewAction(
-                  item: item,
-                  onReviewSubmitted: () {
-                    ref.invalidate(clientReservationDetailProvider(item.id));
-                  },
-                ),
-              ],
-              if (canMessage || ui == ClientReservationUiStatus.confirmed) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => showAddToCalendarSheet(
-                    context,
-                    reservationId: item.id,
-                    title: '$serviceLabel — $prestataireLabel',
-                    start: item.dateHeure,
-                    durationMinutes: item.durationMinutes,
-                  ),
-                  icon: const Icon(Icons.event_available_outlined),
-                  label: const Text(DiscBk.addToCalendar),
-                ),
-              ],
-              if (item.prestataireId != null &&
-                  (ui == ClientReservationUiStatus.done ||
-                      ui == ClientReservationUiStatus.confirmed)) ...[
-                const SizedBox(height: 10),
-                FilledButton.tonalIcon(
-                  onPressed: () => context.pushBooking(
-                    prestataireId: item.prestataireId!,
-                    serviceId: item.serviceId,
-                  ),
-                  icon: const Icon(Icons.replay_rounded),
-                  label: const Text(DiscBk.rebookSamePresta),
-                ),
-                if (ui == ClientReservationUiStatus.done) ...[
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: _schedulingReminder
-                        ? null
-                        : () => _scheduleRebookReminder(item, 4),
-                    icon: const Icon(Icons.notifications_active_outlined),
-                    label: const Text(DiscBk.rebookRemind4Weeks),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _schedulingReminder
-                        ? null
-                        : () => _scheduleRebookReminder(item, 6),
-                    icon: const Icon(Icons.notifications_active_outlined),
-                    label: const Text(DiscBk.rebookRemind6Weeks),
-                  ),
                 ],
-              ],
-              if (item.prestataireId != null) ...[
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: () =>
-                      context.pushPrestataireDetail(item.prestataireId!),
-                  icon: const Icon(Icons.storefront_outlined),
-                  label: Text(prestataireLabel),
-                ),
-              ],
-              if (canDispute) ...[
-                const SizedBox(height: 10),
-                activeDisputeAsync!.when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => OutlinedButton.icon(
-                    onPressed: () => showOpenDisputeSheet(
-                      context,
-                      reservationId: item.id,
-                      viewerRole: DisputeSenderRole.client,
+              ),
+              trailing: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (canMessage)
+                    AppButton(
+                      onPressed: _cancelling
+                          ? null
+                          : () => openChatForReservation(
+                                context,
+                                ref,
+                                item.id,
+                                viewerRole: MessagingInboxRole.client,
+                              ),
+                      child: const Text(DiscChat.openChat),
                     ),
-                    icon: const Icon(Icons.gavel_outlined),
-                    label: const Text(DiscDispute.openAction),
-                  ),
-                  data: (active) {
-                    if (active != null) {
-                      return OutlinedButton.icon(
-                        onPressed: () =>
-                            context.pushClientDisputeDetail(active.id),
-                        icon: const Icon(Icons.gavel_outlined),
-                        label: const Text(DiscDispute.viewAction),
-                      );
-                    }
-                    return OutlinedButton.icon(
-                      onPressed: () => showOpenDisputeSheet(
+                  if (canCancel) ...[
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                      onPressed:
+                          _cancelling ? null : () => _confirmCancel(item),
+                      child: _cancelling
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text(DiscBk.revokeLabel),
+                    ),
+                  ],
+                  if (ui == ClientReservationUiStatus.done) ...[
+                    const SizedBox(height: 10),
+                    ClientReservationReviewAction(
+                      item: item,
+                      onReviewSubmitted: () {
+                        ref.invalidate(
+                          clientReservationDetailProvider(item.id),
+                        );
+                      },
+                    ),
+                  ],
+                  if (canMessage ||
+                      ui == ClientReservationUiStatus.confirmed) ...[
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => showAddToCalendarSheet(
                         context,
                         reservationId: item.id,
-                        viewerRole: DisputeSenderRole.client,
+                        title: '$serviceLabel — $prestataireLabel',
+                        start: item.dateHeure,
+                        durationMinutes: item.durationMinutes,
                       ),
-                      icon: const Icon(Icons.gavel_outlined),
-                      label: const Text(DiscDispute.openAction),
-                    );
-                  },
-                ),
-              ],
-            ],
-          );
+                      icon: const Icon(Icons.event_available_outlined),
+                      label: const Text(DiscBk.addToCalendar),
+                    ),
+                  ],
+                  if (item.prestataireId != null &&
+                      (ui == ClientReservationUiStatus.done ||
+                          ui == ClientReservationUiStatus.confirmed)) ...[
+                    const SizedBox(height: 10),
+                    FilledButton.tonalIcon(
+                      onPressed: () => context.pushBooking(
+                        prestataireId: item.prestataireId!,
+                        serviceId: item.serviceId,
+                      ),
+                      icon: const Icon(Icons.replay_rounded),
+                      label: const Text(DiscBk.rebookSamePresta),
+                    ),
+                    if (ui == ClientReservationUiStatus.done) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _schedulingReminder
+                            ? null
+                            : () => _scheduleRebookReminder(item, 4),
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: const Text(DiscBk.rebookRemind4Weeks),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _schedulingReminder
+                            ? null
+                            : () => _scheduleRebookReminder(item, 6),
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: const Text(DiscBk.rebookRemind6Weeks),
+                      ),
+                    ],
+                  ],
+                  if (item.prestataireId != null) ...[
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.pushPrestataireDetail(item.prestataireId!),
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: Text(prestataireLabel),
+                    ),
+                  ],
+                  if (canDispute) ...[
+                    const SizedBox(height: 10),
+                    activeDisputeAsync!.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => OutlinedButton.icon(
+                        onPressed: () => showOpenDisputeSheet(
+                          context,
+                          reservationId: item.id,
+                          viewerRole: DisputeSenderRole.client,
+                        ),
+                        icon: const Icon(Icons.gavel_outlined),
+                        label: const Text(DiscDispute.openAction),
+                      ),
+                      data: (active) {
+                        if (active != null) {
+                          return OutlinedButton.icon(
+                            onPressed: () =>
+                                context.pushClientDisputeDetail(active.id),
+                            icon: const Icon(Icons.gavel_outlined),
+                            label: const Text(DiscDispute.viewAction),
+                          );
+                        }
+                        return OutlinedButton.icon(
+                          onPressed: () => showOpenDisputeSheet(
+                            context,
+                            reservationId: item.id,
+                            viewerRole: DisputeSenderRole.client,
+                          ),
+                          icon: const Icon(Icons.gavel_outlined),
+                          label: const Text(DiscDispute.openAction),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
         },
       );
 

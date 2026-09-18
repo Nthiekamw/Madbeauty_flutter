@@ -10,6 +10,7 @@ import '../../../services/offline/pending_offline_action.dart';
 import '../../../services/supabase/booking/booking_service_providers.dart';
 import '../../../shared/layout/discovery_responsive.dart';
 import '../../../shared/layout/profile_flow_scaffold.dart';
+import '../../../shared/layout/web_page_split.dart';
 import '../../../shared/widgets/app/app_snack_bar.dart';
 import '../../../shared/widgets/discovery/content/discovery_list_skeleton.dart';
 import '../../../shared/widgets/discovery/discovery_empty_state.dart';
@@ -280,44 +281,12 @@ class _ClientReservationsScreenState
       );
     }
 
-    if (DiscoveryResponsive.of(context).useWebTwoPane) {
-      return RefreshIndicator(
-        onRefresh: _refresh,
-        child: ListView.separated(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 24),
-          itemCount: (items.length / 2).ceil(),
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, row) {
-            final left = items[row * 2];
-            final hasRight = row * 2 + 1 < items.length;
-            final right = hasRight ? items[row * 2 + 1] : null;
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _cardFor(left)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: right == null
-                        ? const SizedBox.shrink()
-                        : _cardFor(right),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ListView.separated(
+      child: WebPairedList(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 24),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) => _cardFor(items[index]),
       ),
     );
